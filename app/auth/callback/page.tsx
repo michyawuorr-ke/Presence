@@ -13,13 +13,10 @@ export default function AuthCallback() {
       }
     });
 
-    const hash = window.location.hash;
-    if (hash) {
-      supabase.auth.getSession().then(({ data: { session } }) => {
-        if (session) router.push("/dashboard/events");
-        else router.push("/login");
-      });
-    }
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      if (session) router.push("/dashboard/events");
+      else router.push("/login");
+    });
   }, [router]);
 
   return (
