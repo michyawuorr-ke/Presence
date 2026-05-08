@@ -4,71 +4,81 @@ import { useRouter } from "next/navigation";
 import { supabase } from "@/lib/supabase/client";
 
 export default function CreateEventPage() {
-  const [form, setForm] = useState({
-    title: "", venue: "", description: "",
-    start_time: "", end_time: "", is_paid: false,
-  });
+  const [title, setTitle] = useState("");
+  const [venue, setVenue] = useState("");
+  const [description, setDescription] = useState("");
+  const [startTime, setStartTime] = useState("");
+  const [endTime, setEndTime] = useState("");
+  const [isPaid, setIsPaid] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const router = useRouter();
 
   async function handleCreate() {
-    if (!form.title || !form.venue || !form.start_time || !form.end_time) {
+    if (!title || !venue || !startTime || !endTime) {
       setError("Please fill in all required fields");
       return;
     }
     setLoading(true);
+    setError("");
+
     const { data: { user } } = await supabase.auth.getUser();
-    if (!user) return;
+    if (!user) { router.push("/login"); return; }
 
-    const slug = form.title.toLowerCase().replace(/\s+/g, "-").replace(/[^a-z0-9-]/g, "") + "-" + Date.now();
+    const slug = title.toLowerCase().replace(/\s+/g, "-").replace(/[^a-z0-9-]/g, "") + "-" + Date.now();
 
-    const { error } = await supabase.from("events").insert({
+    const { error: err } = await supabase.from("events").insert({
       host_id: user.id,
-      title: form.title,
-      venue: form.venue,
-      description: form.description,
-      start_time: form.start_time,
-      end_time: form.end_time,
-      is_paid: form.is_paid,
+      title,
+      venue,
+      description,
+      start_time: startTime,
+      end_time: endTime,
+      is_paid: isPaid,
       status: "draft",
       slug,
+      timezone: "Africa/Nairobi",
     });
 
-    if (error) { setError(error.message); setLoading(false); return; }
+    if (err) { setError(err.message); setLoading(false); return; }
     router.push("/dashboard/events");
   }
 
-  const field = (label: string, key: string, type = "text", required = false) => (
-    <div style={{marginBottom:"16px"}}>
-      <label style={{display:"block",fontSize:"13px",color:"#666",marginBottom:"6px"}}>
-        {label}{required && " *"}
-      </label>
-      <input type={type} value={(form as any)[key]}
-        onChange={(e) => setForm({...form, [key]: e.target.value})}
-        style={{width:"100%",padding:"14px",borderRadius:"14px",border:"1px solid #e5e7eb",
-          background:"#fff",fontSize:"15px",outline:"none",boxSizing:"border-box"}} />
-    </div>
-  );
+  const inputStyle = {
+    width:"100%", padding:"14px", borderRadius:"14px",
+    border:"1px solid #e5e7eb", background:"#fff",
+    fontSize:"15px", outline:"none", boxSizing:"border-box" as const,
+    marginBottom:"16px",
+  };
 
   return (
     <div style={{maxWidth:"520px",margin:"0 auto"}}>
       <button onClick={() => router.back()}
-        style={{background:"none",border:"none",color:"#999",fontSize:"14px",cursor:"pointer",marginBottom:"24px"}}>
+        style={{background:"none",border:"none",color:"#999",fontSize:"14px",
+          cursor:"pointer",marginBottom:"24px",padding:"0"}}>
         ← Back
       </button>
       <h1 style={{fontSize:"24px",fontWeight:"500",marginBottom:"32px"}}>Create event</h1>
 
-      {field("Event title", "title", "text", true)}
-      {field("Venue", "venue", "text", true)}
-      {field("Description", "description")}
-      {field("Start time", "start_time", "datetime-local", true)}
-      {field("End time", "end_time", "datetime-local", true)}
+      <label style={{fontSize:"13px",color:"#666",display:"block",marginBottom:"6px"}}>Event title *</label>
+      <input value={title} onChange={e => setTitle(e.target.value)} placeholder="e.g. Nairobi Tech Meetup" style={inputStyle} />
+
+      <label style={{fontSize:"13px",color:"#666",display:"block",marginBottom:"6px"}}>Venue *</label>
+      <input value={venue} onChange={e => setVenue(e.target.value)} placeholder="e.g. iHub, Nairobi" style={inputStyle} />
+
+      <label style={{fontSize:"13px",color:"#666",display:"block",marginBottom:"6px"}}>Description</label>
+      <input value={description} onChange={e => setDescription(e.target.value)} placeholder="What is this event about?" style={inputStyle} />
+
+      <label style={{fontSize:"13px",color:"#666",display:"block",marginBottom:"6px"}}>Start time *</label>
+      <input type="datetime-local" value={startTime} onChange={e => setStartTime(e.target.value)} style={inputStyle} />
+
+      <label style={{fontSize:"13px",color:"#666",display:"block",marginBottom:"6px"}}>End time *</label>
+      <input type="datetime-local" value={endTime} onChange={e => setEndTime(e.target.value)} style={inputStyle} />
 
       <div style={{display:"flex",alignItems:"center",gap:"12px",marginBottom:"24px",
         padding:"16px",borderRadius:"14px",border:"1px solid #e5e7eb",background:"#fff"}}>
-        <input type="checkbox" id="paid" checked={form.is_paid}
-          onChange={(e) => setForm({...form, is_paid: e.target.checked})}
+        <input type="checkbox" id="paid" checked={isPaid}
+          onChange={e => setIsPaid(e.target.checked)}
           style={{width:"18px",height:"18px",cursor:"pointer"}} />
         <label htmlFor="paid" style={{fontSize:"15px",cursor:"pointer"}}>
           This is a paid event
@@ -78,8 +88,9 @@ export default function CreateEventPage() {
       {error && <p style={{color:"#ef4444",fontSize:"13px",marginBottom:"16px"}}>{error}</p>}
 
       <button onClick={handleCreate} disabled={loading}
-        style={{width:"100%",padding:"16px",borderRadius:"16px",background:loading?"#999":"#000",
-          color:"#fff",border:"none",fontSize:"15px",fontWeight:"500",cursor:"pointer"}}>
+        style={{width:"100%",padding:"16px",borderRadius:"16px",
+          background:loading?"#999":"#000",color:"#fff",border:"none",
+          fontSize:"15px",fontWeight:"500",cursor:"pointer"}}>
         {loading ? "Creating..." : "Create event"}
       </button>
     </div>
