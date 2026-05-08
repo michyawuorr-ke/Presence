@@ -25,6 +25,13 @@ export default function CreateEventPage() {
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) { router.push("/login"); return; }
 
+    // Ensure host record exists
+    await supabase.from("hosts").upsert({
+      id: user.id,
+      email: user.email ?? "",
+      name: user.user_metadata?.name ?? user.email ?? "Host",
+    }, { onConflict: "id" });
+
     const slug = title.toLowerCase().replace(/\s+/g, "-").replace(/[^a-z0-9-]/g, "") + "-" + Date.now();
 
     const { error: err } = await supabase.from("events").insert({
