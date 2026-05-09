@@ -462,7 +462,7 @@ function GuestScene({ event, registration, profile, onProfileUpdate }: any) {
           <div style={{background:"#fff",borderRadius:"20px",padding:"16px",border:"1px solid rgba(0,0,0,0.06)",
             display:"flex",justifyContent:"space-between",alignItems:"center"}}>
             <p style={{fontSize:"14px",color:"#666"}}>
-              {profile?.platform_type}: {profile?.platform_value ? profile.platform_value.replace(/^https?:///, "") : "Not set"}
+              {profile?.platform_type}: {profile?.platform_value || "Not set"}
             </p>
           </div>
         </div>
