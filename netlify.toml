@@ -1,0 +1,16 @@
+[build]
+  command = "npm run build"
+  publish = ".next"
+
+[[plugins]]
+  package = "@netlify/plugin-nextjs"
+
+[[redirects]]
+  from = "/register/*"
+  to = "/register/:splat"
+  status = 200
+
+[[redirects]]
+  from = "/e/*"
+  to = "/e/:splat"
+  status = 200
