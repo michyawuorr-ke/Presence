@@ -462,7 +462,7 @@ function GuestScene({ event, registration, profile, onProfileUpdate }: any) {
           <div style={{background:"#fff",borderRadius:"20px",padding:"16px",border:"1px solid rgba(0,0,0,0.06)",
             display:"flex",justifyContent:"space-between",alignItems:"center"}}>
             <p style={{fontSize:"14px",color:"#666"}}>
-              {profile?.platform_type}: {profile?.platform_value || "Not set"}
+              {profile?.platform_type}: {(profile?.platform_value || "Not set").replace(/^https?:///, "")}
             </p>
           </div>
         </div>
@@ -484,7 +484,7 @@ function GuestScene({ event, registration, profile, onProfileUpdate }: any) {
             <div style={{padding:"40px 0"}}>
               <p style={{fontSize:"40px",marginBottom:"16px"}}>◇</p>
               <p style={{fontSize:"16px",color:"#333",marginBottom:"8px"}}>Your connections</p>
-              <p style={{fontSize:"14px",color:"#999"}}>Full archive coming in next update</p>
+              <p style={{fontSize:"14px",color:"#999"}}>Full archive coming in next update</p><button onClick={()=>setTab("archive")} style={{padding:"12px 24px",borderRadius:"14px",background:"#000",color:"#fff",border:"none",fontSize:"14px",cursor:"pointer"}}>View Archive →</button></p>
             </div>
           )}
         </div>
@@ -512,6 +512,72 @@ function GuestScene({ event, registration, profile, onProfileUpdate }: any) {
           </button>
         ))}
       </div>
+    </div>
+  );
+}
+function EditProfileForm({ profile, onSave }: any) {
+  const [mode, setMode] = useState(profile?.identity_mode ?? 'professional');
+  const [displayName, setDisplayName] = useState(profile?.display_name ?? '');
+  const [roleTitle, setRoleTitle] = useState(profile?.role_title ?? '');
+  const [organisation, setOrganisation] = useState(profile?.organisation ?? '');
+  const [bio, setBio] = useState(profile?.bio ?? '');
+  const [platformType, setPlatformType] = useState(profile?.platform_type ?? 'linkedin');
+  const [platformValue, setPlatformValue] = useState(profile?.platform_value ?? '');
+  const [saving, setSaving] = useState(false);
+
+  async function handleSave() {
+    setSaving(true);
+    const { data } = await supabase.from('guest_profiles').update({
+      identity_mode: mode,
+      display_name: displayName,
+      role_title: roleTitle,
+      organisation,
+      bio,
+      platform_type: platformType,
+      platform_value: platformValue,
+      identity_last_changed_at: new Date().toISOString(),
+    }).eq('id', profile.id).select().single();
+    if (data) onSave(data);
+    setSaving(false);
+  }
+
+  const isPro = mode === 'professional';
+  const inputStyle = {width:'100%',padding:'12px',borderRadius:'12px',border:'1px solid #e5e7eb',fontSize:'14px',outline:'none',marginBottom:'10px',boxSizing:'border-box' as const};
+
+  return (
+    <div style={{background:'#f9fafb',borderRadius:'20px',padding:'20px',marginTop:'16px'}}>
+      <div style={{display:'flex',gap:'8px',marginBottom:'16px',background:'#fff',borderRadius:'12px',padding:'4px'}}>
+        <button onClick={()=>{setMode('professional');setPlatformType('linkedin');}}
+          style={{flex:1,padding:'10px',borderRadius:'10px',border:'none',cursor:'pointer',
+            background:isPro?'#2563eb':'transparent',color:isPro?'#fff':'#999',fontSize:'13px'}}>
+          Professional
+        </button>
+        <button onClick={()=>{setMode('creative');setPlatformType('tiktok');}}
+          style={{flex:1,padding:'10px',borderRadius:'10px',border:'none',cursor:'pointer',
+          Creative
+        </button>
+      </div>
+      <input value={displayName} onChange={e=>setDisplayName(e.target.value)} placeholder='Your name' style={inputStyle} />
+      <input value={roleTitle} onChange={e=>setRoleTitle(e.target.value)} placeholder={isPro?'Job title':'Creative role'} style={inputStyle} />
+      <input value={organisation} onChange={e=>setOrganisation(e.target.value)} placeholder={isPro?'Company':'Studio / Collective'} style={inputStyle} />
+      <input value={bio} onChange={e=>setBio(e.target.value)} placeholder={isPro?'Short bio':'Your vibe'} style={inputStyle} />
+      <div style={{display:'flex',gap:'8px',marginBottom:'10px'}}>
+        {(isPro?[{value:'linkedin',label:'LinkedIn'},{value:'gmail',label:'Gmail'}]:[{value:'tiktok',label:'TikTok'},{value:'instagram',label:'Instagram'}]).map(p=>(
+          <button key={p.value} onClick={()=>setPlatformType(p.value)}
+            style={{flex:1,padding:'8px',borderRadius:'10px',border:'1px solid '+(platformType===p.value?'#000':'#e5e7eb'),
+              background:'transparent',color:platformType===p.value?'#000':'#999',fontSize:'12px',cursor:'pointer'}}>
+            {p.label}
+          </button>
+        ))}
+      </div>
+      <input value={platformValue} onChange={e=>setPlatformValue(e.target.value)}
+        placeholder={platformType==='linkedin'?'LinkedIn URL':platformType==='gmail'?'Gmail':platformType==='tiktok'?'@tiktok handle':'@instagram handle'}
+        style={inputStyle} />
+      <button onClick={handleSave} disabled={saving}
+        style={{width:'100%',padding:'14px',borderRadius:'14px',background:saving?'#999':isPro?'#2563eb':'#7c3aed',
+          color:'#fff',border:'none',fontSize:'14px',cursor:'pointer',fontWeight:'500'}}>
+        {saving?'Saving...':'Save changes'}
+      </button>
     </div>
   );
 }
