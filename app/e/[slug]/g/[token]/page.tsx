@@ -484,7 +484,7 @@ function GuestScene({ event, registration, profile, onProfileUpdate }: any) {
             <div style={{padding:"40px 0"}}>
               <p style={{fontSize:"40px",marginBottom:"16px"}}>◇</p>
               <p style={{fontSize:"16px",color:"#333",marginBottom:"8px"}}>Your connections</p>
-              <p style={{fontSize:"14px",color:"#999"}}>Full archive coming in next update</p><button onClick={()=>setTab("archive")} style={{padding:"12px 24px",borderRadius:"14px",background:"#000",color:"#fff",border:"none",fontSize:"14px",cursor:"pointer"}}>View Archive →</button></p><button onClick={()=>setTab("archive")} style={{padding:"12px 24px",borderRadius:"14px",background:"#000",color:"#fff",border:"none",fontSize:"14px",cursor:"pointer"}}>View Archive →</button></p>
+              <p style={{fontSize:"14px",color:"#999",marginBottom:"16px"}}>Full archive coming in next update</p><button onClick={()=>setTab("archive")} style={{padding:"12px 24px",borderRadius:"14px",background:"#000",color:"#fff",border:"none",fontSize:"14px",cursor:"pointer"}}>View Archive →</button>
             </div>
           )}
         </div>
