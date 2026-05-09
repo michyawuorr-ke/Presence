@@ -108,6 +108,7 @@ function IdentitySetup({ registration, event, onComplete }: any) {
   const [platformType, setPlatformType] = useState("linkedin");
   const [platformValue, setPlatformValue] = useState("");
   const [saving, setSaving] = useState(false);
+  const [editing, setEditing] = useState(false);
   const [error, setError] = useState("");
 
   const isPro = mode === "professional";
@@ -308,8 +309,7 @@ function GuestScene({ event, registration, profile, onProfileUpdate }: any) {
             <div style={{background:"#000",borderRadius:"20px",padding:"24px",marginBottom:"16px",textAlign:"center"}}>
               <p style={{color:"#fff",fontSize:"18px",marginBottom:"8px"}}>Event has ended</p>
               <p style={{color:"#666",fontSize:"14px",marginBottom:"16px"}}>Thank you for being present</p>
-              <p style={{color:"#999",fontSize:"13px"}}>Your connections are saved in Archive →</p>
-            </div>
+              <p style={{color:"#999",fontSize:"13px",marginBottom:"16px"}}>Your connections are saved in Archive</p><button onClick={()=>setTab("archive")} style={{padding:"12px 24px",borderRadius:"14px",background:"#fff",color:"#000",border:"none",fontSize:"14px",cursor:"pointer",fontWeight:"500"}}>View connections →</button></div>
           ) : isLive ? (
             <div style={{background:"#000",borderRadius:"20px",padding:"20px",marginBottom:"16px",
               display:"flex",alignItems:"center",gap:"12px"}}>
@@ -462,7 +462,7 @@ function GuestScene({ event, registration, profile, onProfileUpdate }: any) {
           <div style={{background:"#fff",borderRadius:"20px",padding:"16px",border:"1px solid rgba(0,0,0,0.06)",
             display:"flex",justifyContent:"space-between",alignItems:"center"}}>
             <p style={{fontSize:"14px",color:"#666"}}>
-              {profile?.platform_type}: {profile?.platform_value || "Not set"}
+              {profile?.platform_type}: {profile?.platform_value ? profile.platform_value.replace(/^https?:///, "") : "Not set"}
             </p>
           </div>
         </div>
