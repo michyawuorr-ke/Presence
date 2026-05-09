@@ -114,6 +114,7 @@ function IdentitySetup({ registration, event, onComplete }: any) {
 
   async function handleSave() {
     if (!displayName) { setError("Please enter your name"); return; }
+    if (!platformValue) { setError("Please add your LinkedIn, Gmail, TikTok or Instagram"); return; }
     setSaving(true);
     const { data, error: err } = await supabase.from("guest_profiles").insert({
       registration_id: registration.id,
