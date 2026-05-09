@@ -462,7 +462,7 @@ function GuestScene({ event, registration, profile, onProfileUpdate }: any) {
           <div style={{background:"#fff",borderRadius:"20px",padding:"16px",border:"1px solid rgba(0,0,0,0.06)",
             display:"flex",justifyContent:"space-between",alignItems:"center"}}>
             <p style={{fontSize:"14px",color:"#666"}}>
-              {profile?.platform_type}: {profile?.platform_value || "Not set"}
+              {profile?.platform_type}: {(profile?.platform_value || "Not set").replace(/^https?:///, "")}
             </p>
           </div>
         </div>
@@ -484,7 +484,7 @@ function GuestScene({ event, registration, profile, onProfileUpdate }: any) {
             <div style={{padding:"40px 0"}}>
               <p style={{fontSize:"40px",marginBottom:"16px"}}>◇</p>
               <p style={{fontSize:"16px",color:"#333",marginBottom:"8px"}}>Your connections</p>
-              <p style={{fontSize:"14px",color:"#999"}}>Full archive coming in next update</p><button onClick={()=>setTab("archive")} style={{padding:"12px 24px",borderRadius:"14px",background:"#000",color:"#fff",border:"none",fontSize:"14px",cursor:"pointer"}}>View Archive →</button></p>
+              <p style={{fontSize:"14px",color:"#999"}}>Full archive coming in next update</p><button onClick={()=>setTab("archive")} style={{padding:"12px 24px",borderRadius:"14px",background:"#000",color:"#fff",border:"none",fontSize:"14px",cursor:"pointer"}}>View Archive →</button></p><button onClick={()=>setTab("archive")} style={{padding:"12px 24px",borderRadius:"14px",background:"#000",color:"#fff",border:"none",fontSize:"14px",cursor:"pointer"}}>View Archive →</button></p>
             </div>
           )}
         </div>

@@ -56,6 +56,7 @@ export default function EventDetailPage() {
   if (loading) return <div style={{textAlign:"center",padding:"60px",color:"#999"}}>Loading...</div>;
   if (!event) return <div style={{textAlign:"center",padding:"60px",color:"#999"}}>Event not found</div>;
 
+  const [currentStatus, setCurrentStatus] = useState(event?.status);
   const statusColor: any = { draft:"#999", scheduled:"#2563eb", live:"#16a34a", ended:"#666" };
   const registrationLink = `${window.location.origin}/register/${event.slug}`;
 
