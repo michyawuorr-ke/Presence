@@ -89,8 +89,8 @@ export default function EventDetailPage() {
       {event.status !== "draft" && (
         <div style={{background:"#f0fdf4",borderRadius:"16px",padding:"16px",marginBottom:"16px",border:"1px solid #bbf7d0"}}>
           <p style={{fontSize:"12px",color:"#16a34a",marginBottom:"8px",fontWeight:"500"}}>REGISTRATION LINK</p>
-          <p style={{fontSize:"13px",color:"#333",wordBreak:"break-all",marginBottom:"12px"}}>{registrationLink}</p>
-          <button onClick={() => navigator.clipboard.writeText(registrationLink)}
+          <p style={{fontSize:"13px",color:"#333",wordBreak:"break-all",marginBottom:"12px"}}>{registrationLink.replace("https://","").replace("http://","")}</p>
+          <button onClick={()=>{const el=document.createElement("textarea");el.value=registrationLink;el.style.position="fixed";el.style.opacity="0";document.body.appendChild(el);el.focus();el.select();try{document.execCommand("copy");}catch(e){}document.body.removeChild(el);}}
             style={{padding:"8px 16px",borderRadius:"10px",background:"#16a34a",color:"#fff",border:"none",fontSize:"12px",cursor:"pointer"}}>
             Copy link
           </button>
