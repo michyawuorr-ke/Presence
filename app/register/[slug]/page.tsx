@@ -74,8 +74,8 @@ export default function RegisterPage() {
       <p style={{color:"#666",textAlign:"center",marginBottom:"32px"}}>{event.title}</p>
       <div style={{background:"#111",borderRadius:"20px",padding:"24px",width:"100%",maxWidth:"360px",marginBottom:"24px"}}>
         <p style={{fontSize:"12px",color:"#666",marginBottom:"8px"}}>YOUR EXPERIENCE LINK</p>
-        <p style={{fontSize:"13px",color:"#fff",wordBreak:"break-all",marginBottom:"16px"}}>{guestLink}</p>
-        <button onClick={() => navigator.clipboard.writeText(guestLink)}
+        <p style={{fontSize:"13px",color:"#fff",wordBreak:"break-all",marginBottom:"16px"}}>{guestLink.replace("https://","").replace("http://","")}</p>
+        <button onClick={()=>{const el=document.createElement("textarea");el.value=guestLink;el.style.position="fixed";el.style.opacity="0";document.body.appendChild(el);el.focus();el.select();try{document.execCommand("copy");}catch(e){}document.body.removeChild(el);}}
           style={{width:"100%",padding:"12px",borderRadius:"12px",background:"#fff",color:"#000",border:"none",fontSize:"14px",cursor:"pointer",fontWeight:"500"}}>
           Copy link
         </button>
