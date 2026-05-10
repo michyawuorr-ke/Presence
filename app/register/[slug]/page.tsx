@@ -80,7 +80,7 @@ export default function RegisterPage() {
           Copy link
         </button>
       </div>
-      <p style={{color:"#444",fontSize:"13px",textAlign:"center"}}>Save this link. It is your ticket and networking pass.</p>
+      <p style={{color:"#444",fontSize:"13px",textAlign:"center",marginBottom:"24px"}}>Save this link. It is your ticket and networking pass.</p><a href={guestLink} style={{display:"block",textAlign:"center",padding:"16px",borderRadius:"16px",background:"#fff",color:"#000",textDecoration:"none",fontSize:"15px",fontWeight:"500",maxWidth:"360px",margin:"0 auto"}}>Enter Presence →</a>
     </div>
   );
 
