@@ -84,7 +84,7 @@ function Identity({registration,event,onComplete}:any){
       <div style={{display:"flex",gap:"8px",marginBottom:"32px",background:"#111",borderRadius:"16px",padding:"4px"}}>
         <button onClick={()=>{setMode("professional");setPlatformType("linkedin");}} style={{flex:1,padding:"12px",borderRadius:"12px",border:"none",cursor:"pointer",background:isPro?"#2563eb":"transparent",color:isPro?"#fff":"#666",fontSize:"14px",fontWeight:"500"}}>Professional</button>
       </div>
-      <input value={displayName} onChange={e=>setDisplayName(e.target.value}} placeholder="Your name" style={inp}/>
+      <input value={displayName} onChange={e=>setDisplayName(e.target.value)} placeholder="Your name" style={inp}/>
       <input value={roleTitle} onChange={e=>setRoleTitle(e.target.value)} placeholder={isPro?"Job title (e.g. Product Manager)":"Creative role (e.g. Filmmaker)"} style={inp}/>
       <input value={organisation} onChange={e=>setOrganisation(e.target.value)} placeholder={isPro?"Company / Organisation":"Studio / Collective (optional)"} style={inp}/>
       <input value={bio} onChange={e=>setBio(e.target.value)} placeholder={isPro?"Short bio":"Your vibe"} style={inp}/>
