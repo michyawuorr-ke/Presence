@@ -218,7 +218,7 @@ function Scene({event,registration,profile,onProfileUpdate}:any){
               <p style={{fontSize:"14px",color:"#999"}}>Your connections are saved in Archive</p>
             </div>
           ):(
-            <div style={{padding:"40px 0"}}>
+            {<div style={{padding:"40px 0"}}}
               <p style={{fontSize:"40px",marginBottom:"16px"}}>◎</p>
               <p style={{fontSize:"16px",color:"#333",marginBottom:"8px"}}>Aura is ready</p>
               <p style={{fontSize:"14px",color:"#999",marginBottom:"32px"}}>Full Aura system coming soon</p>
