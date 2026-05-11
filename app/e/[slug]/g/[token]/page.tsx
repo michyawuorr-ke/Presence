@@ -1,91 +1,186 @@
-"use client";
-import{useEffect,useState,useRef,useCallback}from"react";
-import{useParams}from"next/navigation";
-import{supabase}from"@/lib/supabase/client";
-type Screen="splash"|"identity"|"scene";
-type Tab="scene"|"aura"|"ticket"|"profile"|"archive";
-function cleanUrl(u:string){if(!u)return"";return u.replace("https://","").replace("http://","").replace("www.","");}
-function copyToClipboard(text:string){const el=document.createElement("textarea");el.value=text;el.style.position="fixed";el.style.opacity="0";document.body.appendChild(el);el.focus();el.select();try{document.execCommand("copy");}catch(e){}document.body.removeChild(el);}
-function getFirstName(name:string){if(!name)return"";return name.split(" ")[0];}
-function generatePositions(count:number){const zones=[{x:15,y:20},{x:75,y:15},{x:85,y:45},{x:70,y:75},{x:30,y:80},{x:10,y:55},{x:50,y:25},{x:45,y:65}];return zones.slice(0,count).map(z=>({x:z.x+(Math.random()*10-5),y:z.y+(Math.random()*10-5)}));}
-export default function GuestEntryPage(){
-const[screen,setScreen]=useState<Screen>("splash");
-const[registration,setRegistration]=useState<any>(null);
-const[profile,setProfile]=useState<any>(null);
-const[event,setEvent]=useState<any>(null);
-const[loading,setLoading]=useState(true);
-const params=useParams();
-const token=params.token as string;
-const slug=params.slug as string;
-useEffect(()=>{async function load(){const{data:reg}=await supabase.from("registrations").select("*").eq("access_token",token).single();setRegistration(reg);const{data:ev}=await supabase.from("events").select("*").eq("id",reg.event_id).single();setEvent(ev);const{data:prof}=await supabase.from("guest_profiles").select("*").eq("registration_id",reg.id).single();if(prof)setProfile(prof);setLoading(false);}load();},[token]);
-useEffect(()=>{if(loading)return;const timer=setTimeout(()=>{if(profile)setScreen("scene");else setScreen("identity");},2200);return()=>clearTimeout(timer);},[loading,profile]);
-if(screen==="splash")return<Splash/>;
-if(screen==="identity")return<Identity registration={registration} event={event} onComplete={(p:any)=>{setProfile(p);setScreen("scene");}}/>;
-return<Scene event={event} registration={registration} profile={profile} onProfileUpdate={setProfile}/>;
+'use client';
+
+import React, { useState, useEffect } from 'react';
+import { supabase } from "@/lib/supabase/client";
+import { QRCodeSVG } from 'qrcode.react';
+import { 
+  User, 
+  QrCode, 
+  Users, 
+  MapPin, 
+  CheckCircle2, 
+  Lock, 
+  Loader2,
+  Copy,
+  ExternalLink
+} from 'lucide-react';
+
+// --- HELPERS (OUTSIDE JSX) ---
+function cleanUrl(url) {
+  if (!url) return '';
+  return url.replace('https://', '').replace('http://', '').replace('www.', '');
 }
-function Splash(){return(<div style={{position:"fixed",inset:0,background:"#000",display:"flex",alignItems:"center",justifyContent:"center",zIndex:9999}}><style>{`@keyframes fi{from{opacity:0;letter-spacing:0.1em}to{opacity:1;letter-spacing:0.25em}}`}</style><p style={{color:"#fff",fontSize:"18px",fontWeight:"300",letterSpacing:"0.25em",textTransform:"uppercase",animation:"fi 1.4s ease forwards"}}>Presence Manifested</p></div>);}
-function Identity({registration,event,onComplete}:any){
-const[mode,setMode]=useState<"professional"|"creative">("professional");
-const[displayName,setDisplayName]=useState("");
-const[roleTitle,setRoleTitle]=useState("");
-const[organisation,setOrganisation]=useState("");
-const[bio,setBio]=useState("");
-const[platformType,setPlatformType]=useState("linkedin");
-const[platformValue,setPlatformValue]=useState("");
-const[saving,setSaving]=useState(false);
-const[error,setError]=useState("");
-const isPro=mode==="professional";
-const accent=isPro?"#2563eb":"#7c3aed";
-async function save(){if(!platformValue.trim()){setError("Platform value is required");return;}setSaving(true);setError("");const{data,error:err}=await supabase.from("guest_profiles").insert({registration_id:registration.id,event_id:registration.event_id,identity_mode:mode,display_name:displayName,role_title:roleTitle,organisation,bio,platform_type:platformType,platform_value:platformValue,aura_active:false}).select().single();if(err){setError(err.message);setSaving(false);return;}onComplete(data);}
-const inp={width:"100%",padding:"12px",borderRadius:"12px",border:"1px solid #333",background:"#111",color:"#fff",fontSize:"14px",outline:"none",marginBottom:"10px",boxSizing:"border-box" as const};
-return(<div style={{minHeight:"100vh",background:"#000",color:"#fff",padding:"40px 20px"}}><p style={{fontSize:"11px",letterSpacing:"0.3em",color:"#666",textTransform:"uppercase",marginBottom:"32px"}}>Identity</p><div style={{display:"flex",gap:"8px",marginBottom:"24px",background:"#111",borderRadius:"14px",padding:"4px"}}><button onClick={()=>{setMode("professional");setPlatformType("linkedin");}} style={{flex:1,padding:"12px",borderRadius:"12px",border:"none",cursor:"pointer",background:isPro?"#2563eb":"transparent",color:isPro?"#fff":"#666",fontSize:"13px",fontWeight:"500"}}>Professional</button><button onClick={()=>{setMode("creative");setPlatformType("tiktok");}} style={{flex:1,padding:"12px",borderRadius:"12px",border:"none",cursor:"pointer",background:!isPro?"#7c3aed":"transparent",color:!isPro?"#fff":"#666",fontSize:"13px",fontWeight:"500"}}>Creative</button></div><input value={displayName} onChange={e=>setDisplayName(e.target.value)} placeholder="Your full name" style={inp}/><input value={roleTitle} onChange={e=>setRoleTitle(e.target.value)} placeholder={isPro?"Job title":"Creative role"} style={inp}/><input value={organisation} onChange={e=>setOrganisation(e.target.value)} placeholder={isPro?"Company / Organisation":"Studio / Collective"} style={inp}/><input value={bio} onChange={e=>setBio(e.target.value)} placeholder={isPro?"Short bio":"Your vibe"} style={inp}/><div style={{display:"flex",gap:"8px",marginBottom:"8px"}}>{(isPro?[{v:"linkedin",l:"LinkedIn"},{v:"gmail",l:"Gmail"}]:[{v:"tiktok",l:"TikTok"},{v:"instagram",l:"Instagram"}]).map(p=>(<button key={p.v} onClick={()=>setPlatformType(p.v)} style={{flex:1,padding:"10px",borderRadius:"10px",border:"1px solid "+(platformType===p.v?accent:"#333"),background:"transparent",color:platformType===p.v?"#fff":"#666",fontSize:"12px",cursor:"pointer"}}>{p.l}</button>))}</div><input value={platformValue} onChange={e=>setPlatformValue(e.target.value)} placeholder={platformType==="linkedin"?"LinkedIn URL":platformType==="gmail"?"Gmail address":platformType==="tiktok"?"@TikTok handle":"@Instagram handle"} style={{...inp,border:"1px solid "+(platformValue?accent:"#333")}}/>{error&&<p style={{color:"#ef4444",fontSize:"13px",marginBottom:"10px"}}>{error}</p>}<button onClick={save} disabled={saving||!platformValue.trim()} style={{width:"100%",padding:"16px",borderRadius:"14px",background:saving||!platformValue.trim()?"#333":accent,color:"#fff",border:"none",fontSize:"15px",cursor:saving||!platformValue.trim()?"not-allowed":"pointer",fontWeight:"500",marginTop:"8px"}}>{saving?"Setting up...":"Enter Presence →"}</button></div>);
+
+function copyToClipboard(text) {
+  const el = document.createElement('textarea');
+  el.value = text;
+  el.style.position = 'fixed';
+  el.style.opacity = '0';
+  document.body.appendChild(el);
+  el.focus();
+  el.select();
+  try { document.execCommand('copy'); } catch(e) {}
+  document.body.removeChild(el);
 }
-function Scene({event,registration,profile,onProfileUpdate}:any){
-const[tab,setTab]=useState<Tab>("scene");
-const[editing,setEditing]=useState(false);
-const[countdown,setCountdown]=useState({days:0,hours:0,minutes:0,seconds:0});
-const[auraCount,setAuraCount]=useState(0);
-const[handshakeCount,setHandshakeCount]=useState(0);
-const[broadcasts,setBroadcasts]=useState<any[]>([]);
-const[fiveMin,setFiveMin]=useState(false);
-const isPro=profile?.identity_mode==="professional";
-const accent=isPro?"#2563eb":"#7c3aed";
-const[eventStatus,setEventStatus]=useState(event?.status||"");const isLive=eventStatus==="live";
-const isEnded=eventStatus==="ended";
-const nav=[{id:"scene",l:"Scene",e:"❆"},{id:"aura",l:"Aura",e:"◎"},{id:"ticket",l:"Ticket",e:"🏟"},{id:"profile",l:"Profile",e:"◐"},{id:"archive",l:"Archive",e:"◇"}];
-useEffect(()=>{if(!event)return;setEventStatus(event.status);supabase.from("events").select("status").eq("id",event.id).single().then(({data})=>{if(data)setEventStatus(data.status);});const evCh=supabase.channel("event-status:"+event.id).on("postgres_changes",{event:"UPDATE",schema:"public",table:"events",filter:"id=eq."+event.id},(p)=>{setEventStatus(p.new.status);}).subscribe();const tick=setInterval(()=>{const n=new Date();const s=new Date(event.start_time);const e2=new Date(event.end_time);const diff=s.getTime()-n.getTime();if(diff>0){setCountdown({days:Math.floor(diff/86400000),hours:Math.floor((diff%86400000)/3600000),minutes:Math.floor((diff%3600000)/60000),seconds:Math.floor((diff%60000)/1000)});}const toEnd=e2.getTime()-n.getTime();if(toEnd>0&&toEnd<300000)setFiveMin(true);},1000);return()=>{clearInterval(tick);supabase.removeChannel(evCh);};},[event]);
-useEffect(()=>{if(!event)return;async function fetchCounts(){const{count:ac}=await supabase.from("guest_profiles").select("*",{count:"exact",head:true}).eq("event_id",event.id).eq("aura_active",true);setAuraCount(ac||0);const{count:hc}=await supabase.from("handshakes").select("*",{count:"exact",head:true}).eq("event_id",event.id);setHandshakeCount(hc||0);}fetchCounts();const ch=supabase.channel("scene:"+event.id).on("postgres_changes",{event:"*",schema:"public",table:"broadcast_messages",filter:"event_id=eq."+event.id},(payload:any)=>{if(payload.eventType==="INSERT")setBroadcasts(prev=>[payload.new,...prev]);}).subscribe();supabase.from("broadcast_messages").select("*").eq("event_id",event.id).order("sent_at",{ascending:false}).limit(10).then(({data})=>{if(data)setBroadcasts(data);});return()=>{supabase.removeChannel(ch);};},[event]);
-return(<div style={{minHeight:"100vh",background:"linear-gradient(to bottom, #fafafa 0%, #f3f4f6 100%)",paddingBottom:"80px"}}>{fiveMin&&<div style={{background:"#f59e0b",padding:"12px 20px",textAlign:"center"}}><p style={{color:"#000",fontSize:"13px",fontWeight:"500"}}>⏱ Event ends in 5 minutes — finalise your connections</p></div>}{tab==="scene"&&(<div style={{padding:"24px 20px"}}><p style={{fontSize:"11px",letterSpacing:"0.3em",color:"#999",textTransform:"uppercase",marginBottom:"24px"}}>Presence</p><h1 style={{fontSize:"26px",fontWeight:"500",color:"#0a0a0b",marginBottom:"4px"}}>{event?.title}</h1><p style={{fontSize:"14px",color:"#666",marginBottom:"2px"}}>📍 {event?.venue}</p><p style={{fontSize:"14px",color:"#999",marginBottom:"24px"}}>{event&&new Date(event.start_time).toLocaleDateString("en-KE",{weekday:"long",day:"numeric",month:"long"})}</p>{isEnded?(<div style={{background:"linear-gradient(135deg, #0a0a0b 0%, #1a1a1a 100%)",borderRadius:"24px",padding:"28px",marginBottom:"16px",textAlign:"center",boxShadow:"0 8px 24px rgba(0,0,0,0.15)"}}><p style={{color:"#fff",fontSize:"18px",marginBottom:"8px"}}>Event has ended</p><p style={{color:"#666",fontSize:"14px",marginBottom:"16px"}}>Thank you for being present</p><button onClick={()=>setTab("archive")} style={{padding:"12px 24px",borderRadius:"14px",background:"#fff",color:"#000",border:"none",fontSize:"14px",cursor:"pointer",fontWeight:"500"}}>View your connections →</button></div>):isLive?(<div style={{background:"linear-gradient(135deg, #0a0a0b 0%, #1a1a1a 100%)",borderRadius:"24px",padding:"20px",marginBottom:"16px",display:"flex",alignItems:"center",gap:"12px",boxShadow:"0 8px 24px rgba(0,0,0,0.15)"}}><span style={{width:"8px",height:"8px",borderRadius:"50%",background:"#4ade80",display:"inline-block"}}/><p style={{color:"#fff",fontSize:"16px"}}>Event is live</p></div>):(<div style={{background:"linear-gradient(135deg, #0a0a0b 0%, #1a1a1a 100%)",borderRadius:"24px",padding:"28px",marginBottom:"16px",boxShadow:"0 8px 24px rgba(0,0,0,0.15)"}}><p style={{fontSize:"12px",color:"#666",marginBottom:"16px",letterSpacing:"0.1em"}}>STARTS IN</p><div style={{display:"flex",gap:"16px",justifyContent:"center"}}>{[{v:countdown.days,l:"Days"},{v:countdown.hours,l:"Hrs"},{v:countdown.minutes,l:"Min"},{v:countdown.seconds,l:"Sec"}].map(({v,l})=>(<div key={l} style={{textAlign:"center"}}><p style={{fontSize:"32px",fontWeight:"300",color:"#fff",lineHeight:"1"}}>{String(v).padStart(2,"0")}</p><p style={{fontSize:"11px",color:"#666",marginTop:"4px"}}>{l}</p></div>))}</div></div>)}<div style={{background:"#fff",borderRadius:"24px",padding:"24px",marginBottom:"16px",border:"1px solid rgba(0,0,0,0.06)",boxShadow:"0 4px 16px rgba(0,0,0,0.04)"}}><p style={{fontSize:"12px",color:"#999",marginBottom:"12px",letterSpacing:"0.1em"}}>LIVE NETWORKING</p><div style={{display:"flex",gap:"24px"}}><div><p style={{fontSize:"28px",fontWeight:"500",color:accent}}>{auraCount}</p><p style={{fontSize:"12px",color:"#999"}}>on Aura</p></div><div style={{width:"1px",background:"#f3f4f6"}}/><div><p style={{fontSize:"28px",fontWeight:"500",color:accent}}>{handshakeCount}</p><p style={{fontSize:"12px",color:"#999"}}>handshakes</p></div></div></div>{broadcasts.length>0&&(<div><p style={{fontSize:"12px",color:"#999",marginBottom:"12px",letterSpacing:"0.1em"}}>FROM THE HOST</p>{broadcasts.map((b:any)=>(<div key={b.id} style={{background:"#fff",borderRadius:"16px",padding:"16px",marginBottom:"8px",border:"1px solid rgba(0,0,0,0.06)"}}><p style={{fontSize:"14px",color:"#0a0a0b"}}>{b.content}</p><p style={{fontSize:"11px",color:"#999",marginTop:"8px"}}>{new Date(b.sent_at).toLocaleTimeString("en-KE",{hour:"2-digit",minute:"2-digit"})}</p></div>))}</div>)}</div>)}{tab==="aura"&&(<AuraTab event={event} profile={profile} accent={accent} isLive={isLive} isEnded={isEnded}/>)}{tab==="ticket"&&(<div style={{padding:"24px 20px"}}><p style={{fontSize:"11px",letterSpacing:"0.3em",color:"#999",textTransform:"uppercase",marginBottom:"32px",textAlign:"center"}}>Your Ticket</p><div style={{background:"#fff",borderRadius:"24px",padding:"32px",border:"1px solid rgba(0,0,0,0.06)",textAlign:"center",marginBottom:"16px"}}><h2 style={{fontSize:"20px",fontWeight:"500",marginBottom:"4px"}}>{event?.title}</h2><p style={{fontSize:"14px",color:"#666",marginBottom:"4px"}}>📍 {event?.venue}</p><p style={{fontSize:"14px",color:"#999",marginBottom:"24px"}}>{event&&new Date(event.start_time).toLocaleDateString()}</p><div style={{background:"#000",borderRadius:"16px",padding:"32px",marginBottom:"16px"}}><p style={{color:"#fff",fontSize:"14px",marginBottom:"8px"}}>Entry QR</p><p style={{color:"#555",fontSize:"12px",marginBottom:"16px"}}>Show at entrance</p><p style={{color:"#444",fontSize:"10px",wordBreak:"break-all"}}>{registration?.id}</p></div><p style={{fontSize:"12px",color:"#999"}}>QR codes coming in next update</p></div></div>)}{tab==="profile"&&(<div style={{padding:"24px 20px"}}><p style={{fontSize:"11px",letterSpacing:"0.3em",color:"#999",textTransform:"uppercase",marginBottom:"32px",textAlign:"center"}}>Your Profile</p><div style={{background:"#fff",borderRadius:"24px",padding:"24px",border:"1px solid rgba(0,0,0,0.06)",marginBottom:"16px"}}><div style={{display:"flex",alignItems:"center",gap:"16px",marginBottom:"20px"}}><div style={{width:"48px",height:"48px",borderRadius:"50%",background:accent,display:"flex",alignItems:"center",justifyContent:"center"}}><p style={{color:"#fff",fontSize:"18px",fontWeight:"500"}}>{profile?.display_name?.charAt(0)?.toUpperCase()}</p></div><div><p style={{fontSize:"18px",fontWeight:"500"}}>{profile?.display_name}</p><p style={{fontSize:"13px",color:accent}}>{isPro?"Professional":"Creative"}</p></div></div>{profile?.role_title&&<p style={{fontSize:"14px",color:"#333",marginBottom:"4px"}}>{profile.role_title}</p>}{profile?.organisation&&<p style={{fontSize:"14px",color:"#666",marginBottom:"4px"}}>{profile.organisation}</p>}{profile?.bio&&<p style={{fontSize:"14px",color:"#999",marginTop:"12px"}}>{profile.bio}</p>}{profile?.platform_value&&<p style={{fontSize:"13px",color:accent,marginTop:"12px"}}>{profile.platform_type}: {cleanUrl(profile.platform_value)}</p>}<button onClick={()=>setEditing(!editing)} style={{width:"100%",marginTop:"16px",padding:"12px",borderRadius:"12px",background:accent,color:"#fff",border:"none",fontSize:"14px",cursor:"pointer"}}>{editing?"Cancel":"Edit Profile"}</button></div>{editing&&<EditProfile profile={profile} accent={accent} onSave={(p:any)=>{onProfileUpdate(p);setEditing(false);}}/>}</div>)}{tab==="archive"&&(<div style={{padding:"24px 20px",textAlign:"center"}}><p style={{fontSize:"11px",letterSpacing:"0.3em",color:"#999",textTransform:"uppercase",marginBottom:"32px"}}>Archive</p>{isEnded?(<div style={{padding:"40px 0"}}><p style={{fontSize:"40px",marginBottom:"16px"}}>◇</p><p style={{fontSize:"16px",color:"#333",marginBottom:"8px"}}>Your connections</p><p style={{fontSize:"14px",color:"#999"}}>Full archive coming in next update</p></div>):(<div style={{padding:"60px 0"}}><p style={{fontSize:"40px",marginBottom:"16px"}}>◇</p><p style={{fontSize:"16px",color:"#333",marginBottom:"8px"}}>Archive unlocks after the event</p><p style={{fontSize:"14px",color:"#999"}}>Your connections will appear here</p></div>)}</div>)}<div style={{position:"fixed",bottom:0,left:0,right:0,background:"rgba(255,255,255,0.98)",backdropFilter:"blur(24px)",borderTop:"1px solid rgba(0,0,0,0.08)",display:"flex",padding:"12px 0 24px",boxShadow:"0 -4px 24px rgba(0,0,0,0.08)"}}>{nav.map(item=>(<button key={item.id} onClick={()=>{setTab(item.id as Tab);setEditing(false);}} style={{flex:1,display:"flex",flexDirection:"column",alignItems:"center",gap:"6px",background:"none",border:"none",cursor:"pointer",padding:"10px 8px",borderRadius:"12px",transition:"all 0.2s"}}><span style={{fontSize:"20px",opacity:tab===item.id?1:0.35,transform:tab===item.id?"scale(1.1)":"scale(1)",transition:"all 0.2s"}}>{item.e}</span><span style={{fontSize:"11px",color:tab===item.id?accent:"#999",fontWeight:tab===item.id?"600":"400",letterSpacing:"0.02em"}}>{item.l}</span></button>))}</div></div>);
-}
-function AuraTab({event,profile,accent,isLive,isEnded}:any){
-const[auraActive,setAuraActive]=useState(profile?.aura_active||false);
-const[nodes,setNodes]=useState<any[]>([]);
-const[incoming,setIncoming]=useState<any>(null);
-const[confirmNode,setConfirmNode]=useState<any>(null);
-const[sentRequests,setSentRequests]=useState<Set<string>>(new Set());
-const[notification,setNotification]=useState<string>("");
-const channelRef=useRef<any>(null);
-const fetchNodes=useCallback(async()=>{if(!profile||!event)return;const{data:approved}=await supabase.from("handshakes").select("guest_profile_id_a,guest_profile_id_b").eq("event_id",event.id).or("guest_profile_id_a.eq."+profile.id+",guest_profile_id_b.eq."+profile.id);const approvedSet=new Set<string>();(approved||[]).forEach((h:any)=>{if(h.guest_profile_id_a!==profile.id)approvedSet.add(h.guest_profile_id_a);if(h.guest_profile_id_b!==profile.id)approvedSet.add(h.guest_profile_id_b);});const{data}=await supabase.from("guest_profiles").select("*").eq("event_id",event.id).eq("aura_active",true).neq("id",profile.id).limit(8);const filtered=(data||[]).filter((n:any)=>!approvedSet.has(n.id));const positions=generatePositions(filtered.length);setNodes(filtered.map((n:any,i:number)=>({...n,...positions[i]})));setSentRequests(new Set());},[profile,event]);
-useEffect(()=>{if(!isLive||!event||!profile||!auraActive)return;fetchNodes();const interval=setInterval(fetchNodes,60000);const ch=supabase.channel("aura:"+event.id).on("broadcast",{event:"aura_ignited"},(payload:any)=>{setNodes(prev=>{if(prev.find((n:any)=>n.id===payload.payload.guest_profile_id))return prev;if(payload.payload.guest_profile_id===profile.id)return prev;const pos=generatePositions(1)[0];return[...prev,{...payload.payload,...pos}].slice(0,8);});}).on("broadcast",{event:"aura_invisible"},(payload:any)=>{setNodes(prev=>prev.filter((n:any)=>n.id!==payload.payload.guest_profile_id));}).on("broadcast",{event:"handshake_requested"},(payload:any)=>{if(payload.payload.recipient_id===profile.id){setIncoming(payload.payload);setTimeout(()=>setIncoming(null),300000);}}).on("broadcast",{event:"handshake_approved"},(payload:any)=>{if(payload.payload.requester_id===profile.id||payload.payload.recipient_id===profile.id){setNotification(payload.payload.requester_name+" connected with "+payload.payload.recipient_name);setTimeout(()=>setNotification(""),8000);fetchNodes();}}).subscribe();channelRef.current=ch;return()=>{clearInterval(interval);supabase.removeChannel(ch);};},[isLive,event,profile,fetchNodes]);
-async function igniteAura(){setAuraActive(true);await supabase.from("guest_profiles").update({aura_active:true}).eq("id",profile.id);await supabase.from("aura_status_logs").insert({guest_profile_id:profile.id,event_id:event.id,action:"ignited"});await channelRef.current?.send({type:"broadcast",event:"aura_ignited",payload:{guest_profile_id:profile.id,display_name:profile.display_name,identity_mode:profile.identity_mode}});}
-async function goInvisible(){await supabase.from("guest_profiles").update({aura_active:false}).eq("id",profile.id);await supabase.from("aura_status_logs").insert({guest_profile_id:profile.id,event_id:event.id,action:"invisible"});await channelRef.current?.send({type:"broadcast",event:"aura_invisible",payload:{guest_profile_id:profile.id}});setAuraActive(false);}
-async function sendRequest(node:any){if(sentRequests.has(node.id))return;setConfirmNode(null);setSentRequests(prev=>new Set(prev).add(node.id));const{data:req}=await supabase.from("handshake_requests").insert({requester_id:profile.id,recipient_id:node.id,event_id:event.id,status:"pending"}).select().single();await channelRef.current?.send({type:"broadcast",event:"handshake_requested",payload:{request_id:req?.id,requester_id:profile.id,recipient_id:node.id,requester_name:profile.display_name,requester_mode:profile.identity_mode}});}
-async function respondRequest(approved:boolean){if(!incoming)return;const status=approved?"approved":"declined";await supabase.from("handshake_requests").update({status}).eq("id",incoming.request_id);if(approved){await supabase.from("handshakes").insert({event_id:event.id,guest_profile_id_a:incoming.requester_id,guest_profile_id_b:profile.id,networking_status:"connected"});await channelRef.current?.send({type:"broadcast",event:"handshake_approved",payload:{requester_id:incoming.requester_id,recipient_id:profile.id,requester_name:incoming.requester_name,recipient_name:profile.display_name}});}setIncoming(null);fetchNodes();}
-if(!isLive&&!isEnded){return(<div style={{padding:"24px 20px",textAlign:"center",background:"#0a0a0b",minHeight:"calc(100vh - 80px)"}}><p style={{fontSize:"11px",letterSpacing:"0.3em",color:"#444",textTransform:"uppercase",marginBottom:"32px"}}>Aura</p><div style={{paddingTop:"80px"}}><p style={{fontSize:"48px",marginBottom:"16px",opacity:0.3}}>◎</p><p style={{fontSize:"16px",color:"#555",marginBottom:"8px"}}>Aura opens when the event starts</p></div></div>);}
-if(isEnded){return(<div style={{padding:"24px 20px",textAlign:"center",background:"#0a0a0b",minHeight:"calc(100vh - 80px)"}}><p style={{fontSize:"11px",letterSpacing:"0.3em",color:"#444",textTransform:"uppercase",marginBottom:"32px"}}>Aura</p><div style={{paddingTop:"80px"}}><p style={{fontSize:"48px",marginBottom:"16px",opacity:0.3}}>◎</p><p style={{fontSize:"16px",color:"#555",marginBottom:"8px"}}>Aura has closed</p><p style={{fontSize:"14px",color:"#444"}}>Your connections are in Archive</p></div></div>);}
-return(<div style={{background:"#0a0a0b",minHeight:"calc(100vh - 80px)",position:"relative",overflow:"hidden"}}><style>{`@keyframes float{0%,100%{transform:translateY(0px)}50%{transform:translateY(-8px)}}@keyframes pulse-blue{0%,100%{box-shadow:0 0 0 0 rgba(37,99,235,0.4)}50%{box-shadow:0 0 0 12px rgba(37,99,235,0)}}@keyframes pulse-purple{0%,100%{box-shadow:0 0 0 0 rgba(124,58,237,0.4)}50%{box-shadow:0 0 0 12px rgba(124,58,237,0)}}@keyframes slideUp{from{transform:translateY(100%);opacity:0}to{transform:translateY(0);opacity:1}}@keyframes fadeIn{from{opacity:0}to{opacity:1}}`}</style><div style={{position:"absolute",top:"50%",left:"50%",transform:"translate(-50%,-50%)",width:"300px",height:"300px",background:"radial-gradient(circle,rgba(255,255,255,0.03) 0%,transparent 70%)",borderRadius:"50%",pointerEvents:"none"}}/><div style={{position:"absolute",top:"16px",right:"16px",background:"rgba(255,255,255,0.08)",borderRadius:"20px",padding:"6px 12px"}}><p style={{color:"#fff",fontSize:"12px"}}>{nodes.length} on Aura</p></div>{notification&&(<div style={{position:"absolute",top:"24px",left:"50%",transform:"translateX(-50%)",background:"rgba(74,222,128,0.25)",border:"2px solid rgba(74,222,128,0.5)",borderRadius:"24px",padding:"12px 24px",animation:"fadeIn 0.4s ease",zIndex:10,boxShadow:"0 4px 12px rgba(74,222,128,0.2)"}}><p style={{color:"#4ade80",fontSize:"15px",fontWeight:"500",whiteSpace:"nowrap"}}>{notification}</p></div>)}{!auraActive&&(<div style={{position:"absolute",inset:0,display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",backdropFilter:"blur(20px)",zIndex:5}}><p style={{fontSize:"48px",marginBottom:"16px",opacity:0.3}}>◎</p><p style={{color:"#fff",fontSize:"18px",fontWeight:"300",marginBottom:"8px"}}>You are invisible</p><p style={{color:"#555",fontSize:"14px",marginBottom:"40px"}}>Nobody can see you</p><button onClick={igniteAura} style={{padding:"16px 40px",borderRadius:"50px",background:"#fff",color:"#000",border:"none",fontSize:"16px",fontWeight:"500",cursor:"pointer"}}>Ignite Aura</button></div>)}{auraActive&&nodes.map((node:any)=>{const nodeColor=node.identity_mode==="professional"?"#2563eb":"#7c3aed";const isSent=sentRequests.has(node.id);const firstName=getFirstName(node.display_name);return(<div key={node.id} style={{position:"absolute",left:node.x+"%",top:node.y+"%",transform:"translate(-50%,-50%)",animation:"float 4s ease-in-out infinite",zIndex:2}}><button onClick={()=>!isSent&&setConfirmNode(node)} style={{width:"56px",height:"56px",borderRadius:"50%",background:nodeColor,border:"none",cursor:isSent?"default":"pointer",display:"flex",alignItems:"center",justifyContent:"center",animation:node.identity_mode==="professional"?"pulse-blue 2s infinite":"pulse-purple 2s infinite",opacity:isSent?0.5:1}}><span style={{color:"#fff",fontSize:"13px",fontWeight:"500"}}>{firstName.charAt(0)}</span></button><p style={{color:"#fff",fontSize:"11px",textAlign:"center",marginTop:"6px",opacity:0.7}}>{isSent?"sent":firstName}</p></div>);})}{auraActive&&(<div style={{position:"absolute",bottom:"24px",left:"50%",transform:"translateX(-50%)"}}><button onClick={goInvisible} style={{padding:"12px 28px",borderRadius:"50px",background:"rgba(255,255,255,0.08)",color:"#fff",border:"1px solid rgba(255,255,255,0.15)",fontSize:"14px",cursor:"pointer"}}>Invisible</button></div>)}{confirmNode&&(<div style={{position:"fixed",inset:0,background:"rgba(0,0,0,0.7)",display:"flex",alignItems:"flex-end",zIndex:20}} onClick={()=>setConfirmNode(null)}><div style={{background:"#1a1a1a",borderRadius:"24px 24px 0 0",padding:"28px",width:"100%",animation:"slideUp 0.3s ease"}} onClick={e=>e.stopPropagation()}><p style={{color:"#fff",fontSize:"18px",fontWeight:"500",marginBottom:"8px"}}>Connect with {getFirstName(confirmNode.display_name)}?</p><p style={{color:"#666",fontSize:"14px",marginBottom:"28px"}}>{confirmNode.role_title||""}</p><div style={{display:"flex",gap:"12px"}}><button onClick={()=>setConfirmNode(null)} style={{flex:1,padding:"14px",borderRadius:"14px",background:"#333",color:"#fff",border:"none",fontSize:"15px",cursor:"pointer"}}>Cancel</button><button onClick={()=>sendRequest(confirmNode)} style={{flex:1,padding:"14px",borderRadius:"14px",background:"#fff",color:"#000",border:"none",fontSize:"15px",fontWeight:"500",cursor:"pointer"}}>Send →</button></div></div></div>)}{incoming&&(<div style={{position:"fixed",inset:0,background:"rgba(0,0,0,0.7)",display:"flex",alignItems:"flex-end",zIndex:20}}><div style={{background:"#1a1a1a",borderRadius:"24px 24px 0 0",padding:"28px",width:"100%",animation:"slideUp 0.3s ease"}}><p style={{color:"#fff",fontSize:"18px",fontWeight:"500",marginBottom:"8px"}}>{getFirstName(incoming.requester_name)} wants to connect</p><p style={{color:"#666",fontSize:"14px",marginBottom:"28px"}}>{incoming.requester_mode==="professional"?"Professional":"Creative"}</p><div style={{display:"flex",gap:"12px"}}><button onClick={()=>respondRequest(false)} style={{flex:1,padding:"14px",borderRadius:"14px",background:"#333",color:"#fff",border:"none",fontSize:"15px",cursor:"pointer"}}>Decline</button><button onClick={()=>respondRequest(true)} style={{flex:1,padding:"14px",borderRadius:"14px",background:"#4ade80",color:"#000",border:"none",fontSize:"15px",fontWeight:"500",cursor:"pointer"}}>Approve ✓</button></div></div></div>)}</div>);
-}
-function EditProfile({profile,accent,onSave}:any){
-const[mode,setMode]=useState(profile?.identity_mode??"professional");
-const[displayName,setDisplayName]=useState(profile?.display_name??"");
-const[roleTitle,setRoleTitle]=useState(profile?.role_title??"");
-const[organisation,setOrganisation]=useState(profile?.organisation??"");
-const[bio,setBio]=useState(profile?.bio??"");
-const[platformType,setPlatformType]=useState(profile?.platform_type??"linkedin");
-const[platformValue,setPlatformValue]=useState(profile?.platform_value??"");
-const[saving,setSaving]=useState(false);
-const isPro=mode==="professional";
-async function save(){setSaving(true);const{data}=await supabase.from("guest_profiles").update({identity_mode:mode,display_name:displayName,role_title:roleTitle,organisation,bio,platform_type:platformType,platform_value:platformValue,identity_last_changed_at:new Date().toISOString()}).eq("id",profile.id).select().single();if(data)onSave(data);setSaving(false);}
-const inp={width:"100%",padding:"12px",borderRadius:"12px",border:"1px solid #e5e7eb",fontSize:"14px",outline:"none",marginBottom:"10px",boxSizing:"border-box" as const};
-return(<div style={{background:"#f9fafb",borderRadius:"20px",padding:"20px"}}><div style={{display:"flex",gap:"8px",marginBottom:"16px",background:"#fff",borderRadius:"12px",padding:"4px"}}><button onClick={()=>{setMode("professional");setPlatformType("linkedin");}} style={{flex:1,padding:"10px",borderRadius:"10px",border:"none",cursor:"pointer",background:isPro?"#2563eb":"transparent",color:isPro?"#fff":"#999",fontSize:"13px"}}>Professional</button><button onClick={()=>{setMode("creative");setPlatformType("tiktok");}} style={{flex:1,padding:"10px",borderRadius:"10px",border:"none",cursor:"pointer",background:!isPro?"#7c3aed":"transparent",color:!isPro?"#fff":"#999",fontSize:"13px"}}>Creative</button></div><input value={displayName} onChange={e=>setDisplayName(e.target.value)} placeholder="Your name" style={inp}/><input value={roleTitle} onChange={e=>setRoleTitle(e.target.value)} placeholder={isPro?"Job title":"Creative role"} style={inp}/><input value={organisation} onChange={e=>setOrganisation(e.target.value)} placeholder={isPro?"Company":"Studio / Collective"} style={inp}/><input value={bio} onChange={e=>setBio(e.target.value)} placeholder={isPro?"Short bio":"Your vibe"} style={inp}/><div style={{display:"flex",gap:"8px",marginBottom:"8px"}}>{(isPro?[{v:"linkedin",l:"LinkedIn"},{v:"gmail",l:"Gmail"}]:[{v:"tiktok",l:"TikTok"},{v:"instagram",l:"Instagram"}]).map(p=>(<button key={p.v} onClick={()=>setPlatformType(p.v)} style={{flex:1,padding:"8px",borderRadius:"10px",border:"1px solid "+(platformType===p.v?"#000":"#e5e7eb"),background:"transparent",color:platformType===p.v?"#000":"#999",fontSize:"12px",cursor:"pointer"}}>{p.l}</button>))}</div><input value={platformValue} onChange={e=>setPlatformValue(e.target.value)} placeholder={platformType==="linkedin"?"LinkedIn URL":platformType==="gmail"?"Gmail":platformType==="tiktok"?"@TikTok":"@Instagram"} style={inp}/><button onClick={save} disabled={saving} style={{width:"100%",padding:"14px",borderRadius:"14px",background:saving?"#999":isPro?"#2563eb":"#7c3aed",color:"#fff",border:"none",fontSize:"14px",cursor:"pointer",fontWeight:"500"}}>{saving?"Saving...":"Save changes"}</button></div>);
+
+export default function GuestExperience({ params }) {
+  const [screen, setScreen] = useState('splash');
+  const [activeTab, setActiveTab] = useState('home');
+  const [loading, setLoading] = useState(true);
+  const [networkingActive, setNetworkingActive] = useState(false);
+  const [guest, setGuest] = useState(null);
+  const [event, setEvent] = useState(null);
+
+  useEffect(() => {
+    async function init() {
+      setTimeout(() => setScreen(prev => prev === 'splash' ? 'identity' : prev), 2200);
+      const { data: profile } = await supabase
+        .from('guest_profiles')
+        .select('*, registration:registrations!inner(*, event:events!inner(*))')
+        .eq('token', params.token)
+        .single();
+
+      if (profile) {
+        setGuest(profile);
+        setEvent(profile.registration.event);
+        if (profile.name) setScreen('scene');
+      }
+      setLoading(false);
+    }
+    init();
+  }, [params.token]);
+
+  if (loading) return <div className="min-h-screen bg-black flex items-center justify-center"><Loader2 className="animate-spin text-white" /></div>;
+  if (screen === 'splash') return <div className="min-h-screen bg-black flex items-center justify-center animate-pulse"><h1 className="text-white text-xl tracking-[0.4em]">PRESENCE MANIFESTED</h1></div>;
+
+  // --- SUB-COMPONENTS ---
+  const Onboarding = () => {
+    const [form, setForm] = useState({
+      name: guest?.name || '',
+      role: guest?.role_title || '',
+      org: guest?.organisation || '',
+      bio: guest?.bio || '',
+      link: guest?.platform_link || ''
+    });
+
+    const handleSave = async () => {
+      const { error } = await supabase.from('guest_profiles').update({
+        name: form.name,
+        role_title: form.role,
+        organisation: form.org,
+        bio: form.bio,
+        platform_link: form.link
+      }).eq('id', guest.id);
+      if (!error) setScreen('scene');
+    };
+
+    return (
+      <div className="min-h-screen bg-black text-white p-8 flex flex-col justify-center animate-in fade-in duration-700">
+        <h1 className="text-2xl font-light mb-8">Who are you?</h1>
+        <div className="space-y-6">
+          <input placeholder="Full Name" className="w-full bg-transparent border-b border-white/20 py-2 outline-none" value={form.name} onChange={e => setForm({...form, name: e.target.value})} />
+          <input placeholder="Role / Title" className="w-full bg-transparent border-b border-white/20 py-2 outline-none" value={form.role} onChange={e => setForm({...form, role: e.target.value})} />
+          <input placeholder="Organisation" className="w-full bg-transparent border-b border-white/20 py-2 outline-none" value={form.org} onChange={e => setForm({...form, org: e.target.value})} />
+          <textarea placeholder="Short Bio / Vibe" className="w-full bg-transparent border-b border-white/20 py-4 outline-none resize-none" value={form.bio} onChange={e => setForm({...form, bio: e.target.value})} />
+          <input placeholder="Social Link (LinkedIn/IG)" className="w-full bg-transparent border-b border-white/20 py-2 outline-none" value={form.link} onChange={e => setForm({...form, link: e.target.value})} />
+          <button onClick={handleSave} className="w-full bg-white text-black py-4 mt-8 font-medium">Enter Presence</button>
+        </div>
+      </div>
+    );
+  };
+
+  if (screen === 'identity') return <Onboarding />;
+
+  return (
+    <div className="min-h-screen bg-black text-white pb-24 font-sans">
+      {/* SCENE TAB */}
+      {activeTab === 'home' && (
+        <div className="p-6 space-y-8 animate-in slide-in-from-bottom-4">
+          <header>
+            <p className="text-zinc-500 uppercase tracking-widest text-[10px] mb-1">Live Event</p>
+            <h1 className="text-3xl font-light">{event?.title}</h1>
+          </header>
+          <div className="bg-zinc-900/50 border border-white/5 p-6 rounded-2xl">
+            <div className="flex justify-between items-end">
+              <div>
+                <p className="text-3xl font-light mb-1">34</p>
+                <p className="text-zinc-500 text-xs">Networking now</p>
+              </div>
+              <button onClick={() => { setNetworkingActive(true); setActiveTab('network'); }} className="bg-white text-black px-6 py-2 rounded-full text-xs font-bold">Start Networking</button>
+            </div>
+          </div>
+          <div className="space-y-2 text-sm text-zinc-400">
+            <div className="flex items-center gap-2"><MapPin size={14} /> {event?.venue}</div>
+          </div>
+        </div>
+      )}
+
+      {/* TICKET TAB */}
+      {activeTab === 'ticket' && (
+        <div className="p-6 flex flex-col items-center justify-center min-h-[70vh] space-y-10 animate-in fade-in">
+          <div className="text-center space-y-4">
+            <p className="text-[10px] uppercase tracking-widest text-zinc-500">Entry Ticket</p>
+            <div className="bg-white p-3 rounded-xl"><QRCodeSVG value={guest?.registration?.id || ''} size={160} /></div>
+          </div>
+          <div className="w-12 h-[1px] bg-white/20" />
+          <div className="text-center space-y-4">
+            <p className="text-[10px] uppercase tracking-widest text-zinc-500">Networking QR</p>
+            {!networkingActive ? (
+              <div className="bg-zinc-900 border border-dashed border-white/10 p-6 rounded-xl text-zinc-600"><Lock size={20} className="mx-auto mb-2" /><p className="text-[10px]">Start networking to reveal</p></div>
+            ) : (
+              <div className="bg-white p-3 rounded-xl border-4 border-blue-500/20"><QRCodeSVG value={'unlock:' + guest?.id} size={160} /></div>
+            )}
+          </div>
+        </div>
+      )}
+
+      {/* PROFILE TAB */}
+      {activeTab === 'profile' && (
+        <div className="p-6 space-y-8 animate-in fade-in">
+          <div className="flex items-center gap-4">
+            <div className="w-14 h-14 bg-zinc-800 rounded-full flex items-center justify-center"><User className="text-zinc-500" /></div>
+            <div><h2 className="text-lg font-light">{guest?.name}</h2><p className="text-xs text-zinc-500">{guest?.role_title} @ {guest?.organisation}</p></div>
+          </div>
+          <div>
+            <h3 className="text-[10px] uppercase tracking-widest text-zinc-500 mb-4">Connections</h3>
+            <div className="space-y-3">
+              <div className="bg-zinc-900/40 border border-white/5 p-4 rounded-xl flex justify-between items-center opacity-50">
+                <div><p className="text-sm font-medium italic">Scanning logic coming next...</p></div>
+                <QrCode size={16} />
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* NETWORK TAB */}
+      {activeTab === 'network' && (
+        <div className="h-[70vh] flex items-center justify-center p-6 text-center">
+          {!networkingActive ? (
+            <button onClick={() => setNetworkingActive(true)} className="bg-white text-black px-12 py-4 rounded-full font-bold">Start Networking</button>
+          ) : (
+            <div className="space-y-2 animate-pulse"><p className="text-zinc-500 text-sm">Searching for attendees...</p></div>
+          )}
+        </div>
+      )}
+
+      {/* NAV */}
+      <nav className="fixed bottom-0 left-0 right-0 bg-black border-t border-white/10 px-8 py-6 flex justify-between items-center">
+        <button onClick={() => setActiveTab('home')} className={activeTab === 'home' ? 'text-white' : 'text-zinc-600'}><MapPin size={22} /></button>
+        <button onClick={() => setActiveTab('network')} className={activeTab === 'network' ? 'text-white' : 'text-zinc-600'}><Users size={22} /></button>
+        <button onClick={() => setActiveTab('ticket')} className={activeTab === 'ticket' ? 'text-white' : 'text-zinc-600'}><QrCode size={22} /></button>
+        <button onClick={() => setActiveTab('profile')} className={activeTab === 'profile' ? 'text-white' : 'text-zinc-600'}><User size={22} /></button>
+      </nav>
+    </div>
+  );
 }
