@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { supabase } from "@/lib/supabase/client";
-import { QRCodeSVG } from 'qrcode.react';
+import QRCode from 'qrcode';
 import { 
   User, 
   QrCode, 
@@ -40,6 +40,8 @@ export default function GuestExperience({ params }) {
   const [networkingActive, setNetworkingActive] = useState(false);
   const [guest, setGuest] = useState(null);
   const [event, setEvent] = useState(null);
+  const [entryQr, setEntryQr] = useState('');
+  const [networkQr, setNetworkQr] = useState('');
 
   useEffect(() => {
     async function init() {
@@ -50,11 +52,17 @@ export default function GuestExperience({ params }) {
         .eq('token', params.token)
         .single();
 
+      
       if (profile) {
         setGuest(profile);
         setEvent(profile.registration.event);
         if (profile.name) setScreen('scene');
+        
+        // Generate QRs
+        QRCode.toDataURL(profile.registration.id).then(setEntryQr);
+        QRCode.toDataURL('unlock:' + profile.id).then(setNetworkQr);
       }
+
       setLoading(false);
     }
     init();
@@ -130,7 +138,7 @@ export default function GuestExperience({ params }) {
         <div className="p-6 flex flex-col items-center justify-center min-h-[70vh] space-y-10 animate-in fade-in">
           <div className="text-center space-y-4">
             <p className="text-[10px] uppercase tracking-widest text-zinc-500">Entry Ticket</p>
-            <div className="bg-white p-3 rounded-xl"><QRCodeSVG value={guest?.registration?.id || ''} size={160} /></div>
+            <div className="bg-white p-3 rounded-xl"><img src={entryQr} className='w-40 h-40' alt='Entry QR' /></div>
           </div>
           <div className="w-12 h-[1px] bg-white/20" />
           <div className="text-center space-y-4">
@@ -138,7 +146,7 @@ export default function GuestExperience({ params }) {
             {!networkingActive ? (
               <div className="bg-zinc-900 border border-dashed border-white/10 p-6 rounded-xl text-zinc-600"><Lock size={20} className="mx-auto mb-2" /><p className="text-[10px]">Start networking to reveal</p></div>
             ) : (
-              <div className="bg-white p-3 rounded-xl border-4 border-blue-500/20"><QRCodeSVG value={'unlock:' + guest?.id} size={160} /></div>
+              <div className="bg-white p-3 rounded-xl border-4 border-blue-500/20"><img src={networkQr} className='w-40 h-40' alt='Network QR' /></div>
             )}
           </div>
         </div>
