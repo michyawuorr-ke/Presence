@@ -251,7 +251,7 @@ function Scene({event,registration,profile,onProfileUpdate}:any){
               <p style={{color:"#555",fontSize:"12px",marginBottom:"16px"}}>Show at entrance</p>
               <p style={{color:"#444",fontSize:"10px",wordBreak:"break-all"}}>{registration?.id}</p>
             </div>
-            <p style={{fontSize:"12px",color:"#999"}}>QR codes coming soon</p>
+            <div style={{background:"#1a1a1a",borderRadius:"16px",padding:"32px",marginTop:"24px"}}><p style={{color:"#fff",fontSize:"14px",marginBottom:"8px"}}>Networking QR</p><p style={{color:"#555",fontSize:"12px",marginBottom:"16px"}}>For profile unlocks after connecting</p><p style={{color:"#444",fontSize:"10px",wordBreak:"break-all"}}>presence:unlock:{registration?.id}</p></div><p style={{fontSize:"12px",color:"#999",marginTop:"16px"}}>QR codes coming soon</p>
           </div>
         </div>
       )}
