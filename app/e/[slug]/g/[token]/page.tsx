@@ -3,6 +3,7 @@ import{useEffect,useState,useRef,useCallback}from"react";
 import{useParams}from"next/navigation";
 import{supabase}from"@/lib/supabase/client";
 import QRCode from"qrcode";
+import QRCode from"qrcode";
 
 type Screen="splash"|"identity"|"scene";
 type Tab="scene"|"networking"|"ticket"|"profile";
@@ -135,6 +136,8 @@ function Identity({registration,event,onComplete}:any){
 function Scene({event,registration,profile,onProfileUpdate}:any){
 const[entryQR,setEntryQR]=useState("");
 const[networkingQR,setNetworkingQR]=useState("");
+const[entryQR,setEntryQR]=useState("");
+const[networkingQR,setNetworkingQR]=useState("");
   const[tab,setTab]=useState<Tab>("scene");
   const[editing,setEditing]=useState(false);
   const[countdown,setCountdown]=useState({days:0,hours:0,minutes:0,seconds:0});
@@ -189,13 +192,13 @@ const[networkingQR,setNetworkingQR]=useState("");
   },[event]);
 
   return(
-    <div style={{minHeight:"100vh",background:"linear-gradient(to bottom, #fafafa 0%, #f3f4f6 100%)",paddingBottom:"100px"}}>
+    <div style={{minHeight:"100vh",background:"linear-gradient(135deg, #fafafa 0%, #f0f1f3 50%, #e8eaf0 100%)",paddingBottom:"100px",fontFamily:"-apple-system,BlinkMacSystemFont,\"Segoe UI\",Roboto,sans-serif"}}>
       {fiveMin&&<div style={{background:"#f59e0b",padding:"12px 20px",textAlign:"center"}}><p style={{color:"#000",fontSize:"13px",fontWeight:"500"}}>⏱ Event ends in 5 minutes</p></div>}
 
       {tab==="scene"&&(
         <div style={{padding:"24px 20px"}}>
-          <p style={{fontSize:"11px",letterSpacing:"0.3em",color:"#999",textTransform:"uppercase",marginBottom:"24px"}}>Presence</p>
-          <h1 style={{fontSize:"28px",fontWeight:"500",color:"#0a0a0b",marginBottom:"6px"}}>{event?.title}</h1>
+          <p style={{fontSize:"10px",letterSpacing:"0.4em",color:"#999",textTransform:"uppercase",marginBottom:"20px",fontWeight:"600"}}>PRESENCE</p>
+          <h1 style={{fontSize:"30px",fontWeight:"600",color:"#0a0a0b",marginBottom:"8px",letterSpacing:"-0.02em",lineHeight:"1.1"}}>{event?.title}</h1>
           <p style={{fontSize:"14px",color:"#666",marginBottom:"2px"}}>📍 {event?.venue}</p>
           <p style={{fontSize:"14px",color:"#999",marginBottom:"32px"}}>{event&&new Date(event.start_time).toLocaleDateString("en-KE",{weekday:"long",day:"numeric",month:"long"})}</p>
           
@@ -207,7 +210,7 @@ const[networkingQR,setNetworkingQR]=useState("");
             </div>
           ):isLive?(
             <div style={{background:"linear-gradient(135deg, #0a0a0b 0%, #1a1a1a 100%)",borderRadius:"24px",padding:"20px",marginBottom:"16px",display:"flex",alignItems:"center",gap:"12px",boxShadow:"0 8px 24px rgba(0,0,0,0.15)"}}>
-              <span style={{width:"10px",height:"10px",borderRadius:"50%",background:"#4ade80",display:"inline-block"}}/>
+              <span style={{width:"10px",height:"10px",borderRadius:"50%",background:"#4ade80",display:"inline-block",boxShadow:"0 0 0 0 rgba(74,222,128,0.7)",animation:"pulse 2s infinite"}}/><style>{`@keyframes pulse{0%,100%{box-shadow:0 0 0 0 rgba(74,222,128,0.7)}50%{box-shadow:0 0 0 8px rgba(74,222,128,0)}}`}</style>
               <p style={{color:"#fff",fontSize:"16px",fontWeight:"500"}}>Event is live</p>
             </div>
           ):(
@@ -225,14 +228,14 @@ const[networkingQR,setNetworkingQR]=useState("");
           )}
           
           {isLive&&(
-            <div style={{background:"#fff",borderRadius:"24px",padding:"24px",marginBottom:"16px",border:"1px solid rgba(0,0,0,0.06)",boxShadow:"0 4px 16px rgba(0,0,0,0.04)"}}>
+            <div style={{background:"linear-gradient(to bottom, #ffffff 0%, #fafafa 100%)",borderRadius:"24px",padding:"28px",marginBottom:"16px",border:"1px solid rgba(0,0,0,0.08)",boxShadow:"0 8px 24px rgba(0,0,0,0.06), 0 1px 3px rgba(0,0,0,0.02)"}}>
               <p style={{fontSize:"12px",color:"#999",marginBottom:"16px",letterSpacing:"0.1em"}}>LIVE NOW</p>
               <div style={{display:"flex",gap:"24px",marginBottom:"20px"}}>
-                <div><p style={{fontSize:"28px",fontWeight:"500",color:"#2563eb"}}>{networkingCount}</p><p style={{fontSize:"12px",color:"#999"}}>networking now</p></div>
+                <div><p style={{fontSize:"36px",fontWeight:"700",color:"#2563eb",lineHeight:"1"}}>{networkingCount}</p><p style={{fontSize:"12px",color:"#999"}}>networking now</p></div>
                 <div style={{width:"1px",background:"#f3f4f6"}}/>
-                <div><p style={{fontSize:"28px",fontWeight:"500",color:"#2563eb"}}>{connectionsCount}</p><p style={{fontSize:"12px",color:"#999"}}>connections</p></div>
+                <div><p style={{fontSize:"36px",fontWeight:"700",color:"#2563eb",lineHeight:"1"}}>{connectionsCount}</p><p style={{fontSize:"12px",color:"#999"}}>connections</p></div>
               </div>
-              <button onClick={()=>setTab("networking")} style={{width:"100%",padding:"14px",borderRadius:"14px",background:"#2563eb",color:"#fff",border:"none",fontSize:"15px",cursor:"pointer",fontWeight:"500"}}>Start Networking →</button>
+              <button onClick={()=>setTab("networking")} style={{width:"100%",padding:"16px",borderRadius:"16px",background:"linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%)",color:"#fff",border:"none",fontSize:"15px",cursor:"pointer",fontWeight:"600",boxShadow:"0 4px 12px rgba(37,99,235,0.3)",transition:"transform 0.2s,box-shadow 0.2s"}}>Start Networking →</button>
             </div>
           )}
         </div>
@@ -263,9 +266,9 @@ const[networkingQR,setNetworkingQR]=useState("");
         <ProfileTab profile={profile} event={event} onProfileUpdate={onProfileUpdate} isEnded={isEnded}/>
       )}
 
-      <div style={{position:"fixed",bottom:0,left:0,right:0,background:"rgba(255,255,255,0.98)",backdropFilter:"blur(24px)",borderTop:"1px solid rgba(0,0,0,0.08)",display:"flex",padding:"12px 0 24px",boxShadow:"0 -4px 24px rgba(0,0,0,0.08)"}}>
+      <div style={{position:"fixed",bottom:"12px",left:"12px",right:"12px",background:"rgba(255,255,255,0.95)",backdropFilter:"blur(32px)",borderRadius:"24px",border:"1px solid rgba(0,0,0,0.08)",display:"flex",padding:"16px 8px",boxShadow:"0 8px 32px rgba(0,0,0,0.12), 0 2px 8px rgba(0,0,0,0.04)"}}>
         {nav.map(item=>(
-          <button key={item.id} onClick={()=>{setTab(item.id as Tab);setEditing(false);}} style={{flex:1,display:"flex",flexDirection:"column",alignItems:"center",gap:"6px",background:"none",border:"none",cursor:"pointer",padding:"10px 8px",borderRadius:"12px",transition:"all 0.2s"}}>
+          <button key={item.id} onClick={()=>{setTab(item.id as Tab);setEditing(false);}} style={{flex:1,display:"flex",flexDirection:"column",alignItems:"center",gap:"6px",background:tab===item.id?"rgba(37,99,235,0.08)":"none",border:"none",cursor:"pointer",padding:"12px 8px",borderRadius:"14px",transition:"all 0.3s ease"}}>
             <span style={{fontSize:"20px",opacity:tab===item.id?1:0.35,transform:tab===item.id?"scale(1.1)":"scale(1)",transition:"all 0.2s"}}>{item.e}</span>
             <span style={{fontSize:"11px",color:tab===item.id?"#2563eb":"#999",fontWeight:tab===item.id?"600":"400",letterSpacing:"0.02em"}}>{item.l}</span>
           </button>
