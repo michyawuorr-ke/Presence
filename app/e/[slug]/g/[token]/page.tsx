@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { supabase } from "@/lib/supabase/client";
+import QRCode from 'qrcode';
 import { 
   User, 
   QrCode, 
@@ -23,7 +24,7 @@ export default function GuestExperience({ params }) {
 
   useEffect(() => {
     async function init() {
-      // Presence Manifested Splash (2.2s)
+      // 2.2s Splash for brand manifestation
       setTimeout(() => setScreen(prev => prev === 'splash' ? 'identity' : prev), 2200);
 
       const { data: profile, error } = await supabase
@@ -35,11 +36,10 @@ export default function GuestExperience({ params }) {
       if (profile && !error) {
         setGuest(profile);
         setEvent(profile.registration.event);
-
-        // Professional QR Generation using the installed library
-        const QRCode = (await import('qrcode')).default;
-        const entryData = await QRCode.toDataURL(profile.registration.id);
-        const networkData = await QRCode.toDataURL('unlock:' + profile.id);
+        
+        // Generate high-fidelity QR data URLs locally
+        const entryData = await QRCode.toDataURL(profile.registration.id, { margin: 2, scale: 10 });
+        const networkData = await QRCode.toDataURL('unlock:' + profile.id, { margin: 2, scale: 10 });
         
         setEntryQr(entryData);
         setNetworkQr(networkData);
@@ -52,16 +52,7 @@ export default function GuestExperience({ params }) {
   }, [params.token]);
 
   if (loading) return <div className="min-h-screen bg-black flex items-center justify-center"><Loader2 className="animate-spin text-white" /></div>;
-  
-  if (screen === 'splash') {
-    return (
-      <div className="min-h-screen bg-black flex items-center justify-center">
-        <h1 className="text-white text-xl tracking-[0.4em] font-light animate-pulse">
-          PRESENCE MANIFESTED
-        </h1>
-      </div>
-    );
-  }
+  if (screen === 'splash') return <div className="min-h-screen bg-black flex items-center justify-center"><h1 className="text-white text-xl tracking-[0.4em] font-light italic">PRESENCE MANIFESTED</h1></div>;
 
   const handleSaveIdentity = async (formData) => {
     const { error } = await supabase.from('guest_profiles').update({
@@ -81,62 +72,59 @@ export default function GuestExperience({ params }) {
   if (screen === 'identity') return <IdentityForm onSave={handleSaveIdentity} initialData={guest} />;
 
   return (
-    <div className="min-h-screen bg-black text-white pb-24 font-sans">
-      {/* SCENE TAB */}
+    <div className="min-h-screen bg-black text-white pb-24 font-sans select-none">
+      {/* HOME / SCENE */}
       {activeTab === 'home' && (
-        <div className="p-6 space-y-8 animate-in slide-in-from-bottom-4">
+        <div className="p-6 space-y-8 animate-in slide-in-from-bottom-4 duration-700">
           <header>
             <p className="text-zinc-500 uppercase tracking-widest text-[10px] mb-1">Live Event</p>
             <h1 className="text-3xl font-light">{event?.title || 'Event'}</h1>
           </header>
-          <div className="bg-zinc-900/50 border border-white/5 p-6 rounded-2xl">
+          <div className="bg-zinc-900/40 border border-white/5 p-8 rounded-3xl backdrop-blur-sm">
             <div className="flex justify-between items-end">
               <div>
-                <p className="text-3xl font-light mb-1">Live</p>
-                <p className="text-zinc-500 text-xs">Aura is open</p>
+                <p className="text-4xl font-light mb-2">Live</p>
+                <p className="text-zinc-500 text-xs tracking-wide">Aura system is active</p>
               </div>
               <button 
                 onClick={() => { setNetworkingActive(true); setActiveTab('network'); }} 
-                className="bg-white text-black px-6 py-2 rounded-full text-xs font-bold"
+                className="bg-white text-black px-8 py-3 rounded-full text-[10px] font-bold uppercase tracking-widest hover:scale-95 transition-transform"
               >
                 Ignite Aura
               </button>
             </div>
           </div>
-          <div className="flex items-center gap-2 text-sm text-zinc-400">
-            <MapPin size={14} /> {event?.venue}
-          </div>
         </div>
       )}
 
-      {/* TICKET TAB */}
+      {/* TICKET / QR */}
       {activeTab === 'ticket' && (
-        <div className="p-6 flex flex-col items-center justify-center min-h-[70vh] space-y-10">
+        <div className="p-6 flex flex-col items-center justify-center min-h-[75vh] space-y-12 animate-in fade-in duration-500">
           <div className="text-center space-y-4">
-            <p className="text-[10px] uppercase tracking-widest text-zinc-500">Entry Ticket</p>
-            {entryQr && <img src={entryQr} className="w-40 h-40 rounded-lg bg-white p-2" alt="Entry" />}
+            <p className="text-[10px] uppercase tracking-[0.3em] text-zinc-500">Entry Access</p>
+            {entryQr && <img src={entryQr} className="w-44 h-44 rounded-2xl bg-white p-3 shadow-2xl shadow-white/5" alt="Entry" />}
           </div>
-          <div className="w-12 h-[1px] bg-white/20" />
+          <div className="w-8 h-[1px] bg-white/10" />
           <div className="text-center space-y-4">
-            <p className="text-[10px] uppercase tracking-widest text-zinc-500">Networking QR</p>
+            <p className="text-[10px] uppercase tracking-[0.3em] text-zinc-500">Networking Identity</p>
             {!networkingActive ? (
-              <div className="w-40 h-40 bg-zinc-900 border border-dashed border-white/10 rounded-xl flex flex-col items-center justify-center text-zinc-600">
-                <Lock size={20} className="mb-2" />
-                <p className="text-[10px]">Ignite Aura to reveal</p>
+              <div className="w-44 h-44 bg-zinc-900/50 border border-dashed border-white/10 rounded-2xl flex flex-col items-center justify-center text-zinc-600">
+                <Lock size={18} className="mb-3 opacity-20" />
+                <p className="text-[9px] tracking-widest uppercase opacity-40">Ignite Aura to reveal</p>
               </div>
             ) : (
-              networkQr && <img src={networkQr} className="w-40 h-40 rounded-lg bg-white p-2 border-4 border-blue-500/20" alt="Networking" />
+              networkQr && <img src={networkQr} className="w-44 h-44 rounded-2xl bg-white p-3 border-2 border-zinc-800 shadow-2xl shadow-white/5" alt="Networking" />
             )}
           </div>
         </div>
       )}
 
-      {/* NAV */}
-      <nav className="fixed bottom-0 left-0 right-0 bg-black/80 backdrop-blur-md border-t border-white/10 px-8 py-6 flex justify-between items-center">
-        <button onClick={() => setActiveTab('home')} className={activeTab === 'home' ? 'text-white' : 'text-zinc-600'}><MapPin size={22} /></button>
-        <button onClick={() => setActiveTab('network')} className={activeTab === 'network' ? 'text-white' : 'text-zinc-600'}><Users size={22} /></button>
-        <button onClick={() => setActiveTab('ticket')} className={activeTab === 'ticket' ? 'text-white' : 'text-zinc-600'}><QrCode size={22} /></button>
-        <button onClick={() => setActiveTab('profile')} className={activeTab === 'profile' ? 'text-white' : 'text-zinc-600'}><User size={22} /></button>
+      {/* BOTTOM NAV - 40% THUMB ZONE OPTIMIZED */}
+      <nav className="fixed bottom-0 left-0 right-0 bg-black/60 backdrop-blur-xl border-t border-white/5 px-10 py-8 flex justify-between items-center z-50">
+        <button onClick={() => setActiveTab('home')} className={activeTab === 'home' ? 'text-white scale-110 transition-all' : 'text-zinc-600'}><MapPin size={24} strokeWidth={1.5} /></button>
+        <button onClick={() => setActiveTab('network')} className={activeTab === 'network' ? 'text-white scale-110 transition-all' : 'text-zinc-600'}><Users size={24} strokeWidth={1.5} /></button>
+        <button onClick={() => setActiveTab('ticket')} className={activeTab === 'ticket' ? 'text-white scale-110 transition-all' : 'text-zinc-600'}><QrCode size={24} strokeWidth={1.5} /></button>
+        <button onClick={() => setActiveTab('profile')} className={activeTab === 'profile' ? 'text-white scale-110 transition-all' : 'text-zinc-600'}><User size={24} strokeWidth={1.5} /></button>
       </nav>
     </div>
   );
@@ -152,13 +140,24 @@ function IdentityForm({ onSave, initialData }) {
   });
 
   return (
-    <div className="min-h-screen bg-black text-white p-8 flex flex-col justify-center">
-      <h1 className="text-2xl font-light mb-8 italic">Presence Manifested</h1>
-      <div className="space-y-6">
-        <input placeholder="Name" className="w-full bg-transparent border-b border-white/20 py-2 outline-none" value={form.name} onChange={e => setForm({...form, name: e.target.value})} />
-        <input placeholder="Role" className="w-full bg-transparent border-b border-white/20 py-2 outline-none" value={form.role} onChange={e => setForm({...form, role: e.target.value})} />
-        <input placeholder="Organisation" className="w-full bg-transparent border-b border-white/20 py-2 outline-none" value={form.org} onChange={e => setForm({...form, org: e.target.value})} />
-        <button onClick={() => onSave(form)} className="w-full bg-white text-black py-4 mt-8 font-bold tracking-widest uppercase text-xs">Enter</button>
+    <div className="min-h-screen bg-black text-white p-10 flex flex-col justify-center animate-in fade-in duration-1000">
+      <h1 className="text-3xl font-light mb-12 italic tracking-tight">Establish Presence</h1>
+      <div className="space-y-8">
+        <div className="group border-b border-white/10 focus-within:border-white/40 transition-colors">
+          <input placeholder="Name" className="w-full bg-transparent py-3 outline-none text-lg font-light" value={form.name} onChange={e => setForm({...form, name: e.target.value})} />
+        </div>
+        <div className="group border-b border-white/10 focus-within:border-white/40 transition-colors">
+          <input placeholder="Professional Title" className="w-full bg-transparent py-3 outline-none text-lg font-light" value={form.role} onChange={e => setForm({...form, role: e.target.value})} />
+        </div>
+        <div className="group border-b border-white/10 focus-within:border-white/40 transition-colors">
+          <input placeholder="Organization" className="w-full bg-transparent py-3 outline-none text-lg font-light" value={form.org} onChange={e => setForm({...form, org: e.target.value})} />
+        </div>
+        <button 
+          onClick={() => onSave(form)} 
+          className="w-full bg-white text-black py-5 mt-10 font-bold tracking-[0.3em] uppercase text-[10px] hover:bg-zinc-200 transition-colors"
+        >
+          Manifest
+        </button>
       </div>
     </div>
   );
