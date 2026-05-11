@@ -2,6 +2,8 @@
 import * as entry from '../../../app/layout.js'
 import type { ResolvingMetadata, ResolvingViewport } from 'next/dist/lib/metadata/types/metadata-interface.js'
 
+import type { InstantConfigForTypeCheckInternal } from 'next/dist/build/segment-config/app/app-segment-config.js'
+
 type TEntry = typeof import('../../../app/layout.js')
 
 type SegmentParams<T extends Object = any> = T extends Record<string, any>
@@ -13,6 +15,8 @@ checkFields<Diff<{
   default: Function
   config?: {}
   generateStaticParams?: Function
+  unstable_instant?: InstantConfigForTypeCheckInternal
+  unstable_dynamicStaleTime?: number
   revalidate?: RevalidateRange<TEntry> | false
   dynamic?: 'auto' | 'force-dynamic' | 'error' | 'force-static'
   dynamicParams?: boolean
@@ -25,7 +29,6 @@ checkFields<Diff<{
   generateMetadata?: Function
   viewport?: any
   generateViewport?: Function
-  experimental_ppr?: boolean
   
 }, TEntry, ''>>()
 

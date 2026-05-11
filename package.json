@@ -9,26 +9,29 @@
   },
   "dependencies": {
     "@supabase/ssr": "^0.6.1",
-    "@supabase/supabase-js": "^2.49.4",
-    "@tanstack/react-query": "^5.74.4",
-    "autoprefixer": "^10.0.1",
+    "@supabase/supabase-js": "^2.105.4",
+    "@tanstack/react-query": "^5.100.10",
+    "@types/qrcode": "^1.5.6",
+    "autoprefixer": "^10.5.0",
     "clsx": "^2.1.1",
     "date-fns": "^4.1.0",
-    "framer-motion": "^12.6.5",
+    "framer-motion": "^12.38.0",
     "lucide-react": "^0.487.0",
     "next": "^16.2.6",
-    "postcss": "^8",
-    "react": "^19.0.0",
-    "react-dom": "^19.0.0",
+    "postcss": "^8.5.14",
+    "qrcode": "^1.5.4",
+    "react": "^19.2.6",
+    "react-dom": "^19.2.6",
+    "react-qr-code": "^2.0.21",
     "tailwind-merge": "^3.2.0",
-    "tailwindcss": "^3.4.1",
+    "tailwindcss": "^3.4.19",
     "zod": "^3.24.2",
-    "zustand": "^5.0.3"
+    "zustand": "^5.0.13"
   },
   "devDependencies": {
-    "@types/node": "^20",
-    "@types/react": "^19",
-    "@types/react-dom": "^19",
-    "typescript": "^5"
+    "@types/node": "^20.19.40",
+    "@types/react": "^19.2.14",
+    "@types/react-dom": "^19.2.3",
+    "typescript": "^5.9.3"
   }
 }

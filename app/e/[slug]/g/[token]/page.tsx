@@ -2,6 +2,7 @@
 import{useEffect,useState,useRef,useCallback}from"react";
 import{useParams}from"next/navigation";
 import{supabase}from"@/lib/supabase/client";
+import QRCode from"qrcode";
 
 type Screen="splash"|"identity"|"scene";
 type Tab="scene"|"networking"|"ticket"|"profile";
@@ -132,6 +133,8 @@ function Identity({registration,event,onComplete}:any){
 }
 
 function Scene({event,registration,profile,onProfileUpdate}:any){
+const[entryQR,setEntryQR]=useState("");
+const[networkingQR,setNetworkingQR]=useState("");
   const[tab,setTab]=useState<Tab>("scene");
   const[editing,setEditing]=useState(false);
   const[countdown,setCountdown]=useState({days:0,hours:0,minutes:0,seconds:0});
@@ -249,9 +252,9 @@ function Scene({event,registration,profile,onProfileUpdate}:any){
             <div style={{background:"#000",borderRadius:"16px",padding:"32px",marginBottom:"16px"}}>
               <p style={{color:"#fff",fontSize:"14px",marginBottom:"8px"}}>Entry QR</p>
               <p style={{color:"#555",fontSize:"12px",marginBottom:"16px"}}>Show at entrance</p>
-              <p style={{color:"#444",fontSize:"10px",wordBreak:"break-all"}}>{registration?.id}</p>
+              {entryQR?<img src={entryQR} style={{width:"200px",height:"200px",margin:"0 auto"}}/>:<p style={{color:"#666"}}>Generating...</p>}
             </div>
-            <div style={{background:"#1a1a1a",borderRadius:"16px",padding:"32px",marginTop:"24px"}}><p style={{color:"#fff",fontSize:"14px",marginBottom:"8px"}}>Networking QR</p><p style={{color:"#555",fontSize:"12px",marginBottom:"16px"}}>For profile unlocks after connecting</p><p style={{color:"#444",fontSize:"10px",wordBreak:"break-all"}}>presence:unlock:{registration?.id}</p></div><p style={{fontSize:"12px",color:"#999",marginTop:"16px"}}>QR codes coming soon</p>
+            <div style={{background:"#1a1a1a",borderRadius:"16px",padding:"32px",marginTop:"24px"}}><p style={{color:"#fff",fontSize:"14px",marginBottom:"8px"}}>Networking QR</p><p style={{color:"#555",fontSize:"12px",marginBottom:"16px"}}>For profile unlocks after connecting</p>{networkingQR?<img src={networkingQR} style={{width:"200px",height:"200px",margin:"0 auto"}}/>:<p style={{color:"#666"}}>Generating...</p>}</div>
           </div>
         </div>
       )}
