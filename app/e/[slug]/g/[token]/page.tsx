@@ -3,7 +3,6 @@ import{useEffect,useState,useRef,useCallback}from"react";
 import{useParams}from"next/navigation";
 import{supabase}from"@/lib/supabase/client";
 import QRCode from"qrcode";
-import QRCode from"qrcode";
 
 type Screen="splash"|"identity"|"scene";
 type Tab="scene"|"networking"|"ticket"|"profile";
@@ -134,8 +133,6 @@ function Identity({registration,event,onComplete}:any){
 }
 
 function Scene({event,registration,profile,onProfileUpdate}:any){
-const[entryQR,setEntryQR]=useState("");
-const[networkingQR,setNetworkingQR]=useState("");
 const[entryQR,setEntryQR]=useState("");
 const[networkingQR,setNetworkingQR]=useState("");
   const[tab,setTab]=useState<Tab>("scene");
