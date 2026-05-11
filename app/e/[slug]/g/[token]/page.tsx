@@ -513,8 +513,8 @@ function ProfileTab({profile,event,onProfileUpdate,isEnded}:any){
             <div key={c.id} style={{background:"#fff",borderRadius:"20px",padding:"18px",marginBottom:"10px",border:"1px solid rgba(0,0,0,0.06)",boxShadow:"0 2px 8px rgba(0,0,0,0.03)"}}>
               <p style={{fontSize:"15px",fontWeight:"500",marginBottom:"2px"}}>{c.display_name}</p>
               {c.role_title&&<p style={{fontSize:"13px",color:"#666",marginBottom:"2px"}}>{c.role_title}</p>}
-              {c.organisation&&<p style={{fontSize:"13px",color:"#999",marginBottom:"8px"}}>{c.organisation}</p>}
-              {c.platform_value&&<p style={{fontSize:"13px",color:"#2563eb"}}>{cleanUrl(c.platform_value)}</p>}
+              {isUnlocked&&c.organisation&&<p style={{fontSize:"13px",color:"#999",marginBottom:"8px"}}>{c.organisation}</p>}
+              {isUnlocked&&c.platform_value&&<p style={{fontSize:"13px",color:"#2563eb"}}>{cleanUrl(c.platform_value)}</p>}
             </div>
           ))
         )}
