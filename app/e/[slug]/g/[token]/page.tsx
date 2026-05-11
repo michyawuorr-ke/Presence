@@ -2,7 +2,6 @@
 
 import React, { useState, useEffect } from 'react';
 import { supabase } from "@/lib/supabase/client";
-import QRCode from 'qrcode';
 import { 
   User, 
   QrCode, 
@@ -24,7 +23,7 @@ export default function GuestExperience({ params }) {
 
   useEffect(() => {
     async function init() {
-      // 2.2s Splash
+      // Presence Manifested Splash (2.2s)
       setTimeout(() => setScreen(prev => prev === 'splash' ? 'identity' : prev), 2200);
 
       const { data: profile, error } = await supabase
@@ -36,10 +35,12 @@ export default function GuestExperience({ params }) {
       if (profile && !error) {
         setGuest(profile);
         setEvent(profile.registration.event);
-        
-        // Generate QR Codes immediately
+
+        // Professional QR Generation using the installed library
+        const QRCode = (await import('qrcode')).default;
         const entryData = await QRCode.toDataURL(profile.registration.id);
         const networkData = await QRCode.toDataURL('unlock:' + profile.id);
+        
         setEntryQr(entryData);
         setNetworkQr(networkData);
 
@@ -51,7 +52,16 @@ export default function GuestExperience({ params }) {
   }, [params.token]);
 
   if (loading) return <div className="min-h-screen bg-black flex items-center justify-center"><Loader2 className="animate-spin text-white" /></div>;
-  if (screen === 'splash') return <div className="min-h-screen bg-black flex items-center justify-center"><h1 className="text-white text-xl tracking-[0.4em]">PRESENCE MANIFESTED</h1></div>;
+  
+  if (screen === 'splash') {
+    return (
+      <div className="min-h-screen bg-black flex items-center justify-center">
+        <h1 className="text-white text-xl tracking-[0.4em] font-light animate-pulse">
+          PRESENCE MANIFESTED
+        </h1>
+      </div>
+    );
+  }
 
   const handleSaveIdentity = async (formData) => {
     const { error } = await supabase.from('guest_profiles').update({
@@ -68,12 +78,11 @@ export default function GuestExperience({ params }) {
     }
   };
 
-  if (screen === 'identity') {
-    return <IdentityForm onSave={handleSaveIdentity} initialData={guest} />;
-  }
+  if (screen === 'identity') return <IdentityForm onSave={handleSaveIdentity} initialData={guest} />;
 
   return (
-    <div className="min-h-screen bg-black text-white pb-24">
+    <div className="min-h-screen bg-black text-white pb-24 font-sans">
+      {/* SCENE TAB */}
       {activeTab === 'home' && (
         <div className="p-6 space-y-8 animate-in slide-in-from-bottom-4">
           <header>
@@ -86,16 +95,25 @@ export default function GuestExperience({ params }) {
                 <p className="text-3xl font-light mb-1">Live</p>
                 <p className="text-zinc-500 text-xs">Aura is open</p>
               </div>
-              <button onClick={() => { setNetworkingActive(true); setActiveTab('network'); }} className="bg-white text-black px-6 py-2 rounded-full text-xs font-bold">Ignite Aura</button>
+              <button 
+                onClick={() => { setNetworkingActive(true); setActiveTab('network'); }} 
+                className="bg-white text-black px-6 py-2 rounded-full text-xs font-bold"
+              >
+                Ignite Aura
+              </button>
             </div>
+          </div>
+          <div className="flex items-center gap-2 text-sm text-zinc-400">
+            <MapPin size={14} /> {event?.venue}
           </div>
         </div>
       )}
 
+      {/* TICKET TAB */}
       {activeTab === 'ticket' && (
-        <div className="p-6 flex flex-col items-center justify-center min-h-[70vh] space-y-10 animate-in fade-in">
+        <div className="p-6 flex flex-col items-center justify-center min-h-[70vh] space-y-10">
           <div className="text-center space-y-4">
-            <p className="text-[10px] uppercase tracking-widest text-zinc-500">Entry QR</p>
+            <p className="text-[10px] uppercase tracking-widest text-zinc-500">Entry Ticket</p>
             {entryQr && <img src={entryQr} className="w-40 h-40 rounded-lg bg-white p-2" alt="Entry" />}
           </div>
           <div className="w-12 h-[1px] bg-white/20" />
@@ -113,9 +131,7 @@ export default function GuestExperience({ params }) {
         </div>
       )}
 
-      {activeTab === 'network' && <div className="p-6 text-center pt-20 text-zinc-500 italic">Networking Nodes coming next...</div>}
-      {activeTab === 'profile' && <div className="p-6 text-center pt-20 text-zinc-500 italic">Profile detail coming next...</div>}
-
+      {/* NAV */}
       <nav className="fixed bottom-0 left-0 right-0 bg-black/80 backdrop-blur-md border-t border-white/10 px-8 py-6 flex justify-between items-center">
         <button onClick={() => setActiveTab('home')} className={activeTab === 'home' ? 'text-white' : 'text-zinc-600'}><MapPin size={22} /></button>
         <button onClick={() => setActiveTab('network')} className={activeTab === 'network' ? 'text-white' : 'text-zinc-600'}><Users size={22} /></button>
@@ -142,7 +158,7 @@ function IdentityForm({ onSave, initialData }) {
         <input placeholder="Name" className="w-full bg-transparent border-b border-white/20 py-2 outline-none" value={form.name} onChange={e => setForm({...form, name: e.target.value})} />
         <input placeholder="Role" className="w-full bg-transparent border-b border-white/20 py-2 outline-none" value={form.role} onChange={e => setForm({...form, role: e.target.value})} />
         <input placeholder="Organisation" className="w-full bg-transparent border-b border-white/20 py-2 outline-none" value={form.org} onChange={e => setForm({...form, org: e.target.value})} />
-        <button onClick={() => onSave(form)} className="w-full bg-white text-black py-4 mt-8 font-bold">Enter</button>
+        <button onClick={() => onSave(form)} className="w-full bg-white text-black py-4 mt-8 font-bold tracking-widest uppercase text-xs">Enter</button>
       </div>
     </div>
   );
