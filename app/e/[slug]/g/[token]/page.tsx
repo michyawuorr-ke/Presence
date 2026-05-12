@@ -189,7 +189,7 @@ const[networkingQR,setNetworkingQR]=useState("");
   },[event]);
 
   return(
-    <div style={{minHeight:"100vh",background:"linear-gradient(135deg, #fafafa 0%, #f0f1f3 50%, #e8eaf0 100%)",paddingBottom:"100px",fontFamily:"-apple-system,BlinkMacSystemFont,\"Segoe UI\",Roboto,sans-serif"}}>
+    <div style={{minHeight:"100vh",background:"linear-gradient(to bottom, #f8f9fa 0%, #f1f3f5 100%)",paddingBottom:"100px",fontFamily:"-apple-system,BlinkMacSystemFont,\"Segoe UI\",Roboto,sans-serif"}}>
       {fiveMin&&<div style={{background:"#f59e0b",padding:"12px 20px",textAlign:"center"}}><p style={{color:"#000",fontSize:"13px",fontWeight:"500"}}>⏱ Event ends in 5 minutes</p></div>}
 
       {tab==="scene"&&(
@@ -225,7 +225,7 @@ const[networkingQR,setNetworkingQR]=useState("");
           )}
           
           {isLive&&(
-            <div style={{background:"linear-gradient(to bottom, #ffffff 0%, #fafafa 100%)",borderRadius:"24px",padding:"28px",marginBottom:"16px",border:"1px solid rgba(0,0,0,0.08)",boxShadow:"0 8px 24px rgba(0,0,0,0.06), 0 1px 3px rgba(0,0,0,0.02)"}}>
+            <div style={{background:"#ffffff",borderRadius:"24px",padding:"28px",marginBottom:"16px",border:"1px solid rgba(0,0,0,0.08)",boxShadow:"0 2px 8px rgba(0,0,0,0.04), 0 12px 32px rgba(0,0,0,0.08)"}}>
               <p style={{fontSize:"12px",color:"#999",marginBottom:"16px",letterSpacing:"0.1em"}}>LIVE NOW</p>
               <div style={{display:"flex",gap:"24px",marginBottom:"20px"}}>
                 <div><p style={{fontSize:"36px",fontWeight:"700",color:"#2563eb",lineHeight:"1"}}>{networkingCount}</p><p style={{fontSize:"12px",color:"#999"}}>networking now</p></div>
