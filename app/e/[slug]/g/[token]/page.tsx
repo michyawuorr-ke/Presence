@@ -521,6 +521,7 @@ function ProfileTab({profile,event,onProfileUpdate,isEnded}:any){
             </div>
           );}
           )
+        )}
       </div>
     </div>
   );
