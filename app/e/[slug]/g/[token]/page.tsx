@@ -520,8 +520,7 @@ function ProfileTab({profile,event,onProfileUpdate,isEnded}:any){
               {isUnlocked&&c.platform_value&&<p style={{fontSize:"13px",color:"#2563eb"}}>{cleanUrl(c.platform_value)}</p>}
             </div>
           );}
-          )}
-        )
+          )
       </div>
     </div>
   );
