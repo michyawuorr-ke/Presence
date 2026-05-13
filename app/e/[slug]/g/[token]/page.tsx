@@ -97,6 +97,7 @@ function Identity({registration,event,onComplete}:any){
 
   async function save(){
     if(!displayName.trim()){setError("Name is required");return;}
+      if(!link.trim()){setError("A link is required (LinkedIn, website, etc)");return;}
     setSaving(true);
     setError("");
     const{data,error:err}=await supabase.from("guest_profiles").insert({
@@ -122,11 +123,11 @@ function Identity({registration,event,onComplete}:any){
       <div style={{maxWidth:"400px",margin:"0 auto"}}>
         <input value={displayName} onChange={e=>setDisplayName(e.target.value)} placeholder="Your name" style={inp}/>
         <input value={role} onChange={e=>setRole(e.target.value)} placeholder="Your role or title" style={inp}/>
-        <input value={organisation} onChange={e=>setOrganisation(e.target.value)} placeholder="Organisation (optional)" style={inp}/>
-        <textarea value={bio} onChange={e=>setBio(e.target.value)} placeholder="Short bio (optional)" style={{...inp,minHeight:"80px",resize:"vertical"}}/>
-        <input value={link} onChange={e=>setLink(e.target.value)} placeholder="LinkedIn, Instagram, or your website (optional)" style={{...inp,border:"1px solid "+(link?"#4ade80":"#333")}}/>
+        <input value={organisation} onChange={e=>setOrganisation(e.target.value)} placeholder="Organisation" style={inp}/>
+        <textarea value={bio} onChange={e=>setBio(e.target.value)} placeholder="Short bio" style={{...inp,minHeight:"80px",resize:"vertical"}}/>
+        <input value={link} onChange={e=>setLink(e.target.value)} placeholder="LinkedIn, YouTube, Instagram, website..." style={{...inp,border:"1px solid "+(link?"#4ade80":"#333")}}/>
         {error&&<p style={{color:"#ef4444",fontSize:"13px",marginBottom:"12px"}}>{error}</p>}
-        <button onClick={save} disabled={saving||!displayName.trim()} style={{width:"100%",padding:"16px",borderRadius:"16px",background:saving||!displayName.trim()?"#333":"#fff",color:saving||!displayName.trim()?"#666":"#000",border:"none",fontSize:"15px",cursor:saving||!displayName.trim()?"not-allowed":"pointer",fontWeight:"600",marginTop:"8px"}}>{saving?"Saving...":"Continue →"}</button>
+        <button onClick={save} disabled={saving||!displayName.trim()||!link.trim()} style={{width:"100%",padding:"16px",borderRadius:"16px",background:saving||!displayName.trim()||!link.trim()?"#333":"#fff",color:saving||!displayName.trim()||!link.trim()?"#666":"#000",border:"none",fontSize:"15px",cursor:saving||!displayName.trim()||!link.trim()?"not-allowed":"pointer",fontWeight:"600",marginTop:"8px"}}>{saving?"Saving...":"Continue →"}</button>
       </div>
     </div>
   );
