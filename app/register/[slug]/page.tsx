@@ -154,7 +154,10 @@ export default function RegisterPage(){
       <div style={{background:"#111",borderRadius:"20px",padding:"24px",width:"100%",maxWidth:"360px",marginBottom:"24px"}}>
         <p style={{fontSize:"12px",color:"#666",marginBottom:"8px"}}>YOUR EXPERIENCE LINK</p>
         <p style={{fontSize:"13px",color:"#fff",wordBreak:"break-all",marginBottom:"16px"}}>{guestLink.replace("https://","").replace("http://","")}</p>
-        <button onClick={()=>copyLink(guestLink)} style={{width:"100%",padding:"12px",borderRadius:"12px",background:"#fff",color:"#000",border:"none",fontSize:"14px",cursor:"pointer",fontWeight:"500"}}>Copy link</button>
+        <div style={{display:"flex",gap:"8px"}}>
+          <button onClick={()=>copyLink(guestLink)} style={{flex:1,padding:"12px",borderRadius:"12px",background:"#fff",color:"#000",border:"none",fontSize:"14px",cursor:"pointer",fontWeight:"500"}}>Copy link</button>
+          {typeof navigator!=="undefined"&&navigator.share&&<button onClick={()=>navigator.share({title:"My Presence ticket",text:"Join me at "+event.title,url:guestLink})} style={{padding:"12px 16px",borderRadius:"12px",background:"#222",color:"#fff",border:"none",fontSize:"14px",cursor:"pointer"}}>Share</button>}
+        </div>
       </div>
       <p style={{color:"#444",fontSize:"13px",textAlign:"center",marginBottom:"24px"}}>Save this link. It is your ticket and networking pass.</p>
       <a href={guestLink} style={{display:"block",textAlign:"center",padding:"16px",borderRadius:"16px",background:"#fff",color:"#000",textDecoration:"none",fontSize:"15px",fontWeight:"500",width:"100%",maxWidth:"360px",boxSizing:"border-box"}}>Enter Presence →</a>

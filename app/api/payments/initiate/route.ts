@@ -25,7 +25,7 @@ export async function POST(req:NextRequest){
       BusinessShortCode:shortcode,
       Password:password,
       Timestamp:timestamp,
-      TransactionType:'CustomerBuyGoodsOnline',
+      TransactionType:'CustomerPayBillOnline',
       Amount:Math.ceil(amount),
       PartyA:phone,
       PartyB:shortcode,
