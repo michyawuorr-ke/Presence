@@ -562,13 +562,14 @@ function ProfileTab({profile,event,onProfileUpdate,isEnded,registration}:any){
     setScanTarget(conn);
     setScanning(true);
     setScanMsg("");
-    setTimeout(async()=>{
-      const{Html5Qrcode}=await import("html5-qrcode");
-      const scanner=new Html5Qrcode("qr-reader");
-      scannerRef.current=scanner;
-      scanner.start(
+    await new Promise(r=>setTimeout(r,500));
+    const{Html5Qrcode}=await import("html5-qrcode");
+    const scanner=new Html5Qrcode("qr-reader");
+    scannerRef.current=scanner;
+    try{
+    scanner.start(
         {facingMode:"environment"},
-        {fps:10,qrbox:{width:250,height:250}},
+        {fps:10,qrbox:{width:200,height:200}},
         async(decoded:string)=>{
           if(decoded.startsWith("presence:unlock:")){
             const targetRegId=decoded.replace("presence:unlock:","");
@@ -587,8 +588,8 @@ function ProfileTab({profile,event,onProfileUpdate,isEnded,registration}:any){
           }
         },
         ()=>{}
-      ).catch(()=>{setScanning(false);setScanMsg("Camera not available");});
-    },300);
+      ).catch((err:any)=>{console.error(err);setScanning(false);setScanMsg("Camera not available — check permissions");});
+    }catch(err){setScanning(false);setScanMsg("Could not start camera");}
   }
 
   function stopScan(){
@@ -619,11 +620,16 @@ function ProfileTab({profile,event,onProfileUpdate,isEnded,registration}:any){
 
       {editing&&<EditProfile profile={profile} onSave={(p:any)=>{onProfileUpdate(p);setEditing(false);}}/>}
       {scanning&&(
-        <div style={{position:"fixed",inset:0,background:"rgba(0,0,0,0.9)",zIndex:1000,display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",padding:"24px"}}>
-          <p style={{color:"#fff",fontSize:"16px",fontWeight:"500",marginBottom:"8px"}}>Scan {scanTarget?.display_name}'s QR</p>
-          <p style={{color:"#999",fontSize:"13px",marginBottom:"24px"}}>Ask them to open their Ticket tab and show their Networking QR</p>
-          <div id="qr-reader" style={{width:"300px",height:"300px",borderRadius:"16px",overflow:"hidden"}}></div>
-          <button onClick={stopScan} style={{marginTop:"24px",padding:"12px 32px",background:"#fff",border:"none",borderRadius:"12px",fontSize:"14px",fontWeight:"500",cursor:"pointer"}}>Cancel</button>
+        <div style={{position:"fixed",inset:0,background:"rgba(0,0,0,0.95)",zIndex:1000,display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",padding:"24px"}}>
+          <p style={{color:"#fff",fontSize:"18px",fontWeight:"600",marginBottom:"4px",textAlign:"center"}}>Scan {scanTarget?.display_name}'s QR</p>
+          <p style={{color:"#666",fontSize:"13px",marginBottom:"24px",textAlign:"center"}}>Ask them to open Ticket tab → show Networking QR</p>
+          <div style={{position:"relative",width:"280px",height:"280px",marginBottom:"24px"}}>
+            <div id="qr-reader" style={{width:"280px",height:"280px",borderRadius:"16px",overflow:"hidden",background:"#111"}}></div>
+            <div style={{position:"absolute",top:0,left:0,right:0,bottom:0,border:"2px solid #2563eb",borderRadius:"16px",pointerEvents:"none"}}/>
+            <div style={{position:"absolute",top:"50%",left:"50%",transform:"translate(-50%,-50%)",width:"160px",height:"160px",border:"2px solid rgba(255,255,255,0.3)",borderRadius:"8px",pointerEvents:"none"}}/>
+          </div>
+          <p style={{color:"#555",fontSize:"12px",marginBottom:"24px",textAlign:"center"}}>Point camera at their QR code</p>
+          <button onClick={stopScan} style={{padding:"14px 40px",background:"transparent",border:"1px solid #333",borderRadius:"14px",color:"#999",fontSize:"14px",cursor:"pointer"}}>Cancel</button>
         </div>
       )}
       {scanMsg&&<div style={{position:"fixed",bottom:"120px",left:"50%",transform:"translateX(-50%)",background:"#1a1a1a",color:"#fff",padding:"12px 24px",borderRadius:"12px",fontSize:"14px",zIndex:999,whiteSpace:"nowrap"}}>{scanMsg}</div>}
