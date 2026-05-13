@@ -318,11 +318,11 @@ function NetworkingTab({event,profile,isLive,isEnded}:any){
 
   const fetchNodes=useCallback(async()=>{
     if(!profile||!event)return;
-    const{data:approved}=await supabase.from("handshakes").select("guest_profile_id_a,guest_profile_id_b").eq("event_id",event.id).or("guest_profile_id_a.eq."+profile.id+",guest_profile_id_b.eq."+profile.id);
+    const{data:approved}=await supabase.from("handshakes").select("guest_a_id,guest_b_id").eq("event_id",event.id).or("guest_a_id.eq."+profile.id+",guest_b_id.eq."+profile.id);
     const approvedSet=new Set<string>();
     (approved||[]).forEach((h:any)=>{
-      if(h.guest_profile_id_a!==profile.id)approvedSet.add(h.guest_profile_id_a);
-      if(h.guest_profile_id_b!==profile.id)approvedSet.add(h.guest_profile_id_b);
+      if(h.guest_a_id!==profile.id)approvedSet.add(h.guest_a_id);
+      if(h.guest_b_id!==profile.id)approvedSet.add(h.guest_b_id);
     });
     const{data:sentReqs}=await supabase.from("handshake_requests").select("recipient_id").eq("requester_id",profile.id).eq("event_id",event.id).in("status",["pending","approved"]);
     const sentSet=new Set((sentReqs||[]).map((r:any)=>r.recipient_id));
@@ -410,7 +410,7 @@ function NetworkingTab({event,profile,isLive,isEnded}:any){
     const status=approved?"approved":"declined";
     await supabase.from("handshake_requests").update({status}).eq("id",incoming.request_id);
     if(approved){
-      await supabase.from("handshakes").insert({event_id:event.id,guest_profile_id_a:incoming.requester_id,guest_profile_id_b:profile.id,networking_status:"connected"});
+      await supabase.from("handshakes").insert({event_id:event.id,guest_a_id:incoming.requester_id,guest_b_id:profile.id,networking_status:"connected"});
       await channelRef.current?.send({type:"broadcast",event:"handshake_approved",payload:{requester_id:incoming.requester_id,recipient_id:profile.id,requester_name:incoming.requester_name,recipient_name:profile.display_name}});
     }
     setIncoming(null);
@@ -534,9 +534,9 @@ function ProfileTab({profile,event,onProfileUpdate,isEnded,registration}:any){
   useEffect(()=>{
     if(!profile||!event)return;
     async function loadConnections(){
-      const{data:handshakes}=await supabase.from("handshakes").select("id,guest_profile_id_a,guest_profile_id_b,networking_status").eq("event_id",event.id).or("guest_profile_id_a.eq."+profile.id+",guest_profile_id_b.eq."+profile.id);
-      const connectedIds=(handshakes||[]).map((h:any)=>h.guest_profile_id_a===profile.id?h.guest_profile_id_b:h.guest_profile_id_a);
-      const unlockedSet=new Set((handshakes||[]).filter((h:any)=>h.networking_status==="unlocked").map((h:any)=>h.guest_profile_id_a===profile.id?h.guest_profile_id_b:h.guest_profile_id_a) as string[]);
+      const{data:handshakes}=await supabase.from("handshakes").select("id,guest_a_id,guest_b_id,networking_status").eq("event_id",event.id).or("guest_a_id.eq."+profile.id+",guest_b_id.eq."+profile.id);
+      const connectedIds=(handshakes||[]).map((h:any)=>h.guest_a_id===profile.id?h.guest_b_id:h.guest_a_id);
+      const unlockedSet=new Set((handshakes||[]).filter((h:any)=>h.networking_status==="unlocked").map((h:any)=>h.guest_a_id===profile.id?h.guest_b_id:h.guest_a_id) as string[]);
       setUnlocked(unlockedSet);
       if(connectedIds.length===0){setConnections([]);return;}
       const{data:profiles}=await supabase.from("guest_profiles").select("*").in("id",connectedIds);
@@ -546,12 +546,12 @@ function ProfileTab({profile,event,onProfileUpdate,isEnded,registration}:any){
     // Realtime - reload when new handshake created
     const ch=supabase.channel("profile-handshakes:"+profile.id)
       .on("postgres_changes",{event:"INSERT",schema:"public",table:"handshakes"},(payload:any)=>{
-        if(payload.new.guest_profile_id_a===profile.id||payload.new.guest_profile_id_b===profile.id){
+        if(payload.new.guest_a_id===profile.id||payload.new.guest_b_id===profile.id){
           loadConnections();
         }
       })
       .on("postgres_changes",{event:"UPDATE",schema:"public",table:"handshakes"},(payload:any)=>{
-        if(payload.new.guest_profile_id_a===profile.id||payload.new.guest_profile_id_b===profile.id){
+        if(payload.new.guest_a_id===profile.id||payload.new.guest_b_id===profile.id){
           loadConnections();
         }
       })
