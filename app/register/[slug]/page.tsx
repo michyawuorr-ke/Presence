@@ -15,6 +15,35 @@ export default function RegisterPage() {
   const [success, setSuccess] = useState(false);
   const [guestLink, setGuestLink] = useState("");
   const [error, setError] = useState("");
+  const [paymentState, setPaymentState] = useState<"idle"|"waiting"|"success"|"failed">("idle");
+  const [checkoutId, setCheckoutId] = useState("");
+
+  function normalizePhone(p:string){
+    const d=p.replace(/\D/g,"");
+    if(d.startsWith("0")&&d.length===10)return"254"+d.slice(1);
+    if(d.startsWith("254"))return d;
+    if(d.startsWith("7")&&d.length===9)return"254"+d;
+    return d;
+  }
+
+  async function pollPayment(cid:string,regId:string,link:string){
+    let attempts=0;
+    const interval=setInterval(async()=>{
+      attempts++;
+      const{data:payment}=await supabase.from("payments").select("status").eq("mpesa_receipt",cid).single();
+      if(payment?.status==="success"){
+        clearInterval(interval);
+        setPaymentState("success");
+        setGuestLink(link);
+        setSuccess(true);
+      }else if(payment?.status==="failed"||attempts>20){
+        clearInterval(interval);
+        setPaymentState("failed");
+        setError("Payment failed or timed out. Please try again.");
+        setSubmitting(false);
+      }
+    },3000);
+  }
   const params = useParams();
   const slug = params.slug as string;
 
@@ -63,6 +92,21 @@ export default function RegisterPage() {
   if (!event) return (
     <div style={{minHeight:"100vh",background:"#000",display:"flex",alignItems:"center",justifyContent:"center"}}>
       <p style={{color:"#666"}}>Event not found</p>
+    </div>
+  );
+
+  if (paymentState === "waiting") return (
+    <div style={{minHeight:"100vh",background:"#000",display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",padding:"24px"}}>
+      <p style={{fontSize:"11px",letterSpacing:"0.3em",color:"#666",textTransform:"uppercase",marginBottom:"32px"}}>Presence</p>
+      <p style={{fontSize:"48px",marginBottom:"24px"}}>📱</p>
+      <h1 style={{fontSize:"24px",fontWeight:"300",color:"#fff",textAlign:"center",marginBottom:"12px"}}>Check your phone</h1>
+      <p style={{color:"#666",textAlign:"center",marginBottom:"8px"}}>An M-Pesa prompt has been sent to</p>
+      <p style={{color:"#fff",fontSize:"18px",fontWeight:"500",marginBottom:"32px"}}>{phone}</p>
+      <p style={{color:"#555",fontSize:"13px",textAlign:"center",marginBottom:"32px"}}>Enter your M-Pesa PIN to complete payment. This page will update automatically.</p>
+      <div style={{display:"flex",gap:"8px",marginBottom:"32px"}}>
+        {[0,1,2].map(i=><div key={i} style={{width:"8px",height:"8px",borderRadius:"50%",background:"#333",animation:"pulse 1.5s ease-in-out infinite",animationDelay:i*0.3+"s"}}/>)}
+      </div>
+      {error&&<p style={{color:"#ef4444",fontSize:"14px",textAlign:"center"}}>{error}</p>}
     </div>
   );
 
