@@ -554,7 +554,7 @@ function ProfileTab({profile,event,onProfileUpdate,isEnded,registration}:any){
         }
       })
       .subscribe();
-    return()=>supabase.removeChannel(ch);
+    return()=>{supabase.removeChannel(ch);};
   },[profile,event]);
 
   async function startScan(conn:any){
