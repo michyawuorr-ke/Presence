@@ -261,7 +261,7 @@ const[tab,setTab]=useState<Tab>("scene");
       )}
 
       {tab==="profile"&&(
-        <ProfileTab profile={profile} event={event} onProfileUpdate={onProfileUpdate} isEnded={isEnded}/>
+        <ProfileTab profile={profile} event={event} onProfileUpdate={onProfileUpdate} isEnded={isEnded} registration={registration}/>
       )}
 
       <div style={{position:"fixed",bottom:"12px",left:"12px",right:"12px",background:"rgba(255,255,255,0.95)",backdropFilter:"blur(32px)",borderRadius:"24px",border:"1px solid rgba(0,0,0,0.08)",display:"flex",padding:"16px 8px",boxShadow:"0 8px 32px rgba(0,0,0,0.12), 0 2px 8px rgba(0,0,0,0.04)"}}>
@@ -468,21 +468,67 @@ function NetworkingTab({event,profile,isLive,isEnded}:any){
   );
 }
 
-function ProfileTab({profile,event,onProfileUpdate,isEnded}:any){
+function ProfileTab({profile,event,onProfileUpdate,isEnded,registration}:any){
   const[editing,setEditing]=useState(false);
   const[connections,setConnections]=useState<any[]>([]);
+  const[unlocked,setUnlocked]=useState<Set<string>>(new Set());
+  const[scanning,setScanning]=useState(false);
+  const[scanTarget,setScanTarget]=useState<any>(null);
+  const[scanMsg,setScanMsg]=useState("");
+  const scannerRef=useRef<any>(null);
 
   useEffect(()=>{
     if(!profile||!event)return;
     async function loadConnections(){
-      const{data:handshakes}=await supabase.from("handshakes").select("guest_profile_id_a,guest_profile_id_b").eq("event_id",event.id).or("guest_profile_id_a.eq."+profile.id+",guest_profile_id_b.eq."+profile.id);
+      const{data:handshakes}=await supabase.from("handshakes").select("id,guest_profile_id_a,guest_profile_id_b,networking_status").eq("event_id",event.id).or("guest_profile_id_a.eq."+profile.id+",guest_profile_id_b.eq."+profile.id);
       const connectedIds=(handshakes||[]).map((h:any)=>h.guest_profile_id_a===profile.id?h.guest_profile_id_b:h.guest_profile_id_a);
+      const unlockedSet=new Set((handshakes||[]).filter((h:any)=>h.networking_status==="unlocked").map((h:any)=>h.guest_profile_id_a===profile.id?h.guest_profile_id_b:h.guest_profile_id_a) as string[]);
+      setUnlocked(unlockedSet);
       if(connectedIds.length===0){setConnections([]);return;}
       const{data:profiles}=await supabase.from("guest_profiles").select("*").in("id",connectedIds);
       setConnections(profiles||[]);
     }
     loadConnections();
   },[profile,event]);
+
+  async function startScan(conn:any){
+    setScanTarget(conn);
+    setScanning(true);
+    setScanMsg("");
+    setTimeout(async()=>{
+      const{Html5Qrcode}=await import("html5-qrcode");
+      const scanner=new Html5Qrcode("qr-reader");
+      scannerRef.current=scanner;
+      scanner.start(
+        {facingMode:"environment"},
+        {fps:10,qrbox:{width:250,height:250}},
+        async(decoded:string)=>{
+          if(decoded.startsWith("presence:unlock:")){
+            const targetRegId=decoded.replace("presence:unlock:","");
+            await scanner.stop();
+            setScanning(false);
+            setScanMsg("Unlocking...");
+            const res=await fetch("/api/handshakes/unlock",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({scanner_registration_id:registration.id,target_registration_id:targetRegId})});
+            if(res.ok){
+              setUnlocked(prev=>new Set([...prev,conn.id]));
+              setScanMsg("✅ Profile unlocked!");
+              setScanTarget(null);
+            }else{
+              setScanMsg("❌ Could not unlock. Make sure you are connected first.");
+            }
+            setTimeout(()=>setScanMsg(""),3000);
+          }
+        },
+        ()=>{}
+      ).catch(()=>{setScanning(false);setScanMsg("Camera not available");});
+    },300);
+  }
+
+  function stopScan(){
+    scannerRef.current?.stop().catch(()=>{});
+    setScanning(false);
+    setScanTarget(null);
+  }
 
   return(
     <div style={{padding:"24px 20px"}}>
@@ -505,6 +551,15 @@ function ProfileTab({profile,event,onProfileUpdate,isEnded}:any){
       </div>
 
       {editing&&<EditProfile profile={profile} onSave={(p:any)=>{onProfileUpdate(p);setEditing(false);}}/>}
+      {scanning&&(
+        <div style={{position:"fixed",inset:0,background:"rgba(0,0,0,0.9)",zIndex:1000,display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",padding:"24px"}}>
+          <p style={{color:"#fff",fontSize:"16px",fontWeight:"500",marginBottom:"8px"}}>Scan {scanTarget?.display_name}'s QR</p>
+          <p style={{color:"#999",fontSize:"13px",marginBottom:"24px"}}>Ask them to open their Ticket tab and show their Networking QR</p>
+          <div id="qr-reader" style={{width:"300px",height:"300px",borderRadius:"16px",overflow:"hidden"}}></div>
+          <button onClick={stopScan} style={{marginTop:"24px",padding:"12px 32px",background:"#fff",border:"none",borderRadius:"12px",fontSize:"14px",fontWeight:"500",cursor:"pointer"}}>Cancel</button>
+        </div>
+      )}
+      {scanMsg&&<div style={{position:"fixed",bottom:"120px",left:"50%",transform:"translateX(-50%)",background:"#1a1a1a",color:"#fff",padding:"12px 24px",borderRadius:"12px",fontSize:"14px",zIndex:999,whiteSpace:"nowrap"}}>{scanMsg}</div>}
 
       <div style={{marginTop:"32px"}}>
         <h2 style={{fontSize:"16px",fontWeight:"500",marginBottom:"16px"}}>Your Connections</h2>
@@ -513,12 +568,18 @@ function ProfileTab({profile,event,onProfileUpdate,isEnded}:any){
             {isEnded?"No connections from this event":"Connect with people to see them here"}
           </p>
         ):(
-          connections.map((c:any)=>{const isUnlocked=false;return(
-            <div key={c.id} style={{background:"#fff",borderRadius:"20px",padding:"18px",marginBottom:"10px",border:"1px solid rgba(0,0,0,0.06)",boxShadow:"0 2px 8px rgba(0,0,0,0.03)"}}>
-              <p style={{fontSize:"15px",fontWeight:"500",marginBottom:"2px"}}>{c.display_name}</p>
-              {c.role_title&&<p style={{fontSize:"13px",color:"#666",marginBottom:"2px"}}>{c.role_title}</p>}
-              {isUnlocked&&c.organisation&&<p style={{fontSize:"13px",color:"#999",marginBottom:"8px"}}>{c.organisation}</p>}
-              {isUnlocked&&c.platform_value&&<p style={{fontSize:"13px",color:"#2563eb"}}>{cleanUrl(c.platform_value)}</p>}
+          connections.map((c:any)=>{const isUnlocked=unlocked.has(c.id);return(
+            <div key={c.id} style={{background:isUnlocked?"#fff":"#fafafa",borderRadius:"20px",padding:"18px",marginBottom:"10px",border:isUnlocked?"2px solid #2563eb":"1px solid rgba(0,0,0,0.06)",boxShadow:"0 2px 8px rgba(0,0,0,0.03)"}}>
+              <div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-start"}}>
+                <div style={{flex:1}}>
+                  <p style={{fontSize:"15px",fontWeight:"500",marginBottom:"2px"}}>{c.display_name}</p>
+                  {c.role_title&&<p style={{fontSize:"13px",color:"#666",marginBottom:"2px"}}>{c.role_title}</p>}
+                  {isUnlocked&&c.organisation&&<p style={{fontSize:"13px",color:"#999",marginBottom:"8px"}}>{c.organisation}</p>}
+                  {isUnlocked&&c.platform_value&&<p style={{fontSize:"13px",color:"#2563eb",marginTop:"4px"}}>{cleanUrl(c.platform_value)}</p>}
+                </div>
+                {!isUnlocked&&<button onClick={()=>startScan(c)} style={{background:"#f59e0b",color:"#000",border:"none",borderRadius:"8px",padding:"6px 12px",fontSize:"12px",fontWeight:"600",cursor:"pointer",whiteSpace:"nowrap",marginLeft:"12px"}}>Scan to unlock</button>}
+                {isUnlocked&&<span style={{fontSize:"11px",color:"#2563eb",fontWeight:"600",marginLeft:"12px"}}>✓ Unlocked</span>}
+              </div>
             </div>
           );}
           )
