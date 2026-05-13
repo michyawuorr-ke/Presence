@@ -21,7 +21,7 @@ export default function LoginPage() {
     const { error } = await supabase.auth.signInWithOtp({
       email,
       options: {
-        emailRedirectTo: "https://yopresence.netlify.app/auth/callback",
+        emailRedirectTo: "https://presence-bb5i.vercel.app/auth/callback",
         data: { name },
       },
     });
