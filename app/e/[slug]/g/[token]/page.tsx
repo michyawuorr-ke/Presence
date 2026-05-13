@@ -410,7 +410,8 @@ function NetworkingTab({event,profile,isLive,isEnded}:any){
     const status=approved?"approved":"declined";
     await supabase.from("handshake_requests").update({status}).eq("id",incoming.request_id);
     if(approved){
-      await supabase.from("handshakes").insert({event_id:event.id,guest_a_id:incoming.requester_id,guest_b_id:profile.id,networking_status:"connected"});
+      const{error:hsErr}=await supabase.from("handshakes").insert({event_id:event.id,guest_a_id:incoming.requester_id,guest_b_id:profile.id,networking_status:"connected"});
+      if(hsErr)console.error("Handshake insert error:",hsErr);else console.log("Handshake created successfully");
       await channelRef.current?.send({type:"broadcast",event:"handshake_approved",payload:{requester_id:incoming.requester_id,recipient_id:profile.id,requester_name:incoming.requester_name,recipient_name:profile.display_name}});
     }
     setIncoming(null);
