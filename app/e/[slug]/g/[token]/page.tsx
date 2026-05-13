@@ -459,9 +459,7 @@ function NetworkingTab({event,profile,isLive,isEnded}:any){
       )}
 
       {!auraLoaded&&(
-        <div style={{position:"absolute",inset:0,display:"flex",alignItems:"center",justifyContent:"center",zIndex:5,background:"#0a0a0b"}}>
-          <p style={{color:"#333",fontSize:"14px"}}>Loading...</p>
-        </div>
+        <div style={{position:"absolute",inset:0,zIndex:5,background:"#0a0a0b"}}/>
       )}
       {auraLoaded&&!networkingActive&&(
         <div style={{position:"absolute",inset:0,display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",backdropFilter:"blur(20px)",zIndex:5}}>
