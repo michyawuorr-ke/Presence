@@ -234,7 +234,7 @@ const[tab,setTab]=useState<Tab>("scene");
           {isLive&&(
             <div style={{background:"#ffffff",borderRadius:"24px",padding:"28px",marginBottom:"16px",border:"1px solid rgba(0,0,0,0.08)",boxShadow:"0 2px 8px rgba(0,0,0,0.04), 0 12px 32px rgba(0,0,0,0.08)"}}>
               <p style={{fontSize:"12px",color:"#999",marginBottom:"16px",letterSpacing:"0.1em"}}>LIVE NOW</p>
-         e={{display:"flex",flexDirection:"column",gap:"12px",marginBottom:"20px"}}>
+              <div style={{display:"flex",flexDirection:"column",gap:"12px",marginBottom:"20px"}}>
                 <div style={{background:"#f0f7ff",borderRadius:"14px",padding:"16px"}}>
                   <p style={{fontSize:"32px",fontWeight:"700",color:"#2563eb",lineHeight:"1",marginBottom:"4px"}}>{networkingCount}</p>
                   <p style={{fontSize:"13px",color:"#2563eb",fontWeight:"500"}}>networking now</p>
@@ -243,7 +243,6 @@ const[tab,setTab]=useState<Tab>("scene");
                   <p style={{fontSize:"32px",fontWeight:"700",color:"#16a34a",lineHeight:"1",marginBottom:"4px"}}>{connectionsCount}</p>
                   <p style={{fontSize:"13px",color:"#16a34a",fontWeight:"500"}}>handshakes exchanged</p>
                 </div>
-              </div>
               </div>
               <button onClick={()=>setTab("networking")} style={{width:"100%",padding:"16px",borderRadius:"16px",background:"linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%)",color:"#fff",border:"none",fontSize:"15px",cursor:"pointer",fontWeight:"600",boxShadow:"0 4px 12px rgba(37,99,235,0.3)",transition:"transform 0.2s,box-shadow 0.2s"}}>Start Networking →</button>
             </div>
