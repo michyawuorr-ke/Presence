@@ -453,8 +453,8 @@ function NetworkingTab({event,profile,isLive,isEnded}:any){
       </div>
 
       {notification&&(
-        <div style={{position:"absolute",top:"24px",left:"50%",transform:"translateX(-50%)",background:"rgba(74,222,128,0.25)",border:"2px solid rgba(74,222,128,0.5)",borderRadius:"24px",padding:"12px 24px",animation:"fadeIn 0.4s ease",zIndex:10,boxShadow:"0 4px 12px rgba(74,222,128,0.2)"}}>
-          <p style={{color:"#4ade80",fontSize:"15px",fontWeight:"500",whiteSpace:"nowrap"}}>{notification}</p>
+        <div style={{position:"absolute",top:"16px",left:"50%",transform:"translateX(-50%)",background:"rgba(0,0,0,0.8)",border:"1px solid rgba(255,255,255,0.1)",borderRadius:"20px",padding:"8px 16px",animation:"fadeIn 0.4s ease",zIndex:10,maxWidth:"280px"}}>
+          <p style={{color:"#fff",fontSize:"12px",fontWeight:"500",textAlign:"center",lineHeight:"1.4"}}>{notification}</p>
         </div>
       )}
 
