@@ -57,10 +57,13 @@ export default function ScannerPage(){
   }
 
   async function handleCheckin(regId:string){
-    // Check if already checked in
-    const{data:reg}=await supabase.from("registrations").select("*").eq("id",regId).eq("event_id",eventId).single();
+    const{data:reg}=await supabase.from("registrations").select("*").eq("id",regId).single();
     if(!reg){
-      setResult({success:false,message:"Invalid ticket — not for this event"});
+      setResult({success:false,message:"Invalid ticket"});
+      return;
+    }
+    if(reg.event_id!==eventId){
+      setResult({success:false,message:"Ticket is for a different event"});
       return;
     }
     if(reg.checked_in){
