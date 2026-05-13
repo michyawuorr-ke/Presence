@@ -185,8 +185,13 @@ const[tab,setTab]=useState<Tab>("scene");
       setConnectionsCount(cc||0);
     }
     fetchCounts();
-    const interval=setInterval(fetchCounts,30000);
-    return()=>clearInterval(interval);
+    const interval=setInterval(fetchCounts,15000);
+    // Realtime subscription for instant count updates
+    const hsCh=supabase.channel("handshakes-count:"+event.id)
+      .on("postgres_changes",{event:"INSERT",schema:"public",table:"handshakes",filter:"event_id=eq."+event.id},()=>fetchCounts())
+      .on("postgres_changes",{event:"INSERT",schema:"public",table:"guest_profiles",filter:"event_id=eq."+event.id},()=>fetchCounts())
+      .subscribe();
+    return()=>{clearInterval(interval);supabase.removeChannel(hsCh);};
   },[event]);
 
   return(
@@ -354,9 +359,13 @@ function NetworkingTab({event,profile,isLive,isEnded}:any){
         }
       })
       .on("broadcast",{event:"handshake_approved"},(payload:any)=>{
-        if(payload.payload.requester_id===profile.id||payload.payload.recipient_id===profile.id){
-          setNotification(getFirstName(payload.payload.requester_name)+" connected with "+getFirstName(payload.payload.recipient_name));
-          setTimeout(()=>setNotification(""),8000);
+        if(payload.payload.requester_id===profile.id){
+          setNotification("✓ Connected with "+getFirstName(payload.payload.recipient_name)+"! Go to Profile → Scan to unlock their details");
+          setTimeout(()=>setNotification(""),10000);
+          fetchNodes();
+        }else if(payload.payload.recipient_id===profile.id){
+          setNotification("✓ Connected with "+getFirstName(payload.payload.requester_name)+"! Go to Profile → Scan to unlock their details");
+          setTimeout(()=>setNotification(""),10000);
           fetchNodes();
         }
       })
@@ -442,7 +451,12 @@ function NetworkingTab({event,profile,isLive,isEnded}:any){
         </div>
       )}
 
-      {!networkingActive&&(
+      {!auraLoaded&&(
+        <div style={{position:"absolute",inset:0,display:"flex",alignItems:"center",justifyContent:"center",zIndex:5,background:"#0a0a0b"}}>
+          <p style={{color:"#333",fontSize:"14px"}}>Loading...</p>
+        </div>
+      )}
+      {auraLoaded&&!networkingActive&&(
         <div style={{position:"absolute",inset:0,display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",backdropFilter:"blur(20px)",zIndex:5}}>
           <p style={{fontSize:"48px",marginBottom:"16px",opacity:0.2}}>◎</p>
           <p style={{color:"#fff",fontSize:"18px",fontWeight:"300",marginBottom:"8px"}}>Networking Off</p>
@@ -465,8 +479,11 @@ function NetworkingTab({event,profile,isLive,isEnded}:any){
       })}
 
       {networkingActive&&(
-        <div style={{position:"absolute",bottom:"24px",left:"50%",transform:"translateX(-50%)"}}>
-          <button onClick={stopNetworking} style={{padding:"12px 28px",borderRadius:"50px",background:"rgba(255,255,255,0.08)",color:"#fff",border:"1px solid rgba(255,255,255,0.15)",fontSize:"14px",cursor:"pointer"}}>Stop Networking</button>
+        <div style={{position:"absolute",bottom:"24px",left:"50%",transform:"translateX(-50%)",display:"flex",flexDirection:"column",alignItems:"center",gap:"12px"}}>
+          <p style={{color:"#555",fontSize:"12px",textAlign:"center"}}>Tap a circle to connect · Tap screen to scan QR</p>
+          <div style={{display:"flex",gap:"12px"}}>
+            <button onClick={stopNetworking} style={{padding:"12px 28px",borderRadius:"50px",background:"rgba(255,255,255,0.08)",color:"#fff",border:"1px solid rgba(255,255,255,0.15)",fontSize:"14px",cursor:"pointer"}}>Stop</button>
+          </div>
         </div>
       )}
 
@@ -520,6 +537,20 @@ function ProfileTab({profile,event,onProfileUpdate,isEnded,registration}:any){
       setConnections(profiles||[]);
     }
     loadConnections();
+    // Realtime - reload when new handshake created
+    const ch=supabase.channel("profile-handshakes:"+profile.id)
+      .on("postgres_changes",{event:"INSERT",schema:"public",table:"handshakes"},(payload:any)=>{
+        if(payload.new.guest_profile_id_a===profile.id||payload.new.guest_profile_id_b===profile.id){
+          loadConnections();
+        }
+      })
+      .on("postgres_changes",{event:"UPDATE",schema:"public",table:"handshakes"},(payload:any)=>{
+        if(payload.new.guest_profile_id_a===profile.id||payload.new.guest_profile_id_b===profile.id){
+          loadConnections();
+        }
+      })
+      .subscribe();
+    return()=>supabase.removeChannel(ch);
   },[profile,event]);
 
   async function startScan(conn:any){
