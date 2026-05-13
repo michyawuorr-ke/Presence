@@ -45,7 +45,6 @@ export default function ScannerPage(){
             const regId=decoded.replace("presence:entry:","");
             await scanner.stop();
             setScanning(false);
-            setError("Scanned ID: "+regId);
             await handleCheckin(regId);
           }
         },
