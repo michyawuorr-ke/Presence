@@ -366,11 +366,11 @@ function NetworkingTab({event,profile,isLive,isEnded}:any){
       })
       .on("broadcast",{event:"handshake_approved"},(payload:any)=>{
         if(payload.payload.requester_id===profile.id){
-          setNotification("✓ Connected with "+getFirstName(payload.payload.recipient_name)+"! Go to Profile → Scan to unlock their details");
+          setNotification("✓ Connected with "+getFirstName(payload.payload.recipient_name)+"! Open Profile tab → tap Scan to unlock their full profile");
           setTimeout(()=>setNotification(""),10000);
           fetchNodes();
         }else if(payload.payload.recipient_id===profile.id){
-          setNotification("✓ Connected with "+getFirstName(payload.payload.requester_name)+"! Go to Profile → Scan to unlock their details");
+          setNotification("✓ Connected with "+getFirstName(payload.payload.requester_name)+"! Open Profile tab → tap Scan to unlock their full profile");
           setTimeout(()=>setNotification(""),10000);
           fetchNodes();
         }
