@@ -135,7 +135,8 @@ function Identity({registration,event,onComplete}:any){
 function Scene({event,registration,profile,onProfileUpdate}:any){
 const[entryQR,setEntryQR]=useState("");
 const[networkingQR,setNetworkingQR]=useState("");
-  const[tab,setTab]=useState<Tab>("scene");
+  useEffect(()=>{if(!registration)return;QRCode.toDataURL("presence:entry:"+registration.id,{errorCorrectionLevel:"H",margin:2,width:256}).then(setEntryQR).catch(console.error);QRCode.toDataURL("presence:unlock:"+registration.id,{errorCorrectionLevel:"H",margin:2,width:256}).then(setNetworkingQR).catch(console.error);},[registration]);
+const[tab,setTab]=useState<Tab>("scene");
   const[editing,setEditing]=useState(false);
   const[countdown,setCountdown]=useState({days:0,hours:0,minutes:0,seconds:0});
   const[networkingCount,setNetworkingCount]=useState(0);
