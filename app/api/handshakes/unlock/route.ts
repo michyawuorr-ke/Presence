@@ -1,8 +1,13 @@
 import{createClient}from'@supabase/supabase-js';
 import{NextRequest,NextResponse}from'next/server';
+import{rateLimit}from'@/lib/rateLimit';
 const supabase=createClient(process.env.NEXT_PUBLIC_SUPABASE_URL!,process.env.SUPABASE_SERVICE_ROLE_KEY!);
 export async function POST(req:NextRequest){
   try{
+    const ip=req.headers.get('x-forwarded-for')||'unknown';
+    if(!rateLimit('unlock:'+ip, 20, 60000)){
+      return NextResponse.json({error:'Too many requests.'},{status:429});
+    }
     const{scanner_registration_id,target_registration_id}=await req.json();
     if(!scanner_registration_id||!target_registration_id)return NextResponse.json({error:'Missing fields'},{status:400});
     const{data:sp}=await supabase.from('guest_profiles').select('id').eq('registration_id',scanner_registration_id).single();

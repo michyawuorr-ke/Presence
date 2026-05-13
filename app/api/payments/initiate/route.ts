@@ -1,4 +1,6 @@
 import{NextRequest,NextResponse}from'next/server';
+import{rateLimit}from'@/lib/rateLimit';
+import{sanitizePhone,sanitizeAmount,sanitizeString}from'@/lib/sanitize';
 import{createClient}from'@supabase/supabase-js';
 
 const supabase=createClient(process.env.NEXT_PUBLIC_SUPABASE_URL!,process.env.SUPABASE_SERVICE_ROLE_KEY!);
@@ -12,7 +14,14 @@ async function getToken(){
 
 export async function POST(req:NextRequest){
   try{
-    const{phone,amount,registration_id}=await req.json();
+    const ip=req.headers.get('x-forwarded-for')||'unknown';
+    if(!rateLimit('payments:'+ip, 5, 60000)){
+      return NextResponse.json({error:'Too many requests. Please wait a minute.'},{status:429});
+    }
+    const body=await req.json();
+    const phone=sanitizePhone(body.phone);
+    const amount=sanitizeAmount(body.amount);
+    const registration_id=sanitizeString(body.registration_id,36);
     if(!phone||!amount||!registration_id)return NextResponse.json({error:'Missing fields'},{status:400});
 
     const token=await getToken();
