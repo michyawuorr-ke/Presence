@@ -277,13 +277,33 @@ const[tab,setTab]=useState<Tab>("scene");
 }
 
 function NetworkingTab({event,profile,isLive,isEnded}:any){
-  const[networkingActive,setNetworkingActive]=useState(profile?.aura_active||false);
+  const[networkingActive,setNetworkingActive]=useState(false);
+  const[auraLoaded,setAuraLoaded]=useState(false);
   const[nodes,setNodes]=useState<any[]>([]);
   const[incoming,setIncoming]=useState<any>(null);
   const[confirmNode,setConfirmNode]=useState<any>(null);
   const[sentRequests,setSentRequests]=useState<Set<string>>(new Set());
   const[notification,setNotification]=useState<string>("");
   const channelRef=useRef<any>(null);
+
+  const[declinedIds,setDeclinedIds]=useState<Set<string>>(new Set());
+
+  // Load aura state from DB on mount
+  useEffect(()=>{
+    if(!profile||auraLoaded)return;
+    async function loadAura(){
+      const{data:prof}=await supabase.from("guest_profiles").select("aura_active").eq("id",profile.id).single();
+      if(prof?.aura_active)setNetworkingActive(true);
+      // Load already-sent requests
+      const{data:sent}=await supabase.from("handshake_requests").select("recipient_id").eq("requester_id",profile.id).eq("event_id",event.id).in("status",["pending","approved"]);
+      setSentRequests(new Set((sent||[]).map((r:any)=>r.recipient_id)));
+      // Load declined requests (where I was requester and got declined)
+      const{data:declined}=await supabase.from("handshake_requests").select("recipient_id").eq("requester_id",profile.id).eq("event_id",event.id).eq("status","declined");
+      setDeclinedIds(new Set((declined||[]).map((r:any)=>r.recipient_id)));
+      setAuraLoaded(true);
+    }
+    loadAura();
+  },[profile,event,auraLoaded]);
 
   const fetchNodes=useCallback(async()=>{
     if(!profile||!event)return;
@@ -293,11 +313,16 @@ function NetworkingTab({event,profile,isLive,isEnded}:any){
       if(h.guest_profile_id_a!==profile.id)approvedSet.add(h.guest_profile_id_a);
       if(h.guest_profile_id_b!==profile.id)approvedSet.add(h.guest_profile_id_b);
     });
+    const{data:sentReqs}=await supabase.from("handshake_requests").select("recipient_id").eq("requester_id",profile.id).eq("event_id",event.id).in("status",["pending","approved"]);
+    const sentSet=new Set((sentReqs||[]).map((r:any)=>r.recipient_id));
+    const{data:declinedReqs}=await supabase.from("handshake_requests").select("recipient_id").eq("requester_id",profile.id).eq("event_id",event.id).eq("status","declined");
+    const declinedSet=new Set((declinedReqs||[]).map((r:any)=>r.recipient_id));
+    setDeclinedIds(declinedSet);
+    setSentRequests(sentSet);
     const{data}=await supabase.from("guest_profiles").select("*").eq("event_id",event.id).eq("aura_active",true).neq("id",profile.id).limit(8);
-    const filtered=(data||[]).filter((n:any)=>!approvedSet.has(n.id));
+    const filtered=(data||[]).filter((n:any)=>!approvedSet.has(n.id)&&!declinedSet.has(n.id));
     const positions=generatePositions(filtered.length);
     setNodes(filtered.map((n:any,i:number)=>({...n,...positions[i]})));
-    setSentRequests(new Set());
   },[profile,event]);
 
   useEffect(()=>{
@@ -320,6 +345,12 @@ function NetworkingTab({event,profile,isLive,isEnded}:any){
         if(payload.payload.recipient_id===profile.id){
           setIncoming(payload.payload);
           setTimeout(()=>setIncoming(null),300000);
+        }
+      })
+      .on("broadcast",{event:"handshake_declined"},(payload:any)=>{
+        if(payload.payload.requester_id===profile.id){
+          setNodes(prev=>prev.filter((n:any)=>n.id!==payload.payload.recipient_id));
+          setDeclinedIds(prev=>new Set([...prev,payload.payload.recipient_id]));
         }
       })
       .on("broadcast",{event:"handshake_approved"},(payload:any)=>{
@@ -352,7 +383,7 @@ function NetworkingTab({event,profile,isLive,isEnded}:any){
   }
 
   async function sendRequest(node:any){
-    if(sentRequests.has(node.id))return;
+    if(sentRequests.has(node.id)||declinedIds.has(node.id))return;
     setConfirmNode(null);
     setSentRequests(prev=>new Set(prev).add(node.id));
     const{data:req}=await supabase.from("handshake_requests").insert({requester_id:profile.id,recipient_id:node.id,event_id:event.id,status:"pending"}).select().single();
