@@ -18,10 +18,10 @@ export async function POST(req:NextRequest){
     if(!rateLimit('payments:'+ip, 5, 60000)){
       return NextResponse.json({error:'Too many requests. Please wait a minute.'},{status:429});
     }
-    const body=await req.json();
-    const phone=sanitizePhone(body.phone);
-    const amount=sanitizeAmount(body.amount);
-    const registration_id=sanitizeString(body.registration_id,36);
+    const reqBody=await req.json();
+    const phone=sanitizePhone(reqBody.phone);
+    const amount=sanitizeAmount(reqBody.amount);
+    const registration_id=sanitizeString(reqBody.registration_id,36);
     if(!phone||!amount||!registration_id)return NextResponse.json({error:'Missing fields'},{status:400});
 
     const token=await getToken();
