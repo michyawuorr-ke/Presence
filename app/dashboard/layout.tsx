@@ -5,6 +5,7 @@ import{supabase}from"@/lib/supabase/client";
 
 const tabs=[
   {label:"Events",path:"/dashboard/events"},
+  {label:"Profile",path:"/dashboard/profile"},
 ];
 
 export default function DashboardLayout({children}:{children:React.ReactNode}){

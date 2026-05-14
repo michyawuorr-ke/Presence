@@ -295,6 +295,7 @@ function NetworkingTab({event,profile,isLive,isEnded}:any){
   const[networkingActive,setNetworkingActive]=useState(false);
   const[auraLoaded,setAuraLoaded]=useState(false);
   const[nodes,setNodes]=useState<any[]>([]);
+  const[hostNode,setHostNode]=useState<any>(null);
   const[incoming,setIncoming]=useState<any>(null);
   const[confirmNode,setConfirmNode]=useState<any>(null);
   const[sentRequests,setSentRequests]=useState<Set<string>>(new Set());
@@ -338,6 +339,13 @@ function NetworkingTab({event,profile,isLive,isEnded}:any){
     const filtered=(data||[]).filter((n:any)=>!approvedSet.has(n.id)&&!declinedSet.has(n.id));
     const positions=generatePositions(filtered.length);
     setNodes(filtered.map((n:any,i:number)=>({...n,...positions[i]})));
+
+    // Fetch host VIP node
+    const hostRes=await fetch('/api/events/host-profile?event_id='+event.id);
+    const hostData=await hostRes.json();
+    if(hostData.host){
+      setHostNode({...hostData.host,x:50+Math.random()*10-5,y:50+Math.random()*10-5});
+    }
   },[profile,event]);
 
   useEffect(()=>{
@@ -474,6 +482,14 @@ function NetworkingTab({event,profile,isLive,isEnded}:any){
         </div>
       )}
 
+      {networkingActive&&hostNode&&(
+        <div style={{position:"absolute",left:hostNode.x+"%",top:hostNode.y+"%",transform:"translate(-50%,-50%)",animation:"float 5s ease-in-out infinite",zIndex:3}}>
+          <button onClick={()=>setConfirmNode({...hostNode,is_host:true})} style={{width:"52px",height:"52px",background:"none",border:"none",cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center",fontSize:"40px",filter:"drop-shadow(0 0 12px rgba(245,158,11,0.8))"}}>
+            ★
+          </button>
+          <p style={{color:"#f59e0b",fontSize:"10px",textAlign:"center",marginTop:"2px",fontWeight:"600",letterSpacing:"0.05em"}}>HOST</p>
+        </div>
+      )}
       {networkingActive&&nodes.map((node:any)=>{
         const isSent=sentRequests.has(node.id);
         const firstName=getFirstName(node.display_name);
@@ -496,8 +512,12 @@ function NetworkingTab({event,profile,isLive,isEnded}:any){
       {confirmNode&&(
         <div style={{position:"fixed",inset:0,background:"rgba(0,0,0,0.7)",display:"flex",alignItems:"flex-end",zIndex:20}} onClick={()=>setConfirmNode(null)}>
           <div style={{background:"#1a1a1a",borderRadius:"24px 24px 0 0",padding:"28px",width:"100%",animation:"slideUp 0.3s ease"}} onClick={e=>e.stopPropagation()}>
-            <p style={{color:"#fff",fontSize:"18px",fontWeight:"500",marginBottom:"8px"}}>Connect with {getFirstName(confirmNode.display_name)}?</p>
-            <p style={{color:"#666",fontSize:"14px",marginBottom:"28px"}}>{confirmNode.role_title||""}</p>
+            <div style={{display:"flex",alignItems:"center",gap:"8px",marginBottom:"8px"}}>
+              <p style={{color:"#fff",fontSize:"18px",fontWeight:"500"}}>Connect with {getFirstName(confirmNode.display_name)}?</p>
+              {confirmNode.is_host&&<span style={{background:"#f59e0b",color:"#000",fontSize:"10px",fontWeight:"700",padding:"2px 8px",borderRadius:"6px"}}>HOST</span>}
+            </div>
+            <p style={{color:"#666",fontSize:"14px",marginBottom:"4px"}}>{confirmNode.role_title||""}</p>
+            {confirmNode.is_host&&<p style={{color:"#f59e0b",fontSize:"12px",marginBottom:"16px"}}>★ Event organizer — full profile visible on connect</p>}
             <div style={{display:"flex",gap:"12px"}}>
               <button onClick={()=>setConfirmNode(null)} style={{flex:1,padding:"14px",borderRadius:"14px",background:"#333",color:"#fff",border:"none",fontSize:"15px",cursor:"pointer"}}>Cancel</button>
               <button onClick={()=>sendRequest(confirmNode)} style={{flex:1,padding:"14px",borderRadius:"14px",background:"#fff",color:"#000",border:"none",fontSize:"15px",fontWeight:"500",cursor:"pointer"}}>Send Request →</button>

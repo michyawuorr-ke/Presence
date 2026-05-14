@@ -1,24 +1,119 @@
 import{createClient}from'@supabase/supabase-js';
 import{NextRequest,NextResponse}from'next/server';
 import{rateLimit}from'@/lib/rateLimit';
-const supabase=createClient(process.env.NEXT_PUBLIC_SUPABASE_URL!,process.env.SUPABASE_SERVICE_ROLE_KEY!);
+import{sanitizeString}from'@/lib/sanitize';
+
+const supabase=createClient(
+  process.env.NEXT_PUBLIC_SUPABASE_URL!,
+  process.env.SUPABASE_SERVICE_ROLE_KEY!
+);
+
 export async function POST(req:NextRequest){
   try{
-    const ip=req.headers.get('x-forwarded-for')||'unknown';
-    if(!rateLimit('unlock:'+ip, 20, 60000)){
+    // Rate limit by IP
+    const ip=req.headers.get('x-forwarded-for')?.split(',')[0]?.trim()||'unknown';
+    if(!rateLimit('unlock:'+ip,20,60000)){
       return NextResponse.json({error:'Too many requests.'},{status:429});
     }
-    const{scanner_registration_id,target_registration_id}=await req.json();
-    if(!scanner_registration_id||!target_registration_id)return NextResponse.json({error:'Missing fields'},{status:400});
-    const{data:sp}=await supabase.from('guest_profiles').select('id').eq('registration_id',scanner_registration_id).single();
-    const{data:tp}=await supabase.from('guest_profiles').select('id').eq('registration_id',target_registration_id).single();
-    if(!sp||!tp)return NextResponse.json({error:'Profile not found'},{status:404});
-    const{data:handshake}=await supabase.from('handshakes').select('id').or(`and(guest_a_id.eq.${sp.id},guest_b_id.eq.${tp.id}),and(guest_a_id.eq.${tp.id},guest_b_id.eq.${sp.id})`).single();
-    if(!handshake)return NextResponse.json({error:'No connection found'},{status:404});
-    await supabase.from('handshakes').update({networking_status:'unlocked'}).eq('id',handshake.id);
-    await supabase.from('profile_unlocks').insert({handshake_id:handshake.id,unlocker_id:sp.id,unlocked_id:tp.id});
+
+    // Parse and sanitize inputs
+    const body=await req.json();
+    const scanner_registration_id=sanitizeString(body.scanner_registration_id,36);
+    const target_registration_id=sanitizeString(body.target_registration_id,36);
+
+    if(!scanner_registration_id||!target_registration_id){
+      return NextResponse.json({error:'Missing fields'},{status:400});
+    }
+
+    // Validate both registrations exist and are for the SAME event
+    const{data:scannerReg}=await supabase
+      .from('registrations')
+      .select('id,event_id,status,paid')
+      .eq('id',scanner_registration_id)
+      .single();
+
+    const{data:targetReg}=await supabase
+      .from('registrations')
+      .select('id,event_id,status')
+      .eq('id',target_registration_id)
+      .single();
+
+    if(!scannerReg||!targetReg){
+      return NextResponse.json({error:'Registration not found'},{status:404});
+    }
+
+    // Prevent cross-event scanning
+    if(scannerReg.event_id!==targetReg.event_id){
+      return NextResponse.json({error:'Invalid scan — different events'},{status:403});
+    }
+
+    // Check event is still live
+    const{data:event}=await supabase
+      .from('events')
+      .select('status')
+      .eq('id',scannerReg.event_id)
+      .single();
+
+    if(!event||event.status!=='live'){
+      return NextResponse.json({error:'Networking has closed for this event'},{status:403});
+    }
+
+    // Get guest profiles
+    const{data:sp}=await supabase
+      .from('guest_profiles')
+      .select('id')
+      .eq('registration_id',scanner_registration_id)
+      .single();
+
+    const{data:tp}=await supabase
+      .from('guest_profiles')
+      .select('id')
+      .eq('registration_id',target_registration_id)
+      .single();
+
+    if(!sp||!tp){
+      return NextResponse.json({error:'Profile not found'},{status:404});
+    }
+
+    // Prevent self-scan
+    if(sp.id===tp.id){
+      return NextResponse.json({error:'Cannot scan your own QR'},{status:400});
+    }
+
+    // Find handshake between the two
+    const{data:handshake}=await supabase
+      .from('handshakes')
+      .select('id,networking_status')
+      .or(`and(guest_a_id.eq.${sp.id},guest_b_id.eq.${tp.id}),and(guest_a_id.eq.${tp.id},guest_b_id.eq.${sp.id})`)
+      .single();
+
+    if(!handshake){
+      return NextResponse.json({error:'No connection found. Connect first before scanning.'},{status:404});
+    }
+
+    // Prevent duplicate unlock
+    if(handshake.networking_status==='unlocked'){
+      return NextResponse.json({success:true,already:true});
+    }
+
+    // Perform unlock
+    await supabase
+      .from('handshakes')
+      .update({networking_status:'unlocked'})
+      .eq('id',handshake.id);
+
+    await supabase
+      .from('profile_unlocks')
+      .insert({
+        handshake_id:handshake.id,
+        unlocker_id:sp.id,
+        unlocked_id:tp.id,
+      });
+
     return NextResponse.json({success:true});
+
   }catch(err){
+    console.error('Unlock error:',err);
     return NextResponse.json({error:'Server error'},{status:500});
   }
 }
