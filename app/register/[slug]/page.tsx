@@ -172,6 +172,7 @@ export default function RegisterPage(){
       <p style={{fontSize:"11px",letterSpacing:"0.3em",color:"#666",textTransform:"uppercase",marginBottom:"40px",textAlign:"center"}}>Presence</p>
       <div style={{maxWidth:"480px",margin:"0 auto"}}>
         <h1 style={{fontSize:"28px",fontWeight:"300",color:"#fff",marginBottom:"8px"}}>{event.title}</h1>
+        <p style={{fontSize:"11px",letterSpacing:"0.25em",color:"#444",textTransform:"uppercase",marginBottom:"4px"}}>The room, activated.</p>
         <p style={{color:"#666",marginBottom:"4px"}}>📍 {event.venue}</p>
         <p style={{color:"#555",marginBottom:"32px",fontSize:"14px"}}>{new Date(event.start_time).toLocaleDateString("en-KE",{weekday:"long",day:"numeric",month:"long",year:"numeric"})}</p>
 
