@@ -1,5 +1,8 @@
 import type { Metadata } from "next";
 import "./globals.css";
+import { Inter } from "next/font/google";
+
+const inter = Inter({ subsets: ["latin"], variable: "--font-inter" });
 
 export const metadata: Metadata = {
   title: "Oreeti",
@@ -12,8 +15,8 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html lang="en">
-      <body>{children}</body>
+    <html lang="en" className={inter.variable}>
+      <body style={{fontFamily:"var(--font-inter),-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif"}}>{children}</body>
     </html>
   );
 }

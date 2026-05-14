@@ -255,18 +255,22 @@ const[tab,setTab]=useState<Tab>("scene");
       )}
 
       {tab==="ticket"&&(
-        <div style={{padding:"24px 20px"}}>
-          <p style={{fontSize:"11px",letterSpacing:"0.3em",color:"#999",textTransform:"uppercase",marginBottom:"32px",textAlign:"center"}}>Your Ticket</p>
-          <div style={{background:"#fff",borderRadius:"24px",padding:"32px",border:"1px solid rgba(0,0,0,0.06)",textAlign:"center",marginBottom:"16px",boxShadow:"0 4px 16px rgba(0,0,0,0.04)"}}>
-            <h2 style={{fontSize:"20px",fontWeight:"500",marginBottom:"4px"}}>{event?.title}</h2>
-            <p style={{fontSize:"14px",color:"#666",marginBottom:"4px"}}>📍 {event?.venue}</p>
-            <p style={{fontSize:"14px",color:"#999",marginBottom:"24px"}}>{event&&new Date(event.start_time).toLocaleDateString()}</p>
-            <div style={{background:"#000",borderRadius:"16px",padding:"32px",marginBottom:"16px"}}>
-              <p style={{color:"#fff",fontSize:"14px",marginBottom:"8px"}}>Entry QR</p>
-              <p style={{color:"#555",fontSize:"12px",marginBottom:"16px"}}>Show at entrance</p>
-              {entryQR?<img src={entryQR} style={{width:"200px",height:"200px",margin:"0 auto"}}/>:<p style={{color:"#666"}}>Generating...</p>}
+        <div style={{padding:"16px"}}>
+          <p style={{fontSize:"10px",letterSpacing:"0.3em",color:"#999",textTransform:"uppercase",marginBottom:"16px",textAlign:"center"}}>Your Ticket</p>
+          <div style={{background:"#fff",borderRadius:"20px",padding:"20px",border:"1px solid rgba(0,0,0,0.06)",textAlign:"center",marginBottom:"12px"}}>
+            <h2 style={{fontSize:"17px",fontWeight:"600",marginBottom:"2px"}}>{event?.title}</h2>
+            <p style={{fontSize:"12px",color:"#666",marginBottom:"2px"}}>📍 {event?.venue}</p>
+            <p style={{fontSize:"12px",color:"#999",marginBottom:"16px"}}>{event&&new Date(event.start_time).toLocaleDateString("en-KE",{day:"numeric",month:"short",year:"numeric"})}</p>
+            <div style={{background:"#000",borderRadius:"12px",padding:"16px",marginBottom:"10px"}}>
+              <p style={{color:"#fff",fontSize:"12px",fontWeight:"500",marginBottom:"4px"}}>Entry QR</p>
+              <p style={{color:"#555",fontSize:"11px",marginBottom:"12px"}}>Show at entrance</p>
+              {entryQR?<img src={entryQR} style={{width:"160px",height:"160px",margin:"0 auto",display:"block"}}/>:<p style={{color:"#666",fontSize:"12px"}}>Generating...</p>}
             </div>
-            <div style={{background:"#1a1a1a",borderRadius:"16px",padding:"32px",marginTop:"24px"}}><p style={{color:"#fff",fontSize:"14px",marginBottom:"8px"}}>Networking QR</p><p style={{color:"#555",fontSize:"12px",marginBottom:"16px"}}>For profile unlocks after connecting</p>{networkingQR?<img src={networkingQR} style={{width:"200px",height:"200px",margin:"0 auto"}}/>:<p style={{color:"#666"}}>Generating...</p>}</div>
+            <div style={{background:"#111",borderRadius:"12px",padding:"16px"}}>
+              <p style={{color:"#fff",fontSize:"12px",fontWeight:"500",marginBottom:"4px"}}>Networking QR</p>
+              <p style={{color:"#555",fontSize:"11px",marginBottom:"12px"}}>For profile unlocks</p>
+              {networkingQR?<img src={networkingQR} style={{width:"160px",height:"160px",margin:"0 auto",display:"block"}}/>:<p style={{color:"#666",fontSize:"12px"}}>Generating...</p>}
+            </div>
           </div>
         </div>
       )}
@@ -484,11 +488,8 @@ function NetworkingTab({event,profile,isLive,isEnded}:any){
       })}
 
       {networkingActive&&(
-        <div style={{position:"absolute",bottom:"24px",left:"50%",transform:"translateX(-50%)",display:"flex",flexDirection:"column",alignItems:"center",gap:"12px"}}>
-          <p style={{color:"#555",fontSize:"12px",textAlign:"center"}}>Tap a circle to connect · Tap screen to scan QR</p>
-          <div style={{display:"flex",gap:"12px"}}>
-            <button onClick={stopNetworking} style={{padding:"12px 28px",borderRadius:"50px",background:"rgba(255,255,255,0.08)",color:"#fff",border:"1px solid rgba(255,255,255,0.15)",fontSize:"14px",cursor:"pointer"}}>Stop</button>
-          </div>
+        <div style={{position:"absolute",bottom:"24px",left:"50%",transform:"translateX(-50%)"}}>
+          <button onClick={stopNetworking} style={{padding:"10px 24px",borderRadius:"50px",background:"rgba(255,255,255,0.06)",color:"#666",border:"1px solid rgba(255,255,255,0.08)",fontSize:"13px",cursor:"pointer",letterSpacing:"0.02em"}}>Turn off</button>
         </div>
       )}
 
