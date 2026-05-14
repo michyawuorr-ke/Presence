@@ -255,21 +255,21 @@ const[tab,setTab]=useState<Tab>("scene");
       )}
 
       {tab==="ticket"&&(
-        <div style={{padding:"16px"}}>
-          <p style={{fontSize:"10px",letterSpacing:"0.3em",color:"#999",textTransform:"uppercase",marginBottom:"16px",textAlign:"center"}}>Your Ticket</p>
-          <div style={{background:"#fff",borderRadius:"20px",padding:"20px",border:"1px solid rgba(0,0,0,0.06)",textAlign:"center",marginBottom:"12px"}}>
+        <div style={{padding:"12px"}}>
+          <p style={{fontSize:"10px",letterSpacing:"0.3em",color:"#999",textTransform:"uppercase",marginBottom:"12px",textAlign:"center"}}>Your Ticket</p>
+          <div style={{background:"#fff",borderRadius:"16px",padding:"16px",border:"1px solid rgba(0,0,0,0.06)",textAlign:"center",marginBottom:"8px"}}>
             <h2 style={{fontSize:"17px",fontWeight:"600",marginBottom:"2px"}}>{event?.title}</h2>
             <p style={{fontSize:"12px",color:"#666",marginBottom:"2px"}}>📍 {event?.venue}</p>
             <p style={{fontSize:"12px",color:"#999",marginBottom:"16px"}}>{event&&new Date(event.start_time).toLocaleDateString("en-KE",{day:"numeric",month:"short",year:"numeric"})}</p>
-            <div style={{background:"#000",borderRadius:"12px",padding:"16px",marginBottom:"10px"}}>
+            <div style={{background:"#000",borderRadius:"10px",padding:"12px",marginBottom:"8px"}}>
               <p style={{color:"#fff",fontSize:"12px",fontWeight:"500",marginBottom:"4px"}}>Entry QR</p>
               <p style={{color:"#555",fontSize:"11px",marginBottom:"12px"}}>Show at entrance</p>
-              {entryQR?<img src={entryQR} style={{width:"160px",height:"160px",margin:"0 auto",display:"block"}}/>:<p style={{color:"#666",fontSize:"12px"}}>Generating...</p>}
+              {entryQR?<img src={entryQR} style={{width:"130px",height:"130px",margin:"0 auto",display:"block"}}/>:<p style={{color:"#666",fontSize:"12px"}}>Generating...</p>}
             </div>
-            <div style={{background:"#111",borderRadius:"12px",padding:"16px"}}>
+            <div style={{background:"#111",borderRadius:"10px",padding:"12px"}}>
               <p style={{color:"#fff",fontSize:"12px",fontWeight:"500",marginBottom:"4px"}}>Networking QR</p>
               <p style={{color:"#555",fontSize:"11px",marginBottom:"12px"}}>For profile unlocks</p>
-              {networkingQR?<img src={networkingQR} style={{width:"160px",height:"160px",margin:"0 auto",display:"block"}}/>:<p style={{color:"#666",fontSize:"12px"}}>Generating...</p>}
+              {networkingQR?<img src={networkingQR} style={{width:"130px",height:"130px",margin:"0 auto",display:"block"}}/>:<p style={{color:"#666",fontSize:"12px"}}>Generating...</p>}
             </div>
           </div>
         </div>
@@ -279,10 +279,10 @@ const[tab,setTab]=useState<Tab>("scene");
         <ProfileTab profile={profile} event={event} onProfileUpdate={onProfileUpdate} isEnded={isEnded} registration={registration}/>
       )}
 
-      <div style={{position:"fixed",bottom:"12px",left:"12px",right:"12px",background:"rgba(255,255,255,0.95)",backdropFilter:"blur(32px)",borderRadius:"24px",border:"1px solid rgba(0,0,0,0.08)",display:"flex",padding:"16px 8px",boxShadow:"0 8px 32px rgba(0,0,0,0.12), 0 2px 8px rgba(0,0,0,0.04)"}}>
+      <div style={{position:"fixed",bottom:"8px",left:"8px",right:"8px",background:"rgba(255,255,255,0.95)",backdropFilter:"blur(32px)",borderRadius:"20px",border:"1px solid rgba(0,0,0,0.08)",display:"flex",padding:"8px 4px",boxShadow:"0 4px 16px rgba(0,0,0,0.1)"}}>
         {nav.map(item=>(
-          <button key={item.id} onClick={()=>{setTab(item.id as Tab);setEditing(false);}} style={{flex:1,display:"flex",flexDirection:"column",alignItems:"center",gap:"6px",background:tab===item.id?"rgba(37,99,235,0.08)":"none",border:"none",cursor:"pointer",padding:"12px 8px",borderRadius:"14px",transition:"all 0.3s ease"}}>
-            <span style={{fontSize:"20px",opacity:tab===item.id?1:0.35,transform:tab===item.id?"scale(1.1)":"scale(1)",transition:"all 0.2s"}}>{item.e}</span>
+          <button key={item.id} onClick={()=>{setTab(item.id as Tab);setEditing(false);}} style={{flex:1,display:"flex",flexDirection:"column",alignItems:"center",gap:"4px",background:tab===item.id?"rgba(37,99,235,0.08)":"none",border:"none",cursor:"pointer",padding:"8px 4px",borderRadius:"12px",transition:"all 0.2s ease"}}>
+            <span style={{fontSize:"16px",opacity:tab===item.id?1:0.35,transform:tab===item.id?"scale(1.1)":"scale(1)",transition:"all 0.2s"}}>{item.e}</span>
             <span style={{fontSize:"11px",color:tab===item.id?"#2563eb":"#999",fontWeight:tab===item.id?"600":"400",letterSpacing:"0.02em"}}>{item.l}</span>
           </button>
         ))}

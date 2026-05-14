@@ -160,7 +160,7 @@ export default function RegisterPage(){
         </div>
       </div>
       <p style={{color:"#444",fontSize:"13px",textAlign:"center",marginBottom:"24px"}}>Save this link. It is your ticket and networking pass.</p>
-      <a href={guestLink} style={{display:"block",textAlign:"center",padding:"16px",borderRadius:"16px",background:"#fff",color:"#000",textDecoration:"none",fontSize:"15px",fontWeight:"500",width:"100%",maxWidth:"360px",boxSizing:"border-box"}}>Enter Presence →</a>
+      <a href={guestLink} style={{display:"block",textAlign:"center",padding:"16px",borderRadius:"16px",background:"#fff",color:"#000",textDecoration:"none",fontSize:"15px",fontWeight:"500",width:"100%",maxWidth:"360px",boxSizing:"border-box"}}>Enter the Scene →</a>
     </div>
   );
 
