@@ -25,17 +25,19 @@ export default function HostProfilePage(){
       const{data:h}=await supabase.from("hosts").select("*").eq("email",user.email).single();
       setHost(h);
 
-      const{data:p}=await supabase.from("host_profiles").select("*").eq("host_id",user.id).single();
-      if(p){
-        setProfile(p);
-        setDisplayName(p.display_name||h?.name||"");
-        setRole(p.role_title||"");
-        setOrganisation(p.organisation||"");
-        setBio(p.bio||"");
-        setLink(p.platform_value||"");
-        setShowInEvents(p.show_in_events??true);
-      }else{
-        setDisplayName(h?.name||"");
+      if(h){
+        const{data:p}=await supabase.from("host_profiles").select("*").eq("host_id",h.id).single();
+        if(p){
+          setProfile(p);
+          setDisplayName(p.display_name||h?.name||"");
+          setRole(p.role_title||"");
+          setOrganisation(p.organisation||"");
+          setBio(p.bio||"");
+          setLink(p.platform_value||"");
+          setShowInEvents(p.show_in_events??true);
+        }else{
+          setDisplayName(h?.name||"");
+        }
       }
       setLoading(false);
     }
@@ -47,9 +49,11 @@ export default function HostProfilePage(){
     setSaving(true);
     const{data:{user}}=await supabase.auth.getUser();
     if(!user){return;}
+    const{data:h}=await supabase.from("hosts").select("id").eq("email",user.email).single();
+    if(!h){setSaving(false);return;}
 
     const data={
-      host_id:user.id,
+      host_id:h.id,
       display_name:displayName,
       role_title:role,
       organisation,
@@ -106,7 +110,7 @@ export default function HostProfilePage(){
         {organisation&&<p style={{fontSize:"13px",color:"#92400e",marginBottom:"4px"}}>{organisation}</p>}
         {bio&&<p style={{fontSize:"13px",color:"#78350f",marginBottom:"4px"}}>{bio}</p>}
         {link&&<p style={{fontSize:"13px",color:"#b45309"}}>{link.replace("https://","").replace("http://","")}</p>}
-        <p style={{fontSize:"11px",color:"#92400e",marginTop:"12px",fontStyle:"italic"}}>This is how guests see you in the Aura</p>
+        <p style={{fontSize:"11px",color:"#92400e",marginTop:"12px",fontStyle:"italic"}}>This is how guests see you in Networking</p>
       </div>
 
       {/* Form */}
@@ -123,7 +127,7 @@ export default function HostProfilePage(){
       <div style={{background:"#fff",borderRadius:"20px",padding:"20px",border:"1px solid rgba(0,0,0,0.06)",marginBottom:"24px",display:"flex",justifyContent:"space-between",alignItems:"center"}}>
         <div>
           <p style={{fontSize:"14px",fontWeight:"500",marginBottom:"2px"}}>Appear in my events</p>
-          <p style={{fontSize:"12px",color:"#999"}}>Show as VIP host in Aura when event is live</p>
+          <p style={{fontSize:"12px",color:"#999"}}>Show as VIP host in Networking when event is live</p>
         </div>
         <div
           onClick={()=>setShowInEvents(!showInEvents)}

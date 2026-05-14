@@ -100,7 +100,7 @@ export default function EventDetailPage(){
       "━".repeat(40),
       "NETWORKING ACTIVITY",
       "━".repeat(40),
-      "Guests Who Networked: "+stats.onAura,
+      "Guests Networked: "+stats.onAura,
       "Handshakes Exchanged: "+stats.handshakes,
       "Profiles Unlocked:    "+stats.unlocked,
       "Connection Rate:      "+connectionRate+"% of attendees connected",
@@ -211,7 +211,7 @@ export default function EventDetailPage(){
         <p style={{fontSize:"12px",fontWeight:"600",color:"#999",letterSpacing:"0.1em",textTransform:"uppercase",marginBottom:"16px"}}>Networking</p>
         <div style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr",gap:"12px"}}>
           {[
-            {label:"On Aura",value:stats.onAura},
+            {label:"Networking",value:stats.onAura},
             {label:"Handshakes",value:stats.handshakes},
             {label:"Unlocked",value:stats.unlocked},
           ].map(s=>(

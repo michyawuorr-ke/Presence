@@ -21,22 +21,24 @@ export async function GET(req:NextRequest){
     return NextResponse.json({host:null});
   }
 
-  // Get host profile
+  // Get host info first
+  const{data:host}=await supabase
+    .from('hosts')
+    .select('id,name,email')
+    .eq('id',event.host_id)
+    .single();
+
+  if(!host)return NextResponse.json({host:null});
+
+  // Get host profile using hosts.id
   const{data:hostProfile}=await supabase
     .from('host_profiles')
     .select('*')
-    .eq('host_id',event.host_id)
+    .eq('host_id',host.id)
     .eq('show_in_events',true)
     .single();
 
   if(!hostProfile)return NextResponse.json({host:null});
-
-  // Get host info
-  const{data:host}=await supabase
-    .from('hosts')
-    .select('name,email')
-    .eq('id',event.host_id)
-    .single();
 
   return NextResponse.json({
     host:{
