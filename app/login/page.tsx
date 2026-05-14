@@ -91,7 +91,10 @@ export default function LoginPage(){
       </div>
 
       <p style={{color:"#333",fontSize:"11px",marginTop:"48px",textAlign:"center",lineHeight:"1.6"}}>
-        By continuing you agree to our Terms of Use{"\n"}and Privacy Policy
+        By continuing you agree to our{" "}
+        <a href="/terms" target="_blank" style={{color:"#555",textDecoration:"underline"}}>Terms of Use</a>
+        {" "}and{" "}
+        <a href="/privacy" target="_blank" style={{color:"#555",textDecoration:"underline"}}>Privacy Policy</a>
       </p>
     </main>
   );

@@ -517,7 +517,7 @@ function NetworkingTab({event,profile,isLive,isEnded}:any){
               {confirmNode.is_host&&<span style={{background:"#f59e0b",color:"#000",fontSize:"10px",fontWeight:"700",padding:"2px 8px",borderRadius:"6px"}}>HOST</span>}
             </div>
             <p style={{color:"#666",fontSize:"14px",marginBottom:"4px"}}>{confirmNode.role_title||""}</p>
-            {confirmNode.is_host&&<p style={{color:"#f59e0b",fontSize:"12px",marginBottom:"16px"}}>★ Event organizer — full profile visible on connect</p>}
+            {confirmNode.is_host&&<p style={{color:"#f59e0b",fontSize:"12px",marginBottom:"8px"}}>★ Event organizer</p>}
             <div style={{display:"flex",gap:"12px"}}>
               <button onClick={()=>setConfirmNode(null)} style={{flex:1,padding:"14px",borderRadius:"14px",background:"#333",color:"#fff",border:"none",fontSize:"15px",cursor:"pointer"}}>Cancel</button>
               <button onClick={()=>sendRequest(confirmNode)} style={{flex:1,padding:"14px",borderRadius:"14px",background:"#fff",color:"#000",border:"none",fontSize:"15px",fontWeight:"500",cursor:"pointer"}}>Send Request →</button>
@@ -655,8 +655,8 @@ function ProfileTab({profile,event,onProfileUpdate,isEnded,registration}:any){
       )}
       {scanMsg&&<div style={{position:"fixed",bottom:"120px",left:"50%",transform:"translateX(-50%)",background:"#1a1a1a",color:"#fff",padding:"12px 24px",borderRadius:"12px",fontSize:"14px",zIndex:999,whiteSpace:"nowrap"}}>{scanMsg}</div>}
 
-      <div style={{marginTop:"32px"}}>
-        <h2 style={{fontSize:"16px",fontWeight:"500",marginBottom:"16px"}}>Your Connections</h2>
+      <div style={{marginTop:"16px"}}>
+        <p style={{fontSize:"12px",fontWeight:"600",color:"#999",letterSpacing:"0.08em",textTransform:"uppercase",marginBottom:"12px"}}>Connections</p>
         {connections.length===0?(
           <p style={{color:"#999",fontSize:"14px",textAlign:"center",padding:"40px 0"}}>
             {isEnded?"No connections from this event":"Connect with people to see them here"}
