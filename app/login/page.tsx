@@ -123,7 +123,7 @@ export default function LoginPage(){
         <input value={name} onChange={e=>setName(e.target.value)} placeholder="Full name" type="text" style={inp}/>
         <input value={email} onChange={e=>setEmail(e.target.value)} placeholder="Email address" type="email" style={inp}/>
         <div style={{position:"relative"}}>
-          <input value={phone} onChange={e=>setPhone(e.target.value)} placeholder="07XXXXXXXX" type="tel" style={{...inp,paddingLeft:"16px"}}/>
+          <input value={phone} onChange={e=>setPhone(e.target.value)} placeholder="+254XXXXXXXXX" type="tel" style={{...inp,paddingLeft:"16px"}}/>
           <p style={{fontSize:"11px",color:"#444",marginTop:"6px",paddingLeft:"4px"}}>M-Pesa number for ticket payouts</p>
         </div>
       </div>
