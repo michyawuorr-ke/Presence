@@ -13,6 +13,9 @@ export default function EventDetailPage(){
   const[ticketPrice,setTicketPrice]=useState("");
   const[ticketQty,setTicketQty]=useState("");
   const[saving,setSaving]=useState(false);
+  const[hostLink,setHostLink]=useState("");
+  const[goingLive,setGoingLive]=useState(false);
+  const[timeToLive,setTimeToLive]=useState<string>("");
   const router=useRouter();
   const params=useParams();
   const id=params.id as string;
