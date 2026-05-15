@@ -1,8 +1,8 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
-
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
 
 :root {
   --font-inter: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
@@ -43,22 +43,4 @@ input, textarea, button {
 
 ::-webkit-scrollbar {
   display: none;
-}
-
-/* Premium glass card */
-.glass-card {
-  background: rgba(26,26,36,0.8);
-  backdrop-filter: blur(20px);
-  border: 1px solid rgba(255,255,255,0.06);
-  border-radius: 20px;
-}
-
-/* Accent gradient */
-.accent-gradient {
-  background: linear-gradient(135deg, #7c6aff, #5b4fd4);
-}
-
-/* Gold gradient */
-.gold-gradient {
-  background: linear-gradient(135deg, #f59e0b, #d97706);
 }
