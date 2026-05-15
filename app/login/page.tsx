@@ -1,6 +1,7 @@
 "use client";
 import{useState}from"react";
 import{supabase}from"@/lib/supabase/client";
+import OreetiLogo from"@/components/OreetiLogo";
 
 type Mode="landing"|"signup"|"login"|"sent";
 
@@ -75,10 +76,8 @@ export default function LoginPage(){
   // Landing
   if(mode==="landing")return(
     <main style={{minHeight:"100vh",background:"#000",display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",padding:"32px 24px"}}>
-      <div style={{marginBottom:"64px",textAlign:"center"}}>
-        <p style={{fontSize:"11px",letterSpacing:"0.4em",color:"#444",textTransform:"uppercase",marginBottom:"24px"}}>Welcome to</p>
-        <h1 style={{fontSize:"48px",fontWeight:"700",color:"#fff",letterSpacing:"-0.03em",lineHeight:"1",marginBottom:"12px"}}>Oreeti</h1>
-        <p style={{fontSize:"16px",color:"#555",fontWeight:"300",letterSpacing:"0.02em"}}>Your Events, Alive.</p>
+      <div style={{marginBottom:"64px",textAlign:"center",display:"flex",flexDirection:"column",alignItems:"center"}}>
+        <OreetiLogo size="lg" theme="dark"/>
       </div>
 
       <div style={{width:"100%",maxWidth:"320px",display:"flex",flexDirection:"column",gap:"12px"}}>
@@ -117,7 +116,7 @@ export default function LoginPage(){
       <button onClick={()=>{setMode("landing");setError("");}} style={{background:"none",border:"none",color:"#555",fontSize:"20px",cursor:"pointer",marginBottom:"32px",alignSelf:"flex-start"}}>←</button>
 
       <div style={{marginBottom:"32px"}}>
-        <p style={{fontSize:"11px",letterSpacing:"0.3em",color:"#444",textTransform:"uppercase",marginBottom:"8px"}}>Oreeti</p>
+        <div style={{marginBottom:"16px"}}><OreetiLogo size="sm" theme="dark"/></div>
         <h1 style={{fontSize:"28px",fontWeight:"600",color:"#fff",letterSpacing:"-0.02em",marginBottom:"8px"}}>Create account</h1>
         <p style={{fontSize:"14px",color:"#555"}}>Start hosting intentional events</p>
       </div>
@@ -150,7 +149,7 @@ export default function LoginPage(){
       <button onClick={()=>{setMode("landing");setError("");}} style={{background:"none",border:"none",color:"#555",fontSize:"20px",cursor:"pointer",marginBottom:"32px",alignSelf:"flex-start"}}>←</button>
 
       <div style={{marginBottom:"32px"}}>
-        <p style={{fontSize:"11px",letterSpacing:"0.3em",color:"#444",textTransform:"uppercase",marginBottom:"8px"}}>Oreeti</p>
+        <div style={{marginBottom:"16px"}}><OreetiLogo size="sm" theme="dark"/></div>
         <h1 style={{fontSize:"28px",fontWeight:"600",color:"#fff",letterSpacing:"-0.02em",marginBottom:"8px"}}>Welcome back</h1>
         <p style={{fontSize:"14px",color:"#555"}}>Sign in to your organizer account</p>
       </div>

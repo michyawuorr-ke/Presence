@@ -2,6 +2,7 @@
 import{usePathname,useRouter}from"next/navigation";
 import{useEffect}from"react";
 import{supabase}from"@/lib/supabase/client";
+import OreetiLogo from"@/components/OreetiLogo";
 
 const tabs=[
   {label:"Events",path:"/dashboard/events"},
@@ -22,12 +23,7 @@ export default function DashboardLayout({children}:{children:React.ReactNode}){
     <div style={{minHeight:"100vh",background:"#0f0f13",fontFamily:"var(--font-inter),-apple-system,sans-serif"}}>
       <div style={{position:"fixed",top:0,left:0,right:0,zIndex:100,background:"rgba(15,15,19,0.95)",backdropFilter:"blur(20px)",borderBottom:"1px solid rgba(255,255,255,0.06)",padding:"0 20px",maxWidth:"480px",margin:"0 auto"}}>
         <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",height:"52px"}}>
-          <div style={{display:"flex",alignItems:"center",gap:"8px"}}>
-            <div style={{width:"24px",height:"24px",borderRadius:"6px",background:"linear-gradient(135deg,#7c6aff,#5b4fd4)",display:"flex",alignItems:"center",justifyContent:"center"}}>
-              <span style={{color:"#fff",fontSize:"12px",fontWeight:"700"}}>O</span>
-            </div>
-            <p style={{fontSize:"13px",fontWeight:"600",color:"#f1f0f5",letterSpacing:"-0.01em"}}>Oreeti</p>
-          </div>
+          <OreetiLogo size="sm" theme="dark"/>
           <button onClick={async()=>{await supabase.auth.signOut();router.push("/login");}} style={{fontSize:"12px",color:"#6b6880",background:"rgba(255,255,255,0.06)",border:"none",cursor:"pointer",padding:"6px 12px",borderRadius:"8px"}}>Sign out</button>
         </div>
         <div style={{display:"flex",gap:"4px",paddingBottom:"10px"}}>

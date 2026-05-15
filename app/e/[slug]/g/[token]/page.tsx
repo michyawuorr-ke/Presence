@@ -3,6 +3,7 @@ import{useEffect,useState,useRef,useCallback}from"react";
 import{useParams}from"next/navigation";
 import{supabase}from"@/lib/supabase/client";
 import QRCode from"qrcode";
+import OreetiLogo from"@/components/OreetiLogo";
 
 type Screen="splash"|"identity"|"scene";
 type Tab="scene"|"networking"|"ticket"|"profile";
@@ -80,9 +81,15 @@ export default function GuestEntryPage(){
 
 function Splash(){
   return(
-    <div style={{position:"fixed",inset:0,background:"#000",display:"flex",alignItems:"center",justifyContent:"center",zIndex:9999}}>
-      <style>{`@keyframes fi{from{opacity:0;letter-spacing:0.1em}to{opacity:1;letter-spacing:0.25em}}`}</style>
-      <p style={{color:"#fff",fontSize:"18px",fontWeight:"300",letterSpacing:"0.25em",textTransform:"uppercase",animation:"fi 1.4s ease forwards"}}>Presence Manifested</p>
+    <div style={{position:"fixed",inset:0,background:"#0f0f13",display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",zIndex:9999,gap:"24px"}}>
+      <style>{`
+        @keyframes logoIn{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
+        @keyframes textIn{from{opacity:0}to{opacity:1}}
+      `}</style>
+      <div style={{animation:"logoIn 1.2s ease forwards"}}>
+        <OreetiLogo size="lg" theme="dark"/>
+      </div>
+      <p style={{color:"#403A35",fontSize:"13px",letterSpacing:"0.3em",textTransform:"uppercase",animation:"textIn 1.8s ease forwards",fontWeight:"300"}}>Presence Manifested</p>
     </div>
   );
 }
