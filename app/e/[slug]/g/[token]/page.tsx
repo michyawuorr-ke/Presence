@@ -89,7 +89,7 @@ function Splash(){
       <div style={{animation:"logoIn 1.2s ease forwards"}}>
         <OreetiLogo size="lg" theme="dark"/>
       </div>
-      <p style={{color:"#403A35",fontSize:"13px",letterSpacing:"0.3em",textTransform:"uppercase",animation:"textIn 1.8s ease forwards",fontWeight:"300"}}>Presence Manifested</p>
+      <p style={{color:"#E26D34",fontSize:"11px",letterSpacing:"0.35em",textTransform:"uppercase",animation:"textIn 1.8s ease forwards",fontWeight:"400",opacity:0.8}}>The room, activated.</p>
     </div>
   );
 }
