@@ -52,6 +52,38 @@ export default function EventDetailPage(){
     });
   }
 
+  // Auto go-live at start time
+  useEffect(()=>{
+    if(!event||event.status!=="scheduled")return;
+    const tick=setInterval(async()=>{
+      const now=new Date();
+      const start=new Date(event.start_time);
+      const diff=start.getTime()-now.getTime();
+      if(diff<=0){
+        clearInterval(tick);
+        // Auto trigger go live
+        const{data:{user}}=await supabase.auth.getUser();
+        if(user){
+          const res=await fetch('/api/events/go-live',{
+            method:'POST',
+            headers:{'Content-Type':'application/json'},
+            body:JSON.stringify({event_id:id,host_email:user.email}),
+          });
+          const data=await res.json();
+          if(res.ok){
+            setEvent({...event,status:'live'});
+            setHostLink(data.host_link);
+          }
+        }
+      }else{
+        const mins=Math.floor(diff/60000);
+        const secs=Math.floor((diff%60000)/1000);
+        setTimeToLive(mins>0?mins+"m "+secs+"s":secs+"s");
+      }
+    },1000);
+    return()=>clearInterval(tick);
+  },[event,id]);
+
   async function handleAddTicket(){
     if(!ticketName)return;
     setSaving(true);

@@ -34,12 +34,12 @@ export default function EventsPage(){
 
   function EventCard({event}:{event:any}){
     return(
-      <div style={{background:"#fff",borderRadius:"20px",padding:"20px",marginBottom:"12px",border:"1px solid rgba(0,0,0,0.06)",cursor:"pointer",opacity:event.is_hidden?0.5:1}}>
+      <div style={{background:"rgba(26,26,36,0.9)",borderRadius:"16px",padding:"16px",marginBottom:"8px",border:"1px solid rgba(255,255,255,0.06)",cursor:"pointer",opacity:event.is_hidden?0.4:1}}>
         <div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-start",marginBottom:"8px"}}>
           <div style={{flex:1}} onClick={()=>router.push("/dashboard/events/"+event.id)}>
-            <h2 style={{fontSize:"16px",fontWeight:"500",marginBottom:"4px"}}>{event.title}</h2>
-            <p style={{fontSize:"13px",color:"#666",marginBottom:"4px"}}>📍 {event.venue}</p>
-            <p style={{fontSize:"13px",color:"#999"}}>🗓 {new Date(event.start_time).toLocaleDateString("en-KE",{day:"numeric",month:"short",year:"numeric"})}</p>
+            <h2 style={{fontSize:"15px",fontWeight:"600",marginBottom:"4px",color:"#f1f0f5"}}>{event.title}</h2>
+            <p style={{fontSize:"12px",color:"#6b6880",marginBottom:"2px"}}>📍 {event.venue}</p>
+            <p style={{fontSize:"12px",color:"#6b6880"}}>🗓 {new Date(event.start_time).toLocaleDateString("en-KE",{day:"numeric",month:"short",year:"numeric"})}</p>
           </div>
           <div style={{display:"flex",flexDirection:"column",alignItems:"flex-end",gap:"8px",marginLeft:"12px"}}>
             <span style={{fontSize:"11px",textTransform:"uppercase",fontWeight:"600",color:statusColor[event.status]}}>{event.status}</span>
@@ -58,8 +58,8 @@ export default function EventsPage(){
   return(
     <div style={{maxWidth:"600px",margin:"0 auto"}}>
       <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:"24px"}}>
-        <h1 style={{fontSize:"22px",fontWeight:"500"}}>Your Events</h1>
-        <button onClick={()=>router.push("/dashboard/events/create")} style={{padding:"10px 20px",borderRadius:"14px",background:"#000",color:"#fff",border:"none",fontSize:"13px",cursor:"pointer"}}>+ New event</button>
+        <h1 style={{fontSize:"20px",fontWeight:"700",color:"#f1f0f5",letterSpacing:"-0.02em"}}>Your Events</h1>
+        <button onClick={()=>router.push("/dashboard/events/create")} style={{padding:"8px 16px",borderRadius:"12px",background:"linear-gradient(135deg,#7c6aff,#5b4fd4)",color:"#fff",border:"none",fontSize:"13px",cursor:"pointer",fontWeight:"600",boxShadow:"0 4px 12px rgba(124,106,255,0.3)"}}>+ New event</button>
       </div>
 
       {visible.length===0&&hidden.length===0&&(
