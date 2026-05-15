@@ -67,6 +67,7 @@ export default function GuestEntryPage(){
     if(loading)return;
     const timer=setTimeout(()=>{
       if(profile)setScreen("scene");
+      else if(registration?.status==="host")setScreen("scene");
       else setScreen("identity");
     },2200);
     return()=>clearTimeout(timer);
