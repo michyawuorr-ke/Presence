@@ -14,8 +14,8 @@ export default function EventDetailPage(){
   const[ticketQty,setTicketQty]=useState("");
   const[saving,setSaving]=useState(false);
   const[hostLink,setHostLink]=useState("");
-  const[goingLive,setGoingLive]=useState(false);
-  const[timeToLive,setTimeToLive]=useState<string>("");
+  const[timeToLive,setTimeToLive]=useState("");
+  const[ending,setEnding]=useState(false);
   const router=useRouter();
   const params=useParams();
   const id=params.id as string;
@@ -27,10 +27,48 @@ export default function EventDetailPage(){
       setEvent(ev);
       setTicketTypes(tickets??[]);
       if(ev){await loadStats(ev.id);}
+      // Check if host already has a link
+      const{data:{user}}=await supabase.auth.getUser();
+      if(user&&ev?.status==="live"){
+        const{data:hostReg}=await supabase.from("registrations").select("guest_access_link").eq("event_id",id).eq("guest_email",user.email).eq("status","host").single();
+        if(hostReg)setHostLink(hostReg.guest_access_link);
+      }
       setLoading(false);
     }
     load();
   },[id]);
+
+  // Auto go-live countdown
+  useEffect(()=>{
+    if(!event||event.status!=="scheduled")return;
+    const tick=setInterval(async()=>{
+      const now=new Date();
+      const start=new Date(event.start_time);
+      const diff=start.getTime()-now.getTime();
+      if(diff<=0){
+        clearInterval(tick);
+        const{data:{user}}=await supabase.auth.getUser();
+        if(user){
+          const res=await fetch('/api/events/go-live',{
+            method:'POST',
+            headers:{'Content-Type':'application/json'},
+            body:JSON.stringify({event_id:id,host_email:user.email}),
+          });
+          const data=await res.json();
+          if(res.ok){
+            setEvent((prev:any)=>({...prev,status:'live'}));
+            setHostLink(data.host_link);
+          }
+        }
+      }else{
+        const h=Math.floor(diff/3600000);
+        const m=Math.floor((diff%3600000)/60000);
+        const s=Math.floor((diff%60000)/1000);
+        setTimeToLive(h>0?h+"h "+m+"m":m>0?m+"m "+s+"s":s+"s");
+      }
+    },1000);
+    return()=>clearInterval(tick);
+  },[event,id]);
 
   async function loadStats(eventId:string){
     const[{count:total},{count:confirmed},{count:checkins},{count:onAura},{count:handshakes},{count:unlocked}]=await Promise.all([
@@ -43,49 +81,20 @@ export default function EventDetailPage(){
     ]);
     const{data:revenueData}=await supabase.from("registrations").select("amount").eq("event_id",eventId).eq("paid",true);
     const revenue=(revenueData||[]).reduce((sum:number,r:any)=>sum+(r.amount||0),0);
-    setStats({
-      registrations:total||0,
-      confirmed:confirmed||0,
-      pending:(total||0)-(confirmed||0),
-      revenue,
-      checkins:checkins||0,
-      onAura:onAura||0,
-      handshakes:handshakes||0,
-      unlocked:unlocked||0,
-    });
+    setStats({registrations:total||0,confirmed:confirmed||0,pending:(total||0)-(confirmed||0),revenue,checkins:checkins||0,onAura:onAura||0,handshakes:handshakes||0,unlocked:unlocked||0});
   }
 
-  // Auto go-live at start time
-  useEffect(()=>{
-    if(!event||event.status!=="scheduled")return;
-    const tick=setInterval(async()=>{
-      const now=new Date();
-      const start=new Date(event.start_time);
-      const diff=start.getTime()-now.getTime();
-      if(diff<=0){
-        clearInterval(tick);
-        // Auto trigger go live
-        const{data:{user}}=await supabase.auth.getUser();
-        if(user){
-          const res=await fetch('/api/events/go-live',{
-            method:'POST',
-            headers:{'Content-Type':'application/json'},
-            body:JSON.stringify({event_id:id,host_email:user.email}),
-          });
-          const data=await res.json();
-          if(res.ok){
-            setEvent({...event,status:'live'});
-            setHostLink(data.host_link);
-          }
-        }
-      }else{
-        const mins=Math.floor(diff/60000);
-        const secs=Math.floor((diff%60000)/1000);
-        setTimeToLive(mins>0?mins+"m "+secs+"s":secs+"s");
-      }
-    },1000);
-    return()=>clearInterval(tick);
-  },[event,id]);
+  async function handleEndEvent(){
+    setEnding(true);
+    await supabase.from("events").update({status:"ended"}).eq("id",id);
+    setEvent((prev:any)=>({...prev,status:"ended"}));
+    setEnding(false);
+  }
+
+  async function handlePublish(){
+    await supabase.from("events").update({status:"scheduled"}).eq("id",id);
+    setEvent((prev:any)=>({...prev,status:"scheduled"}));
+  }
 
   async function handleAddTicket(){
     if(!ticketName)return;
@@ -109,7 +118,7 @@ export default function EventDetailPage(){
     document.body.removeChild(el);
   }
 
-  function downloadPDF(){
+  function downloadReport(){
     const engagementRate=stats.registrations>0?Math.round((stats.checkins/stats.registrations)*100):0;
     const connectionRate=stats.checkins>0?Math.round((stats.handshakes/stats.checkins)*100):0;
     const unlockRate=stats.handshakes>0?Math.round((stats.unlocked/stats.handshakes)*100):0;
@@ -133,9 +142,9 @@ export default function EventDetailPage(){
       stats.revenue>0?"Total Revenue:        KES "+stats.revenue.toLocaleString():"",
       "",
       "━".repeat(40),
-      "NETWORKING ACTIVITY",
+      "NETWORKING",
       "━".repeat(40),
-      "Guests Networked: "+stats.onAura,
+      "Guests Who Networked: "+stats.onAura,
       "Handshakes Exchanged: "+stats.handshakes,
       "Profiles Unlocked:    "+stats.unlocked,
       "Connection Rate:      "+connectionRate+"% of attendees connected",
@@ -145,147 +154,159 @@ export default function EventDetailPage(){
       "ACTIVATION SUMMARY",
       "━".repeat(40),
       activationLevel,
-      "",
-      stats.unlocked>0?stats.unlocked+" people walked out with real contact details —":"",
-      stats.unlocked>0?"not a LinkedIn request. A real connection made in person.":"",
+      stats.unlocked>0?"\n"+stats.unlocked+" people walked out with real contact details.":"",
       "",
       "━".repeat(40),
       "Generated by Oreeti · "+new Date().toLocaleDateString("en-KE"),
-      "hello.oreeti@gmail.com",
-      "The room, activated.",
-    ].filter(l=>l!==undefined).join("\n").trim();
+      "hello.oreeti@gmail.com · The room, activated.",
+    ].filter(Boolean).join("\n").trim();
     const blob=new Blob([content],{type:"text/plain"});
     const url=URL.createObjectURL(blob);
     const a=document.createElement("a");
-    a.href=url;
-    a.download=event.title.replace(/\s+/g,"-")+"-oreeti-report.txt";
+    a.href=url;a.download=event.title.replace(/\s+/g,"-")+"-oreeti-report.txt";
     document.body.appendChild(a);a.click();
     document.body.removeChild(a);URL.revokeObjectURL(url);
   }
 
-  if(loading)return<div style={{textAlign:"center",padding:"60px",color:"#999"}}>Loading...</div>;
-  if(!event)return<div style={{textAlign:"center",padding:"60px",color:"#999"}}>Event not found</div>;
+  if(loading)return<div style={{textAlign:"center",padding:"60px",color:"#6b6880"}}>Loading...</div>;
+  if(!event)return<div style={{textAlign:"center",padding:"60px",color:"#6b6880"}}>Event not found</div>;
 
-  const statusColor:any={draft:"#999",scheduled:"#2563eb",live:"#16a34a",ended:"#666"};
-  const registrationLink=`${window.location.origin}/register/${event.slug}`;
+  const statusColor:any={draft:"#6b6880",scheduled:"#7c6aff",live:"#34d399",ended:"#6b6880"};
+  const statusBg:any={draft:"rgba(107,104,128,0.1)",scheduled:"rgba(124,106,255,0.1)",live:"rgba(52,211,153,0.1)",ended:"rgba(107,104,128,0.08)"};
+  const registrationLink=`${typeof window!=="undefined"?window.location.origin:""}/register/${event.slug}`;
+
+  const card=(label:string,value:any,color:string="#f1f0f5")=>(
+    <div style={{background:"rgba(26,26,36,0.9)",borderRadius:"12px",padding:"14px",border:"1px solid rgba(255,255,255,0.06)"}}>
+      <p style={{fontSize:"24px",fontWeight:"700",color,lineHeight:"1",marginBottom:"4px"}}>{value}</p>
+      <p style={{fontSize:"11px",color:"#6b6880"}}>{label}</p>
+    </div>
+  );
 
   return(
     <div style={{maxWidth:"600px",margin:"0 auto"}}>
-      <button onClick={()=>router.back()} style={{background:"none",border:"none",color:"#999",fontSize:"14px",cursor:"pointer",marginBottom:"24px",padding:"0"}}>← Back</button>
+      <button onClick={()=>router.back()} style={{background:"rgba(255,255,255,0.06)",border:"none",color:"#6b6880",fontSize:"16px",cursor:"pointer",marginBottom:"20px",width:"36px",height:"36px",borderRadius:"10px",display:"flex",alignItems:"center",justifyContent:"center"}}>←</button>
 
       {/* Header */}
-      <div style={{background:"#fff",borderRadius:"20px",padding:"24px",marginBottom:"16px",border:"1px solid rgba(0,0,0,0.06)"}}>
+      <div style={{background:"rgba(26,26,36,0.9)",borderRadius:"20px",padding:"20px",marginBottom:"12px",border:"1px solid rgba(255,255,255,0.06)"}}>
         <div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-start",marginBottom:"12px"}}>
-          <h1 style={{fontSize:"22px",fontWeight:"500"}}>{event.title}</h1>
-          <span style={{fontSize:"11px",textTransform:"uppercase",fontWeight:"600",color:statusColor[event.status],background:event.status==="live"?"#f0fdf4":"#f9fafb",padding:"4px 10px",borderRadius:"8px"}}>{event.status}</span>
+          <h1 style={{fontSize:"20px",fontWeight:"700",color:"#f1f0f5",letterSpacing:"-0.02em",flex:1,marginRight:"12px"}}>{event.title}</h1>
+          <span style={{fontSize:"10px",textTransform:"uppercase",fontWeight:"700",color:statusColor[event.status],background:statusBg[event.status],padding:"4px 10px",borderRadius:"8px",letterSpacing:"0.05em",whiteSpace:"nowrap"}}>{event.status}</span>
         </div>
-        <p style={{fontSize:"14px",color:"#666",marginBottom:"4px"}}>📍 {event.venue}</p>
-        <p style={{fontSize:"14px",color:"#999",marginBottom:"4px"}}>🗓 {new Date(event.start_time).toLocaleDateString("en-KE",{weekday:"short",day:"numeric",month:"short",year:"numeric"})}</p>
-        <p style={{fontSize:"14px",color:"#999"}}> 🕐 {new Date(event.start_time).toLocaleTimeString("en-KE",{hour:"2-digit",minute:"2-digit"})} — {new Date(event.end_time).toLocaleTimeString("en-KE",{hour:"2-digit",minute:"2-digit"})}</p>
+        <p style={{fontSize:"13px",color:"#6b6880",marginBottom:"2px"}}>📍 {event.venue}</p>
+        <p style={{fontSize:"13px",color:"#6b6880",marginBottom:"2px"}}>🗓 {new Date(event.start_time).toLocaleDateString("en-KE",{weekday:"short",day:"numeric",month:"short",year:"numeric"})}</p>
+        <p style={{fontSize:"13px",color:"#6b6880"}}>🕐 {new Date(event.start_time).toLocaleTimeString("en-KE",{hour:"2-digit",minute:"2-digit"})} — {new Date(event.end_time).toLocaleTimeString("en-KE",{hour:"2-digit",minute:"2-digit"})}</p>
       </div>
 
-      {(event.status==="live"||event.status==="ended")&&(
-        <div style={{background:"#fff",borderRadius:"20px",padding:"20px",marginBottom:"16px",border:"1px solid rgba(0,0,0,0.06)",display:"flex",justifyContent:"space-between",alignItems:"center"}}>
-          <div>
-            <p style={{fontSize:"14px",fontWeight:"500",marginBottom:"2px"}}>Gate Scanner</p>
-            <p style={{fontSize:"12px",color:"#999"}}>Scan guest tickets at entrance</p>
+      {/* Actions */}
+      <div style={{marginBottom:"12px"}}>
+        {event.status==="draft"&&(
+          <button onClick={handlePublish} style={{width:"100%",padding:"14px",borderRadius:"14px",background:"linear-gradient(135deg,#7c6aff,#5b4fd4)",color:"#fff",border:"none",fontSize:"14px",fontWeight:"600",cursor:"pointer",boxShadow:"0 8px 24px rgba(124,106,255,0.3)"}}>Publish Event</button>
+        )}
+        {event.status==="scheduled"&&(
+          <div style={{background:"rgba(124,106,255,0.08)",borderRadius:"14px",padding:"16px",border:"1px solid rgba(124,106,255,0.2)",textAlign:"center"}}>
+            <p style={{fontSize:"11px",color:"#7c6aff",fontWeight:"600",letterSpacing:"0.05em",textTransform:"uppercase",marginBottom:"4px"}}>Goes live automatically in</p>
+            <p style={{fontSize:"32px",fontWeight:"700",color:"#7c6aff",letterSpacing:"-0.02em"}}>{timeToLive||"..."}</p>
+            <p style={{fontSize:"11px",color:"#6b6880",marginTop:"4px"}}>at {new Date(event.start_time).toLocaleTimeString("en-KE",{hour:"2-digit",minute:"2-digit"})}</p>
           </div>
-          <button onClick={()=>router.push("/dashboard/scanner/"+id)} style={{padding:"10px 20px",borderRadius:"12px",background:"#000",color:"#fff",border:"none",fontSize:"13px",cursor:"pointer",fontWeight:"500"}}>Open →</button>
+        )}
+        {event.status==="live"&&(
+          <button onClick={handleEndEvent} disabled={ending} style={{width:"100%",padding:"14px",borderRadius:"14px",background:"rgba(248,113,113,0.1)",color:"#f87171",border:"1px solid rgba(248,113,113,0.2)",fontSize:"14px",fontWeight:"600",cursor:"pointer"}}>
+            {ending?"Ending...":"End Event"}
+          </button>
+        )}
+      </div>
+
+      {/* Host networking link */}
+      {hostLink&&(
+        <div style={{background:"rgba(245,158,11,0.08)",borderRadius:"14px",padding:"16px",marginBottom:"12px",border:"1px solid rgba(245,158,11,0.2)"}}>
+          <p style={{fontSize:"11px",color:"#f59e0b",fontWeight:"700",letterSpacing:"0.05em",textTransform:"uppercase",marginBottom:"4px"}}>★ Your Host Link</p>
+          <p style={{fontSize:"11px",color:"#6b6880",marginBottom:"12px"}}>Open this to appear as host in your event's networking</p>
+          <p style={{fontSize:"11px",color:"#f1f0f5",wordBreak:"break-all",marginBottom:"12px"}}>{hostLink.replace("https://","")}</p>
+          <div style={{display:"flex",gap:"8px"}}>
+            <button onClick={()=>copyLink(hostLink)} style={{flex:1,padding:"10px",borderRadius:"10px",background:"rgba(245,158,11,0.15)",color:"#f59e0b",border:"1px solid rgba(245,158,11,0.2)",fontSize:"12px",cursor:"pointer",fontWeight:"600"}}>Copy link</button>
+            {typeof navigator!=="undefined"&&navigator.share&&<button onClick={()=>navigator.share({title:"My Host Link",url:hostLink})} style={{padding:"10px 16px",borderRadius:"10px",background:"rgba(255,255,255,0.06)",color:"#6b6880",border:"1px solid rgba(255,255,255,0.06)",fontSize:"12px",cursor:"pointer"}}>Share</button>}
+          </div>
         </div>
       )}
 
-      {/* Actions */}
-      <div style={{display:"flex",flexDirection:"column",gap:"12px",marginBottom:"16px"}}>
-        {event.status==="draft"&&(
-          <button onClick={()=>supabase.from("events").update({status:"scheduled"}).eq("id",id).then(()=>setEvent({...event,status:"scheduled"}))} style={{width:"100%",padding:"16px",borderRadius:"16px",background:"#2563eb",color:"#fff",border:"none",fontSize:"15px",fontWeight:"500",cursor:"pointer"}}>Publish Event</button>
-        )}
-        {event.status==="scheduled"&&(
-          <button onClick={()=>supabase.from("events").update({status:"live"}).eq("id",id).then(()=>setEvent({...event,status:"live"}))} style={{width:"100%",padding:"16px",borderRadius:"16px",background:"#16a34a",color:"#fff",border:"none",fontSize:"15px",fontWeight:"500",cursor:"pointer"}}>🟢 Go Live</button>
-        )}
-        {event.status==="live"&&(
-          <button onClick={()=>supabase.from("events").update({status:"ended"}).eq("id",id).then(()=>setEvent({...event,status:"ended"}))} style={{width:"100%",padding:"16px",borderRadius:"16px",background:"#ef4444",color:"#fff",border:"none",fontSize:"15px",fontWeight:"500",cursor:"pointer"}}>End Event</button>
-        )}
-      </div>
-
       {/* Registration link */}
       {event.status!=="draft"&&(
-        <div style={{background:"#f0fdf4",borderRadius:"16px",padding:"16px",marginBottom:"16px",border:"1px solid #bbf7d0"}}>
-          <p style={{fontSize:"12px",color:"#16a34a",marginBottom:"8px",fontWeight:"600"}}>REGISTRATION LINK</p>
-          <p style={{fontSize:"13px",color:"#333",wordBreak:"break-all",marginBottom:"12px"}}>{registrationLink.replace("https://","")}</p>
+        <div style={{background:"rgba(52,211,153,0.06)",borderRadius:"14px",padding:"16px",marginBottom:"12px",border:"1px solid rgba(52,211,153,0.15)"}}>
+          <p style={{fontSize:"11px",color:"#34d399",fontWeight:"700",letterSpacing:"0.05em",textTransform:"uppercase",marginBottom:"4px"}}>Registration Link</p>
+          <p style={{fontSize:"11px",color:"#f1f0f5",wordBreak:"break-all",marginBottom:"12px"}}>{registrationLink.replace("https://","")}</p>
           <div style={{display:"flex",gap:"8px"}}>
-          <button onClick={()=>copyLink(registrationLink)} style={{padding:"8px 16px",borderRadius:"10px",background:"#16a34a",color:"#fff",border:"none",fontSize:"12px",cursor:"pointer",fontWeight:"500"}}>Copy link</button>
-          {typeof navigator!=="undefined"&&navigator.share&&<button onClick={()=>navigator.share({title:event.title,text:"Register for "+event.title,url:registrationLink})} style={{padding:"8px 16px",borderRadius:"10px",background:"#166534",color:"#fff",border:"none",fontSize:"12px",cursor:"pointer",fontWeight:"500"}}>Share</button>}
+            <button onClick={()=>copyLink(registrationLink)} style={{flex:1,padding:"10px",borderRadius:"10px",background:"rgba(52,211,153,0.1)",color:"#34d399",border:"1px solid rgba(52,211,153,0.15)",fontSize:"12px",cursor:"pointer",fontWeight:"600"}}>Copy link</button>
+            {typeof navigator!=="undefined"&&navigator.share&&<button onClick={()=>navigator.share({title:event.title,text:"Register for "+event.title,url:registrationLink})} style={{padding:"10px 16px",borderRadius:"10px",background:"rgba(255,255,255,0.06)",color:"#6b6880",border:"none",fontSize:"12px",cursor:"pointer"}}>Share</button>}
+          </div>
         </div>
+      )}
+
+      {/* Gate scanner */}
+      {(event.status==="live"||event.status==="ended")&&(
+        <div style={{background:"rgba(26,26,36,0.9)",borderRadius:"14px",padding:"16px",marginBottom:"12px",border:"1px solid rgba(255,255,255,0.06)",display:"flex",justifyContent:"space-between",alignItems:"center"}}>
+          <div>
+            <p style={{fontSize:"14px",fontWeight:"600",color:"#f1f0f5",marginBottom:"2px"}}>Gate Scanner</p>
+            <p style={{fontSize:"12px",color:"#6b6880"}}>Check in guests at entrance</p>
+          </div>
+          <button onClick={()=>router.push("/dashboard/scanner/"+id)} style={{padding:"10px 16px",borderRadius:"10px",background:"linear-gradient(135deg,#7c6aff,#5b4fd4)",color:"#fff",border:"none",fontSize:"12px",cursor:"pointer",fontWeight:"600"}}>Open →</button>
         </div>
       )}
 
       {/* Stats */}
-      <div style={{background:"#fff",borderRadius:"20px",padding:"24px",marginBottom:"16px",border:"1px solid rgba(0,0,0,0.06)"}}>
-        <p style={{fontSize:"12px",fontWeight:"600",color:"#999",letterSpacing:"0.1em",textTransform:"uppercase",marginBottom:"16px"}}>Registrations</p>
-        <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:"12px",marginBottom:"16px"}}>
-          {[
-            {label:"Total",value:stats.registrations},
-            {label:"Confirmed",value:stats.confirmed},
-            {label:"Pending",value:stats.pending},
-            {label:"Checked In",value:stats.checkins},
-          ].map(s=>(
-            <div key={s.label} style={{background:"#f9fafb",borderRadius:"14px",padding:"16px"}}>
-              <p style={{fontSize:"28px",fontWeight:"600",color:"#0a0a0b",marginBottom:"4px"}}>{s.value}</p>
-              <p style={{fontSize:"12px",color:"#999"}}>{s.label}</p>
-            </div>
-          ))}
+      <div style={{background:"rgba(26,26,36,0.9)",borderRadius:"16px",padding:"16px",marginBottom:"12px",border:"1px solid rgba(255,255,255,0.06)"}}>
+        <p style={{fontSize:"10px",fontWeight:"700",color:"#6b6880",letterSpacing:"0.12em",textTransform:"uppercase",marginBottom:"12px"}}>Registrations</p>
+        <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:"8px",marginBottom:"8px"}}>
+          {card("Total",stats.registrations)}
+          {card("Confirmed",stats.confirmed,"#34d399")}
+          {card("Pending",stats.pending,"#f59e0b")}
+          {card("Checked In",stats.checkins,"#7c6aff")}
         </div>
-        <div style={{background:"#f0fdf4",borderRadius:"14px",padding:"16px"}}>
-          <p style={{fontSize:"24px",fontWeight:"600",color:"#16a34a",marginBottom:"4px"}}>KES {stats.revenue.toLocaleString()}</p>
-          <p style={{fontSize:"12px",color:"#16a34a"}}>Total Revenue</p>
-        </div>
+        {stats.revenue>0&&(
+          <div style={{background:"rgba(52,211,153,0.08)",borderRadius:"12px",padding:"14px",border:"1px solid rgba(52,211,153,0.15)"}}>
+            <p style={{fontSize:"22px",fontWeight:"700",color:"#34d399",marginBottom:"2px"}}>KES {stats.revenue.toLocaleString()}</p>
+            <p style={{fontSize:"11px",color:"#6b6880"}}>Total Revenue</p>
+          </div>
+        )}
       </div>
 
       {/* Networking stats */}
-      <div style={{background:"#fff",borderRadius:"20px",padding:"24px",marginBottom:"16px",border:"1px solid rgba(0,0,0,0.06)"}}>
-        <p style={{fontSize:"12px",fontWeight:"600",color:"#999",letterSpacing:"0.1em",textTransform:"uppercase",marginBottom:"16px"}}>Networking</p>
-        <div style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr",gap:"12px"}}>
-          {[
-            {label:"Networking",value:stats.onAura},
-            {label:"Handshakes",value:stats.handshakes},
-            {label:"Unlocked",value:stats.unlocked},
-          ].map(s=>(
-            <div key={s.label} style={{background:"#f9fafb",borderRadius:"14px",padding:"16px",textAlign:"center"}}>
-              <p style={{fontSize:"28px",fontWeight:"600",color:"#0a0a0b",marginBottom:"4px"}}>{s.value}</p>
-              <p style={{fontSize:"12px",color:"#999"}}>{s.label}</p>
-            </div>
-          ))}
+      <div style={{background:"rgba(26,26,36,0.9)",borderRadius:"16px",padding:"16px",marginBottom:"12px",border:"1px solid rgba(255,255,255,0.06)"}}>
+        <p style={{fontSize:"10px",fontWeight:"700",color:"#6b6880",letterSpacing:"0.12em",textTransform:"uppercase",marginBottom:"12px"}}>Networking</p>
+        <div style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr",gap:"8px"}}>
+          {card("Networking",stats.onAura,"#7c6aff")}
+          {card("Handshakes",stats.handshakes,"#34d399")}
+          {card("Unlocked",stats.unlocked,"#f59e0b")}
         </div>
       </div>
 
       {/* Ticket types */}
-      <div style={{background:"#fff",borderRadius:"20px",padding:"24px",marginBottom:"16px",border:"1px solid rgba(0,0,0,0.06)"}}>
-        <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:"16px"}}>
-          <p style={{fontSize:"12px",fontWeight:"600",color:"#999",letterSpacing:"0.1em",textTransform:"uppercase"}}>Ticket Types</p>
-          <button onClick={()=>setShowAddTicket(!showAddTicket)} style={{padding:"8px 16px",borderRadius:"12px",background:"#000",color:"#fff",border:"none",fontSize:"12px",cursor:"pointer"}}>+ Add</button>
+      <div style={{background:"rgba(26,26,36,0.9)",borderRadius:"16px",padding:"16px",marginBottom:"12px",border:"1px solid rgba(255,255,255,0.06)"}}>
+        <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:"12px"}}>
+          <p style={{fontSize:"10px",fontWeight:"700",color:"#6b6880",letterSpacing:"0.12em",textTransform:"uppercase"}}>Ticket Types</p>
+          <button onClick={()=>setShowAddTicket(!showAddTicket)} style={{padding:"6px 12px",borderRadius:"8px",background:"rgba(124,106,255,0.1)",color:"#7c6aff",border:"1px solid rgba(124,106,255,0.2)",fontSize:"12px",cursor:"pointer",fontWeight:"600"}}>+ Add</button>
         </div>
         {showAddTicket&&(
-          <div style={{background:"#f9fafb",borderRadius:"14px",padding:"16px",marginBottom:"16px"}}>
-            <input value={ticketName} onChange={e=>setTicketName(e.target.value)} placeholder="Ticket name (e.g. General, VIP)" style={{width:"100%",padding:"12px",borderRadius:"10px",border:"1px solid #e5e7eb",marginBottom:"8px",fontSize:"14px",outline:"none",boxSizing:"border-box"}}/>
-            <input value={ticketPrice} onChange={e=>setTicketPrice(e.target.value)} placeholder="Price in KES (0 for free)" type="number" style={{width:"100%",padding:"12px",borderRadius:"10px",border:"1px solid #e5e7eb",marginBottom:"8px",fontSize:"14px",outline:"none",boxSizing:"border-box"}}/>
-            <input value={ticketQty} onChange={e=>setTicketQty(e.target.value)} placeholder="Quantity (leave empty for unlimited)" type="number" style={{width:"100%",padding:"12px",borderRadius:"10px",border:"1px solid #e5e7eb",marginBottom:"12px",fontSize:"14px",outline:"none",boxSizing:"border-box"}}/>
-            <button onClick={handleAddTicket} disabled={saving} style={{width:"100%",padding:"12px",borderRadius:"12px",background:"#000",color:"#fff",border:"none",fontSize:"14px",cursor:"pointer"}}>{saving?"Saving...":"Save ticket type"}</button>
+          <div style={{background:"rgba(15,15,19,0.8)",borderRadius:"12px",padding:"14px",marginBottom:"12px",border:"1px solid rgba(255,255,255,0.06)"}}>
+            <input value={ticketName} onChange={e=>setTicketName(e.target.value)} placeholder="Ticket name" style={{width:"100%",padding:"10px 12px",borderRadius:"10px",border:"1px solid rgba(255,255,255,0.08)",background:"rgba(255,255,255,0.04)",color:"#f1f0f5",fontSize:"13px",outline:"none",marginBottom:"8px",boxSizing:"border-box"}}/>
+            <input value={ticketPrice} onChange={e=>setTicketPrice(e.target.value)} placeholder="Price in KES (0 for free)" type="number" style={{width:"100%",padding:"10px 12px",borderRadius:"10px",border:"1px solid rgba(255,255,255,0.08)",background:"rgba(255,255,255,0.04)",color:"#f1f0f5",fontSize:"13px",outline:"none",marginBottom:"8px",boxSizing:"border-box"}}/>
+            <input value={ticketQty} onChange={e=>setTicketQty(e.target.value)} placeholder="Quantity (empty = unlimited)" type="number" style={{width:"100%",padding:"10px 12px",borderRadius:"10px",border:"1px solid rgba(255,255,255,0.08)",background:"rgba(255,255,255,0.04)",color:"#f1f0f5",fontSize:"13px",outline:"none",marginBottom:"12px",boxSizing:"border-box"}}/>
+            <button onClick={handleAddTicket} disabled={saving} style={{width:"100%",padding:"10px",borderRadius:"10px",background:"linear-gradient(135deg,#7c6aff,#5b4fd4)",color:"#fff",border:"none",fontSize:"13px",cursor:"pointer",fontWeight:"600"}}>{saving?"Saving...":"Save"}</button>
           </div>
         )}
-        {ticketTypes.length===0&&!showAddTicket&&<p style={{color:"#999",fontSize:"14px"}}>No ticket types yet.</p>}
+        {ticketTypes.length===0&&!showAddTicket&&<p style={{color:"#6b6880",fontSize:"13px"}}>No ticket types yet.</p>}
         {ticketTypes.map(t=>(
-          <div key={t.id} style={{display:"flex",justifyContent:"space-between",padding:"12px 0",borderBottom:"1px solid #f3f4f6"}}>
-            <p style={{fontSize:"14px",fontWeight:"500"}}>{t.name}</p>
-            <p style={{fontSize:"14px",color:t.price>0?"#2563eb":"#16a34a"}}>{t.price>0?"KES "+t.price:"Free"}</p>
+          <div key={t.id} style={{display:"flex",justifyContent:"space-between",padding:"10px 0",borderBottom:"1px solid rgba(255,255,255,0.04)"}}>
+            <p style={{fontSize:"13px",fontWeight:"500",color:"#f1f0f5"}}>{t.name}</p>
+            <p style={{fontSize:"13px",color:t.price>0?"#7c6aff":"#34d399",fontWeight:"600"}}>{t.price>0?"KES "+t.price:"Free"}</p>
           </div>
         ))}
       </div>
 
-      {/* Download Report */}
-      <div style={{background:"#fff",borderRadius:"20px",padding:"24px",marginBottom:"32px",border:"1px solid rgba(0,0,0,0.06)"}}>
-        <p style={{fontSize:"12px",fontWeight:"600",color:"#999",letterSpacing:"0.1em",textTransform:"uppercase",marginBottom:"8px"}}>Report</p>
-        <p style={{fontSize:"13px",color:"#999",marginBottom:"16px"}}>Download a summary of this event's registrations and networking activity.</p>
-        <button onClick={downloadPDF} style={{width:"100%",padding:"14px",borderRadius:"14px",background:"#0a0a0b",color:"#fff",border:"none",fontSize:"14px",fontWeight:"500",cursor:"pointer"}}>⬇ Download Report</button>
+      {/* Report */}
+      <div style={{background:"rgba(26,26,36,0.9)",borderRadius:"16px",padding:"16px",marginBottom:"32px",border:"1px solid rgba(255,255,255,0.06)"}}>
+        <p style={{fontSize:"10px",fontWeight:"700",color:"#6b6880",letterSpacing:"0.12em",textTransform:"uppercase",marginBottom:"8px"}}>Activation Report</p>
+        <p style={{fontSize:"12px",color:"#6b6880",marginBottom:"14px"}}>Download a summary of registrations and networking activity.</p>
+        <button onClick={downloadReport} style={{width:"100%",padding:"12px",borderRadius:"12px",background:"rgba(255,255,255,0.06)",color:"#f1f0f5",border:"1px solid rgba(255,255,255,0.08)",fontSize:"13px",fontWeight:"600",cursor:"pointer"}}>⬇ Download Report</button>
       </div>
     </div>
   );
