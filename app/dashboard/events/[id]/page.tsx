@@ -123,6 +123,7 @@ export default function EventDetailPage(){
     const connectionRate=stats.checkins>0?Math.round((stats.handshakes/stats.checkins)*100):0;
     const unlockRate=stats.handshakes>0?Math.round((stats.unlocked/stats.handshakes)*100):0;
     const activationLevel=stats.handshakes===0?"No networking data recorded.":stats.handshakes<5?"Early connections were made. A great start.":stats.handshakes<20?"Solid networking activity. Your guests were engaged.":stats.handshakes<50?"Strong activation. Your room came alive.":"Exceptional activation. This event created lasting connections.";
+    // Clean report - no code artifacts
     const content=[
       "OREETI — EVENT ACTIVATION REPORT",
       "The room, activated.",
@@ -199,9 +200,7 @@ export default function EventDetailPage(){
 
       {/* Actions */}
       <div style={{marginBottom:"12px"}}>
-        {event.status==="draft"&&(
-          <button onClick={handlePublish} style={{width:"100%",padding:"14px",borderRadius:"14px",background:"linear-gradient(135deg,#7c6aff,#5b4fd4)",color:"#fff",border:"none",fontSize:"14px",fontWeight:"600",cursor:"pointer",boxShadow:"0 8px 24px rgba(124,106,255,0.3)"}}>Publish Event</button>
-        )}
+
         {event.status==="scheduled"&&(
           <div style={{background:"rgba(124,106,255,0.08)",borderRadius:"14px",padding:"16px",border:"1px solid rgba(124,106,255,0.2)",textAlign:"center"}}>
             <p style={{fontSize:"11px",color:"#7c6aff",fontWeight:"600",letterSpacing:"0.05em",textTransform:"uppercase",marginBottom:"4px"}}>Goes live automatically in</p>
@@ -230,7 +229,7 @@ export default function EventDetailPage(){
       )}
 
       {/* Registration link */}
-      {event.status!=="draft"&&(
+      {event.status!=="draft"&&event.status!=="ended"&&(
         <div style={{background:"rgba(52,211,153,0.06)",borderRadius:"14px",padding:"16px",marginBottom:"12px",border:"1px solid rgba(52,211,153,0.15)"}}>
           <p style={{fontSize:"11px",color:"#34d399",fontWeight:"700",letterSpacing:"0.05em",textTransform:"uppercase",marginBottom:"4px"}}>Registration Link</p>
           <p style={{fontSize:"11px",color:"#f1f0f5",wordBreak:"break-all",marginBottom:"12px"}}>{registrationLink.replace("https://","")}</p>
@@ -301,6 +300,14 @@ export default function EventDetailPage(){
           </div>
         ))}
       </div>
+
+      {/* Publish - only for draft */}
+      {event.status==="draft"&&(
+        <div style={{background:"rgba(26,26,36,0.9)",borderRadius:"16px",padding:"16px",marginBottom:"12px",border:"1px solid rgba(124,106,255,0.2)"}}>
+          <p style={{fontSize:"12px",color:"#6b6880",marginBottom:"12px"}}>Add ticket types above, then publish your event to open registrations.</p>
+          <button onClick={handlePublish} style={{width:"100%",padding:"14px",borderRadius:"14px",background:"linear-gradient(135deg,#7c6aff,#5b4fd4)",color:"#fff",border:"none",fontSize:"14px",fontWeight:"600",cursor:"pointer",boxShadow:"0 8px 24px rgba(124,106,255,0.3)"}}>Publish Event</button>
+        </div>
+      )}
 
       {/* Report */}
       <div style={{background:"rgba(26,26,36,0.9)",borderRadius:"16px",padding:"16px",marginBottom:"32px",border:"1px solid rgba(255,255,255,0.06)"}}>

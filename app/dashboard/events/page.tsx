@@ -30,7 +30,7 @@ export default function EventsPage(){
     e.stopPropagation();
     if(status==="live"){return;}
     if(!confirm("Delete this event? This cannot be undone."))return;
-    await supabase.from("events").update({is_hidden:true,deleted_at:new Date().toISOString()}).eq("id",eventId);
+    await supabase.from("events").update({deleted_at:new Date().toISOString()}).eq("id",eventId);
     setEvents(prev=>prev.filter(ev=>ev.id!==eventId));
   }
 
@@ -41,6 +41,7 @@ export default function EventsPage(){
 
   const visible=events.filter(e=>!e.is_hidden&&!e.deleted_at);
   const hidden=events.filter(e=>e.is_hidden&&!e.deleted_at);
+  // deleted events are filtered out of both
 
   function EventCard({event}:{event:any}){
     return(
@@ -48,7 +49,7 @@ export default function EventsPage(){
         <div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-start"}}>
           <div style={{flex:1}} onClick={()=>router.push("/dashboard/events/"+event.id)}>
             <div style={{display:"flex",alignItems:"center",gap:"8px",marginBottom:"6px"}}>
-              <h2 style={{fontSize:"15px",fontWeight:"600",color:"#f1f0f5"}}>{event.title}</h2>
+              <h2 style={{fontSize:"15px",fontWeight:"700",color:"#ffffff",letterSpacing:"-0.01em"}}>{event.title}</h2>
               <span style={{fontSize:"10px",fontWeight:"600",color:statusColor[event.status],background:statusBg[event.status],padding:"2px 8px",borderRadius:"6px",textTransform:"uppercase",letterSpacing:"0.05em"}}>{event.status}</span>
             </div>
             <p style={{fontSize:"12px",color:"#6b6880",marginBottom:"2px"}}>📍 {event.venue}</p>
