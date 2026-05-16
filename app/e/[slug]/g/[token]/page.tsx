@@ -248,7 +248,7 @@ const[tab,setTab]=useState<Tab>("scene");
 
       {tab==="scene"&&(
         <div style={{padding:"24px 20px"}}>
-          <p style={{fontSize:"10px",letterSpacing:"0.4em",fontWeight:"700",letterSpacing:"-0.01em",marginBottom:"20px",fontFamily:"'Helvetica Neue',Arial,sans-serif"}}><span style={{color:"#ffffff"}}>Or</span><span style={{color:"#E26D34"}}>ee</span><span style={{color:"#ffffff"}}>ti</span></p>
+          <p style={{fontSize:"10px",fontWeight:"700",letterSpacing:"-0.01em",marginBottom:"20px",fontFamily:"'Helvetica Neue',Arial,sans-serif"}}><span style={{color:"#ffffff"}}>Or</span><span style={{color:"#E26D34"}}>ee</span><span style={{color:"#ffffff"}}>ti</span></p>
           <h1 style={{fontSize:"30px",fontWeight:"600",color:"#ffffff",marginBottom:"8px",letterSpacing:"-0.02em",lineHeight:"1.1"}}>{event?.title}</h1>
           <p style={{fontSize:"14px",color:"rgba(255,255,255,0.6)",marginBottom:"2px"}}>📍 {event?.venue}</p>
           <p style={{fontSize:"14px",color:"rgba(255,255,255,0.45)",marginBottom:"32px"}}>{event&&new Date(event.start_time).toLocaleDateString("en-KE",{weekday:"long",day:"numeric",month:"long"})}</p>
