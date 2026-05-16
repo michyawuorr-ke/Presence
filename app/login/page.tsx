@@ -76,8 +76,9 @@ export default function LoginPage(){
   // Landing
   if(mode==="landing")return(
     <main style={{minHeight:"100vh",background:"#000",display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",padding:"32px 24px"}}>
-      <div style={{marginBottom:"64px",textAlign:"center",display:"flex",flexDirection:"column",alignItems:"center"}}>
+      <div style={{marginBottom:"64px",textAlign:"center",display:"flex",flexDirection:"column",alignItems:"center",gap:"16px"}}>
         <OreetiLogo size="sm"/>
+        <p style={{fontSize:"11px",letterSpacing:"0.32em",color:"#E26D34",textTransform:"uppercase",fontWeight:"400",opacity:0.85,fontFamily:"'Helvetica Neue',Arial,sans-serif"}}>The room activated</p>
       </div>
 
       <div style={{width:"100%",maxWidth:"320px",display:"flex",flexDirection:"column",gap:"12px"}}>
