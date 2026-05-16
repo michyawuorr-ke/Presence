@@ -96,22 +96,22 @@ export default function HostProfilePage(){
 
       {/* Profile card — shown when filled */}
       {hasProfile&&!editing&&(
-        <div style={{background:"rgba(226,109,52,0.08)",borderRadius:"20px",padding:"20px",marginBottom:"16px",border:"1px solid rgba(226,109,52,0.25)"}}>
+        <div style={{background:"rgba(212,175,55,0.08)",borderRadius:"20px",padding:"20px",marginBottom:"16px",border:"1px solid rgba(212,175,55,0.3)"}}>
           <div style={{display:"flex",alignItems:"center",gap:"14px",marginBottom:"12px"}}>
-            <div style={{width:"48px",height:"48px",borderRadius:"50%",background:"linear-gradient(135deg,#E26D34,#c85a24)",display:"flex",alignItems:"center",justifyContent:"center",fontSize:"20px",fontWeight:"700",color:"#fff",flexShrink:0}}>
+            <div style={{width:"48px",height:"48px",borderRadius:"50%",background:"linear-gradient(135deg,#D4AF37,#b8962e)",display:"flex",alignItems:"center",justifyContent:"center",fontSize:"20px",fontWeight:"700",color:"#000",flexShrink:0}}>
               {displayName?.charAt(0)?.toUpperCase()}
             </div>
             <div style={{flex:1,minWidth:0}}>
               <div style={{display:"flex",alignItems:"center",gap:"8px",marginBottom:"2px"}}>
                 <p style={{fontSize:"16px",fontWeight:"700",color:"#ffffff"}}>{displayName}</p>
-                <span style={{background:"rgba(226,109,52,0.2)",color:"#E26D34",fontSize:"10px",fontWeight:"700",padding:"2px 8px",borderRadius:"6px",letterSpacing:"0.05em"}}>HOST</span>
+                <span style={{background:"rgba(212,175,55,0.2)",color:"#D4AF37",fontSize:"10px",fontWeight:"700",padding:"2px 8px",borderRadius:"6px",letterSpacing:"0.05em"}}>HOST</span>
               </div>
               {role&&<p style={{fontSize:"13px",color:"rgba(255,255,255,0.6)"}}>{role}</p>}
               {organisation&&<p style={{fontSize:"13px",color:"rgba(255,255,255,0.5)"}}>{organisation}</p>}
             </div>
           </div>
           {bio&&<p style={{fontSize:"13px",color:"rgba(255,255,255,0.5)",marginBottom:"8px",lineHeight:"1.5"}}>{bio}</p>}
-          {link&&<p style={{fontSize:"13px",color:"#E26D34"}}>{link.replace("https://","").replace("http://","")}</p>}
+          {link&&<p style={{fontSize:"13px",color:"#D4AF37"}}>{link.replace("https://","").replace("http://","")}</p>}
           <button onClick={()=>setEditing(true)} style={{width:"100%",marginTop:"16px",padding:"10px",borderRadius:"10px",background:"rgba(255,255,255,0.06)",color:"rgba(255,255,255,0.7)",border:"1px solid rgba(255,255,255,0.08)",fontSize:"13px",cursor:"pointer",fontWeight:"500"}}>
             Edit Profile
           </button>
@@ -122,7 +122,7 @@ export default function HostProfilePage(){
       {hasProfile&&!editing&&(
         <div style={{background:"rgba(26,26,36,0.9)",borderRadius:"16px",padding:"16px",marginBottom:"16px",border:"1px solid rgba(255,255,255,0.06)",display:"flex",justifyContent:"space-between",alignItems:"center"}}>
           <p style={{fontSize:"14px",color:"#ffffff",fontWeight:"500"}}>Appear in my events</p>
-          <div onClick={()=>{setShowInEvents(!showInEvents);}} style={{width:"44px",height:"24px",borderRadius:"12px",background:showInEvents?"#E26D34":"rgba(255,255,255,0.1)",cursor:"pointer",position:"relative",transition:"background 0.2s"}}>
+          <div onClick={()=>{setShowInEvents(!showInEvents);}} style={{width:"44px",height:"24px",borderRadius:"12px",background:showInEvents?"#D4AF37":"rgba(255,255,255,0.1)",cursor:"pointer",position:"relative",transition:"background 0.2s"}}>
             <div style={{position:"absolute",top:"3px",left:showInEvents?"22px":"3px",width:"18px",height:"18px",borderRadius:"50%",background:"#fff",transition:"left 0.2s"}}/>
           </div>
         </div>
@@ -142,14 +142,14 @@ export default function HostProfilePage(){
 
           <div style={{display:"flex",gap:"8px"}}>
             {hasProfile&&<button onClick={()=>setEditing(false)} style={{flex:1,padding:"12px",borderRadius:"10px",background:"rgba(255,255,255,0.04)",color:"rgba(255,255,255,0.5)",border:"1px solid rgba(255,255,255,0.08)",fontSize:"13px",cursor:"pointer"}}>Cancel</button>}
-            <button onClick={save} disabled={saving||!displayName.trim()} style={{flex:2,padding:"12px",borderRadius:"10px",background:saving?"rgba(255,255,255,0.1)":"linear-gradient(135deg,#E26D34,#c85a24)",color:"#fff",border:"none",fontSize:"14px",fontWeight:"600",cursor:saving?"not-allowed":"pointer"}}>
+            <button onClick={save} disabled={saving||!displayName.trim()} style={{flex:2,padding:"12px",borderRadius:"10px",background:saving?"rgba(255,255,255,0.1)":"linear-gradient(135deg,#D4AF37,#b8962e)",color:"#fff",border:"none",fontSize:"14px",fontWeight:"600",cursor:saving?"not-allowed":"pointer"}}>
               {saving?"Saving...":"Save Profile"}
             </button>
           </div>
         </div>
       )}
 
-      {saved&&<p style={{color:"#E26D34",fontSize:"13px",textAlign:"center",marginTop:"8px"}}>✓ Profile saved</p>}
+      {saved&&<p style={{color:"#D4AF37",fontSize:"13px",textAlign:"center",marginTop:"8px"}}>✓ Profile saved</p>}
     </div>
   );
 }

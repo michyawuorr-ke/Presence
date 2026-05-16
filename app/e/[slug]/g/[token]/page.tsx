@@ -550,7 +550,7 @@ function NetworkingTab({event,profile,isLive,isEnded}:any){
           <button onClick={()=>setConfirmNode({...hostNode,is_host:true})} style={{width:"56px",height:"56px",background:"none",border:"none",cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center",position:"relative"}}>
             <span style={{fontSize:"44px",color:"#0a0800",textShadow:"0 0 6px #D4AF37,0 0 18px #D4AF37,0 0 35px rgba(212,175,55,0.7),0 0 60px rgba(212,175,55,0.3)",lineHeight:"1",display:"block"}}>★</span>
           </button>
-          <p style={{color:"#E26D34",fontSize:"10px",textAlign:"center",marginTop:"2px",fontWeight:"600",letterSpacing:"0.05em"}}>HOST</p>
+          <p style={{color:"#D4AF37",fontSize:"10px",textAlign:"center",marginTop:"2px",fontWeight:"600",letterSpacing:"0.05em",textShadow:"0 0 8px rgba(212,175,55,0.6)"}}>HOST</p>
         </div>
       )}
       {networkingActive&&nodes.map((node:any)=>{

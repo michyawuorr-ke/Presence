@@ -18,7 +18,7 @@ export default function TermsPage(){
       <p style={{fontSize:"11px",letterSpacing:"0.3em",color:"#999",textTransform:"uppercase",marginBottom:"4px"}}>Oreeti</p>
       <p style={{fontSize:"12px",color:"#bbb",marginBottom:"32px",fontStyle:"italic"}}>The room, activated.</p>
       <h1 style={{fontSize:"28px",fontWeight:"700",color:"#0a0a0b",marginBottom:"8px",letterSpacing:"-0.02em"}}>Terms of Use</h1>
-      <p style={{fontSize:"13px",color:"#999",marginBottom:"40px"}}>Last updated: May 2025</p>
+      <p style={{fontSize:"13px",color:"#999",marginBottom:"40px"}}>Last updated: May 2026</p>
       {sections.map(s=>(
         <div key={s.title} style={{marginBottom:"32px"}}>
           <h2 style={{fontSize:"15px",fontWeight:"600",color:"#0a0a0b",marginBottom:"8px"}}>{s.title}</h2>
@@ -26,7 +26,7 @@ export default function TermsPage(){
         </div>
       ))}
       <div style={{borderTop:"1px solid #f3f4f6",paddingTop:"32px",marginTop:"40px",textAlign:"center"}}>
-        <p style={{fontSize:"13px",color:"#999"}}>© 2025 Oreeti. All rights reserved.</p>
+        <p style={{fontSize:"13px",color:"#999"}}>© 2026 Oreeti. All rights reserved.</p>
         <a href="/privacy" style={{fontSize:"13px",color:"#aaa",marginTop:"8px",display:"block"}}>Privacy Policy →</a>
       </div>
     </main>
