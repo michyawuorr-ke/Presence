@@ -87,7 +87,7 @@ function Splash(){
         @keyframes textIn{from{opacity:0}to{opacity:1}}
       `}</style>
       <div style={{animation:"logoIn 1.2s ease forwards"}}>
-        <OreetiLogo size="lg" theme="dark"/>
+        <OreetiLogo size="lg"/>
       </div>
       <p style={{color:"#E26D34",fontSize:"11px",letterSpacing:"0.35em",textTransform:"uppercase",animation:"textIn 1.8s ease forwards",fontWeight:"400",opacity:0.8}}>The room, activated.</p>
     </div>
