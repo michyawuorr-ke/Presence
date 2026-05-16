@@ -131,7 +131,7 @@ export default function RegisterPage(){
 
   if(paymentState==="waiting")return(
     <div style={{minHeight:"100vh",background:"#000",display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",padding:"24px"}}>
-      <p style={{fontSize:"11px",letterSpacing:"0.3em",color:"#666",textTransform:"uppercase",marginBottom:"32px"}}>Presence</p>
+      <p style={{fontSize:"11px",letterSpacing:"0.3em",color:"#E26D34",textTransform:"uppercase",marginBottom:"32px"}}>Oreeti</p>
       <p style={{fontSize:"48px",marginBottom:"24px"}}>📱</p>
       <h1 style={{fontSize:"24px",fontWeight:"300",color:"#fff",textAlign:"center",marginBottom:"12px"}}>Check your phone</h1>
       <p style={{color:"#666",textAlign:"center",marginBottom:"8px"}}>An M-Pesa prompt has been sent to</p>
@@ -147,7 +147,7 @@ export default function RegisterPage(){
 
   if(success)return(
     <div style={{minHeight:"100vh",background:"#000",display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",padding:"24px"}}>
-      <p style={{fontSize:"11px",letterSpacing:"0.3em",color:"#666",textTransform:"uppercase",marginBottom:"32px"}}>Presence</p>
+      <p style={{fontSize:"11px",letterSpacing:"0.3em",color:"#E26D34",textTransform:"uppercase",marginBottom:"32px"}}>Oreeti</p>
       <p style={{fontSize:"40px",marginBottom:"16px"}}>✓</p>
       <h1 style={{fontSize:"24px",fontWeight:"300",color:"#fff",textAlign:"center",marginBottom:"8px"}}>You are in.</h1>
       <p style={{color:"#666",textAlign:"center",marginBottom:"32px"}}>{event.title}</p>
@@ -169,10 +169,10 @@ export default function RegisterPage(){
 
   return(
     <div style={{minHeight:"100vh",background:"#000",padding:"40px 24px"}}>
-      <p style={{fontSize:"11px",letterSpacing:"0.3em",color:"#666",textTransform:"uppercase",marginBottom:"40px",textAlign:"center"}}>Presence</p>
+      <p style={{fontSize:"11px",letterSpacing:"0.3em",color:"#E26D34",textTransform:"uppercase",marginBottom:"40px",textAlign:"center"}}>Oreeti</p>
       <div style={{maxWidth:"480px",margin:"0 auto"}}>
         <h1 style={{fontSize:"28px",fontWeight:"300",color:"#fff",marginBottom:"8px"}}>{event.title}</h1>
-        <p style={{fontSize:"11px",letterSpacing:"0.25em",color:"#444",textTransform:"uppercase",marginBottom:"4px"}}>The room, activated.</p>
+
         <p style={{color:"#666",marginBottom:"4px"}}>📍 {event.venue}</p>
         <p style={{color:"#555",marginBottom:"32px",fontSize:"14px"}}>{new Date(event.start_time).toLocaleDateString("en-KE",{weekday:"long",day:"numeric",month:"long",year:"numeric"})}</p>
 

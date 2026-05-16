@@ -226,9 +226,9 @@ const[tab,setTab]=useState<Tab>("scene");
       {tab==="scene"&&(
         <div style={{padding:"24px 20px"}}>
           <p style={{fontSize:"10px",letterSpacing:"0.4em",color:"#999",textTransform:"uppercase",marginBottom:"20px",fontWeight:"600"}}>PRESENCE</p>
-          <h1 style={{fontSize:"30px",fontWeight:"600",color:"#0a0a0b",marginBottom:"8px",letterSpacing:"-0.02em",lineHeight:"1.1"}}>{event?.title}</h1>
-          <p style={{fontSize:"14px",color:"#666",marginBottom:"2px"}}>📍 {event?.venue}</p>
-          <p style={{fontSize:"14px",color:"#999",marginBottom:"32px"}}>{event&&new Date(event.start_time).toLocaleDateString("en-KE",{weekday:"long",day:"numeric",month:"long"})}</p>
+          <h1 style={{fontSize:"30px",fontWeight:"600",color:"#ffffff",marginBottom:"8px",letterSpacing:"-0.02em",lineHeight:"1.1"}}>{event?.title}</h1>
+          <p style={{fontSize:"14px",color:"rgba(255,255,255,0.6)",marginBottom:"2px"}}>📍 {event?.venue}</p>
+          <p style={{fontSize:"14px",color:"rgba(255,255,255,0.45)",marginBottom:"32px"}}>{event&&new Date(event.start_time).toLocaleDateString("en-KE",{weekday:"long",day:"numeric",month:"long"})}</p>
           
           {isEnded?(
             <div style={{background:"linear-gradient(135deg, #0a0a0b 0%, #1a1a1a 100%)",borderRadius:"24px",padding:"28px",marginBottom:"16px",textAlign:"center",boxShadow:"0 8px 24px rgba(0,0,0,0.15)"}}>
@@ -495,7 +495,7 @@ function NetworkingTab({event,profile,isLive,isEnded}:any){
       )}
 
       {!auraLoaded&&(
-        <div style={{position:"absolute",inset:0,zIndex:5,background:"#0a0a0b"}}/>
+        <div style={{position:"absolute",inset:0,zIndex:5,background:"rgba(10,10,11,0.85)"}}/>
       )}
       {auraLoaded&&!networkingActive&&(
         <div style={{position:"absolute",inset:0,display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",backdropFilter:"blur(20px)",zIndex:5}}>
@@ -508,8 +508,8 @@ function NetworkingTab({event,profile,isLive,isEnded}:any){
 
       {networkingActive&&hostNode&&(
         <div style={{position:"absolute",left:hostNode.x+"%",top:hostNode.y+"%",transform:"translate(-50%,-50%)",animation:"float 5s ease-in-out infinite",zIndex:3}}>
-          <button onClick={()=>setConfirmNode({...hostNode,is_host:true})} style={{width:"52px",height:"52px",background:"none",border:"none",cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center",fontSize:"40px",filter:"drop-shadow(0 0 12px rgba(226,109,52,0.15))"}}>
-            ★
+          <button onClick={()=>setConfirmNode({...hostNode,is_host:true})} style={{width:"56px",height:"56px",background:"none",border:"none",cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center",position:"relative"}}>
+            <span style={{fontSize:"42px",color:"#1a1008",textShadow:"0 0 8px #E26D34,0 0 20px #E26D34,0 0 40px rgba(226,109,52,0.6)",lineHeight:"1",display:"block"}}>★</span>
           </button>
           <p style={{color:"#E26D34",fontSize:"10px",textAlign:"center",marginTop:"2px",fontWeight:"600",letterSpacing:"0.05em"}}>HOST</p>
         </div>
