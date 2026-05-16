@@ -7,7 +7,7 @@ export default function HomePage(){
   return(
     <main style={{minHeight:"100vh",background:"#0f0f13",display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",padding:"32px 24px"}}>
       <div style={{marginBottom:"64px",textAlign:"center",display:"flex",flexDirection:"column",alignItems:"center"}}>
-        <OreetiLogo size="lg" theme="dark"/>
+        <OreetiLogo size="lg"/>
       </div>
 
       <div style={{width:"100%",maxWidth:"320px",display:"flex",flexDirection:"column",gap:"12px"}}>
