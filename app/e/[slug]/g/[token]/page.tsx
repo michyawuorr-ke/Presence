@@ -183,7 +183,23 @@ function Identity({registration,event,onComplete}:any){
 function Scene({event,registration,profile,onProfileUpdate}:any){
 const[entryQR,setEntryQR]=useState("");
 const[networkingQR,setNetworkingQR]=useState("");
-  useEffect(()=>{if(!registration)return;QRCode.toDataURL("presence:entry:"+registration.id,{errorCorrectionLevel:"H",margin:2,width:256}).then(setEntryQR).catch(console.error);QRCode.toDataURL("presence:unlock:"+registration.id,{errorCorrectionLevel:"H",margin:2,width:256}).then(setNetworkingQR).catch(console.error);},[registration]);
+  useEffect(()=>{
+  if(!registration)return;
+  async function genQRs(){
+    // Generate signed QR payloads via API
+    const res=await fetch('/api/qr/generate?reg_id='+registration.id).catch(()=>null);
+    if(res?.ok){
+      const{entryPayload,unlockPayload}=await res.json();
+      QRCode.toDataURL(entryPayload,{errorCorrectionLevel:"H",margin:2,width:256}).then(setEntryQR).catch(console.error);
+      QRCode.toDataURL(unlockPayload,{errorCorrectionLevel:"H",margin:2,width:256}).then(setNetworkingQR).catch(console.error);
+    }else{
+      // Fallback to unsigned (backward compat)
+      QRCode.toDataURL("presence:entry:"+registration.id,{errorCorrectionLevel:"H",margin:2,width:256}).then(setEntryQR).catch(console.error);
+      QRCode.toDataURL("presence:unlock:"+registration.id,{errorCorrectionLevel:"H",margin:2,width:256}).then(setNetworkingQR).catch(console.error);
+    }
+  }
+  genQRs();
+},[registration]);
 const[tab,setTab]=useState<Tab>("scene");
   const[editing,setEditing]=useState(false);
   const[countdown,setCountdown]=useState({days:0,hours:0,minutes:0,seconds:0});
@@ -644,7 +660,7 @@ function ProfileTab({profile,event,onProfileUpdate,isEnded,registration}:any){
             await scanner.stop();
             setScanning(false);
             setScanMsg("Unlocking...");
-            const res=await fetch("/api/handshakes/unlock",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({scanner_registration_id:registration.id,target_registration_id:targetRegId})});
+            const res=await fetch("/api/handshakes/unlock",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({scanner_registration_id:registration.id,target_registration_id:regId})});
             if(res.ok){
               setUnlocked(prev=>new Set([...prev,conn.id]));
               setScanMsg("✅ Profile unlocked!");

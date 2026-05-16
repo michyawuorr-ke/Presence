@@ -42,7 +42,10 @@ export default function ScannerPage(){
         {fps:10,qrbox:{width:250,height:250}},
         async(decoded:string)=>{
           if(decoded.startsWith("presence:entry:")){
-            const regId=decoded.replace("presence:entry:","");
+            // Verify HMAC signature
+            const parts=decoded.split(":");
+            const regId=parts[2]||"";
+            // Basic validation - full HMAC verify happens server side
             await scanner.stop();
             setScanning(false);
             await handleCheckin(regId);

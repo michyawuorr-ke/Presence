@@ -2,6 +2,7 @@ import{createClient}from'@supabase/supabase-js';
 import{NextRequest,NextResponse}from'next/server';
 import{rateLimit}from'@/lib/rateLimit';
 import{sanitizeString}from'@/lib/sanitize';
+import{verifyQRPayload}from'@/lib/qrSecurity';
 
 const supabase=createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -19,7 +20,17 @@ export async function POST(req:NextRequest){
     // Parse and sanitize inputs
     const body=await req.json();
     const scanner_registration_id=sanitizeString(body.scanner_registration_id,36);
-    const target_registration_id=sanitizeString(body.target_registration_id,36);
+    const raw_target=sanitizeString(body.target_registration_id||'',200);
+
+    // Verify HMAC if signed payload provided
+    let target_registration_id=raw_target;
+    if(raw_target.includes(':')){
+      const verified=verifyQRPayload(raw_target,'presence:unlock:');
+      if(!verified){
+        return NextResponse.json({error:'Invalid or tampered QR code'},{status:403});
+      }
+      target_registration_id=verified;
+    }
 
     if(!scanner_registration_id||!target_registration_id){
       return NextResponse.json({error:'Missing fields'},{status:400});
