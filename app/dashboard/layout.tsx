@@ -23,7 +23,9 @@ export default function DashboardLayout({children}:{children:React.ReactNode}){
     <div style={{minHeight:"100vh",background:"#0f0f13",fontFamily:"var(--font-inter),-apple-system,sans-serif"}}>
       <div style={{position:"fixed",top:0,left:0,right:0,zIndex:100,background:"rgba(15,15,19,0.95)",backdropFilter:"blur(20px)",borderBottom:"1px solid rgba(255,255,255,0.06)",padding:"0 20px",maxWidth:"480px",margin:"0 auto"}}>
         <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",height:"52px"}}>
-          <OreetiLogo size="sm" theme="dark"/>
+          <p style={{fontSize:"18px",fontWeight:"700",color:"#ffffff",letterSpacing:"-0.02em",fontFamily:"'Helvetica Neue',Arial,sans-serif"}}>
+            <span style={{color:"#ffffff"}}>Or</span><span style={{color:"#E26D34"}}>ee</span><span style={{color:"#ffffff"}}>ti</span>
+          </p>
           <button onClick={async()=>{await supabase.auth.signOut();router.push("/login");}} style={{fontSize:"12px",color:"#6b6880",background:"rgba(255,255,255,0.06)",border:"none",cursor:"pointer",padding:"6px 12px",borderRadius:"8px"}}>Sign out</button>
         </div>
         <div style={{display:"flex",gap:"4px",paddingBottom:"10px"}}>

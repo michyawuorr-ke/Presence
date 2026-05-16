@@ -172,7 +172,7 @@ export default function EventDetailPage(){
   if(loading)return<div style={{textAlign:"center",padding:"60px",color:"#6b6880"}}>Loading...</div>;
   if(!event)return<div style={{textAlign:"center",padding:"60px",color:"#6b6880"}}>Event not found</div>;
 
-  const statusColor:any={draft:"#6b6880",scheduled:"#7c6aff",live:"#34d399",ended:"#6b6880"};
+  const statusColor:any={draft:"#6b6880",scheduled:"#E26D34",live:"#34d399",ended:"#6b6880"};
   const statusBg:any={draft:"rgba(107,104,128,0.1)",scheduled:"rgba(124,106,255,0.1)",live:"rgba(52,211,153,0.1)",ended:"rgba(107,104,128,0.08)"};
   const registrationLink=`${typeof window!=="undefined"?window.location.origin:""}/register/${event.slug}`;
 
@@ -202,9 +202,9 @@ export default function EventDetailPage(){
       <div style={{marginBottom:"12px"}}>
 
         {event.status==="scheduled"&&(
-          <div style={{background:"rgba(124,106,255,0.08)",borderRadius:"14px",padding:"16px",border:"1px solid rgba(124,106,255,0.2)",textAlign:"center"}}>
-            <p style={{fontSize:"11px",color:"#7c6aff",fontWeight:"600",letterSpacing:"0.05em",textTransform:"uppercase",marginBottom:"4px"}}>Goes live automatically in</p>
-            <p style={{fontSize:"32px",fontWeight:"700",color:"#7c6aff",letterSpacing:"-0.02em"}}>{timeToLive||"..."}</p>
+          <div style={{background:"rgba(124,106,255,0.08)",borderRadius:"14px",padding:"16px",border:"1px solid rgba(226,109,52,0.2)",textAlign:"center"}}>
+            <p style={{fontSize:"11px",color:"#E26D34",fontWeight:"600",letterSpacing:"0.05em",textTransform:"uppercase",marginBottom:"4px"}}>Goes live automatically in</p>
+            <p style={{fontSize:"32px",fontWeight:"700",color:"#E26D34",letterSpacing:"-0.02em"}}>{timeToLive||"..."}</p>
             <p style={{fontSize:"11px",color:"#6b6880",marginTop:"4px"}}>at {new Date(event.start_time).toLocaleTimeString("en-KE",{hour:"2-digit",minute:"2-digit"})}</p>
           </div>
         )}
@@ -247,7 +247,7 @@ export default function EventDetailPage(){
             <p style={{fontSize:"14px",fontWeight:"600",color:"#f1f0f5",marginBottom:"2px"}}>Gate Scanner</p>
             <p style={{fontSize:"12px",color:"#6b6880"}}>Check in guests at entrance</p>
           </div>
-          <button onClick={()=>router.push("/dashboard/scanner/"+id)} style={{padding:"10px 16px",borderRadius:"10px",background:"linear-gradient(135deg,#7c6aff,#5b4fd4)",color:"#fff",border:"none",fontSize:"12px",cursor:"pointer",fontWeight:"600"}}>Open →</button>
+          <button onClick={()=>router.push("/dashboard/scanner/"+id)} style={{padding:"10px 16px",borderRadius:"10px",background:"linear-gradient(135deg,#E26D34,#c85a24)",color:"#fff",border:"none",fontSize:"12px",cursor:"pointer",fontWeight:"600"}}>Open →</button>
         </div>
       )}
 
@@ -258,7 +258,7 @@ export default function EventDetailPage(){
           {card("Total",stats.registrations)}
           {card("Confirmed",stats.confirmed,"#34d399")}
           {card("Pending",stats.pending,"#f59e0b")}
-          {card("Checked In",stats.checkins,"#7c6aff")}
+          {card("Checked In",stats.checkins,"#E26D34")}
         </div>
         {stats.revenue>0&&(
           <div style={{background:"rgba(52,211,153,0.08)",borderRadius:"12px",padding:"14px",border:"1px solid rgba(52,211,153,0.15)"}}>
@@ -272,7 +272,7 @@ export default function EventDetailPage(){
       <div style={{background:"rgba(26,26,36,0.9)",borderRadius:"16px",padding:"16px",marginBottom:"12px",border:"1px solid rgba(255,255,255,0.06)"}}>
         <p style={{fontSize:"10px",fontWeight:"700",color:"#6b6880",letterSpacing:"0.12em",textTransform:"uppercase",marginBottom:"12px"}}>Networking</p>
         <div style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr",gap:"8px"}}>
-          {card("Networking",stats.onAura,"#7c6aff")}
+          {card("Networking",stats.onAura,"#E26D34")}
           {card("Handshakes",stats.handshakes,"#34d399")}
           {card("Unlocked",stats.unlocked,"#f59e0b")}
         </div>
@@ -282,30 +282,30 @@ export default function EventDetailPage(){
       <div style={{background:"rgba(26,26,36,0.9)",borderRadius:"16px",padding:"16px",marginBottom:"12px",border:"1px solid rgba(255,255,255,0.06)"}}>
         <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:"12px"}}>
           <p style={{fontSize:"10px",fontWeight:"700",color:"#6b6880",letterSpacing:"0.12em",textTransform:"uppercase"}}>Ticket Types</p>
-          <button onClick={()=>setShowAddTicket(!showAddTicket)} style={{padding:"6px 12px",borderRadius:"8px",background:"rgba(124,106,255,0.1)",color:"#7c6aff",border:"1px solid rgba(124,106,255,0.2)",fontSize:"12px",cursor:"pointer",fontWeight:"600"}}>+ Add</button>
+          <button onClick={()=>setShowAddTicket(!showAddTicket)} style={{padding:"6px 12px",borderRadius:"8px",background:"rgba(124,106,255,0.1)",color:"#E26D34",border:"1px solid rgba(226,109,52,0.2)",fontSize:"12px",cursor:"pointer",fontWeight:"600"}}>+ Add</button>
         </div>
         {showAddTicket&&(
           <div style={{background:"rgba(15,15,19,0.8)",borderRadius:"12px",padding:"14px",marginBottom:"12px",border:"1px solid rgba(255,255,255,0.06)"}}>
             <input value={ticketName} onChange={e=>setTicketName(e.target.value)} placeholder="Ticket name" style={{width:"100%",padding:"10px 12px",borderRadius:"10px",border:"1px solid rgba(255,255,255,0.08)",background:"rgba(255,255,255,0.04)",color:"#f1f0f5",fontSize:"13px",outline:"none",marginBottom:"8px",boxSizing:"border-box"}}/>
             <input value={ticketPrice} onChange={e=>setTicketPrice(e.target.value)} placeholder="Price in KES (0 for free)" type="number" style={{width:"100%",padding:"10px 12px",borderRadius:"10px",border:"1px solid rgba(255,255,255,0.08)",background:"rgba(255,255,255,0.04)",color:"#f1f0f5",fontSize:"13px",outline:"none",marginBottom:"8px",boxSizing:"border-box"}}/>
             <input value={ticketQty} onChange={e=>setTicketQty(e.target.value)} placeholder="Quantity (empty = unlimited)" type="number" style={{width:"100%",padding:"10px 12px",borderRadius:"10px",border:"1px solid rgba(255,255,255,0.08)",background:"rgba(255,255,255,0.04)",color:"#f1f0f5",fontSize:"13px",outline:"none",marginBottom:"12px",boxSizing:"border-box"}}/>
-            <button onClick={handleAddTicket} disabled={saving} style={{width:"100%",padding:"10px",borderRadius:"10px",background:"linear-gradient(135deg,#7c6aff,#5b4fd4)",color:"#fff",border:"none",fontSize:"13px",cursor:"pointer",fontWeight:"600"}}>{saving?"Saving...":"Save"}</button>
+            <button onClick={handleAddTicket} disabled={saving} style={{width:"100%",padding:"10px",borderRadius:"10px",background:"linear-gradient(135deg,#E26D34,#c85a24)",color:"#fff",border:"none",fontSize:"13px",cursor:"pointer",fontWeight:"600"}}>{saving?"Saving...":"Save"}</button>
           </div>
         )}
         {ticketTypes.length===0&&!showAddTicket&&<p style={{color:"#6b6880",fontSize:"13px"}}>No ticket types yet.</p>}
         {ticketTypes.map(t=>(
           <div key={t.id} style={{display:"flex",justifyContent:"space-between",padding:"10px 0",borderBottom:"1px solid rgba(255,255,255,0.04)"}}>
             <p style={{fontSize:"13px",fontWeight:"500",color:"#f1f0f5"}}>{t.name}</p>
-            <p style={{fontSize:"13px",color:t.price>0?"#7c6aff":"#34d399",fontWeight:"600"}}>{t.price>0?"KES "+t.price:"Free"}</p>
+            <p style={{fontSize:"13px",color:t.price>0?"#E26D34":"#34d399",fontWeight:"600"}}>{t.price>0?"KES "+t.price:"Free"}</p>
           </div>
         ))}
       </div>
 
       {/* Publish - only for draft */}
       {event.status==="draft"&&(
-        <div style={{background:"rgba(26,26,36,0.9)",borderRadius:"16px",padding:"16px",marginBottom:"12px",border:"1px solid rgba(124,106,255,0.2)"}}>
+        <div style={{background:"rgba(26,26,36,0.9)",borderRadius:"16px",padding:"16px",marginBottom:"12px",border:"1px solid rgba(226,109,52,0.2)"}}>
           <p style={{fontSize:"12px",color:"#6b6880",marginBottom:"12px"}}>Add ticket types above, then publish your event to open registrations.</p>
-          <button onClick={handlePublish} style={{width:"100%",padding:"14px",borderRadius:"14px",background:"linear-gradient(135deg,#7c6aff,#5b4fd4)",color:"#fff",border:"none",fontSize:"14px",fontWeight:"600",cursor:"pointer",boxShadow:"0 8px 24px rgba(124,106,255,0.3)"}}>Publish Event</button>
+          <button onClick={handlePublish} style={{width:"100%",padding:"14px",borderRadius:"14px",background:"linear-gradient(135deg,#E26D34,#c85a24)",color:"#fff",border:"none",fontSize:"14px",fontWeight:"600",cursor:"pointer",boxShadow:"0 8px 24px rgba(226,109,52,0.3)"}}>Publish Event</button>
         </div>
       )}
 

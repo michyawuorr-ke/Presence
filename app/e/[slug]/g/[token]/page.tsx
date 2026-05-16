@@ -252,7 +252,7 @@ const[tab,setTab]=useState<Tab>("scene");
                   <p style={{fontSize:"12px",color:"#34d399",fontWeight:"500"}}>handshakes exchanged</p>
                 </div>
               </div>
-              <button onClick={()=>setTab("networking")} style={{width:"100%",padding:"14px",borderRadius:"14px",background:"linear-gradient(135deg,#7c6aff,#5b4fd4)",color:"#fff",border:"none",fontSize:"14px",cursor:"pointer",fontWeight:"600",boxShadow:"0 8px 24px rgba(124,106,255,0.3)"}}>Start Networking →</button>
+              <button onClick={()=>setTab("networking")} style={{width:"100%",padding:"14px",borderRadius:"14px",background:"linear-gradient(135deg,#E26D34,#c85a24)",color:"#fff",border:"none",fontSize:"14px",cursor:"pointer",fontWeight:"600",boxShadow:"0 8px 24px rgba(226,109,52,0.3)"}}>Start Networking →</button>
             </div>
           )}
         </div>
@@ -289,7 +289,7 @@ const[tab,setTab]=useState<Tab>("scene");
 
       <div style={{position:"fixed",bottom:"8px",left:"8px",right:"8px",background:"rgba(15,15,19,0.92)",backdropFilter:"blur(32px)",borderRadius:"20px",border:"1px solid rgba(255,255,255,0.08)",display:"flex",padding:"8px 4px",boxShadow:"0 8px 32px rgba(0,0,0,0.4)"}}>
         {nav.map(item=>(
-          <button key={item.id} onClick={()=>{setTab(item.id as Tab);setEditing(false);}} style={{flex:1,display:"flex",flexDirection:"column",alignItems:"center",gap:"4px",background:tab===item.id?"rgba(124,106,255,0.15)":"none",border:"none",cursor:"pointer",padding:"8px 4px",borderRadius:"12px",transition:"all 0.2s ease"}}>
+          <button key={item.id} onClick={()=>{setTab(item.id as Tab);setEditing(false);}} style={{flex:1,display:"flex",flexDirection:"column",alignItems:"center",gap:"4px",background:tab===item.id?"rgba(226,109,52,0.12)":"none",border:"none",cursor:"pointer",padding:"8px 4px",borderRadius:"12px",transition:"all 0.2s ease"}}>
             <span style={{fontSize:"16px",opacity:tab===item.id?1:0.35,transform:tab===item.id?"scale(1.1)":"scale(1)",transition:"all 0.2s"}}>{item.e}</span>
             <span style={{fontSize:"11px",color:tab===item.id?"#2563eb":"#999",fontWeight:tab===item.id?"600":"400",letterSpacing:"0.02em"}}>{item.l}</span>
           </button>
@@ -503,7 +503,7 @@ function NetworkingTab({event,profile,isLive,isEnded}:any){
         const firstName=getFirstName(node.display_name);
         return(
           <div key={node.id} style={{position:"absolute",left:node.x+"%",top:node.y+"%",transform:"translate(-50%,-50%)",animation:"float 4s ease-in-out infinite",zIndex:2}}>
-            <button onClick={()=>!isSent&&setConfirmNode(node)} style={{width:"56px",height:"56px",borderRadius:"50%",background:"#2563eb",border:"none",cursor:isSent?"default":"pointer",display:"flex",alignItems:"center",justifyContent:"center",animation:"pulse 2s infinite",opacity:isSent?0.5:1}}>
+            <button onClick={()=>!isSent&&setConfirmNode(node)} style={{width:"56px",height:"56px",borderRadius:"50%",background:"linear-gradient(135deg,#E26D34,#c85a24)",border:"none",cursor:isSent?"default":"pointer",display:"flex",alignItems:"center",justifyContent:"center",animation:"pulse 2s infinite",opacity:isSent?0.5:1}}>
               <span style={{color:"#fff",fontSize:"13px",fontWeight:"500"}}>{firstName.charAt(0)}</span>
             </button>
             <p style={{color:"#fff",fontSize:"11px",textAlign:"center",marginTop:"6px",opacity:0.7}}>{isSent?"sent":firstName}</p>
@@ -680,7 +680,7 @@ function ProfileTab({profile,event,onProfileUpdate,isEnded,registration}:any){
                   {isUnlocked&&c.platform_value&&<p style={{fontSize:"13px",color:"#2563eb",marginTop:"4px"}}>{cleanUrl(c.platform_value)}</p>}
                 </div>
                 {!isUnlocked&&<button onClick={()=>startScan(c)} style={{background:"rgba(245,158,11,0.15)",color:"#f59e0b",border:"1px solid rgba(245,158,11,0.3)",borderRadius:"8px",padding:"5px 10px",fontSize:"11px",fontWeight:"600",cursor:"pointer",whiteSpace:"nowrap",marginLeft:"8px"}}>Scan to unlock</button>}
-                {isUnlocked&&<span style={{fontSize:"10px",color:"#7c6aff",fontWeight:"600",marginLeft:"8px",background:"rgba(124,106,255,0.15)",padding:"2px 8px",borderRadius:"6px"}}>✓ Unlocked</span>}
+                {isUnlocked&&<span style={{fontSize:"10px",color:"#E26D34",fontWeight:"600",marginLeft:"8px",background:"rgba(226,109,52,0.12)",padding:"2px 8px",borderRadius:"6px"}}>✓ Unlocked</span>}
               </div>
             </div>
           );}

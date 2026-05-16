@@ -30,7 +30,8 @@ export default function EventsPage(){
     e.stopPropagation();
     if(status==="live"){return;}
     if(!confirm("Delete this event? This cannot be undone."))return;
-    await supabase.from("events").update({deleted_at:new Date().toISOString()}).eq("id",eventId);
+    const{error}=await supabase.from("events").update({deleted_at:new Date().toISOString(),is_hidden:true}).eq("id",eventId);
+    if(error){alert("Could not delete: "+error.message);return;}
     setEvents(prev=>prev.filter(ev=>ev.id!==eventId));
   }
 
@@ -74,7 +75,7 @@ export default function EventsPage(){
     <div style={{maxWidth:"600px",margin:"0 auto"}}>
       <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:"20px"}}>
         <h1 style={{fontSize:"20px",fontWeight:"700",color:"#f1f0f5",letterSpacing:"-0.02em"}}>Your Events</h1>
-        <button onClick={()=>router.push("/dashboard/events/create")} style={{padding:"8px 16px",borderRadius:"12px",background:"linear-gradient(135deg,#7c6aff,#5b4fd4)",color:"#fff",border:"none",fontSize:"13px",cursor:"pointer",fontWeight:"600",boxShadow:"0 4px 12px rgba(124,106,255,0.3)"}}>+ New event</button>
+        <button onClick={()=>router.push("/dashboard/events/create")} style={{padding:"8px 16px",borderRadius:"12px",background:"linear-gradient(135deg,#E26D34,#c85a24)",color:"#fff",border:"none",fontSize:"13px",cursor:"pointer",fontWeight:"600",boxShadow:"0 4px 12px rgba(226,109,52,0.3)"}}>+ New event</button>
       </div>
 
       {visible.length===0&&hidden.length===0&&(
