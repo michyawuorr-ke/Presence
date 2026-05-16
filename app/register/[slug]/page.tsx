@@ -16,6 +16,7 @@ export default function RegisterPage(){
   const[success,setSuccess]=useState(false);
   const[guestLink,setGuestLink]=useState("");
   const[error,setError]=useState("");
+  const[consent,setConsent]=useState(false);
   const[paymentState,setPaymentState]=useState<"idle"|"waiting"|"success"|"failed">("idle");
   const[checkoutId,setCheckoutId]=useState("");
   const params=useParams();
@@ -203,6 +204,18 @@ export default function RegisterPage(){
         <input value={name} onChange={e=>setName(e.target.value)} placeholder="Your full name" style={{width:"100%",padding:"16px",borderRadius:"14px",border:"1px solid #222",background:"#111",color:"#fff",fontSize:"15px",outline:"none",marginBottom:"12px",boxSizing:"border-box"}}/>
         <input value={email} onChange={e=>setEmail(e.target.value)} placeholder="Email address" type="email" style={{width:"100%",padding:"16px",borderRadius:"14px",border:"1px solid #222",background:"#111",color:"#fff",fontSize:"15px",outline:"none",marginBottom:"12px",boxSizing:"border-box"}}/>
         <input value={phone} onChange={e=>setPhone(e.target.value)} placeholder={isPaid?"Phone 07XXXXXXXX (required for M-Pesa)":"Phone 07XXXXXXXX"} type="tel" style={{width:"100%",padding:"16px",borderRadius:"14px",border:"1px solid "+(isPaid?"#2563eb":"#222"),background:"#111",color:"#fff",fontSize:"15px",outline:"none",marginBottom:"24px",boxSizing:"border-box"}}/>
+
+        <div style={{display:"flex",alignItems:"flex-start",gap:"12px",marginBottom:"16px"}}>
+          <div onClick={()=>setConsent(!consent)} style={{width:"20px",height:"20px",borderRadius:"6px",border:"1px solid "+(consent?"#E26D34":"#444"),background:consent?"#E26D34":"transparent",display:"flex",alignItems:"center",justifyContent:"center",cursor:"pointer",flexShrink:0,marginTop:"2px"}}>
+            {consent&&<span style={{color:"#fff",fontSize:"13px",fontWeight:"700",lineHeight:"1"}}>✓</span>}
+          </div>
+          <p style={{fontSize:"12px",color:"#666",lineHeight:"1.7"}}>
+            I agree to Oreeti's{" "}
+            <a href="/terms" target="_blank" style={{color:"#E26D34",textDecoration:"none",fontWeight:"500"}}>Terms of Use</a>
+            {" "}and{" "}
+            <a href="/privacy" target="_blank" style={{color:"#E26D34",textDecoration:"none",fontWeight:"500"}}>Privacy Policy</a>
+          </p>
+        </div>
 
         {error&&<p style={{color:"#ef4444",fontSize:"13px",marginBottom:"16px"}}>{error}</p>}
 

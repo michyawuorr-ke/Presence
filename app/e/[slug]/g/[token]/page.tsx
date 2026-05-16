@@ -127,7 +127,7 @@ function Splash(){
         <OreetiLogo size="sm"/>
       </div>
       <p className="splash-tag" style={{color:"#E26D34",fontSize:"11px",letterSpacing:"0.35em",textTransform:"uppercase",fontWeight:"400"}}>
-        The room, activated<span className="splash-dot" style={{display:"inline-block",color:"#E26D34"}}>.</span>
+        The room activated<span className="splash-dot" style={{display:"inline-block",color:"#E26D34"}}>.</span>
       </p>
     </div>
   );
@@ -248,7 +248,7 @@ const[tab,setTab]=useState<Tab>("scene");
 
       {tab==="scene"&&(
         <div style={{padding:"24px 20px"}}>
-          <p style={{fontSize:"10px",letterSpacing:"0.4em",color:"#E26D34",textTransform:"uppercase",marginBottom:"20px",fontWeight:"600"}}>OREETI</p>
+          <p style={{fontSize:"10px",letterSpacing:"0.4em",fontWeight:"700",letterSpacing:"-0.01em",marginBottom:"20px",fontFamily:"'Helvetica Neue',Arial,sans-serif"}}><span style={{color:"#ffffff"}}>Or</span><span style={{color:"#E26D34"}}>ee</span><span style={{color:"#ffffff"}}>ti</span></p>
           <h1 style={{fontSize:"30px",fontWeight:"600",color:"#ffffff",marginBottom:"8px",letterSpacing:"-0.02em",lineHeight:"1.1"}}>{event?.title}</h1>
           <p style={{fontSize:"14px",color:"rgba(255,255,255,0.6)",marginBottom:"2px"}}>📍 {event?.venue}</p>
           <p style={{fontSize:"14px",color:"rgba(255,255,255,0.45)",marginBottom:"32px"}}>{event&&new Date(event.start_time).toLocaleDateString("en-KE",{weekday:"long",day:"numeric",month:"long"})}</p>
@@ -497,7 +497,7 @@ function NetworkingTab({event,profile,isLive,isEnded}:any){
   }
 
   return(
-    <div style={{background:"#0a0a0b",minHeight:"calc(100vh - 100px)",position:"relative",overflow:"hidden"}}>
+    <div style={{background:"linear-gradient(160deg,#0f0f13 0%,#12101a 100%)",minHeight:"calc(100vh - 100px)",position:"relative",overflow:"hidden"}}>
       <style>{`
         @keyframes float{0%,100%{transform:translateY(0px)}50%{transform:translateY(-8px)}}
         @keyframes pulse{0%,100%{box-shadow:0 0 0 0 rgba(226,109,52,0.2)}50%{box-shadow:0 0 0 12px rgba(37,99,235,0)}}
@@ -532,7 +532,7 @@ function NetworkingTab({event,profile,isLive,isEnded}:any){
       {networkingActive&&hostNode&&(
         <div style={{position:"absolute",left:hostNode.x+"%",top:hostNode.y+"%",transform:"translate(-50%,-50%)",animation:"float 5s ease-in-out infinite",zIndex:3}}>
           <button onClick={()=>setConfirmNode({...hostNode,is_host:true})} style={{width:"56px",height:"56px",background:"none",border:"none",cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center",position:"relative"}}>
-            <span style={{fontSize:"42px",color:"#1a1008",textShadow:"0 0 8px #E26D34,0 0 20px #E26D34,0 0 40px rgba(226,109,52,0.6)",lineHeight:"1",display:"block"}}>★</span>
+            <span style={{fontSize:"44px",color:"#0a0800",textShadow:"0 0 6px #D4AF37,0 0 18px #D4AF37,0 0 35px rgba(212,175,55,0.7),0 0 60px rgba(212,175,55,0.3)",lineHeight:"1",display:"block"}}>★</span>
           </button>
           <p style={{color:"#E26D34",fontSize:"10px",textAlign:"center",marginTop:"2px",fontWeight:"600",letterSpacing:"0.05em"}}>HOST</p>
         </div>
@@ -561,7 +561,7 @@ function NetworkingTab({event,profile,isLive,isEnded}:any){
           <div style={{background:"#1a1a1a",borderRadius:"24px 24px 0 0",padding:"28px",width:"100%",animation:"slideUp 0.3s ease"}} onClick={e=>e.stopPropagation()}>
             <div style={{display:"flex",alignItems:"center",gap:"8px",marginBottom:"8px"}}>
               <p style={{color:"#fff",fontSize:"18px",fontWeight:"500"}}>Connect with {getFirstName(confirmNode.display_name)}?</p>
-              {confirmNode.is_host&&<span style={{background:"#E26D34",color:"#000",fontSize:"10px",fontWeight:"700",padding:"2px 8px",borderRadius:"6px"}}>HOST</span>}
+              {confirmNode.is_host&&<span style={{background:"linear-gradient(135deg,#D4AF37,#b8962e)",color:"#000",fontSize:"10px",fontWeight:"700",padding:"3px 10px",borderRadius:"6px",letterSpacing:"0.05em"}}>HOST</span>}
             </div>
             <p style={{color:"#666",fontSize:"14px",marginBottom:"4px"}}>{confirmNode.role_title||""}</p>
             {confirmNode.is_host&&<p style={{color:"#E26D34",fontSize:"12px",marginBottom:"8px"}}>★ Event organizer</p>}
