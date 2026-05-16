@@ -660,7 +660,7 @@ function ProfileTab({profile,event,onProfileUpdate,isEnded,registration}:any){
             await scanner.stop();
             setScanning(false);
             setScanMsg("Unlocking...");
-            const res=await fetch("/api/handshakes/unlock",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({scanner_registration_id:registration.id,target_registration_id:regId})});
+            const res=await fetch("/api/handshakes/unlock",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({scanner_registration_id:registration.id,target_registration_id:targetRegId})});
             if(res.ok){
               setUnlocked(prev=>new Set([...prev,conn.id]));
               setScanMsg("✅ Profile unlocked!");
