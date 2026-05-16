@@ -85,11 +85,7 @@ export default function OreetiLogo({size="md"}:{size?:"sm"|"md"|"lg"}){
       {/* i dot — amber lands */}
       <circle className="idot" cx="302" cy="36" r="7" fill="#E26D34" filter="url(#ga)"/>
 
-      {/* Tagline */}
-      <text x="155" y="148" textAnchor="middle"
-        style={{fontFamily:"'Helvetica Neue',Arial,sans-serif",fontSize:"13.5px",letterSpacing:"0.38em",fill:"url(#chrome)",fontWeight:300}}>
-        THE ROOM, ACTIVATED.
-      </text>
+
     </svg>
   );
 }
