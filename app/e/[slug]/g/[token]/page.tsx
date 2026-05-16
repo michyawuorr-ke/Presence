@@ -81,15 +81,31 @@ export default function GuestEntryPage(){
 
 function Splash(){
   return(
-    <div style={{position:"fixed",inset:0,background:"#0f0f13",display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",zIndex:9999,gap:"24px"}}>
+    <div style={{position:"fixed",inset:0,background:"#0a0a0a",display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",zIndex:9999,gap:"20px"}}>
       <style>{`
-        @keyframes logoIn{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
-        @keyframes textIn{from{opacity:0}to{opacity:1}}
+        @keyframes logoSlide{
+          0%{opacity:0;transform:translateY(24px) scale(0.92);}
+          60%{opacity:1;transform:translateY(-4px) scale(1.02);}
+          100%{opacity:1;transform:translateY(0) scale(1);}
+        }
+        @keyframes tagSlide{
+          0%,40%{opacity:0;transform:translateY(12px);}
+          100%{opacity:0.8;transform:translateY(0);}
+        }
+        @keyframes dotPulse{
+          0%,100%{transform:scale(1);opacity:0.8;}
+          50%{transform:scale(1.4);opacity:1;}
+        }
+        .splash-logo{animation:logoSlide 1s cubic-bezier(0.34,1.56,0.64,1) forwards;}
+        .splash-tag{animation:tagSlide 1.6s ease forwards;}
+        .splash-dot{animation:dotPulse 1.2s ease-in-out infinite;animation-delay:1s;}
       `}</style>
-      <div style={{animation:"logoIn 1.2s ease forwards"}}>
+      <div className="splash-logo">
         <OreetiLogo size="sm"/>
       </div>
-      <p style={{color:"#E26D34",fontSize:"11px",letterSpacing:"0.35em",textTransform:"uppercase",animation:"textIn 1.8s ease forwards",fontWeight:"400",opacity:0.8}}>The room, activated.</p>
+      <p className="splash-tag" style={{color:"#E26D34",fontSize:"11px",letterSpacing:"0.35em",textTransform:"uppercase",fontWeight:"400"}}>
+        The room, activated<span className="splash-dot" style={{display:"inline-block",color:"#E26D34"}}>.</span>
+      </p>
     </div>
   );
 }
@@ -205,7 +221,7 @@ const[tab,setTab]=useState<Tab>("scene");
 
   return(
     <div style={{minHeight:"100vh",background:"linear-gradient(160deg,#0f0f13 0%,#13131f 50%,#0f0f13 100%)",paddingBottom:"100px",fontFamily:"var(--font-inter),-apple-system,sans-serif"}}>
-      {fiveMin&&<div style={{background:"#f59e0b",padding:"12px 20px",textAlign:"center"}}><p style={{color:"#000",fontSize:"13px",fontWeight:"500"}}>⏱ Event ends in 5 minutes</p></div>}
+      {fiveMin&&<div style={{background:"#E26D34",padding:"12px 20px",textAlign:"center"}}><p style={{color:"#000",fontSize:"13px",fontWeight:"500"}}>⏱ Event ends in 5 minutes</p></div>}
 
       {tab==="scene"&&(
         <div style={{padding:"24px 20px"}}>
@@ -240,16 +256,16 @@ const[tab,setTab]=useState<Tab>("scene");
           )}
           
           {isLive&&(
-            <div style={{background:"rgba(26,26,36,0.8)",borderRadius:"20px",padding:"20px",marginBottom:"12px",border:"1px solid rgba(124,106,255,0.15)",backdropFilter:"blur(20px)"}}>
-              <p style={{fontSize:"10px",color:"#7c6aff",marginBottom:"12px",letterSpacing:"0.15em",fontWeight:"600"}}>LIVE NOW</p>
+            <div style={{background:"rgba(26,26,36,0.8)",borderRadius:"20px",padding:"20px",marginBottom:"12px",border:"1px solid rgba(226,109,52,0.12)",backdropFilter:"blur(20px)"}}>
+              <p style={{fontSize:"10px",color:"#E26D34",marginBottom:"12px",letterSpacing:"0.15em",fontWeight:"600"}}>LIVE NOW</p>
               <div style={{display:"flex",flexDirection:"column",gap:"12px",marginBottom:"20px"}}>
-                <div style={{background:"rgba(124,106,255,0.1)",borderRadius:"12px",padding:"14px",border:"1px solid rgba(124,106,255,0.15)"}}>
-                  <p style={{fontSize:"28px",fontWeight:"700",color:"#7c6aff",lineHeight:"1",marginBottom:"2px"}}>{networkingCount}</p>
-                  <p style={{fontSize:"12px",color:"#7c6aff",fontWeight:"500"}}>networking now</p>
+                <div style={{background:"rgba(226,109,52,0.1)",borderRadius:"12px",padding:"14px",border:"1px solid rgba(226,109,52,0.12)"}}>
+                  <p style={{fontSize:"28px",fontWeight:"700",color:"#E26D34",lineHeight:"1",marginBottom:"2px"}}>{networkingCount}</p>
+                  <p style={{fontSize:"12px",color:"#E26D34",fontWeight:"500"}}>networking now</p>
                 </div>
-                <div style={{background:"rgba(52,211,153,0.1)",borderRadius:"12px",padding:"14px",border:"1px solid rgba(52,211,153,0.15)"}}>
-                  <p style={{fontSize:"28px",fontWeight:"700",color:"#34d399",lineHeight:"1",marginBottom:"2px"}}>{connectionsCount}</p>
-                  <p style={{fontSize:"12px",color:"#34d399",fontWeight:"500"}}>handshakes exchanged</p>
+                <div style={{background:"rgba(226,109,52,0.12)",borderRadius:"12px",padding:"14px",border:"1px solid rgba(226,109,52,0.12)"}}>
+                  <p style={{fontSize:"28px",fontWeight:"700",color:"#E26D34",lineHeight:"1",marginBottom:"2px"}}>{connectionsCount}</p>
+                  <p style={{fontSize:"12px",color:"#E26D34",fontWeight:"500"}}>handshakes exchanged</p>
                 </div>
               </div>
               <button onClick={()=>setTab("networking")} style={{width:"100%",padding:"14px",borderRadius:"14px",background:"linear-gradient(135deg,#E26D34,#c85a24)",color:"#fff",border:"none",fontSize:"14px",cursor:"pointer",fontWeight:"600",boxShadow:"0 8px 24px rgba(226,109,52,0.3)"}}>Start Networking →</button>
@@ -291,7 +307,7 @@ const[tab,setTab]=useState<Tab>("scene");
         {nav.map(item=>(
           <button key={item.id} onClick={()=>{setTab(item.id as Tab);setEditing(false);}} style={{flex:1,display:"flex",flexDirection:"column",alignItems:"center",gap:"4px",background:tab===item.id?"rgba(226,109,52,0.12)":"none",border:"none",cursor:"pointer",padding:"8px 4px",borderRadius:"12px",transition:"all 0.2s ease"}}>
             <span style={{fontSize:"16px",opacity:tab===item.id?1:0.35,transform:tab===item.id?"scale(1.1)":"scale(1)",transition:"all 0.2s"}}>{item.e}</span>
-            <span style={{fontSize:"11px",color:tab===item.id?"#2563eb":"#999",fontWeight:tab===item.id?"600":"400",letterSpacing:"0.02em"}}>{item.l}</span>
+            <span style={{fontSize:"11px",color:tab===item.id?"#E26D34":"#999",fontWeight:tab===item.id?"600":"400",letterSpacing:"0.02em"}}>{item.l}</span>
           </button>
         ))}
       </div>
@@ -461,7 +477,7 @@ function NetworkingTab({event,profile,isLive,isEnded}:any){
     <div style={{background:"#0a0a0b",minHeight:"calc(100vh - 100px)",position:"relative",overflow:"hidden"}}>
       <style>{`
         @keyframes float{0%,100%{transform:translateY(0px)}50%{transform:translateY(-8px)}}
-        @keyframes pulse{0%,100%{box-shadow:0 0 0 0 rgba(37,99,235,0.4)}50%{box-shadow:0 0 0 12px rgba(37,99,235,0)}}
+        @keyframes pulse{0%,100%{box-shadow:0 0 0 0 rgba(226,109,52,0.2)}50%{box-shadow:0 0 0 12px rgba(37,99,235,0)}}
         @keyframes slideUp{from{transform:translateY(100%);opacity:0}to{transform:translateY(0);opacity:1}}
         @keyframes fadeIn{from{opacity:0}to{opacity:1}}
       `}</style>
@@ -492,10 +508,10 @@ function NetworkingTab({event,profile,isLive,isEnded}:any){
 
       {networkingActive&&hostNode&&(
         <div style={{position:"absolute",left:hostNode.x+"%",top:hostNode.y+"%",transform:"translate(-50%,-50%)",animation:"float 5s ease-in-out infinite",zIndex:3}}>
-          <button onClick={()=>setConfirmNode({...hostNode,is_host:true})} style={{width:"52px",height:"52px",background:"none",border:"none",cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center",fontSize:"40px",filter:"drop-shadow(0 0 12px rgba(245,158,11,0.8))"}}>
+          <button onClick={()=>setConfirmNode({...hostNode,is_host:true})} style={{width:"52px",height:"52px",background:"none",border:"none",cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center",fontSize:"40px",filter:"drop-shadow(0 0 12px rgba(226,109,52,0.15))"}}>
             ★
           </button>
-          <p style={{color:"#f59e0b",fontSize:"10px",textAlign:"center",marginTop:"2px",fontWeight:"600",letterSpacing:"0.05em"}}>HOST</p>
+          <p style={{color:"#E26D34",fontSize:"10px",textAlign:"center",marginTop:"2px",fontWeight:"600",letterSpacing:"0.05em"}}>HOST</p>
         </div>
       )}
       {networkingActive&&nodes.map((node:any)=>{
@@ -522,10 +538,10 @@ function NetworkingTab({event,profile,isLive,isEnded}:any){
           <div style={{background:"#1a1a1a",borderRadius:"24px 24px 0 0",padding:"28px",width:"100%",animation:"slideUp 0.3s ease"}} onClick={e=>e.stopPropagation()}>
             <div style={{display:"flex",alignItems:"center",gap:"8px",marginBottom:"8px"}}>
               <p style={{color:"#fff",fontSize:"18px",fontWeight:"500"}}>Connect with {getFirstName(confirmNode.display_name)}?</p>
-              {confirmNode.is_host&&<span style={{background:"#f59e0b",color:"#000",fontSize:"10px",fontWeight:"700",padding:"2px 8px",borderRadius:"6px"}}>HOST</span>}
+              {confirmNode.is_host&&<span style={{background:"#E26D34",color:"#000",fontSize:"10px",fontWeight:"700",padding:"2px 8px",borderRadius:"6px"}}>HOST</span>}
             </div>
             <p style={{color:"#666",fontSize:"14px",marginBottom:"4px"}}>{confirmNode.role_title||""}</p>
-            {confirmNode.is_host&&<p style={{color:"#f59e0b",fontSize:"12px",marginBottom:"8px"}}>★ Event organizer</p>}
+            {confirmNode.is_host&&<p style={{color:"#E26D34",fontSize:"12px",marginBottom:"8px"}}>★ Event organizer</p>}
             <div style={{display:"flex",gap:"12px"}}>
               <button onClick={()=>setConfirmNode(null)} style={{flex:1,padding:"14px",borderRadius:"14px",background:"#333",color:"#fff",border:"none",fontSize:"15px",cursor:"pointer"}}>Cancel</button>
               <button onClick={()=>sendRequest(confirmNode)} style={{flex:1,padding:"14px",borderRadius:"14px",background:"#fff",color:"#000",border:"none",fontSize:"15px",fontWeight:"500",cursor:"pointer"}}>Send Request →</button>
@@ -633,7 +649,7 @@ function ProfileTab({profile,event,onProfileUpdate,isEnded,registration}:any){
       
       <div style={{background:"#fff",borderRadius:"24px",padding:"24px",border:"1px solid rgba(0,0,0,0.06)",marginBottom:"16px",boxShadow:"0 4px 16px rgba(0,0,0,0.04)"}}>
         <div style={{display:"flex",alignItems:"center",gap:"16px",marginBottom:"20px"}}>
-          <div style={{width:"48px",height:"48px",borderRadius:"50%",background:"#2563eb",display:"flex",alignItems:"center",justifyContent:"center"}}>
+          <div style={{width:"48px",height:"48px",borderRadius:"50%",background:"#E26D34",display:"flex",alignItems:"center",justifyContent:"center"}}>
             <p style={{color:"#fff",fontSize:"18px",fontWeight:"500"}}>{profile?.display_name?.charAt(0)?.toUpperCase()}</p>
           </div>
           <div>
@@ -643,8 +659,8 @@ function ProfileTab({profile,event,onProfileUpdate,isEnded,registration}:any){
         </div>
         {profile?.organisation&&<p style={{fontSize:"14px",color:"#666",marginBottom:"4px"}}>{profile.organisation}</p>}
         {profile?.bio&&<p style={{fontSize:"14px",color:"#999",marginTop:"12px"}}>{profile.bio}</p>}
-        {profile?.platform_value&&<p style={{fontSize:"13px",color:"#2563eb",marginTop:"12px"}}>{cleanUrl(profile.platform_value)}</p>}
-        <button onClick={()=>setEditing(!editing)} style={{width:"100%",marginTop:"16px",padding:"12px",borderRadius:"12px",background:"#2563eb",color:"#fff",border:"none",fontSize:"14px",cursor:"pointer",fontWeight:"500"}}>{editing?"Cancel":"Edit Profile"}</button>
+        {profile?.platform_value&&<p style={{fontSize:"13px",color:"#E26D34",marginTop:"12px"}}>{cleanUrl(profile.platform_value)}</p>}
+        <button onClick={()=>setEditing(!editing)} style={{width:"100%",marginTop:"16px",padding:"12px",borderRadius:"12px",background:"#E26D34",color:"#fff",border:"none",fontSize:"14px",cursor:"pointer",fontWeight:"500"}}>{editing?"Cancel":"Edit Profile"}</button>
       </div>
 
       {editing&&<EditProfile profile={profile} onSave={(p:any)=>{onProfileUpdate(p);setEditing(false);}}/>}
@@ -654,7 +670,7 @@ function ProfileTab({profile,event,onProfileUpdate,isEnded,registration}:any){
           <p style={{color:"#666",fontSize:"13px",marginBottom:"24px",textAlign:"center"}}>Ask them to open Ticket tab → show Networking QR</p>
           <div style={{position:"relative",width:"280px",height:"280px",marginBottom:"24px"}}>
             <div id="qr-reader" style={{width:"280px",height:"280px",borderRadius:"16px",overflow:"hidden",background:"#111"}}></div>
-            <div style={{position:"absolute",top:0,left:0,right:0,bottom:0,border:"2px solid #2563eb",borderRadius:"16px",pointerEvents:"none"}}/>
+            <div style={{position:"absolute",top:0,left:0,right:0,bottom:0,border:"2px solid #E26D34",borderRadius:"16px",pointerEvents:"none"}}/>
             <div style={{position:"absolute",top:"50%",left:"50%",transform:"translate(-50%,-50%)",width:"160px",height:"160px",border:"2px solid rgba(255,255,255,0.3)",borderRadius:"8px",pointerEvents:"none"}}/>
           </div>
           <p style={{color:"#555",fontSize:"12px",marginBottom:"24px",textAlign:"center"}}>Point camera at their QR code</p>
@@ -664,22 +680,22 @@ function ProfileTab({profile,event,onProfileUpdate,isEnded,registration}:any){
       {scanMsg&&<div style={{position:"fixed",bottom:"120px",left:"50%",transform:"translateX(-50%)",background:"#1a1a1a",color:"#fff",padding:"12px 24px",borderRadius:"12px",fontSize:"14px",zIndex:999,whiteSpace:"nowrap"}}>{scanMsg}</div>}
 
       <div style={{marginTop:"16px"}}>
-        <p style={{fontSize:"10px",fontWeight:"600",color:"#6b6880",letterSpacing:"0.12em",textTransform:"uppercase",marginBottom:"12px"}}>Connections</p>
+        <p style={{fontSize:"10px",fontWeight:"600",color:"rgba(255,255,255,0.45)",letterSpacing:"0.12em",textTransform:"uppercase",marginBottom:"12px"}}>Connections</p>
         {connections.length===0?(
           <p style={{color:"#999",fontSize:"14px",textAlign:"center",padding:"40px 0"}}>
             {isEnded?"No connections from this event":"Connect with people to see them here"}
           </p>
         ):(
           connections.map((c:any)=>{const isUnlocked=unlocked.has(c.id);return(
-            <div key={c.id} style={{background:isUnlocked?"rgba(124,106,255,0.08)":"rgba(26,26,36,0.9)",borderRadius:"14px",padding:"14px",marginBottom:"8px",border:isUnlocked?"1px solid rgba(124,106,255,0.3)":"1px solid rgba(255,255,255,0.06)"}}>
+            <div key={c.id} style={{background:isUnlocked?"rgba(226,109,52,0.08)":"rgba(26,26,36,0.9)",borderRadius:"14px",padding:"14px",marginBottom:"8px",border:isUnlocked?"1px solid rgba(226,109,52,0.25)":"1px solid rgba(255,255,255,0.06)"}}>
               <div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-start"}}>
                 <div style={{flex:1}}>
                   <p style={{fontSize:"14px",fontWeight:"600",marginBottom:"1px",color:"#f1f0f5"}}>{c.display_name}</p>
                   {c.role_title&&<p style={{fontSize:"13px",color:"#666",marginBottom:"2px"}}>{c.role_title}</p>}
                   {isUnlocked&&c.organisation&&<p style={{fontSize:"13px",color:"#999",marginBottom:"8px"}}>{c.organisation}</p>}
-                  {isUnlocked&&c.platform_value&&<p style={{fontSize:"13px",color:"#2563eb",marginTop:"4px"}}>{cleanUrl(c.platform_value)}</p>}
+                  {isUnlocked&&c.platform_value&&<p style={{fontSize:"13px",color:"#E26D34",marginTop:"4px"}}>{cleanUrl(c.platform_value)}</p>}
                 </div>
-                {!isUnlocked&&<button onClick={()=>startScan(c)} style={{background:"rgba(245,158,11,0.15)",color:"#f59e0b",border:"1px solid rgba(245,158,11,0.3)",borderRadius:"8px",padding:"5px 10px",fontSize:"11px",fontWeight:"600",cursor:"pointer",whiteSpace:"nowrap",marginLeft:"8px"}}>Scan to unlock</button>}
+                {!isUnlocked&&<button onClick={()=>startScan(c)} style={{background:"rgba(226,109,52,0.15)",color:"#E26D34",border:"1px solid rgba(226,109,52,0.15)",borderRadius:"8px",padding:"5px 10px",fontSize:"11px",fontWeight:"600",cursor:"pointer",whiteSpace:"nowrap",marginLeft:"8px"}}>Scan to unlock</button>}
                 {isUnlocked&&<span style={{fontSize:"10px",color:"#E26D34",fontWeight:"600",marginLeft:"8px",background:"rgba(226,109,52,0.12)",padding:"2px 8px",borderRadius:"6px"}}>✓ Unlocked</span>}
               </div>
             </div>
@@ -722,7 +738,7 @@ function EditProfile({profile,onSave}:any){
       <input value={organisation} onChange={e=>setOrganisation(e.target.value)} placeholder="Organisation" style={inp}/>
       <textarea value={bio} onChange={e=>setBio(e.target.value)} placeholder="Short bio" style={{...inp,minHeight:"60px",resize:"vertical"}}/>
       <input value={link} onChange={e=>setLink(e.target.value)} placeholder="LinkedIn, Instagram, or your website" style={inp}/>
-      <button onClick={save} disabled={saving} style={{width:"100%",padding:"14px",borderRadius:"14px",background:saving?"#999":"#2563eb",color:"#fff",border:"none",fontSize:"14px",cursor:"pointer",fontWeight:"500"}}>{saving?"Saving...":"Save changes"}</button>
+      <button onClick={save} disabled={saving} style={{width:"100%",padding:"14px",borderRadius:"14px",background:saving?"#999":"#E26D34",color:"#fff",border:"none",fontSize:"14px",cursor:"pointer",fontWeight:"500"}}>{saving?"Saving...":"Save changes"}</button>
     </div>
   );
 }

@@ -35,10 +35,10 @@ export default function EventsPage(){
     setEvents(prev=>prev.filter(ev=>ev.id!==eventId));
   }
 
-  const statusColor:any={draft:"#6b6880",scheduled:"#7c6aff",live:"#34d399",ended:"#6b6880"};
-  const statusBg:any={draft:"rgba(107,104,128,0.1)",scheduled:"rgba(124,106,255,0.1)",live:"rgba(52,211,153,0.1)",ended:"rgba(107,104,128,0.1)"};
+  const statusColor:any={draft:"rgba(255,255,255,0.45)",scheduled:"#E26D34",live:"#E26D34",ended:"rgba(255,255,255,0.45)"};
+  const statusBg:any={draft:"rgba(107,104,128,0.1)",scheduled:"rgba(226,109,52,0.1)",live:"rgba(226,109,52,0.12)",ended:"rgba(107,104,128,0.1)"};
 
-  if(loading)return<div style={{textAlign:"center",padding:"60px",color:"#6b6880"}}>Loading...</div>;
+  if(loading)return<div style={{textAlign:"center",padding:"60px",color:"rgba(255,255,255,0.45)"}}>Loading...</div>;
 
   const visible=events.filter(e=>!e.is_hidden&&!e.deleted_at);
   const hidden=events.filter(e=>e.is_hidden&&!e.deleted_at);
@@ -53,11 +53,11 @@ export default function EventsPage(){
               <h2 style={{fontSize:"15px",fontWeight:"700",color:"#ffffff",letterSpacing:"-0.01em"}}>{event.title}</h2>
               <span style={{fontSize:"10px",fontWeight:"600",color:statusColor[event.status],background:statusBg[event.status],padding:"2px 8px",borderRadius:"6px",textTransform:"uppercase",letterSpacing:"0.05em"}}>{event.status}</span>
             </div>
-            <p style={{fontSize:"12px",color:"#6b6880",marginBottom:"2px"}}>📍 {event.venue}</p>
-            <p style={{fontSize:"12px",color:"#6b6880"}}>🗓 {new Date(event.start_time).toLocaleDateString("en-KE",{day:"numeric",month:"short",year:"numeric"})} · {new Date(event.start_time).toLocaleTimeString("en-KE",{hour:"2-digit",minute:"2-digit"})}</p>
+            <p style={{fontSize:"12px",color:"rgba(255,255,255,0.45)",marginBottom:"2px"}}>📍 {event.venue}</p>
+            <p style={{fontSize:"12px",color:"rgba(255,255,255,0.45)"}}>🗓 {new Date(event.start_time).toLocaleDateString("en-KE",{day:"numeric",month:"short",year:"numeric"})} · {new Date(event.start_time).toLocaleTimeString("en-KE",{hour:"2-digit",minute:"2-digit"})}</p>
           </div>
           <div style={{display:"flex",flexDirection:"column",gap:"6px",marginLeft:"12px"}}>
-            <button onClick={(e)=>toggleHide(e,event.id,event.is_hidden)} style={{fontSize:"10px",color:event.is_hidden?"#34d399":"#6b6880",background:"rgba(255,255,255,0.04)",border:"1px solid rgba(255,255,255,0.06)",borderRadius:"6px",padding:"4px 8px",cursor:"pointer"}}>
+            <button onClick={(e)=>toggleHide(e,event.id,event.is_hidden)} style={{fontSize:"10px",color:event.is_hidden?"#E26D34":"rgba(255,255,255,0.45)",background:"rgba(255,255,255,0.04)",border:"1px solid rgba(255,255,255,0.06)",borderRadius:"6px",padding:"4px 8px",cursor:"pointer"}}>
               {event.is_hidden?"Show":"Hide"}
             </button>
             {event.status!=="live"&&(
@@ -82,7 +82,7 @@ export default function EventsPage(){
         <div style={{textAlign:"center",padding:"80px 0"}}>
           <p style={{fontSize:"32px",marginBottom:"16px",opacity:0.3}}>✦</p>
           <p style={{fontSize:"15px",color:"#f1f0f5",marginBottom:"8px",fontWeight:"500"}}>No events yet</p>
-          <p style={{fontSize:"13px",color:"#6b6880"}}>Create your first event to get started</p>
+          <p style={{fontSize:"13px",color:"rgba(255,255,255,0.45)"}}>Create your first event to get started</p>
         </div>
       )}
 
@@ -90,7 +90,7 @@ export default function EventsPage(){
 
       {hidden.length>0&&(
         <div style={{marginTop:"24px"}}>
-          <button onClick={()=>setShowHidden(!showHidden)} style={{background:"none",border:"none",color:"#6b6880",fontSize:"12px",cursor:"pointer",marginBottom:"12px",display:"flex",alignItems:"center",gap:"6px"}}>
+          <button onClick={()=>setShowHidden(!showHidden)} style={{background:"none",border:"none",color:"rgba(255,255,255,0.45)",fontSize:"12px",cursor:"pointer",marginBottom:"12px",display:"flex",alignItems:"center",gap:"6px"}}>
             {showHidden?"▾":"▸"} {hidden.length} hidden event{hidden.length>1?"s":""}
           </button>
           {showHidden&&hidden.map(event=><EventCard key={event.id} event={event}/>)}

@@ -169,23 +169,23 @@ export default function EventDetailPage(){
     document.body.removeChild(a);URL.revokeObjectURL(url);
   }
 
-  if(loading)return<div style={{textAlign:"center",padding:"60px",color:"#6b6880"}}>Loading...</div>;
-  if(!event)return<div style={{textAlign:"center",padding:"60px",color:"#6b6880"}}>Event not found</div>;
+  if(loading)return<div style={{textAlign:"center",padding:"60px",color:"rgba(255,255,255,0.45)"}}>Loading...</div>;
+  if(!event)return<div style={{textAlign:"center",padding:"60px",color:"rgba(255,255,255,0.45)"}}>Event not found</div>;
 
-  const statusColor:any={draft:"#6b6880",scheduled:"#E26D34",live:"#34d399",ended:"#6b6880"};
-  const statusBg:any={draft:"rgba(107,104,128,0.1)",scheduled:"rgba(124,106,255,0.1)",live:"rgba(52,211,153,0.1)",ended:"rgba(107,104,128,0.08)"};
+  const statusColor:any={draft:"rgba(255,255,255,0.45)",scheduled:"#E26D34",live:"#E26D34",ended:"rgba(255,255,255,0.45)"};
+  const statusBg:any={draft:"rgba(107,104,128,0.1)",scheduled:"rgba(226,109,52,0.1)",live:"rgba(226,109,52,0.12)",ended:"rgba(107,104,128,0.08)"};
   const registrationLink=`${typeof window!=="undefined"?window.location.origin:""}/register/${event.slug}`;
 
   const card=(label:string,value:any,color:string="#f1f0f5")=>(
     <div style={{background:"rgba(26,26,36,0.9)",borderRadius:"12px",padding:"14px",border:"1px solid rgba(255,255,255,0.06)"}}>
       <p style={{fontSize:"24px",fontWeight:"700",color,lineHeight:"1",marginBottom:"4px"}}>{value}</p>
-      <p style={{fontSize:"11px",color:"#6b6880"}}>{label}</p>
+      <p style={{fontSize:"11px",color:"rgba(255,255,255,0.45)"}}>{label}</p>
     </div>
   );
 
   return(
     <div style={{maxWidth:"600px",margin:"0 auto"}}>
-      <button onClick={()=>router.back()} style={{background:"rgba(255,255,255,0.06)",border:"none",color:"#6b6880",fontSize:"16px",cursor:"pointer",marginBottom:"20px",width:"36px",height:"36px",borderRadius:"10px",display:"flex",alignItems:"center",justifyContent:"center"}}>←</button>
+      <button onClick={()=>router.back()} style={{background:"rgba(255,255,255,0.06)",border:"none",color:"rgba(255,255,255,0.45)",fontSize:"16px",cursor:"pointer",marginBottom:"20px",width:"36px",height:"36px",borderRadius:"10px",display:"flex",alignItems:"center",justifyContent:"center"}}>←</button>
 
       {/* Header */}
       <div style={{background:"rgba(26,26,36,0.9)",borderRadius:"20px",padding:"20px",marginBottom:"12px",border:"1px solid rgba(255,255,255,0.06)"}}>
@@ -193,19 +193,19 @@ export default function EventDetailPage(){
           <h1 style={{fontSize:"20px",fontWeight:"700",color:"#f1f0f5",letterSpacing:"-0.02em",flex:1,marginRight:"12px"}}>{event.title}</h1>
           <span style={{fontSize:"10px",textTransform:"uppercase",fontWeight:"700",color:statusColor[event.status],background:statusBg[event.status],padding:"4px 10px",borderRadius:"8px",letterSpacing:"0.05em",whiteSpace:"nowrap"}}>{event.status}</span>
         </div>
-        <p style={{fontSize:"13px",color:"#6b6880",marginBottom:"2px"}}>📍 {event.venue}</p>
-        <p style={{fontSize:"13px",color:"#6b6880",marginBottom:"2px"}}>🗓 {new Date(event.start_time).toLocaleDateString("en-KE",{weekday:"short",day:"numeric",month:"short",year:"numeric"})}</p>
-        <p style={{fontSize:"13px",color:"#6b6880"}}>🕐 {new Date(event.start_time).toLocaleTimeString("en-KE",{hour:"2-digit",minute:"2-digit"})} — {new Date(event.end_time).toLocaleTimeString("en-KE",{hour:"2-digit",minute:"2-digit"})}</p>
+        <p style={{fontSize:"13px",color:"rgba(255,255,255,0.45)",marginBottom:"2px"}}>📍 {event.venue}</p>
+        <p style={{fontSize:"13px",color:"rgba(255,255,255,0.45)",marginBottom:"2px"}}>🗓 {new Date(event.start_time).toLocaleDateString("en-KE",{weekday:"short",day:"numeric",month:"short",year:"numeric"})}</p>
+        <p style={{fontSize:"13px",color:"rgba(255,255,255,0.45)"}}>🕐 {new Date(event.start_time).toLocaleTimeString("en-KE",{hour:"2-digit",minute:"2-digit"})} — {new Date(event.end_time).toLocaleTimeString("en-KE",{hour:"2-digit",minute:"2-digit"})}</p>
       </div>
 
       {/* Actions */}
       <div style={{marginBottom:"12px"}}>
 
         {event.status==="scheduled"&&(
-          <div style={{background:"rgba(124,106,255,0.08)",borderRadius:"14px",padding:"16px",border:"1px solid rgba(226,109,52,0.2)",textAlign:"center"}}>
+          <div style={{background:"rgba(226,109,52,0.08)",borderRadius:"14px",padding:"16px",border:"1px solid rgba(226,109,52,0.2)",textAlign:"center"}}>
             <p style={{fontSize:"11px",color:"#E26D34",fontWeight:"600",letterSpacing:"0.05em",textTransform:"uppercase",marginBottom:"4px"}}>Goes live automatically in</p>
             <p style={{fontSize:"32px",fontWeight:"700",color:"#E26D34",letterSpacing:"-0.02em"}}>{timeToLive||"..."}</p>
-            <p style={{fontSize:"11px",color:"#6b6880",marginTop:"4px"}}>at {new Date(event.start_time).toLocaleTimeString("en-KE",{hour:"2-digit",minute:"2-digit"})}</p>
+            <p style={{fontSize:"11px",color:"rgba(255,255,255,0.45)",marginTop:"4px"}}>at {new Date(event.start_time).toLocaleTimeString("en-KE",{hour:"2-digit",minute:"2-digit"})}</p>
           </div>
         )}
         {event.status==="live"&&(
@@ -217,25 +217,25 @@ export default function EventDetailPage(){
 
       {/* Host networking link */}
       {hostLink&&(
-        <div style={{background:"rgba(245,158,11,0.08)",borderRadius:"14px",padding:"16px",marginBottom:"12px",border:"1px solid rgba(245,158,11,0.2)"}}>
-          <p style={{fontSize:"11px",color:"#f59e0b",fontWeight:"700",letterSpacing:"0.05em",textTransform:"uppercase",marginBottom:"4px"}}>★ Your Host Link</p>
-          <p style={{fontSize:"11px",color:"#6b6880",marginBottom:"12px"}}>Open this to appear as host in your event's networking</p>
+        <div style={{background:"rgba(226,109,52,0.15)",borderRadius:"14px",padding:"16px",marginBottom:"12px",border:"1px solid rgba(226,109,52,0.15)"}}>
+          <p style={{fontSize:"11px",color:"#E26D34",fontWeight:"700",letterSpacing:"0.05em",textTransform:"uppercase",marginBottom:"4px"}}>★ Your Host Link</p>
+          <p style={{fontSize:"11px",color:"rgba(255,255,255,0.45)",marginBottom:"12px"}}>Open this to appear as host in your event's networking</p>
           <p style={{fontSize:"11px",color:"#f1f0f5",wordBreak:"break-all",marginBottom:"12px"}}>{hostLink.replace("https://","")}</p>
           <div style={{display:"flex",gap:"8px"}}>
-            <button onClick={()=>copyLink(hostLink)} style={{flex:1,padding:"10px",borderRadius:"10px",background:"rgba(245,158,11,0.15)",color:"#f59e0b",border:"1px solid rgba(245,158,11,0.2)",fontSize:"12px",cursor:"pointer",fontWeight:"600"}}>Copy link</button>
-            {typeof navigator!=="undefined"&&navigator.share&&<button onClick={()=>navigator.share({title:"My Host Link",url:hostLink})} style={{padding:"10px 16px",borderRadius:"10px",background:"rgba(255,255,255,0.06)",color:"#6b6880",border:"1px solid rgba(255,255,255,0.06)",fontSize:"12px",cursor:"pointer"}}>Share</button>}
+            <button onClick={()=>copyLink(hostLink)} style={{flex:1,padding:"10px",borderRadius:"10px",background:"rgba(226,109,52,0.15)",color:"#E26D34",border:"1px solid rgba(226,109,52,0.15)",fontSize:"12px",cursor:"pointer",fontWeight:"600"}}>Copy link</button>
+            {typeof navigator!=="undefined"&&navigator.share&&<button onClick={()=>navigator.share({title:"My Host Link",url:hostLink})} style={{padding:"10px 16px",borderRadius:"10px",background:"rgba(255,255,255,0.06)",color:"rgba(255,255,255,0.45)",border:"1px solid rgba(255,255,255,0.06)",fontSize:"12px",cursor:"pointer"}}>Share</button>}
           </div>
         </div>
       )}
 
       {/* Registration link */}
       {event.status!=="draft"&&event.status!=="ended"&&(
-        <div style={{background:"rgba(52,211,153,0.06)",borderRadius:"14px",padding:"16px",marginBottom:"12px",border:"1px solid rgba(52,211,153,0.15)"}}>
-          <p style={{fontSize:"11px",color:"#34d399",fontWeight:"700",letterSpacing:"0.05em",textTransform:"uppercase",marginBottom:"4px"}}>Registration Link</p>
+        <div style={{background:"rgba(226,109,52,0.12)",borderRadius:"14px",padding:"16px",marginBottom:"12px",border:"1px solid rgba(226,109,52,0.12)"}}>
+          <p style={{fontSize:"11px",color:"#E26D34",fontWeight:"700",letterSpacing:"0.05em",textTransform:"uppercase",marginBottom:"4px"}}>Registration Link</p>
           <p style={{fontSize:"11px",color:"#f1f0f5",wordBreak:"break-all",marginBottom:"12px"}}>{registrationLink.replace("https://","")}</p>
           <div style={{display:"flex",gap:"8px"}}>
-            <button onClick={()=>copyLink(registrationLink)} style={{flex:1,padding:"10px",borderRadius:"10px",background:"rgba(52,211,153,0.1)",color:"#34d399",border:"1px solid rgba(52,211,153,0.15)",fontSize:"12px",cursor:"pointer",fontWeight:"600"}}>Copy link</button>
-            {typeof navigator!=="undefined"&&navigator.share&&<button onClick={()=>navigator.share({title:event.title,text:"Register for "+event.title,url:registrationLink})} style={{padding:"10px 16px",borderRadius:"10px",background:"rgba(255,255,255,0.06)",color:"#6b6880",border:"none",fontSize:"12px",cursor:"pointer"}}>Share</button>}
+            <button onClick={()=>copyLink(registrationLink)} style={{flex:1,padding:"10px",borderRadius:"10px",background:"rgba(226,109,52,0.12)",color:"#E26D34",border:"1px solid rgba(226,109,52,0.12)",fontSize:"12px",cursor:"pointer",fontWeight:"600"}}>Copy link</button>
+            {typeof navigator!=="undefined"&&navigator.share&&<button onClick={()=>navigator.share({title:event.title,text:"Register for "+event.title,url:registrationLink})} style={{padding:"10px 16px",borderRadius:"10px",background:"rgba(255,255,255,0.06)",color:"rgba(255,255,255,0.45)",border:"none",fontSize:"12px",cursor:"pointer"}}>Share</button>}
           </div>
         </div>
       )}
@@ -245,7 +245,7 @@ export default function EventDetailPage(){
         <div style={{background:"rgba(26,26,36,0.9)",borderRadius:"14px",padding:"16px",marginBottom:"12px",border:"1px solid rgba(255,255,255,0.06)",display:"flex",justifyContent:"space-between",alignItems:"center"}}>
           <div>
             <p style={{fontSize:"14px",fontWeight:"600",color:"#f1f0f5",marginBottom:"2px"}}>Gate Scanner</p>
-            <p style={{fontSize:"12px",color:"#6b6880"}}>Check in guests at entrance</p>
+            <p style={{fontSize:"12px",color:"rgba(255,255,255,0.45)"}}>Check in guests at entrance</p>
           </div>
           <button onClick={()=>router.push("/dashboard/scanner/"+id)} style={{padding:"10px 16px",borderRadius:"10px",background:"linear-gradient(135deg,#E26D34,#c85a24)",color:"#fff",border:"none",fontSize:"12px",cursor:"pointer",fontWeight:"600"}}>Open →</button>
         </div>
@@ -253,36 +253,36 @@ export default function EventDetailPage(){
 
       {/* Stats */}
       <div style={{background:"rgba(26,26,36,0.9)",borderRadius:"16px",padding:"16px",marginBottom:"12px",border:"1px solid rgba(255,255,255,0.06)"}}>
-        <p style={{fontSize:"10px",fontWeight:"700",color:"#6b6880",letterSpacing:"0.12em",textTransform:"uppercase",marginBottom:"12px"}}>Registrations</p>
+        <p style={{fontSize:"10px",fontWeight:"700",color:"rgba(255,255,255,0.45)",letterSpacing:"0.12em",textTransform:"uppercase",marginBottom:"12px"}}>Registrations</p>
         <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:"8px",marginBottom:"8px"}}>
           {card("Total",stats.registrations)}
-          {card("Confirmed",stats.confirmed,"#34d399")}
-          {card("Pending",stats.pending,"#f59e0b")}
+          {card("Confirmed",stats.confirmed,"#E26D34")}
+          {card("Pending",stats.pending,"#E26D34")}
           {card("Checked In",stats.checkins,"#E26D34")}
         </div>
         {stats.revenue>0&&(
-          <div style={{background:"rgba(52,211,153,0.08)",borderRadius:"12px",padding:"14px",border:"1px solid rgba(52,211,153,0.15)"}}>
-            <p style={{fontSize:"22px",fontWeight:"700",color:"#34d399",marginBottom:"2px"}}>KES {stats.revenue.toLocaleString()}</p>
-            <p style={{fontSize:"11px",color:"#6b6880"}}>Total Revenue</p>
+          <div style={{background:"rgba(226,109,52,0.12)",borderRadius:"12px",padding:"14px",border:"1px solid rgba(226,109,52,0.12)"}}>
+            <p style={{fontSize:"22px",fontWeight:"700",color:"#E26D34",marginBottom:"2px"}}>KES {stats.revenue.toLocaleString()}</p>
+            <p style={{fontSize:"11px",color:"rgba(255,255,255,0.45)"}}>Total Revenue</p>
           </div>
         )}
       </div>
 
       {/* Networking stats */}
       <div style={{background:"rgba(26,26,36,0.9)",borderRadius:"16px",padding:"16px",marginBottom:"12px",border:"1px solid rgba(255,255,255,0.06)"}}>
-        <p style={{fontSize:"10px",fontWeight:"700",color:"#6b6880",letterSpacing:"0.12em",textTransform:"uppercase",marginBottom:"12px"}}>Networking</p>
+        <p style={{fontSize:"10px",fontWeight:"700",color:"rgba(255,255,255,0.45)",letterSpacing:"0.12em",textTransform:"uppercase",marginBottom:"12px"}}>Networking</p>
         <div style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr",gap:"8px"}}>
           {card("Networking",stats.onAura,"#E26D34")}
-          {card("Handshakes",stats.handshakes,"#34d399")}
-          {card("Unlocked",stats.unlocked,"#f59e0b")}
+          {card("Handshakes",stats.handshakes,"#E26D34")}
+          {card("Unlocked",stats.unlocked,"#E26D34")}
         </div>
       </div>
 
       {/* Ticket types */}
       <div style={{background:"rgba(26,26,36,0.9)",borderRadius:"16px",padding:"16px",marginBottom:"12px",border:"1px solid rgba(255,255,255,0.06)"}}>
         <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:"12px"}}>
-          <p style={{fontSize:"10px",fontWeight:"700",color:"#6b6880",letterSpacing:"0.12em",textTransform:"uppercase"}}>Ticket Types</p>
-          <button onClick={()=>setShowAddTicket(!showAddTicket)} style={{padding:"6px 12px",borderRadius:"8px",background:"rgba(124,106,255,0.1)",color:"#E26D34",border:"1px solid rgba(226,109,52,0.2)",fontSize:"12px",cursor:"pointer",fontWeight:"600"}}>+ Add</button>
+          <p style={{fontSize:"10px",fontWeight:"700",color:"rgba(255,255,255,0.45)",letterSpacing:"0.12em",textTransform:"uppercase"}}>Ticket Types</p>
+          <button onClick={()=>setShowAddTicket(!showAddTicket)} style={{padding:"6px 12px",borderRadius:"8px",background:"rgba(226,109,52,0.1)",color:"#E26D34",border:"1px solid rgba(226,109,52,0.2)",fontSize:"12px",cursor:"pointer",fontWeight:"600"}}>+ Add</button>
         </div>
         {showAddTicket&&(
           <div style={{background:"rgba(15,15,19,0.8)",borderRadius:"12px",padding:"14px",marginBottom:"12px",border:"1px solid rgba(255,255,255,0.06)"}}>
@@ -292,11 +292,11 @@ export default function EventDetailPage(){
             <button onClick={handleAddTicket} disabled={saving} style={{width:"100%",padding:"10px",borderRadius:"10px",background:"linear-gradient(135deg,#E26D34,#c85a24)",color:"#fff",border:"none",fontSize:"13px",cursor:"pointer",fontWeight:"600"}}>{saving?"Saving...":"Save"}</button>
           </div>
         )}
-        {ticketTypes.length===0&&!showAddTicket&&<p style={{color:"#6b6880",fontSize:"13px"}}>No ticket types yet.</p>}
+        {ticketTypes.length===0&&!showAddTicket&&<p style={{color:"rgba(255,255,255,0.45)",fontSize:"13px"}}>No ticket types yet.</p>}
         {ticketTypes.map(t=>(
           <div key={t.id} style={{display:"flex",justifyContent:"space-between",padding:"10px 0",borderBottom:"1px solid rgba(255,255,255,0.04)"}}>
             <p style={{fontSize:"13px",fontWeight:"500",color:"#f1f0f5"}}>{t.name}</p>
-            <p style={{fontSize:"13px",color:t.price>0?"#E26D34":"#34d399",fontWeight:"600"}}>{t.price>0?"KES "+t.price:"Free"}</p>
+            <p style={{fontSize:"13px",color:t.price>0?"#E26D34":"#E26D34",fontWeight:"600"}}>{t.price>0?"KES "+t.price:"Free"}</p>
           </div>
         ))}
       </div>
@@ -304,15 +304,15 @@ export default function EventDetailPage(){
       {/* Publish - only for draft */}
       {event.status==="draft"&&(
         <div style={{background:"rgba(26,26,36,0.9)",borderRadius:"16px",padding:"16px",marginBottom:"12px",border:"1px solid rgba(226,109,52,0.2)"}}>
-          <p style={{fontSize:"12px",color:"#6b6880",marginBottom:"12px"}}>Add ticket types above, then publish your event to open registrations.</p>
+          <p style={{fontSize:"12px",color:"rgba(255,255,255,0.45)",marginBottom:"12px"}}>Add ticket types above, then publish your event to open registrations.</p>
           <button onClick={handlePublish} style={{width:"100%",padding:"14px",borderRadius:"14px",background:"linear-gradient(135deg,#E26D34,#c85a24)",color:"#fff",border:"none",fontSize:"14px",fontWeight:"600",cursor:"pointer",boxShadow:"0 8px 24px rgba(226,109,52,0.3)"}}>Publish Event</button>
         </div>
       )}
 
       {/* Report */}
       <div style={{background:"rgba(26,26,36,0.9)",borderRadius:"16px",padding:"16px",marginBottom:"32px",border:"1px solid rgba(255,255,255,0.06)"}}>
-        <p style={{fontSize:"10px",fontWeight:"700",color:"#6b6880",letterSpacing:"0.12em",textTransform:"uppercase",marginBottom:"8px"}}>Activation Report</p>
-        <p style={{fontSize:"12px",color:"#6b6880",marginBottom:"14px"}}>Download a summary of registrations and networking activity.</p>
+        <p style={{fontSize:"10px",fontWeight:"700",color:"rgba(255,255,255,0.45)",letterSpacing:"0.12em",textTransform:"uppercase",marginBottom:"8px"}}>Activation Report</p>
+        <p style={{fontSize:"12px",color:"rgba(255,255,255,0.45)",marginBottom:"14px"}}>Download a summary of registrations and networking activity.</p>
         <button onClick={downloadReport} style={{width:"100%",padding:"12px",borderRadius:"12px",background:"rgba(255,255,255,0.06)",color:"#f1f0f5",border:"1px solid rgba(255,255,255,0.08)",fontSize:"13px",fontWeight:"600",cursor:"pointer"}}>⬇ Download Report</button>
       </div>
     </div>

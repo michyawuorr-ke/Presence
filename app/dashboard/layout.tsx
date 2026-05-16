@@ -26,13 +26,13 @@ export default function DashboardLayout({children}:{children:React.ReactNode}){
           <p style={{fontSize:"18px",fontWeight:"700",color:"#ffffff",letterSpacing:"-0.02em",fontFamily:"'Helvetica Neue',Arial,sans-serif"}}>
             <span style={{color:"#ffffff"}}>Or</span><span style={{color:"#E26D34"}}>ee</span><span style={{color:"#ffffff"}}>ti</span>
           </p>
-          <button onClick={async()=>{await supabase.auth.signOut();router.push("/login");}} style={{fontSize:"12px",color:"#6b6880",background:"rgba(255,255,255,0.06)",border:"none",cursor:"pointer",padding:"6px 12px",borderRadius:"8px"}}>Sign out</button>
+          <button onClick={async()=>{await supabase.auth.signOut();router.push("/login");}} style={{fontSize:"12px",color:"rgba(255,255,255,0.45)",background:"rgba(255,255,255,0.06)",border:"none",cursor:"pointer",padding:"6px 12px",borderRadius:"8px"}}>Sign out</button>
         </div>
         <div style={{display:"flex",gap:"4px",paddingBottom:"10px"}}>
           {tabs.map((tab)=>{
             const active=pathname.startsWith(tab.path);
             return(
-              <button key={tab.path} onClick={()=>router.push(tab.path)} style={{padding:"6px 16px",borderRadius:"10px",border:"none",background:active?"rgba(124,106,255,0.15)":"transparent",color:active?"#7c6aff":"#6b6880",fontSize:"13px",fontWeight:active?"600":"400",cursor:"pointer",transition:"all 0.2s"}}>
+              <button key={tab.path} onClick={()=>router.push(tab.path)} style={{padding:"6px 16px",borderRadius:"10px",border:"none",background:active?"rgba(226,109,52,0.12)":"transparent",color:active?"#E26D34":"rgba(255,255,255,0.45)",fontSize:"13px",fontWeight:active?"600":"400",cursor:"pointer",transition:"all 0.2s"}}>
                 {tab.label}
               </button>
             );
