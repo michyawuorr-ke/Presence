@@ -2,7 +2,7 @@
 import React from "react";
 
 export default function OreetiLogo({size="md"}:{size?:"sm"|"md"|"lg"}){
-  const scales:any={sm:0.55,md:0.75,lg:1};
+  const scales:any={sm:0.42,md:0.55,lg:0.7};
   const s=scales[size];
   const w=Math.round(620*s);
   const h=Math.round(180*s);

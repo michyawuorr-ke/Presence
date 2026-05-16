@@ -77,7 +77,7 @@ export default function LoginPage(){
   if(mode==="landing")return(
     <main style={{minHeight:"100vh",background:"#000",display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",padding:"32px 24px"}}>
       <div style={{marginBottom:"64px",textAlign:"center",display:"flex",flexDirection:"column",alignItems:"center"}}>
-        <OreetiLogo size="lg"/>
+        <OreetiLogo size="sm"/>
       </div>
 
       <div style={{width:"100%",maxWidth:"320px",display:"flex",flexDirection:"column",gap:"12px"}}>
