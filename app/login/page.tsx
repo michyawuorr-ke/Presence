@@ -77,7 +77,7 @@ export default function LoginPage(){
   if(mode==="landing")return(
     <main style={{minHeight:"100vh",background:"#000",display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",padding:"32px 24px"}}>
       <div style={{marginBottom:"64px",textAlign:"center",display:"flex",flexDirection:"column",alignItems:"center"}}>
-        <OreetiLogo size="lg" theme="dark"/>
+        <OreetiLogo size="lg"/>
       </div>
 
       <div style={{width:"100%",maxWidth:"320px",display:"flex",flexDirection:"column",gap:"12px"}}>
@@ -116,7 +116,7 @@ export default function LoginPage(){
       <button onClick={()=>{setMode("landing");setError("");}} style={{background:"none",border:"none",color:"#555",fontSize:"20px",cursor:"pointer",marginBottom:"32px",alignSelf:"flex-start"}}>←</button>
 
       <div style={{marginBottom:"32px"}}>
-        <div style={{marginBottom:"16px"}}><OreetiLogo size="sm" theme="dark"/></div>
+        <div style={{marginBottom:"16px"}}><OreetiLogo size="sm"/></div>
         <h1 style={{fontSize:"28px",fontWeight:"600",color:"#fff",letterSpacing:"-0.02em",marginBottom:"8px"}}>Create account</h1>
         <p style={{fontSize:"14px",color:"#555"}}>Start hosting intentional events</p>
       </div>
@@ -149,7 +149,7 @@ export default function LoginPage(){
       <button onClick={()=>{setMode("landing");setError("");}} style={{background:"none",border:"none",color:"#555",fontSize:"20px",cursor:"pointer",marginBottom:"32px",alignSelf:"flex-start"}}>←</button>
 
       <div style={{marginBottom:"32px"}}>
-        <div style={{marginBottom:"16px"}}><OreetiLogo size="sm" theme="dark"/></div>
+        <div style={{marginBottom:"16px"}}><OreetiLogo size="sm"/></div>
         <h1 style={{fontSize:"28px",fontWeight:"600",color:"#fff",letterSpacing:"-0.02em",marginBottom:"8px"}}>Welcome back</h1>
         <p style={{fontSize:"14px",color:"#555"}}>Sign in to your organizer account</p>
       </div>
