@@ -58,7 +58,30 @@ export default function GuestEntryPage(){
       const{data:ev}=await supabase.from("events").select("*").eq("id",reg.event_id).single();
       setEvent(ev);
       const{data:prof}=await supabase.from("guest_profiles").select("*").eq("registration_id",reg.id).single();
-      if(prof)setProfile(prof);
+      if(prof){
+        setProfile(prof);
+      }else if(reg?.status==="host"){
+        const{data:evFull}=await supabase.from("events").select("host_id").eq("id",reg.event_id).single();
+        if(evFull){
+          const{data:h}=await supabase.from("hosts").select("*").eq("id",evFull.host_id).single();
+          if(h){
+            const{data:hp}=await supabase.from("host_profiles").select("*").eq("host_id",h.id).single();
+            const name=hp?.display_name||h.name||"Host";
+            const{data:newProf}=await supabase.from("guest_profiles").insert({
+              registration_id:reg.id,
+              event_id:reg.event_id,
+              display_name:name,
+              role_title:hp?.role_title||"",
+              organisation:hp?.organisation||"",
+              bio:hp?.bio||"",
+              platform_type:"link",
+              platform_value:hp?.platform_value||"",
+              aura_active:false,
+            }).select().single();
+            if(newProf)setProfile(newProf);
+          }
+        }
+      }
       setLoading(false);
     }
     load();
@@ -225,7 +248,7 @@ const[tab,setTab]=useState<Tab>("scene");
 
       {tab==="scene"&&(
         <div style={{padding:"24px 20px"}}>
-          <p style={{fontSize:"10px",letterSpacing:"0.4em",color:"#999",textTransform:"uppercase",marginBottom:"20px",fontWeight:"600"}}>PRESENCE</p>
+          <p style={{fontSize:"10px",letterSpacing:"0.4em",color:"#E26D34",textTransform:"uppercase",marginBottom:"20px",fontWeight:"600"}}>OREETI</p>
           <h1 style={{fontSize:"30px",fontWeight:"600",color:"#ffffff",marginBottom:"8px",letterSpacing:"-0.02em",lineHeight:"1.1"}}>{event?.title}</h1>
           <p style={{fontSize:"14px",color:"rgba(255,255,255,0.6)",marginBottom:"2px"}}>📍 {event?.venue}</p>
           <p style={{fontSize:"14px",color:"rgba(255,255,255,0.45)",marginBottom:"32px"}}>{event&&new Date(event.start_time).toLocaleDateString("en-KE",{weekday:"long",day:"numeric",month:"long"})}</p>
