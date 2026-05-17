@@ -545,7 +545,7 @@ function NetworkingTab({event,profile,isLive,isEnded}:any){
         </div>
       )}
 
-      {networkingActive&&hostNode&&(
+      {(networkingActive||registration?.status==="host")&&hostNode&&(
         <div style={{position:"absolute",left:hostNode.x+"%",top:hostNode.y+"%",transform:"translate(-50%,-50%)",animation:"float 5s ease-in-out infinite",zIndex:3}}>
           <button onClick={()=>setConfirmNode({...hostNode,is_host:true})} style={{width:"56px",height:"56px",background:"none",border:"none",cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center",position:"relative"}}>
             <span style={{fontSize:"44px",color:"#0a0800",textShadow:"0 0 6px #D4AF37,0 0 18px #D4AF37,0 0 35px rgba(212,175,55,0.7),0 0 60px rgba(212,175,55,0.3)",lineHeight:"1",display:"block"}}>★</span>
@@ -688,7 +688,7 @@ function ProfileTab({profile,event,onProfileUpdate,isEnded,registration}:any){
       
       <div style={{background:"#fff",borderRadius:"24px",padding:"24px",border:"1px solid rgba(0,0,0,0.06)",marginBottom:"16px",boxShadow:"0 4px 16px rgba(0,0,0,0.04)"}}>
         <div style={{display:"flex",alignItems:"center",gap:"16px",marginBottom:"20px"}}>
-          <div style={{width:"48px",height:"48px",borderRadius:"50%",background:"#E26D34",display:"flex",alignItems:"center",justifyContent:"center"}}>
+          <div style={{width:"48px",height:"48px",borderRadius:"50%",background:registration?.status==="host"?"linear-gradient(135deg,#D4AF37,#b8962e)":"linear-gradient(135deg,#E26D34,#c85a24)",display:"flex",alignItems:"center",justifyContent:"center"}}>
             <p style={{color:"#fff",fontSize:"18px",fontWeight:"500"}}>{profile?.display_name?.charAt(0)?.toUpperCase()}</p>
           </div>
           <div>
@@ -698,8 +698,8 @@ function ProfileTab({profile,event,onProfileUpdate,isEnded,registration}:any){
         </div>
         {profile?.organisation&&<p style={{fontSize:"14px",color:"#666",marginBottom:"4px"}}>{profile.organisation}</p>}
         {profile?.bio&&<p style={{fontSize:"14px",color:"#999",marginTop:"12px"}}>{profile.bio}</p>}
-        {profile?.platform_value&&<p style={{fontSize:"13px",color:"#E26D34",marginTop:"12px"}}>{cleanUrl(profile.platform_value)}</p>}
-        <button onClick={()=>setEditing(!editing)} style={{width:"100%",marginTop:"16px",padding:"12px",borderRadius:"12px",background:"#E26D34",color:"#fff",border:"none",fontSize:"14px",cursor:"pointer",fontWeight:"500"}}>{editing?"Cancel":"Edit Profile"}</button>
+        {profile?.platform_value&&<p style={{fontSize:"13px",color:registration?.status==="host"?"#D4AF37":"#E26D34",marginTop:"12px"}}>{cleanUrl(profile.platform_value)}</p>}
+        <button onClick={()=>setEditing(!editing)} style={{width:"100%",marginTop:"16px",padding:"12px",borderRadius:"12px",background:registration?.status==="host"?"linear-gradient(135deg,#D4AF37,#b8962e)":"#E26D34",color:registration?.status==="host"?"#000":"#fff",border:"none",fontSize:"14px",cursor:"pointer",fontWeight:"500"}}>{editing?"Cancel":"Edit Profile"}</button>
       </div>
 
       {editing&&<EditProfile profile={profile} onSave={(p:any)=>{onProfileUpdate(p);setEditing(false);}}/>}
