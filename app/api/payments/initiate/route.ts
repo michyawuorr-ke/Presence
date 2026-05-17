@@ -20,6 +20,10 @@ export async function POST(req:NextRequest){
     }
     const reqBody=await req.json();
     const phone=sanitizePhone(reqBody.phone);
+    // Rate limit by phone number — max 3 attempts per hour
+    if(phone&&!rateLimit('payments:phone:'+phone, 3, 3600000)){
+      return NextResponse.json({error:'Too many payment attempts for this number. Try again in an hour.'},{status:429});
+    }
     const amount=sanitizeAmount(reqBody.amount);
     const registration_id=sanitizeString(reqBody.registration_id,36);
     if(!phone||!amount||!registration_id)return NextResponse.json({error:'Missing fields'},{status:400});
