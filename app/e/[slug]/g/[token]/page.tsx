@@ -421,7 +421,10 @@ function NetworkingTab({event,profile,isLive,isEnded,registration}:any){
     setDeclinedIds(declinedSet);
     setSentRequests(sentSet);
     const{data}=await supabase.from("guest_profiles").select("*").eq("event_id",event.id).eq("aura_active",true).neq("id",profile.id).limit(8);
-    const filtered=(data||[]).filter((n:any)=>!approvedSet.has(n.id)&&!declinedSet.has(n.id));
+    // Also fetch blocked users to hide them from aura
+    const{data:blockedData}=await supabase.from("guest_blocks").select("blocked_id").eq("blocker_id",profile.id).eq("event_id",event.id);
+    const blockedSet=new Set((blockedData||[]).map((b:any)=>b.blocked_id));
+    const filtered=(data||[]).filter((n:any)=>!approvedSet.has(n.id)&&!declinedSet.has(n.id)&&!blockedSet.has(n.id));
     const positions=generatePositions(filtered.length);
     setNodes(filtered.map((n:any,i:number)=>({...n,...positions[i]})));
 
@@ -638,6 +641,8 @@ function ProfileTab({profile,event,onProfileUpdate,isEnded,registration}:any){
   const[scanTarget,setScanTarget]=useState<any>(null);
   const[scanMsg,setScanMsg]=useState("");
   const scannerRef=useRef<any>(null);
+  const[blocked,setBlocked]=useState<Set<string>>(new Set());
+  const[reportMsg,setReportMsg]=useState("");
 
   useEffect(()=>{
     if(!profile||!event)return;
@@ -666,6 +671,32 @@ function ProfileTab({profile,event,onProfileUpdate,isEnded,registration}:any){
       .subscribe();
     return()=>{supabase.removeChannel(ch);};
   },[profile,event]);
+
+  async function blockUser(connId:string){
+    if(!profile||!event)return;
+    await supabase.from("guest_blocks").insert({
+      event_id:event.id,
+      blocker_id:profile.id,
+      blocked_id:connId,
+    });
+    setBlocked(prev=>new Set([...prev,connId]));
+    setReportMsg("User blocked");
+    setTimeout(()=>setReportMsg(""),3000);
+  }
+
+  async function reportUser(connId:string,name:string){
+    if(!profile||!event)return;
+    const reason=prompt("Why are you reporting "+name+"? (harassment, spam, inappropriate)");
+    if(!reason)return;
+    await supabase.from("guest_reports").insert({
+      event_id:event.id,
+      reporter_id:profile.id,
+      reported_id:connId,
+      reason,
+    });
+    setReportMsg("Report submitted. Thank you.");
+    setTimeout(()=>setReportMsg(""),3000);
+  }
 
   async function startScan(conn:any){
     setScanTarget(conn);
@@ -742,6 +773,7 @@ function ProfileTab({profile,event,onProfileUpdate,isEnded,registration}:any){
         </div>
       )}
       {scanMsg&&<div style={{position:"fixed",bottom:"120px",left:"50%",transform:"translateX(-50%)",background:"#1a1a1a",color:"#fff",padding:"12px 24px",borderRadius:"12px",fontSize:"14px",zIndex:999,whiteSpace:"nowrap"}}>{scanMsg}</div>}
+      {reportMsg&&<div style={{position:"fixed",bottom:"160px",left:"50%",transform:"translateX(-50%)",background:"#1a1a1a",color:"#E26D34",padding:"12px 24px",borderRadius:"12px",fontSize:"14px",zIndex:999,whiteSpace:"nowrap"}}>{reportMsg}</div>}
 
       <div style={{marginTop:"16px"}}>
         <p style={{fontSize:"10px",fontWeight:"600",color:"rgba(255,255,255,0.45)",letterSpacing:"0.12em",textTransform:"uppercase",marginBottom:"12px"}}>Connections</p>
