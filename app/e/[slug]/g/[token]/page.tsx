@@ -314,7 +314,7 @@ const[tab,setTab]=useState<Tab>("scene");
       )}
 
       {tab==="networking"&&(
-        <NetworkingTab event={event} profile={profile} isLive={isLive} isEnded={isEnded}/>
+        <NetworkingTab event={event} profile={profile} isLive={isLive} isEnded={isEnded} registration={registration}/>
       )}
 
       {tab==="ticket"&&(
@@ -354,7 +354,7 @@ const[tab,setTab]=useState<Tab>("scene");
   );
 }
 
-function NetworkingTab({event,profile,isLive,isEnded}:any){
+function NetworkingTab({event,profile,isLive,isEnded,registration}:any){
   const[networkingActive,setNetworkingActive]=useState(false);
   const[auraLoaded,setAuraLoaded]=useState(false);
   const[nodes,setNodes]=useState<any[]>([]);
