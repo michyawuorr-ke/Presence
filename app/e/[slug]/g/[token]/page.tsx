@@ -397,7 +397,7 @@ function NetworkingTab({event,profile,isLive,isEnded,registration}:any){
       const{data:declined}=await supabase.from("handshake_requests").select("recipient_id").eq("requester_id",profile.id).eq("event_id",event.id).eq("status","declined");
       setDeclinedIds(new Set((declined||[]).map((r:any)=>r.recipient_id)));
       // Host auto-starts networking
-      if(reg?.status==="host"&&!prof?.aura_active){
+      if(registration?.status==="host"&&!prof?.aura_active){
         await supabase.from("guest_profiles").update({aura_active:true}).eq("id",profile.id);
         setNetworkingActive(true);
       }
