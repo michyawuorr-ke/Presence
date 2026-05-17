@@ -67,7 +67,8 @@ export default function GuestEntryPage(){
           if(h){
             const{data:hp}=await supabase.from("host_profiles").select("*").eq("host_id",h.id).single();
             const name=hp?.display_name||h.name||"Host";
-            const{data:newProf}=await supabase.from("guest_profiles").insert({
+            // Try insert — if exists, fetch and update instead
+            const{data:newProf,error:insertErr}=await supabase.from("guest_profiles").insert({
               registration_id:reg.id,
               event_id:reg.event_id,
               display_name:name,
@@ -78,7 +79,22 @@ export default function GuestEntryPage(){
               platform_value:hp?.platform_value||"",
               aura_active:false,
             }).select().single();
-            if(newProf)setProfile(newProf);
+            if(newProf){
+              setProfile(newProf);
+            }else{
+              // Profile exists — fetch and update with latest host_profile data
+              const{data:existing}=await supabase.from("guest_profiles").select("*").eq("registration_id",reg.id).single();
+              if(existing){
+                const{data:updated}=await supabase.from("guest_profiles").update({
+                  display_name:name,
+                  role_title:hp?.role_title||"",
+                  organisation:hp?.organisation||"",
+                  bio:hp?.bio||"",
+                  platform_value:hp?.platform_value||"",
+                }).eq("registration_id",reg.id).select().single();
+                setProfile(updated||existing);
+              }
+            }
           }
         }
       }
@@ -357,6 +373,7 @@ const[tab,setTab]=useState<Tab>("scene");
 function NetworkingTab({event,profile,isLive,isEnded,registration}:any){
   const[networkingActive,setNetworkingActive]=useState(false);
   const[auraLoaded,setAuraLoaded]=useState(false);
+  const isHostUser=registration?.status==="host";
   const[nodes,setNodes]=useState<any[]>([]);
   const[hostNode,setHostNode]=useState<any>(null);
   const[incoming,setIncoming]=useState<any>(null);
@@ -379,6 +396,11 @@ function NetworkingTab({event,profile,isLive,isEnded,registration}:any){
       // Load declined requests (where I was requester and got declined)
       const{data:declined}=await supabase.from("handshake_requests").select("recipient_id").eq("requester_id",profile.id).eq("event_id",event.id).eq("status","declined");
       setDeclinedIds(new Set((declined||[]).map((r:any)=>r.recipient_id)));
+      // Host auto-starts networking
+      if(reg?.status==="host"&&!prof?.aura_active){
+        await supabase.from("guest_profiles").update({aura_active:true}).eq("id",profile.id);
+        setNetworkingActive(true);
+      }
       setAuraLoaded(true);
     }
     loadAura();
@@ -404,10 +426,13 @@ function NetworkingTab({event,profile,isLive,isEnded,registration}:any){
     setNodes(filtered.map((n:any,i:number)=>({...n,...positions[i]})));
 
     // Fetch host VIP node
-    const hostRes=await fetch('/api/events/host-profile?event_id='+event.id);
-    const hostData=await hostRes.json();
-    if(hostData.host){
-      setHostNode({...hostData.host,x:50+Math.random()*10-5,y:50+Math.random()*10-5});
+    // Only show host star to non-host users
+    if(registration?.status!=="host"){
+      const hostRes=await fetch('/api/events/host-profile?event_id='+event.id);
+      const hostData=await hostRes.json();
+      if(hostData.host){
+        setHostNode({...hostData.host,x:50+Math.random()*10-5,y:50+Math.random()*10-5});
+      }
     }
   },[profile,event]);
 
@@ -533,15 +558,15 @@ function NetworkingTab({event,profile,isLive,isEnded,registration}:any){
         </div>
       )}
 
-      {!auraLoaded&&(
+      {!auraLoaded&&registration?.status!=="host"&&(
         <div style={{position:"absolute",inset:0,zIndex:5,background:"rgba(10,10,11,0.85)"}}/>
       )}
-      {auraLoaded&&!networkingActive&&(
+      {auraLoaded&&!networkingActive&&registration?.status!=="host"&&(
         <div style={{position:"absolute",inset:0,display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",backdropFilter:"blur(20px)",zIndex:5}}>
           <p style={{fontSize:"48px",marginBottom:"16px",opacity:0.2}}>◎</p>
           <p style={{color:"#fff",fontSize:"18px",fontWeight:"300",marginBottom:"8px"}}>Networking Off</p>
           <p style={{color:"#555",fontSize:"14px",marginBottom:"40px"}}>Nobody can see you</p>
-          <button onClick={startNetworking} style={{padding:"16px 40px",borderRadius:"50px",background:"#fff",color:"#000",border:"none",fontSize:"16px",fontWeight:"600",cursor:"pointer"}}>Start Networking</button>
+          {registration?.status!=="host"&&<button onClick={startNetworking} style={{padding:"16px 40px",borderRadius:"50px",background:"#fff",color:"#000",border:"none",fontSize:"16px",fontWeight:"600",cursor:"pointer"}}>Start Networking</button>}
         </div>
       )}
 
