@@ -275,7 +275,7 @@ const[tab,setTab]=useState<Tab>("scene");
   },[event]);
 
   return(
-    <div style={{minHeight:"100vh",background:"linear-gradient(160deg,#0f0f13 0%,#13131f 50%,#0f0f13 100%)",paddingBottom:"100px",fontFamily:"var(--font-inter),-apple-system,sans-serif"}}>
+    <div style={{minHeight:"100vh",background:"linear-gradient(170deg,#0a0a0c 0%,#0f0d14 40%,#0a0a0c 100%)",paddingBottom:"100px",fontFamily:"var(--font-inter),-apple-system,sans-serif"}}>
       {fiveMin&&<div style={{background:"#E26D34",padding:"12px 20px",textAlign:"center"}}><p style={{color:"#000",fontSize:"13px",fontWeight:"500"}}>⏱ Event ends in 5 minutes</p></div>}
 
       {tab==="scene"&&(
@@ -311,7 +311,7 @@ const[tab,setTab]=useState<Tab>("scene");
           )}
           
           {isLive&&(
-            <div style={{background:"rgba(26,26,36,0.8)",borderRadius:"20px",padding:"20px",marginBottom:"12px",border:"1px solid rgba(226,109,52,0.12)",backdropFilter:"blur(20px)"}}>
+            <div style={{background:"linear-gradient(135deg,rgba(22,18,28,0.9) 0%,rgba(18,16,22,0.9) 100%)",borderRadius:"18px",padding:"20px",marginBottom:"12px",border:"1px solid rgba(255,255,255,0.06)",boxShadow:"var(--shadow-card), inset 0 1px 0 rgba(255,255,255,0.04)",backdropFilter:"blur(20px)"}}>
               <p style={{fontSize:"10px",color:"#E26D34",marginBottom:"12px",letterSpacing:"0.15em",fontWeight:"600"}}>LIVE NOW</p>
               <div style={{display:"flex",flexDirection:"column",gap:"12px",marginBottom:"20px"}}>
                 <div style={{background:"rgba(226,109,52,0.1)",borderRadius:"12px",padding:"14px",border:"1px solid rgba(226,109,52,0.12)"}}>
@@ -360,7 +360,7 @@ const[tab,setTab]=useState<Tab>("scene");
 
       <div style={{position:"fixed",bottom:"8px",left:"8px",right:"8px",background:"rgba(15,15,19,0.92)",backdropFilter:"blur(32px)",borderRadius:"20px",border:"1px solid rgba(255,255,255,0.08)",display:"flex",padding:"8px 4px",boxShadow:"0 8px 32px rgba(0,0,0,0.4)"}}>
         {nav.map(item=>(
-          <button key={item.id} onClick={()=>{setTab(item.id as Tab);setEditing(false);}} style={{flex:1,display:"flex",flexDirection:"column",alignItems:"center",gap:"4px",background:tab===item.id?"rgba(226,109,52,0.12)":"none",border:"none",cursor:"pointer",padding:"8px 4px",borderRadius:"12px",transition:"all 0.2s ease"}}>
+          <button key={item.id} onClick={()=>{setTab(item.id as Tab);setEditing(false);}} style={{flex:1,display:"flex",flexDirection:"column",alignItems:"center",gap:"4px",background:tab===item.id?"rgba(226,109,52,0.1)":"none",border:"none",cursor:"pointer",padding:"8px 4px",borderRadius:"12px",transition:"all 0.15s ease",boxShadow:tab===item.id?"inset 0 0 0 1px rgba(226,109,52,0.15)":"none"}}>
             <span style={{fontSize:"16px",opacity:tab===item.id?1:0.35,transform:tab===item.id?"scale(1.1)":"scale(1)",transition:"all 0.2s"}}>{item.e}</span>
             <span style={{fontSize:"11px",color:tab===item.id?"#E26D34":"#999",fontWeight:tab===item.id?"600":"400",letterSpacing:"0.02em"}}>{item.l}</span>
           </button>

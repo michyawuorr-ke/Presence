@@ -177,7 +177,7 @@ export default function EventDetailPage(){
   const registrationLink=`${typeof window!=="undefined"?window.location.origin:""}/register/${event.slug}`;
 
   const card=(label:string,value:any,color:string="#f1f0f5")=>(
-    <div style={{background:"rgba(26,26,36,0.9)",borderRadius:"12px",padding:"14px",border:"1px solid rgba(255,255,255,0.06)"}}>
+    <div style={{background:"linear-gradient(135deg,rgba(22,20,28,0.95),rgba(18,16,22,0.95))",borderRadius:"12px",padding:"14px",border:"1px solid rgba(255,255,255,0.06)",boxShadow:"var(--shadow-card)"}}>
       <p style={{fontSize:"24px",fontWeight:"700",color,lineHeight:"1",marginBottom:"4px"}}>{value}</p>
       <p style={{fontSize:"11px",color:"rgba(255,255,255,0.45)"}}>{label}</p>
     </div>
@@ -188,7 +188,7 @@ export default function EventDetailPage(){
       <button onClick={()=>router.back()} style={{background:"rgba(255,255,255,0.06)",border:"none",color:"rgba(255,255,255,0.45)",fontSize:"16px",cursor:"pointer",marginBottom:"20px",width:"36px",height:"36px",borderRadius:"10px",display:"flex",alignItems:"center",justifyContent:"center"}}>←</button>
 
       {/* Header */}
-      <div style={{background:"rgba(26,26,36,0.9)",borderRadius:"20px",padding:"20px",marginBottom:"12px",border:"1px solid rgba(255,255,255,0.06)"}}>
+      <div style={{background:"linear-gradient(135deg,rgba(22,20,28,0.98),rgba(16,14,20,0.98))",borderRadius:"20px",padding:"20px",marginBottom:"12px",border:"1px solid rgba(255,255,255,0.07)",boxShadow:"var(--shadow-elevated)"}}>
         <div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-start",marginBottom:"12px"}}>
           <h1 style={{fontSize:"20px",fontWeight:"700",color:"#f1f0f5",letterSpacing:"-0.02em",flex:1,marginRight:"12px"}}>{event.title}</h1>
           <span style={{fontSize:"10px",textTransform:"uppercase",fontWeight:"700",color:statusColor[event.status],background:statusBg[event.status],padding:"4px 10px",borderRadius:"8px",letterSpacing:"0.05em",whiteSpace:"nowrap"}}>{event.status}</span>
@@ -252,7 +252,7 @@ export default function EventDetailPage(){
       )}
 
       {/* Stats */}
-      <div style={{background:"rgba(26,26,36,0.9)",borderRadius:"16px",padding:"16px",marginBottom:"12px",border:"1px solid rgba(255,255,255,0.06)"}}>
+      <div style={{background:"linear-gradient(135deg,rgba(22,20,28,0.95),rgba(18,16,22,0.95))",borderRadius:"16px",padding:"16px",marginBottom:"12px",border:"1px solid rgba(255,255,255,0.06)",boxShadow:"var(--shadow-card)"}}>
         <p style={{fontSize:"10px",fontWeight:"700",color:"rgba(255,255,255,0.45)",letterSpacing:"0.12em",textTransform:"uppercase",marginBottom:"12px"}}>Registrations</p>
         <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:"8px",marginBottom:"8px"}}>
           {card("Total",stats.registrations)}
@@ -269,7 +269,7 @@ export default function EventDetailPage(){
       </div>
 
       {/* Networking stats */}
-      <div style={{background:"rgba(26,26,36,0.9)",borderRadius:"16px",padding:"16px",marginBottom:"12px",border:"1px solid rgba(255,255,255,0.06)"}}>
+      <div style={{background:"linear-gradient(135deg,rgba(22,20,28,0.95),rgba(18,16,22,0.95))",borderRadius:"16px",padding:"16px",marginBottom:"12px",border:"1px solid rgba(255,255,255,0.06)",boxShadow:"var(--shadow-card)"}}>
         <p style={{fontSize:"10px",fontWeight:"700",color:"rgba(255,255,255,0.45)",letterSpacing:"0.12em",textTransform:"uppercase",marginBottom:"12px"}}>Networking</p>
         <div style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr",gap:"8px"}}>
           {card("Networking",stats.onAura,"#E26D34")}
@@ -279,7 +279,7 @@ export default function EventDetailPage(){
       </div>
 
       {/* Ticket types */}
-      <div style={{background:"rgba(26,26,36,0.9)",borderRadius:"16px",padding:"16px",marginBottom:"12px",border:"1px solid rgba(255,255,255,0.06)"}}>
+      <div style={{background:"linear-gradient(135deg,rgba(22,20,28,0.95),rgba(18,16,22,0.95))",borderRadius:"16px",padding:"16px",marginBottom:"12px",border:"1px solid rgba(255,255,255,0.06)",boxShadow:"var(--shadow-card)"}}>
         <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:"12px"}}>
           <p style={{fontSize:"10px",fontWeight:"700",color:"rgba(255,255,255,0.45)",letterSpacing:"0.12em",textTransform:"uppercase"}}>Ticket Types</p>
           <button onClick={()=>setShowAddTicket(!showAddTicket)} style={{padding:"6px 12px",borderRadius:"8px",background:"rgba(226,109,52,0.1)",color:"#E26D34",border:"1px solid rgba(226,109,52,0.2)",fontSize:"12px",cursor:"pointer",fontWeight:"600"}}>+ Add</button>
