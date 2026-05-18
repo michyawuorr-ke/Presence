@@ -589,7 +589,7 @@ function NetworkingTab({event,profile,isLive,isEnded,registration}:any){
             <button onClick={()=>!isSent&&setConfirmNode(node)} style={{width:"56px",height:"56px",borderRadius:"50%",background:"linear-gradient(135deg,#E26D34,#c85a24)",border:"none",cursor:isSent?"default":"pointer",display:"flex",alignItems:"center",justifyContent:"center",animation:"pulse 2s infinite",opacity:isSent?0.5:1}}>
               <span style={{color:"#fff",fontSize:"13px",fontWeight:"500"}}>{firstName.charAt(0)}</span>
             </button>
-            <p style={{color:"#fff",fontSize:"11px",textAlign:"center",marginTop:"6px",opacity:0.7}}>{isSent?"sent":firstName}</p>
+            <p style={{color:"rgba(255,255,255,0.6)",fontSize:"10px",textAlign:"center",marginTop:"4px"}}>{isSent?"sent":firstName}</p>
           </div>
         );
       })}
