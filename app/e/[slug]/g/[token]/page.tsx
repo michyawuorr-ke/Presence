@@ -578,7 +578,7 @@ function NetworkingTab({event,profile,isLive,isEnded,registration}:any){
           <button onClick={()=>setConfirmNode({...hostNode,is_host:true})} style={{width:"56px",height:"56px",background:"none",border:"none",cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center",position:"relative"}}>
             <span style={{fontSize:"44px",color:"#0a0800",textShadow:"0 0 6px #D4AF37,0 0 18px #D4AF37,0 0 35px rgba(212,175,55,0.7),0 0 60px rgba(212,175,55,0.3)",lineHeight:"1",display:"block"}}>★</span>
           </button>
-          <p style={{color:"#D4AF37",fontSize:"10px",textAlign:"center",marginTop:"2px",fontWeight:"600",letterSpacing:"0.05em",textShadow:"0 0 8px rgba(212,175,55,0.6)"}}>HOST</p>
+          <p style={{color:"#D4AF37",fontSize:"10px",textAlign:"center",marginTop:"2px",fontWeight:"600",letterSpacing:"0.05em",textShadow:"0 0 8px rgba(212,175,55,0.6)"}}>ORGANIZER</p>
         </div>
       )}
       {networkingActive&&nodes.map((node:any)=>{
@@ -605,7 +605,7 @@ function NetworkingTab({event,profile,isLive,isEnded,registration}:any){
           <div style={{background:"#1a1a1a",borderRadius:"24px 24px 0 0",padding:"28px",width:"100%",animation:"slideUp 0.3s ease"}} onClick={e=>e.stopPropagation()}>
             <div style={{display:"flex",alignItems:"center",gap:"8px",marginBottom:"8px"}}>
               <p style={{color:"#fff",fontSize:"18px",fontWeight:"500"}}>Connect with {getFirstName(confirmNode.display_name)}?</p>
-              {confirmNode.is_host&&<span style={{background:"linear-gradient(135deg,#D4AF37,#b8962e)",color:"#000",fontSize:"10px",fontWeight:"700",padding:"3px 10px",borderRadius:"6px",letterSpacing:"0.05em"}}>HOST</span>}
+              {confirmNode.is_host&&<span style={{background:"linear-gradient(135deg,#D4AF37,#b8962e)",color:"#000",fontSize:"10px",fontWeight:"700",padding:"3px 10px",borderRadius:"6px",letterSpacing:"0.05em"}}>ORGANIZER</span>}
             </div>
             <p style={{color:"#666",fontSize:"14px",marginBottom:"4px"}}>{confirmNode.role_title||""}</p>
             {confirmNode.is_host&&<p style={{color:"#E26D34",fontSize:"12px",marginBottom:"8px"}}>★ Event organizer</p>}
