@@ -6,6 +6,7 @@ import { supabase } from "@/lib/supabase/client";
 export default function CreateEvent() {
   const [title, setTitle] = useState("");
   const [venue, setVenue] = useState("");
+  const [description, setDescription] = useState("");
   const [startTime, setStartTime] = useState("");
   const [endTime, setEndTime] = useState("");
   const [loading, setLoading] = useState(false);
@@ -17,7 +18,7 @@ export default function CreateEvent() {
     const { data: { user } } = await supabase.auth.getUser();
     
     await supabase.from("events").insert({
-      title, venue, 
+      title, venue, description,
       start_time: startTime + ":00+03:00",
       end_time: endTime + ":00+03:00",
       slug, status: "draft",
@@ -37,14 +38,15 @@ export default function CreateEvent() {
         <div style={{ display: "flex", flexDirection: "column", gap: "20px" }}>
           <input placeholder="Event Title" value={title} onChange={e => setTitle(e.target.value)} style={{ background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.06)", padding: "16px", borderRadius: "12px", color: "#fff", outline: "none" }} />
           <input placeholder="Venue" value={venue} onChange={e => setVenue(e.target.value)} style={{ background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.06)", padding: "16px", borderRadius: "12px", color: "#fff", outline: "none" }} />
+          <textarea placeholder="Event Description" value={description} onChange={e => setDescription(e.target.value)} style={{ background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.06)", padding: "16px", borderRadius: "12px", color: "#fff", outline: "none", minHeight: "100px" }} />
           
-          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "16px" }}>
+          <div style={{ display: "flex", flexDirection: "column", gap: "16px" }}>
             <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
-              <label style={{ fontSize: "10px", color: "#D4AF37", textTransform: "uppercase", letterSpacing: "0.1em" }}>Start</label>
+              <label style={{ fontSize: "10px", color: "#D4AF37", textTransform: "uppercase", letterSpacing: "0.1em" }}>Start Time</label>
               <input type="datetime-local" onChange={e => setStartTime(e.target.value)} style={{ background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.06)", padding: "12px", borderRadius: "10px", color: "#fff", outline: "none" }} />
             </div>
             <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
-              <label style={{ fontSize: "10px", color: "#D4AF37", textTransform: "uppercase", letterSpacing: "0.1em" }}>End</label>
+              <label style={{ fontSize: "10px", color: "#D4AF37", textTransform: "uppercase", letterSpacing: "0.1em" }}>End Time</label>
               <input type="datetime-local" onChange={e => setEndTime(e.target.value)} style={{ background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.06)", padding: "12px", borderRadius: "10px", color: "#fff", outline: "none" }} />
             </div>
           </div>
