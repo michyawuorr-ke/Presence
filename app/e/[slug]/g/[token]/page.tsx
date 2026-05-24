@@ -738,24 +738,82 @@ function ProfileTab({profile,event,onProfileUpdate,isEnded,registration}:any){
     setScanTarget(null);
   }
 
+  const isHost=registration?.status==="host";
+  const accent=isHost?"#D4AF37":"#E26D34";
+  const accentBg=isHost?"rgba(212,175,55,0.08)":"rgba(226,109,52,0.08)";
+  const accentBorder=isHost?"rgba(212,175,55,0.15)":"rgba(226,109,52,0.15)";
+
   return(
-    <div style={{padding:"24px 20px"}}>
-      <p style={{fontSize:"11px",letterSpacing:"0.3em",color:"#999",textTransform:"uppercase",marginBottom:"32px",textAlign:"center"}}>Your Profile</p>
-      
-      <div style={{background:"#fff",borderRadius:"24px",padding:"24px",border:"1px solid rgba(0,0,0,0.06)",marginBottom:"16px",boxShadow:"0 4px 16px rgba(0,0,0,0.04)"}}>
-        <div style={{display:"flex",alignItems:"center",gap:"16px",marginBottom:"20px"}}>
-          <div style={{width:"48px",height:"48px",borderRadius:"50%",background:registration?.status==="host"?"linear-gradient(135deg,#D4AF37,#b8962e)":"linear-gradient(135deg,#E26D34,#c85a24)",display:"flex",alignItems:"center",justifyContent:"center"}}>
-            <p style={{color:"#fff",fontSize:"18px",fontWeight:"500"}}>{profile?.display_name?.charAt(0)?.toUpperCase()}</p>
+    <div style={{padding:"16px",background:"#08080a",minHeight:"100vh"}}>
+
+      {/* ── Premium profile card ── */}
+      <div style={{
+        background:"linear-gradient(145deg,#1a1820 0%,#141218 60%,#111016 100%)",
+        borderRadius:"22px",padding:"20px",marginBottom:"12px",
+        border:"1px solid rgba(255,255,255,0.07)",
+        boxShadow:"0 1px 0 rgba(255,255,255,0.05) inset,0 4px 8px rgba(0,0,0,0.35),0 16px 48px rgba(0,0,0,0.5)",
+        position:"relative",overflow:"hidden",
+      }}>
+        {/* Top edge shimmer */}
+        <div style={{position:"absolute",top:0,left:0,right:0,height:"1px",background:"linear-gradient(90deg,transparent,rgba(255,255,255,0.1) 40%,rgba(255,255,255,0.07) 60%,transparent)",pointerEvents:"none"}}/>
+        {/* Host ambient glow */}
+        {isHost&&<div style={{position:"absolute",top:"-50px",right:"-50px",width:"140px",height:"140px",background:"radial-gradient(circle,rgba(212,175,55,0.07) 0%,transparent 70%)",pointerEvents:"none"}}/>}
+
+        {/* Row 1: avatar + name + edit icon */}
+        <div style={{display:"flex",alignItems:"flex-start",gap:"14px",marginBottom:"14px"}}>
+          <div style={{
+            width:"50px",height:"50px",borderRadius:"14px",flexShrink:0,
+            background:isHost?"linear-gradient(145deg,#2c2410,#1e1a0c)":"linear-gradient(145deg,#2a1e18,#1e1510)",
+            border:"1px solid "+(isHost?"rgba(212,175,55,0.2)":"rgba(226,109,52,0.2)"),
+            display:"flex",alignItems:"center",justifyContent:"center",
+            fontSize:"20px",fontWeight:"700",color:accent,
+            boxShadow:"0 2px 8px rgba(0,0,0,0.4)",
+          }}>
+            {profile?.display_name?.charAt(0)?.toUpperCase()}
           </div>
-          <div>
-            <p style={{fontSize:"18px",fontWeight:"500"}}>{profile?.display_name}</p>
-            {profile?.role_title&&<p style={{fontSize:"13px",color:"#666"}}>{profile.role_title}</p>}
+          <div style={{flex:1,minWidth:0}}>
+            {/* Name — most prominent */}
+            <p style={{fontSize:"17px",fontWeight:"700",color:"#f0ede8",letterSpacing:"-0.02em",margin:"0 0 6px"}}>{profile?.display_name}</p>
+            {/* Role pill */}
+            {profile?.role_title&&(
+              <span style={{
+                display:"inline-block",
+                fontSize:"10px",fontWeight:"700",letterSpacing:"0.06em",textTransform:"uppercase",
+                color:accent,background:accentBg,
+                border:"1px solid "+accentBorder,
+                padding:"3px 9px",borderRadius:"6px",
+              }}>{isHost?"ORGANIZER":profile.role_title}</span>
+            )}
+            {/* Org — quiet, below role */}
+            {profile?.organisation&&<p style={{fontSize:"12px",color:"rgba(240,237,232,0.38)",margin:"5px 0 0"}}>{profile.organisation}</p>}
           </div>
+          {/* Edit icon button */}
+          <button onClick={()=>setEditing(!editing)} style={{
+            width:"30px",height:"30px",borderRadius:"9px",flexShrink:0,
+            background:"rgba(255,255,255,0.05)",border:"1px solid rgba(255,255,255,0.07)",
+            display:"flex",alignItems:"center",justifyContent:"center",
+            cursor:"pointer",color:"rgba(255,255,255,0.35)",fontSize:"14px",
+          }}>{editing?"✕":"✎"}</button>
         </div>
-        {profile?.organisation&&<p style={{fontSize:"14px",color:"#666",marginBottom:"4px"}}>{profile.organisation}</p>}
-        {profile?.bio&&<p style={{fontSize:"14px",color:"#999",marginTop:"12px"}}>{profile.bio}</p>}
-        {profile?.platform_value&&<p style={{fontSize:"13px",color:registration?.status==="host"?"#D4AF37":"#E26D34",marginTop:"12px"}}>{cleanUrl(profile.platform_value)}</p>}
-        <button onClick={()=>setEditing(!editing)} style={{width:"100%",marginTop:"16px",padding:"12px",borderRadius:"12px",background:registration?.status==="host"?"linear-gradient(135deg,#D4AF37,#b8962e)":"#E26D34",color:registration?.status==="host"?"#000":"#fff",border:"none",fontSize:"14px",cursor:"pointer",fontWeight:"500"}}>{editing?"Cancel":"Edit Profile"}</button>
+
+        {/* Divider */}
+        <div style={{height:"1px",background:"linear-gradient(90deg,transparent,rgba(255,255,255,0.06) 30%,rgba(255,255,255,0.06) 70%,transparent)",margin:"0 0 14px"}}/>
+
+        {/* Bio */}
+        {profile?.bio&&<p style={{fontSize:"13px",lineHeight:"1.65",color:"rgba(240,237,232,0.58)",margin:"0 0 14px"}}>{profile.bio}</p>}
+
+        {/* Link row */}
+        {profile?.platform_value&&(
+          <div style={{display:"flex",alignItems:"center",gap:"10px"}}>
+            <div style={{
+              width:"30px",height:"30px",borderRadius:"9px",flexShrink:0,
+              background:"rgba(255,255,255,0.05)",border:"1px solid rgba(255,255,255,0.07)",
+              display:"flex",alignItems:"center",justifyContent:"center",
+              fontSize:"14px",color:accent,
+            }}>↗</div>
+            <span style={{fontSize:"13px",color:"rgba(240,237,232,0.48)"}}>{cleanUrl(profile.platform_value)}</span>
+          </div>
+        )}
       </div>
 
       {editing&&<EditProfile profile={profile} onSave={(p:any)=>{onProfileUpdate(p);setEditing(false);}}/>}
