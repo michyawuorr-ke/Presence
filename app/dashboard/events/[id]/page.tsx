@@ -262,7 +262,7 @@ export default function EventDetailPage() {
 
         {/* Ticket Tier Management Matrix */}
         <div style={{ background: "linear-gradient(160deg, #16151a 0%, #0f0e12 100%)", borderRadius: "20px", padding: "20px", marginBottom: "16px", border: "1px solid rgba(255, 255, 255, 0.04)" }}>
-          <div style={{ display: "flex", justifycontent: "space-between", alignItems: "center", justifyItems: "center", marginBottom: "16px" }}>
+          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", justifyItems: "center", marginBottom: "16px" }}>
             <p style={{ fontSize: "10px", fontWeight: "700", color: "rgba(255,255,255,0.4)", letterSpacing: "0.12em", textTransform: "uppercase", margin: 0, flex: 1 }}>Ticket Architecture Tiers</p>
             <button onClick={() => setShowAddTicket(!showAddTicket)} style={{ padding: "6px 14px", borderRadius: "8px", background: "rgba(212,175,55,0.08)", color: "#D4AF37", border: "1px solid rgba(212,175,55,0.2)", fontSize: "12px", cursor: "pointer", fontWeight: "600" }}>
               {showAddTicket ? "Cancel" : "+ Allocate Tier"}
