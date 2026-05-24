@@ -3,103 +3,57 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { supabase } from "@/lib/supabase/client";
 
-export default function CreateEventPage() {
+export default function CreateEvent() {
   const [title, setTitle] = useState("");
   const [venue, setVenue] = useState("");
-  const [description, setDescription] = useState("");
   const [startTime, setStartTime] = useState("");
   const [endTime, setEndTime] = useState("");
-  const [isPaid, setIsPaid] = useState(false);
   const [loading, setLoading] = useState(false);
-  const [error, setError] = useState("");
   const router = useRouter();
 
   async function handleCreate() {
-    if (!title || !venue || !startTime || !endTime) {
-      setError("Please fill in all required fields");
-      return;
-    }
     setLoading(true);
-    setError("");
-
-    const { data: { user } } = await supabase.auth.getUser();
-    if (!user) { router.push("/login"); return; }
-
-    // Ensure host record exists
-    await supabase.from("hosts").upsert({
-      id: user.id,
-      email: user.email ?? "",
-      name: user.user_metadata?.name ?? user.email ?? "Host",
-    }, { onConflict: "id" });
-
     const slug = title.toLowerCase().replace(/\s+/g, "-").replace(/[^a-z0-9-]/g, "") + "-" + Date.now();
-
-    const { error: err } = await supabase.from("events").insert({
-      host_id: user.id,
-      title,
-      venue,
-      description,
-      start_time: startTime+":00+03:00",
-      end_time: endTime+":00+03:00",
-      is_paid: isPaid,
-      status: "draft",
-      slug,
-      timezone: "Africa/Nairobi",
+    const { data: { user } } = await supabase.auth.getUser();
+    
+    await supabase.from("events").insert({
+      title, venue, 
+      start_time: startTime + ":00+03:00",
+      end_time: endTime + ":00+03:00",
+      slug, status: "draft",
+      organizer_id: user?.id
     });
-
-    if (err) { setError(err.message); setLoading(false); return; }
     router.push("/dashboard/events");
   }
 
-  const inputStyle = {
-    width:"100%", padding:"14px", borderRadius:"14px",
-    border:"1px solid #e5e7eb", background:"#fff",
-    fontSize:"15px", outline:"none", boxSizing:"border-box" as const,
-    marginBottom:"16px",
-  };
-
   return (
-    <div style={{maxWidth:"520px",margin:"0 auto"}}>
-      <button onClick={() => router.back()}
-        style={{background:"none",border:"none",color:"#999",fontSize:"14px",
-          cursor:"pointer",marginBottom:"24px",padding:"0"}}>
-        ← Back
-      </button>
-      <h1 style={{fontSize:"24px",fontWeight:"500",marginBottom:"32px"}}>Create event</h1>
+    <div style={{ padding: "40px 24px", background: "#060608", minHeight: "100vh", color: "#f3f4f6" }}>
+      <div style={{ maxWidth: "500px", margin: "0 auto" }}>
+        <button onClick={() => router.back()} style={{ background: "transparent", border: "none", color: "rgba(255,255,255,0.3)", cursor: "pointer", marginBottom: "32px", fontSize: "14px" }}>← Back</button>
+        
+        <h1 style={{ fontSize: "28px", fontWeight: "600", marginBottom: "8px", letterSpacing: "-0.02em" }}>New Activation</h1>
+        <p style={{ fontSize: "14px", color: "rgba(255,255,255,0.45)", marginBottom: "40px" }}>Define the event parameters.</p>
 
-      <label style={{fontSize:"13px",color:"#666",display:"block",marginBottom:"6px"}}>Event title *</label>
-      <input value={title} onChange={e => setTitle(e.target.value)} placeholder="e.g. Nairobi Tech Meetup" style={inputStyle} />
+        <div style={{ display: "flex", flexDirection: "column", gap: "20px" }}>
+          <input placeholder="Event Title" value={title} onChange={e => setTitle(e.target.value)} style={{ background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.06)", padding: "16px", borderRadius: "12px", color: "#fff", outline: "none" }} />
+          <input placeholder="Venue" value={venue} onChange={e => setVenue(e.target.value)} style={{ background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.06)", padding: "16px", borderRadius: "12px", color: "#fff", outline: "none" }} />
+          
+          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "16px" }}>
+            <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
+              <label style={{ fontSize: "10px", color: "#D4AF37", textTransform: "uppercase", letterSpacing: "0.1em" }}>Start</label>
+              <input type="datetime-local" onChange={e => setStartTime(e.target.value)} style={{ background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.06)", padding: "12px", borderRadius: "10px", color: "#fff", outline: "none" }} />
+            </div>
+            <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
+              <label style={{ fontSize: "10px", color: "#D4AF37", textTransform: "uppercase", letterSpacing: "0.1em" }}>End</label>
+              <input type="datetime-local" onChange={e => setEndTime(e.target.value)} style={{ background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.06)", padding: "12px", borderRadius: "10px", color: "#fff", outline: "none" }} />
+            </div>
+          </div>
 
-      <label style={{fontSize:"13px",color:"#666",display:"block",marginBottom:"6px"}}>Venue *</label>
-      <input value={venue} onChange={e => setVenue(e.target.value)} placeholder="e.g. iHub, Nairobi" style={inputStyle} />
-
-      <label style={{fontSize:"13px",color:"#666",display:"block",marginBottom:"6px"}}>Description</label>
-      <input value={description} onChange={e => setDescription(e.target.value)} placeholder="What is this event about?" style={inputStyle} />
-
-      <label style={{fontSize:"13px",color:"#666",display:"block",marginBottom:"6px"}}>Start time *</label>
-      <input type="datetime-local" value={startTime} onChange={e => setStartTime(e.target.value)} style={inputStyle} />
-
-      <label style={{fontSize:"13px",color:"#666",display:"block",marginBottom:"6px"}}>End time *</label>
-      <input type="datetime-local" value={endTime} onChange={e => setEndTime(e.target.value)} style={inputStyle} />
-
-      <div style={{display:"flex",alignItems:"center",gap:"12px",marginBottom:"24px",
-        padding:"16px",borderRadius:"14px",border:"1px solid #e5e7eb",background:"#fff"}}>
-        <input type="checkbox" id="paid" checked={isPaid}
-          onChange={e => setIsPaid(e.target.checked)}
-          style={{width:"18px",height:"18px",cursor:"pointer"}} />
-        <label htmlFor="paid" style={{fontSize:"15px",cursor:"pointer"}}>
-          This is a paid event
-        </label>
+          <button onClick={handleCreate} disabled={loading} style={{ marginTop: "20px", background: "#D4AF37", border: "none", padding: "16px", borderRadius: "12px", color: "#000", fontWeight: "700", cursor: "pointer", fontSize: "15px" }}>
+            {loading ? "Initializing..." : "Create Event"}
+          </button>
+        </div>
       </div>
-
-      {error && <p style={{color:"#ef4444",fontSize:"13px",marginBottom:"16px"}}>{error}</p>}
-
-      <button onClick={handleCreate} disabled={loading}
-        style={{width:"100%",padding:"16px",borderRadius:"16px",
-          background:loading?"#999":"#000",color:"#fff",border:"none",
-          fontSize:"15px",fontWeight:"500",cursor:"pointer"}}>
-        {loading ? "Creating..." : "Create event"}
-      </button>
     </div>
   );
 }
