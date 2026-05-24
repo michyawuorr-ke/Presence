@@ -178,7 +178,20 @@ function Identity({registration,event,onComplete}:any){
     onComplete(data);
   }
 
-  const inp={width:"100%",padding:"14px",borderRadius:"14px",border:"1px solid #333",background:"#111",color:"#fff",fontSize:"15px",outline:"none",marginBottom:"12px",boxSizing:"border-box" as const};
+  const inp = {
+    width: "100%",
+    padding: "14px 16px",
+    borderRadius: "14px",
+    background: "rgba(255, 255, 255, 0.02)",
+    color: "#f0ede8",
+    fontSize: "15px",
+    outline: "none",
+    border: "1px solid rgba(255, 255, 255, 0.07)",
+    boxShadow: "0 2px 8px rgba(0, 0, 0, 0.2), inset 0 1px 0 rgba(255, 255, 255, 0.03)",
+    boxSizing: "border-box",
+    marginBottom: "14px",
+    transition: "all 0.2s ease"
+  };
 
   return(
     <div style={{minHeight:"100vh",background:"#000",color:"#fff",padding:"40px 20px"}}>
