@@ -188,7 +188,7 @@ function Identity({registration,event,onComplete}:any){
     outline: "none",
     border: "1px solid rgba(255, 255, 255, 0.07)",
     boxShadow: "0 2px 8px rgba(0, 0, 0, 0.2), inset 0 1px 0 rgba(255, 255, 255, 0.03)",
-    boxSizing: "border-box",
+    boxSizing: "border-box" as const,
     marginBottom: "14px",
     transition: "all 0.2s ease"
   };
