@@ -761,63 +761,126 @@ function ProfileTab({profile,event,onProfileUpdate,isEnded,registration}:any){
 
       {/* ── Premium profile card ── */}
       <div style={{
-        background:"linear-gradient(145deg,#1a1820 0%,#141218 60%,#111016 100%)",
-        borderRadius:"22px",padding:"20px",marginBottom:"12px",
-        border:"1px solid rgba(255,255,255,0.07)",
-        boxShadow:"0 1px 0 rgba(255,255,255,0.05) inset,0 4px 8px rgba(0,0,0,0.35),0 16px 48px rgba(0,0,0,0.5)",
-        position:"relative",overflow:"hidden",
+        background: "linear-gradient(160deg, #16151a 0%, #0f0e12 100%)",
+        borderRadius: "28px",
+        padding: "28px 24px 20px 24px",
+        marginBottom: "16px",
+        border: "1px solid rgba(255, 255, 255, 0.04)",
+        boxShadow: "0 24px 64px rgba(0,0,0,0.7), inset 0 1px 0 rgba(255,255,255,0.03)",
+        position: "relative",
+        overflow: "hidden",
       }}>
-        {/* Top edge shimmer */}
-        <div style={{position:"absolute",top:0,left:0,right:0,height:"1px",background:"linear-gradient(90deg,transparent,rgba(255,255,255,0.1) 40%,rgba(255,255,255,0.07) 60%,transparent)",pointerEvents:"none"}}/>
-        {/* Host ambient glow */}
-        {isHost&&<div style={{position:"absolute",top:"-50px",right:"-50px",width:"140px",height:"140px",background:"radial-gradient(circle,rgba(212,175,55,0.07) 0%,transparent 70%)",pointerEvents:"none"}}/>}
+        {/* Luxury Background Ambient Glows */}
+        <div style={{
+          position: "absolute",
+          top: "-80px",
+          left: "-40px",
+          width: "220px",
+          height: "220px",
+          background: isHost 
+            ? "radial-gradient(circle, rgba(212,175,55,0.06) 0%, transparent 75%)" 
+            : "radial-gradient(circle, rgba(226,109,52,0.05) 0%, transparent 75%)",
+          pointerEvents: "none"
+        }} />
+        
+        <div style={{
+          position: "absolute",
+          top: "-60px",
+          right: "-40px",
+          width: "180px",
+          height: "180px",
+          background: "radial-gradient(circle, rgba(147,197,253,0.03) 0%, transparent 70%)",
+          pointerEvents: "none"
+        }} />
 
-        {/* Row 1: avatar + name + edit icon */}
-        <div style={{display:"flex",alignItems:"flex-start",gap:"14px",marginBottom:"14px"}}>
+        {/* Floating Absolute Top-Right Edit Button (Matches Reference Screenshot Perfectly) */}
+        <button 
+          onClick={() => setEditing(!editing)} 
+          style={{
+            position: "absolute",
+            top: "24px",
+            right: "24px",
+            width: "38px",
+            height: "38px",
+            borderRadius: "50%",
+            background: "rgba(255, 255, 255, 0.03)",
+            border: "1px solid rgba(255, 255, 255, 0.06)",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            cursor: "pointer",
+            color: "rgba(255, 255, 255, 0.45)",
+            fontSize: "15px",
+            boxShadow: "0 4px 12px rgba(0,0,0,0.2)",
+            transition: "all 0.2s ease",
+            zIndex: 10
+          }}
+        >
+          {editing ? "✕" : "✎"}
+        </button>
+
+        {/* Header Profile Identity Section */}
+        <div style={{ display: "flex", alignItems: "center", gap: "16px", marginBottom: "24px" }}>
+          {/* Circular Avatar */}
           <div style={{
-            width:"50px",height:"50px",borderRadius:"14px",flexShrink:0,
-            background:isHost?"linear-gradient(145deg,#2c2410,#1e1a0c)":"linear-gradient(145deg,#2a1e18,#1e1510)",
-            border:"1px solid "+(isHost?"rgba(212,175,55,0.2)":"rgba(226,109,52,0.2)"),
-            display:"flex",alignItems:"center",justifyContent:"center",
-            fontSize:"20px",fontWeight:"700",color:accent,
-            boxShadow:"0 2px 8px rgba(0,0,0,0.4)",
+            width: "56px",
+            height: "56px",
+            borderRadius: "50%",
+            flexShrink: 0,
+            background: isHost ? "linear-gradient(135deg, #221b0f, #13100b)" : "linear-gradient(135deg, #221611, #120e0c)",
+            border: "1px solid " + (isHost ? "rgba(212,175,55,0.22)" : "rgba(226,109,52,0.18)"),
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            fontSize: "22px",
+            fontWeight: "600",
+            color: accent,
+            boxShadow: "0 8px 20px rgba(0,0,0,0.4), inset 0 1px 0 rgba(255,255,255,0.05)",
           }}>
             {profile?.display_name?.charAt(0)?.toUpperCase()}
           </div>
-          <div style={{flex:1,minWidth:0}}>
-            {/* Name — most prominent */}
-            <p style={{fontSize:"17px",fontWeight:"700",color:"#f0ede8",letterSpacing:"-0.02em",margin:"0 0 6px"}}>{profile?.display_name}</p>
-            {/* Role pill */}
-            {profile?.role_title&&(
+
+          <div style={{ flex: 1, minWidth: 0, paddingRight: "40px" }}>
+            <p style={{ fontSize: "21px", fontWeight: "600", color: "#f3f4f6", letterSpacing: "-0.01em", margin: "0 0 6px" }}>
+              {profile?.display_name}
+            </p>
+            
+            <div style={{ display: "flex", alignItems: "center", flexWrap: "wrap", gap: "8px" }}>
+              {/* Premium Role Tag Badge */}
               <span style={{
-                display:"inline-block",
-                fontSize:"10px",fontWeight:"700",letterSpacing:"0.06em",textTransform:"uppercase",
-                color:accent,background:accentBg,
-                border:"1px solid "+accentBorder,
-                padding:"3px 9px",borderRadius:"6px",
-              }}>{isHost?"ORGANIZER":profile.role_title}</span>
-            )}
-            {/* Org — quiet, below role */}
-            {profile?.organisation&&<p style={{fontSize:"12px",color:"rgba(240,237,232,0.38)",margin:"5px 0 0"}}>{profile.organisation}</p>}
+                display: "inline-block",
+                fontSize: "10px",
+                fontWeight: "700",
+                letterSpacing: "0.08em",
+                textTransform: "uppercase",
+                color: isHost ? "#d4af37" : accent,
+                background: isHost ? "rgba(212,175,55,0.07)" : accentBg,
+                border: "1px solid " + (isHost ? "rgba(212,175,55,0.18)" : accentBorder),
+                padding: "3px 10px",
+                borderRadius: "20px",
+              }}>
+                {isHost ? "ORGANIZER" : profile?.role_title}
+              </span>
+
+              {/* Subdued Organization Text Placement */}
+              {profile?.organisation && (
+                <span style={{ fontSize: "14px", color: "rgba(255,255,255,0.35)", fontWeight: "400", marginLeft: "4px" }}>
+                  {profile.organisation}
+                </span>
+              )}
+            </div>
           </div>
-          {/* Edit icon button */}
-          <button onClick={()=>setEditing(!editing)} style={{
-            width:"30px",height:"30px",borderRadius:"9px",flexShrink:0,
-            background:"rgba(255,255,255,0.05)",border:"1px solid rgba(255,255,255,0.07)",
-            display:"flex",alignItems:"center",justifyContent:"center",
-            cursor:"pointer",color:"rgba(255,255,255,0.35)",fontSize:"14px",
-          }}>{editing?"✕":"✎"}</button>
         </div>
 
-        {/* Divider */}
-        <div style={{height:"1px",background:"linear-gradient(90deg,transparent,rgba(255,255,255,0.06) 30%,rgba(255,255,255,0.06) 70%,transparent)",margin:"0 0 14px"}}/>
-
-        {/* Bio */}
-        {profile?.bio&&<p style={{fontSize:"13px",lineHeight:"1.65",color:"rgba(240,237,232,0.58)",margin:"0 0 14px"}}>{profile.bio}</p>}
+{/* Bio */}
+        {profile?.bio&&<p style={{fontSize:"13px",lineHeight:"1.65",color:"rgba(255,255,255,0.55)",margin:"0 0 24px",fontSize:"14px",lineHeight:"1.6"}}>{profile.bio}</p>}
 
         {/* Link row */}
         {profile?.platform_value&&(
-          <div style={{display:"flex",alignItems:"center",gap:"10px"}}>
+          <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: "8px", width: "100%", marginTop: "8px" }}>
+            <span style={{ color: "rgba(255,255,255,0.35)", display: "flex", alignItems: "center" }}>
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"></path><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"></path></svg>
+            </span>
             <div style={{
               width:"30px",height:"30px",borderRadius:"9px",flexShrink:0,
               background:"rgba(255,255,255,0.05)",border:"1px solid rgba(255,255,255,0.07)",
