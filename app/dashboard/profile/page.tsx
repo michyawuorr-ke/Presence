@@ -1,155 +1,167 @@
-"use client";
-import{useEffect,useState}from"react";
-import{useRouter}from"next/navigation";
-import{supabase}from"@/lib/supabase/client";
+'use client';
 
-export default function HostProfilePage(){
-  const[host,setHost]=useState<any>(null);
-  const[profile,setProfile]=useState<any>(null);
-  const[loading,setLoading]=useState(true);
-  const[saving,setSaving]=useState(false);
-  const[saved,setSaved]=useState(false);
-  const[editing,setEditing]=useState(false);
-  const[displayName,setDisplayName]=useState("");
-  const[role,setRole]=useState("");
-  const[organisation,setOrganisation]=useState("");
-  const[bio,setBio]=useState("");
-  const[link,setLink]=useState("");
-  const[showInEvents,setShowInEvents]=useState(true);
-  const router=useRouter();
+import { useState, useEffect } from 'react';
+import { supabase } from '@/lib/supabase';
 
-  useEffect(()=>{
-    async function load(){
-      const{data:{user}}=await supabase.auth.getUser();
-      if(!user){router.push("/login");return;}
-      const{data:h}=await supabase.from("hosts").select("*").eq("email",user.email).single();
-      setHost(h);
-      if(h){
-        const{data:p}=await supabase.from("host_profiles").select("*").eq("host_id",h.id).single();
-        if(p){
-          setProfile(p);
-          setDisplayName(p.display_name||h?.name||"");
-          setRole(p.role_title||"");
-          setOrganisation(p.organisation||"");
-          setBio(p.bio||"");
-          setLink(p.platform_value||"");
-          setShowInEvents(p.show_in_events??true);
-        }else{
-          setDisplayName(h?.name||"");
-          setEditing(true);
-        }
+export default function OrganizerProfile() {
+  const [profile, setProfile] = useState<any>(null);
+  const [editing, setEditing] = useState(false);
+  const [displayName, setDisplayName] = useState('');
+  const [bio, setBio] = useState('');
+  const [organisation, setOrganisation] = useState('');
+  const [platformValue, setPlatformValue] = useState('');
+
+  useEffect(() => {
+    async function loadProfile() {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return;
+      const { data } = await supabase.from('profiles').select('*').eq('id', user.id).single();
+      if (data) {
+        setProfile(data);
+        setDisplayName(data.display_name || '');
+        setBio(data.bio || '');
+        setOrganisation(data.organisation || '');
+        setPlatformValue(data.platform_value || '');
       }
-      setLoading(false);
     }
-    load();
-  },[router]);
+    loadProfile();
+  }, []);
 
-  async function save(){
-    if(!displayName.trim())return;
-    setSaving(true);
-    const{data:{user}}=await supabase.auth.getUser();
-    if(!user){setSaving(false);return;}
-    const{data:h}=await supabase.from("hosts").select("id").eq("email",user.email).single();
-    if(!h){setSaving(false);return;}
-    const data={
-      host_id:h.id,
-      display_name:displayName,
-      role_title:role,
-      organisation,
-      bio,
-      platform_value:link,
-      show_in_events:showInEvents,
-      updated_at:new Date().toISOString(),
-    };
-    if(profile){
-      await supabase.from("host_profiles").update(data).eq("id",profile.id);
-    }else{
-      const{data:newP}=await supabase.from("host_profiles").insert(data).select().single();
-      setProfile(newP);
-    }
-    setSaving(false);
-    setSaved(true);
-    setEditing(false);
-    setTimeout(()=>setSaved(false),3000);
-  }
+  return (
+    <div style={{ padding: "24px 16px", background: "#08080a", minHeight: "100vh" }}>
+      <p style={{ fontSize: "11px", letterSpacing: "0.3em", color: "#666", textTransform: "uppercase", marginBottom: "32px", textAlign: "center", fontWeight: "600" }}>
+        Organizer Identity
+      </p>
 
-  const inp={
-    width:"100%",
-    padding:"12px 14px",
-    borderRadius:"10px",
-    border:"1px solid rgba(255,255,255,0.1)",
-    background:"rgba(255,255,255,0.05)",
-    color:"#ffffff",
-    fontSize:"14px",
-    outline:"none",
-    boxSizing:"border-box" as const,
-    fontFamily:"inherit",
-    marginBottom:"10px",
-  };
+      {/* ── Premium Luxury Profile Card (Matches Reference Screenshot Perfectly) ── */}
+      <div style={{
+        background: "linear-gradient(160deg, #16151a 0%, #0f0e12 100%)",
+        borderRadius: "28px",
+        padding: "28px 24px 20px 24px",
+        marginBottom: "24px",
+        border: "1px solid rgba(255, 255, 255, 0.04)",
+        boxShadow: "0 24px 64px rgba(0,0,0,0.7), inset 0 1px 0 rgba(255,255,255,0.03)",
+        position: "relative",
+        overflow: "hidden",
+      }}>
+        {/* Luxury Background Ambient Glow */}
+        <div style={{
+          position: "absolute",
+          top: "-80px",
+          left: "-40px",
+          width: "220px",
+          height: "220px",
+          background: "radial-gradient(circle, rgba(212,175,55,0.06) 0%, transparent 75%)",
+          pointerEvents: "none"
+        }} />
 
-  if(loading)return<div style={{textAlign:"center",padding:"60px",color:"rgba(255,255,255,0.4)"}}>Loading...</div>;
+        {/* Floating Absolute Top-Right Circle Edit Button */}
+        <button 
+          onClick={() => setEditing(!editing)} 
+          style={{
+            position: "absolute",
+            top: "24px",
+            right: "24px",
+            width: "38px",
+            height: "38px",
+            borderRadius: "50%",
+            background: "rgba(255, 255, 255, 0.03)",
+            border: "1px solid rgba(255, 255, 255, 0.06)",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            cursor: "pointer",
+            color: "rgba(255, 255, 255, 0.45)",
+            fontSize: "15px",
+            boxShadow: "0 4px 12px rgba(0,0,0,0.2)",
+            zIndex: 10
+          }}
+        >
+          {editing ? "✕" : "✎"}
+        </button>
 
-  const hasProfile=profile&&displayName;
+        {/* Profile Details Header Row */}
+        <div style={{ display: "flex", alignItems: "center", gap: "16px", marginBottom: "24px" }}>
+          <div style={{
+            width: "56px",
+            height: "56px",
+            borderRadius: "50%",
+            flexShrink: 0,
+            background: "linear-gradient(135deg, #221b0f, #13100b)",
+            border: "1px solid rgba(212,175,55,0.22)",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            fontSize: "22px",
+            fontWeight: "600",
+            color: "#D4AF37",
+            boxShadow: "0 8px 20px rgba(0,0,0,0.4), inset 0 1px 0 rgba(255,255,255,0.05)",
+          }}>
+            {displayName.charAt(0).toUpperCase() || "O"}
+          </div>
 
-  return(
-    <div style={{maxWidth:"500px",margin:"0 auto"}}>
+          <div style={{ flex: 1, minWidth: 0, paddingRight: "40px" }}>
+            <p style={{ fontSize: "21px", fontWeight: "600", color: "#f3f4f6", letterSpacing: "-0.01em", margin: "0 0 6px" }}>
+              {displayName || "Unnamed Organizer"}
+            </p>
+            
+            <div style={{ display: "flex", alignItems: "center", flexWrap: "wrap", gap: "8px" }}>
+              <span style={{
+                display: "inline-block",
+                fontSize: "10px",
+                fontWeight: "700",
+                letterSpacing: "0.08em",
+                textTransform: "uppercase",
+                color: "#d4af37",
+                background: "rgba(212,175,55,0.07)",
+                border: "1px solid rgba(212,175,55,0.18)",
+                padding: "3px 10px",
+                borderRadius: "20px",
+              }}>
+                ORGANIZER
+              </span>
 
-      {/* Profile card — shown when filled */}
-      {hasProfile&&!editing&&(
-        <div style={{background:"rgba(212,175,55,0.08)",borderRadius:"20px",padding:"20px",marginBottom:"16px",border:"1px solid rgba(212,175,55,0.3)"}}>
-          <div style={{display:"flex",alignItems:"center",gap:"14px",marginBottom:"12px"}}>
-            <div style={{width:"48px",height:"48px",borderRadius:"50%",background:"linear-gradient(135deg,#D4AF37,#b8962e)",display:"flex",alignItems:"center",justifyContent:"center",fontSize:"20px",fontWeight:"700",color:"#000",flexShrink:0}}>
-              {displayName?.charAt(0)?.toUpperCase()}
-            </div>
-            <div style={{flex:1,minWidth:0}}>
-              <div style={{display:"flex",alignItems:"center",gap:"8px",marginBottom:"2px"}}>
-                <p style={{fontSize:"16px",fontWeight:"700",color:"#ffffff"}}>{displayName}</p>
-                <span style={{background:"rgba(212,175,55,0.2)",color:"#D4AF37",fontSize:"10px",fontWeight:"700",padding:"2px 8px",borderRadius:"6px",letterSpacing:"0.05em"}}>HOST</span>
-              </div>
-              {role&&<p style={{fontSize:"13px",color:"rgba(255,255,255,0.6)"}}>{role}</p>}
-              {organisation&&<p style={{fontSize:"13px",color:"rgba(255,255,255,0.5)"}}>{organisation}</p>}
+              {organisation && (
+                <span style={{ fontSize: "14px", color: "rgba(255,255,255,0.35)", fontWeight: "400", marginLeft: "4px" }}>
+                  {organisation}
+                </span>
+              )}
             </div>
           </div>
-          {bio&&<p style={{fontSize:"13px",color:"rgba(255,255,255,0.5)",marginBottom:"8px",lineHeight:"1.5"}}>{bio}</p>}
-          {link&&<p style={{fontSize:"13px",color:"#D4AF37"}}>{link.replace("https://","").replace("http://","")}</p>}
-          <button onClick={()=>setEditing(true)} style={{width:"100%",marginTop:"16px",padding:"10px",borderRadius:"10px",background:"rgba(255,255,255,0.06)",color:"rgba(255,255,255,0.7)",border:"1px solid rgba(255,255,255,0.08)",fontSize:"13px",cursor:"pointer",fontWeight:"500"}}>
-            Edit Profile
-          </button>
         </div>
-      )}
 
-      {/* Visibility toggle — always visible */}
-      {hasProfile&&!editing&&(
-        <div style={{background:"rgba(26,26,36,0.9)",borderRadius:"16px",padding:"16px",marginBottom:"16px",border:"1px solid rgba(255,255,255,0.06)",display:"flex",justifyContent:"space-between",alignItems:"center"}}>
-          <p style={{fontSize:"14px",color:"#ffffff",fontWeight:"500"}}>Appear in my events</p>
-          <div onClick={()=>{setShowInEvents(!showInEvents);}} style={{width:"44px",height:"24px",borderRadius:"12px",background:showInEvents?"#D4AF37":"rgba(255,255,255,0.1)",cursor:"pointer",position:"relative",transition:"background 0.2s"}}>
-            <div style={{position:"absolute",top:"3px",left:showInEvents?"22px":"3px",width:"18px",height:"18px",borderRadius:"50%",background:"#fff",transition:"left 0.2s"}}/>
-          </div>
-        </div>
-      )}
-
-      {/* Edit form — shown when editing or no profile yet */}
-      {editing&&(
-        <div style={{background:"rgba(26,26,36,0.9)",borderRadius:"20px",padding:"20px",marginBottom:"16px",border:"1px solid rgba(255,255,255,0.06)"}}>
-          <p style={{fontSize:"11px",fontWeight:"600",color:"rgba(255,255,255,0.4)",letterSpacing:"0.1em",textTransform:"uppercase",marginBottom:"16px"}}>
-            {hasProfile?"Edit Profile":"Set up your host profile"}
+        {/* Bio Frame */}
+        {bio && (
+          <p style={{ fontSize: "14px", lineHeight: "1.6", color: "rgba(255, 255, 255, 0.55)", margin: "0 0 24px 0" }}>
+            {bio}
           </p>
-          <input value={displayName} onChange={e=>setDisplayName(e.target.value)} placeholder="Your name" style={inp}/>
-          <input value={role} onChange={e=>setRole(e.target.value)} placeholder="Role — Founder, Curator, CEO..." style={inp}/>
-          <input value={organisation} onChange={e=>setOrganisation(e.target.value)} placeholder="Organisation" style={inp}/>
-          <textarea value={bio} onChange={e=>setBio(e.target.value)} placeholder="Short bio" style={{...inp,minHeight:"72px",resize:"vertical"}}/>
-          <input value={link} onChange={e=>setLink(e.target.value)} placeholder="LinkedIn, website, Instagram..." style={{...inp,marginBottom:"16px"}}/>
+        )}
 
-          <div style={{display:"flex",gap:"8px"}}>
-            {hasProfile&&<button onClick={()=>setEditing(false)} style={{flex:1,padding:"12px",borderRadius:"10px",background:"rgba(255,255,255,0.04)",color:"rgba(255,255,255,0.5)",border:"1px solid rgba(255,255,255,0.08)",fontSize:"13px",cursor:"pointer"}}>Cancel</button>}
-            <button onClick={save} disabled={saving||!displayName.trim()} style={{flex:2,padding:"12px",borderRadius:"10px",background:saving?"rgba(255,255,255,0.1)":"linear-gradient(135deg,#D4AF37,#b8962e)",color:"#fff",border:"none",fontSize:"14px",fontWeight:"600",cursor:saving?"not-allowed":"pointer"}}>
-              {saving?"Saving...":"Save Profile"}
-            </button>
+        {/* Full-width Divider Line */}
+        <div style={{ height: "1px", background: "rgba(255, 255, 255, 0.04)", margin: "0 -24px 16px -24px" }} />
+
+        {/* Isolated Premium Center Link Footer Row */}
+        {platformValue && (
+          <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: "8px", width: "100%" }}>
+            <span style={{ color: "rgba(255,255,255,0.35)", display: "flex", alignItems: "center" }}>
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"></path><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"></path></svg>
+            </span>
+            <span style={{ fontSize: "14px", color: "#93c5fd", fontWeight: "500", letterSpacing: "-0.01em" }}>
+              {platformValue}
+            </span>
           </div>
+        )}
+      </div>
+
+      {/* Editing Dropdown Inputs — Rendered below card when active */}
+      {editing && (
+        <div style={{ background: "#111015", borderRadius: "20px", padding: "20px", border: "1px solid rgba(255,255,255,0.04)" }}>
+          <input className="premium-input-well" value={displayName} onChange={e => setDisplayName(e.target.value)} placeholder="Display Name" />
+          <input className="premium-input-well" value={organisation} onChange={e => setOrganisation(e.target.value)} placeholder="Organisation / Company" />
+          <input className="premium-input-well" value={platformValue} onChange={e => setPlatformValue(e.target.value)} placeholder="Website link URL" />
+          <textarea className="premium-input-well" value={bio} onChange={e => setBio(e.target.value)} placeholder="Short Bio" style={{ minHeight: "80px", resize: "none" }} />
         </div>
       )}
-
-      {saved&&<p style={{color:"#D4AF37",fontSize:"13px",textAlign:"center",marginTop:"8px"}}>✓ Profile saved</p>}
     </div>
   );
 }
