@@ -166,10 +166,8 @@ export default function EventDetailPage() {
     <div style={{ padding: "40px 24px 120px 24px", background: "#060608", minHeight: "100vh" }}>
       <div style={{ maxWidth: "600px", margin: "0 auto" }}>
         
-        {/* Unified Luxury Back Navigation */}
         <button onClick={() => router.back()} style={{ background: "rgba(255, 255, 255, 0.03)", border: "1px solid rgba(255,255,255,0.05)", color: "rgba(255,255,255,0.5)", fontSize: "15px", cursor: "pointer", marginBottom: "24px", width: "38px", height: "38px", borderRadius: "50%", display: "flex", alignItems: "center", justifyContent: "center" }}>←</button>
 
-        {/* Core Profile Header Card Container */}
         <div style={{ background: "linear-gradient(160deg, #16151a 0%, #0f0e12 100%)", borderRadius: "24px", padding: "24px", marginBottom: "16px", border: "1px solid rgba(255, 255, 255, 0.04)", boxShadow: "0 20px 40px rgba(0,0,0,0.6)" }}>
           <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: "16px" }}>
             <h1 style={{ fontSize: "22px", fontWeight: "600", color: "#f3f4f6", letterSpacing: "-0.01em", flex: 1, marginRight: "16px", margin: 0 }}>{event.title}</h1>
@@ -181,7 +179,6 @@ export default function EventDetailPage() {
           <p style={{ fontSize: "13px", color: "rgba(255,255,255,0.5)", margin: 0, display: "flex", alignItems: "center", gap: "6px" }}>🕐 {new Date(event.start_time).toLocaleTimeString("en-KE", { hour: "2-digit", minute: "2-digit" })} — {new Date(event.end_time).toLocaleTimeString("en-KE", { hour: "2-digit", minute: "2-digit" })}</p>
         </div>
 
-        {/* Live Automatic Timing Banner */}
         <div style={{ marginBottom: "16px" }}>
           {event.status === "scheduled" && (
             <div style={{ background: "rgba(212,175,55,0.05)", borderRadius: "16px", padding: "20px", border: "1px solid rgba(212,175,55,0.15)", textAlign: "center" }}>
@@ -197,117 +194,109 @@ export default function EventDetailPage() {
           )}
         </div>
 
-        {/* Host Identity Networking Hub Link */}
         {hostLink && (
           <div style={{ background: "rgba(212,175,55,0.06)", borderRadius: "18px", padding: "18px", marginBottom: "16px", border: "1px solid rgba(212,175,55,0.12)" }}>
-            <p style={{ fontSize: "11px", color: "#D4AF37", fontWeight: "700", letterSpacing: "0.08em", textTransform: "uppercase", marginBottom: "4px" }}>★ Active Host Identification Access</p>
+            <p style={{ fontSize: "11px", color: "#D4AF37", fontWeight: "700", letterSpacing: "0.08em", textTransform: "uppercase", marginBottom: "4px" }}>★ Your Host Link</p>
             <p style={{ fontSize: "11px", color: "rgba(255,255,255,0.4)", marginBottom: "12px" }}>Open this terminal to assume verified host credentials in the room</p>
             <p style={{ fontSize: "12px", color: "#93c5fd", wordBreak: "break-all", marginBottom: "16px", fontFamily: "monospace" }}>{hostLink.replace("https://", "")}</p>
             <div style={{ display: "flex", gap: "10px" }}>
-              <button onClick={() => copyLink(hostLink)} style={{ flex: 1, padding: "12px", borderRadius: "10px", background: "rgba(212,175,55,0.12)", color: "#D4AF37", border: "1px solid rgba(212,175,55,0.2)", fontSize: "12px", cursor: "pointer", fontWeight: "600" }}>Copy Host Key</button>
+              <button onClick={() => copyLink(hostLink)} style={{ flex: 1, padding: "12px", borderRadius: "10px", background: "rgba(212,175,55,0.12)", color: "#D4AF37", border: "1px solid rgba(212,175,55,0.2)", fontSize: "12px", cursor: "pointer", fontWeight: "600" }}>Copy link</button>
               {typeof navigator !== "undefined" && navigator.share && <button onClick={() => navigator.share({ title: "My Host Link", url: hostLink })} style={{ padding: "12px 18px", borderRadius: "10px", background: "rgba(255,255,255,0.04)", color: "rgba(255,255,255,0.5)", border: "1px solid rgba(255,255,255,0.06)", fontSize: "12px", cursor: "pointer" }}>Share</button>}
             </div>
           </div>
         )}
 
-        {/* Global Registration Entry Pipeline */}
         {event.status !== "draft" && event.status !== "ended" && (
           <div style={{ background: "rgba(255,255,255,0.02)", borderRadius: "18px", padding: "18px", marginBottom: "16px", border: "1px solid rgba(255,255,255,0.04)" }}>
-            <p style={{ fontSize: "11px", color: "rgba(255,255,255,0.45)", fontWeight: "700", letterSpacing: "0.08em", textTransform: "uppercase", marginBottom: "4px" }}>Public Registration Link</p>
+            <p style={{ fontSize: "11px", color: "rgba(255,255,255,0.45)", fontWeight: "700", letterSpacing: "0.08em", textTransform: "uppercase", marginBottom: "4px" }}>Registration Link</p>
             <p style={{ fontSize: "12px", color: "#93c5fd", wordBreak: "break-all", marginBottom: "16px", fontFamily: "monospace" }}>{registrationLink.replace("https://", "")}</p>
             <div style={{ display: "flex", gap: "10px" }}>
-              <button onClick={() => copyLink(registrationLink)} style={{ flex: 1, padding: "12px", borderRadius: "10px", background: "rgba(255,255,255,0.04)", color: "#f3f4f6", border: "1px solid rgba(255,255,255,0.06)", fontSize: "12px", cursor: "pointer", fontWeight: "600" }}>Copy Public Link</button>
+              <button onClick={() => copyLink(registrationLink)} style={{ flex: 1, padding: "12px", borderRadius: "10px", background: "rgba(255,255,255,0.04)", color: "#f3f4f6", border: "1px solid rgba(255,255,255,0.06)", fontSize: "12px", cursor: "pointer", fontWeight: "600" }}>Copy link</button>
               {typeof navigator !== "undefined" && navigator.share && <button onClick={() => navigator.share({ title: event.title, text: "Register for " + event.title, url: registrationLink })} style={{ padding: "12px 18px", borderRadius: "10px", background: "rgba(255,255,255,0.04)", color: "rgba(255,255,255,0.5)", border: "none", fontSize: "12px", cursor: "pointer" }}>Share</button>}
             </div>
           </div>
         )}
 
-        {/* Gate Entry Scanner Interface Strip */}
         {(event.status === "live" || event.status === "ended") && (
           <div style={{ background: "#111015", borderRadius: "16px", padding: "18px", marginBottom: "16px", border: "1px solid rgba(255,255,255,0.04)", display: "flex", justifyContent: "space-between", alignItems: "center", boxShadow: "0 10px 30px rgba(0,0,0,0.3)" }}>
             <div>
-              <p style={{ fontSize: "14px", fontWeight: "600", color: "#f1f0f5", margin: "0 0 2px 0" }}>Gate Check-In Terminal</p>
-              <p style={{ fontSize: "12px", color: "rgba(255,255,255,0.4)" }}>Verify tickets and manage door registration flows</p>
+              <p style={{ fontSize: "14px", fontWeight: "600", color: "#f1f0f5", margin: "0 0 2px 0" }}>Gate Scanner</p>
+              <p style={{ fontSize: "12px", color: "rgba(255,255,255,0.4)" }}>Check in guests at entrance</p>
             </div>
-            <button onClick={() => router.push("/dashboard/scanner/" + id)} style={{ padding: "12px 20px", borderRadius: "12px", background: "linear-gradient(135deg, #221b0f, #13100b)", color: "#D4AF37", border: "1px solid rgba(212,175,55,0.25)", fontSize: "12px", cursor: "pointer", fontWeight: "700", letterSpacing: "0.05em" }}>OPEN →</button>
+            <button onClick={() => router.push("/dashboard/scanner/" + id)} style={{ padding: "12px 20px", borderRadius: "12px", background: "linear-gradient(135deg, #221b0f, #13100b)", color: "#D4AF37", border: "1px solid rgba(212,175,55,0.25)", fontSize: "12px", cursor: "pointer", fontWeight: "700", letterSpacing: "0.05em" }}>Open →</button>
           </div>
         )}
 
-        {/* Operational Statistics Matrix Grid */}
         <div style={{ background: "linear-gradient(160deg, #16151a 0%, #0f0e12 100%)", borderRadius: "20px", padding: "20px", marginBottom: "16px", border: "1px solid rgba(255, 255, 255, 0.04)", boxShadow: "0 15px 35px rgba(0,0,0,0.4)" }}>
-          <p style={{ fontSize: "10px", fontWeight: "700", color: "rgba(255,255,255,0.4)", letterSpacing: "0.12em", textTransform: "uppercase", marginBottom: "14px" }}>Registration Metrics</p>
+          <p style={{ fontSize: "10px", fontWeight: "700", color: "rgba(255,255,255,0.4)", letterSpacing: "0.12em", textTransform: "uppercase", marginBottom: "14px" }}>Registrations</p>
           <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "10px", marginBottom: "10px" }}>
-            {card("Total Passes Issued", stats.registrations)}
-            {card("Confirmed Seats", stats.confirmed, "#D4AF37")}
-            {card("Pending Clearance", stats.pending, "rgba(255,255,255,0.6)")}
-            {card("Attended Door", stats.checkins, "#D4AF37")}
+            {card("Total", stats.registrations)}
+            {card("Confirmed", stats.confirmed, "#D4AF37")}
+            {card("Pending", stats.pending, "rgba(255,255,255,0.6)")}
+            {card("Checked In", stats.checkins, "#D4AF37")}
           </div>
           {stats.revenue > 0 && (
             <div style={{ background: "rgba(212,175,55,0.06)", borderRadius: "12px", padding: "14px", border: "1px solid rgba(212,175,55,0.15)", marginTop: "10px" }}>
               <p style={{ fontSize: "22px", fontWeight: "700", color: "#D4AF37", margin: "0 0 2px 0" }}>KES {stats.revenue.toLocaleString()}</p>
-              <p style={{ fontSize: "11px", color: "rgba(255,255,255,0.45)" }}>Total Pipeline Revenue</p>
+              <p style={{ fontSize: "11px", color: "rgba(255,255,255,0.45)" }}>Total Revenue</p>
             </div>
           )}
         </div>
 
-        {/* Aura Engine Engagement Suite */}
         <div style={{ background: "linear-gradient(160deg, #16151a 0%, #0f0e12 100%)", borderRadius: "20px", padding: "20px", marginBottom: "16px", border: "1px solid rgba(255, 255, 255, 0.04)" }}>
-          <p style={{ fontSize: "10px", fontWeight: "700", color: "rgba(255,255,255,0.4)", letterSpacing: "0.12em", textTransform: "uppercase", marginBottom: "14px" }}>Aura Proximity Pipeline Engagement</p>
+          <p style={{ fontSize: "10px", fontWeight: "700", color: "rgba(255,255,255,0.4)", letterSpacing: "0.12em", textTransform: "uppercase", marginBottom: "14px" }}>Networking</p>
           <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: "8px" }}>
-            {card("Active Nodes", stats.onAura, "#D4AF37")}
+            {card("Networking", stats.onAura, "#D4AF37")}
             {card("Handshakes", stats.handshakes, "#D4AF37")}
-            {card("Unlocked Cards", stats.unlocked, "#D4AF37")}
+            {card("Unlocked", stats.unlocked, "#D4AF37")}
           </div>
         </div>
 
-        {/* Ticket Tier Management Matrix */}
         <div style={{ background: "linear-gradient(160deg, #16151a 0%, #0f0e12 100%)", borderRadius: "20px", padding: "20px", marginBottom: "16px", border: "1px solid rgba(255, 255, 255, 0.04)" }}>
-          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", justifyItems: "center", marginBottom: "16px" }}>
-            <p style={{ fontSize: "10px", fontWeight: "700", color: "rgba(255,255,255,0.4)", letterSpacing: "0.12em", textTransform: "uppercase", margin: 0, flex: 1 }}>Ticket Architecture Tiers</p>
+          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "16px" }}>
+            <p style={{ fontSize: "10px", fontWeight: "700", color: "rgba(255,255,255,0.4)", letterSpacing: "0.12em", textTransform: "uppercase", margin: 0, flex: 1 }}>Ticket Types</p>
             <button onClick={() => setShowAddTicket(!showAddTicket)} style={{ padding: "6px 14px", borderRadius: "8px", background: "rgba(212,175,55,0.08)", color: "#D4AF37", border: "1px solid rgba(212,175,55,0.2)", fontSize: "12px", cursor: "pointer", fontWeight: "600" }}>
-              {showAddTicket ? "Cancel" : "+ Allocate Tier"}
+              {showAddTicket ? "Cancel" : "+ Add"}
             </button>
           </div>
 
           {showAddTicket && (
             <div style={{ background: "#0d0c10", borderRadius: "14px", padding: "16px", marginBottom: "16px", border: "1px solid rgba(255,255,255,0.04)" }}>
-              <input value={ticketName} onChange={e => setTicketName(e.target.value)} placeholder="Tier Name (e.g., VIP Platinum Pass)" style={{ width: "100%", padding: "12px", borderRadius: "10px", border: "1px solid rgba(255,255,255,0.06)", background: "rgba(255,255,255,0.03)", color: "#f3f4f6", fontSize: "13px", outline: "none", marginBottom: "8px", boxSizing: "border-box" }} />
-              <input value={ticketPrice} onChange={e => setTicketPrice(e.target.value)} placeholder="Price in KES (0 for free admission)" type="number" style={{ width: "100%", padding: "12px", borderRadius: "10px", border: "1px solid rgba(255,255,255,0.06)", background: "rgba(255,255,255,0.03)", color: "#f3f4f6", fontSize: "13px", outline: "none", marginBottom: "8px", boxSizing: "border-box" }} />
-              <input value={ticketQty} onChange={e => setTicketQty(e.target.value)} placeholder="Allocated Seat Quantity (Blank = Unlimited)" type="number" style={{ width: "100%", padding: "12px", borderRadius: "10px", border: "1px solid rgba(255,255,255,0.06)", background: "rgba(255,255,255,0.03)", color: "#f3f4f6", fontSize: "13px", outline: "none", marginBottom: "14px", boxSizing: "border-box" }} />
+              <input value={ticketName} onChange={e => setTicketName(e.target.value)} placeholder="Ticket name" style={{ width: "100%", padding: "12px", borderRadius: "10px", border: "1px solid rgba(255,255,255,0.06)", background: "rgba(255,255,255,0.03)", color: "#f3f4f6", fontSize: "13px", outline: "none", marginBottom: "8px", boxSizing: "border-box" }} />
+              <input value={ticketPrice} onChange={e => setTicketPrice(e.target.value)} placeholder="Price in KES (0 for free)" type="number" style={{ width: "100%", padding: "12px", borderRadius: "10px", border: "1px solid rgba(255,255,255,0.06)", background: "rgba(255,255,255,0.03)", color: "#f3f4f6", fontSize: "13px", outline: "none", marginBottom: "8px", boxSizing: "border-box" }} />
+              <input value={ticketQty} onChange={e => setTicketQty(e.target.value)} placeholder="Quantity (empty = unlimited)" type="number" style={{ width: "100%", padding: "12px", borderRadius: "10px", border: "1px solid rgba(255,255,255,0.06)", background: "rgba(255,255,255,0.03)", color: "#f3f4f6", fontSize: "13px", outline: "none", marginBottom: "14px", boxSizing: "border-box" }} />
               <button onClick={handleAddTicket} disabled={saving} style={{ width: "100%", padding: "12px", borderRadius: "10px", background: "linear-gradient(135deg, #221b0f, #13100b)", color: "#D4AF37", border: "1px solid rgba(212,175,55,0.25)", fontSize: "13px", cursor: "pointer", fontWeight: "700" }}>
-                {saving ? "Deploying Tier..." : "Save Allocation Profile"}
+                {saving ? "Saving..." : "Save"}
               </button>
             </div>
           )}
 
-          {ticketTypes.length === 0 && !showAddTicket && <p style={{ color: "rgba(255,255,255,0.35)", fontSize: "13px", margin: "8px 0 0 0" }}>No specialized ticket infrastructure declared yet.</p>}
+          {ticketTypes.length === 0 && !showAddTicket && <p style={{ color: "rgba(255,255,255,0.35)", fontSize: "13px", margin: "8px 0 0 0" }}>No ticket types yet.</p>}
           
           <div style={{ display: "flex", flexDirection: "column" }}>
             {ticketTypes.map(t => (
               <div key={t.id} style={{ display: "flex", justifyContent: "space-between", padding: "12px 0", borderBottom: "1px solid rgba(255,255,255,0.03)" }}>
                 <div>
                   <p style={{ fontSize: "14px", fontWeight: "500", color: "#f3f4f6", margin: "0 0 2px 0" }}>{t.name}</p>
-                  <p style={{ fontSize: "11px", color: "rgba(255,255,255,0.35)", margin: 0 }}>{t.quantity ? `Capacity: ${t.quantity} remaining` : "Unlimited Availability"}</p>
+                  <p style={{ fontSize: "11px", color: "rgba(255,255,255,0.35)", margin: 0 }}>{t.quantity ? `Quantity: ${t.quantity}` : "Unlimited"}</p>
                 </div>
-                <p style={{ fontSize: "14px", color: "#D4AF37", fontWeight: "600", margin: 0 }}>{t.price > 0 ? "KES " + t.price.toLocaleString() : "Free Entry"}</p>
+                <p style={{ fontSize: "14px", color: "#D4AF37", fontWeight: "600", margin: 0 }}>{t.price > 0 ? "KES " + t.price.toLocaleString() : "Free"}</p>
               </div>
             ))}
           </div>
         </div>
 
-        {/* Global Pipeline Publishing Module Gateway */}
         {event.status === "draft" && (
           <div style={{ background: "#111015", borderRadius: "20px", padding: "20px", marginBottom: "16px", border: "1px solid rgba(212,175,55,0.2)", boxShadow: "0 15px 30px rgba(0,0,0,0.4)" }}>
-            <p style={{ fontSize: "13px", color: "rgba(255,255,255,0.5)", marginBottom: "16px", lineHeight: "1.5" }}>Confirm all ticket types above are complete. Publishing will open public registrations across the platform.</p>
-            <button onClick={handlePublish} style={{ width: "100%", padding: "16px", borderRadius: "14px", background: "linear-gradient(135deg, #221b0f, #13100b)", color: "#D4AF37", border: "1px solid rgba(212,175,55,0.35)", fontSize: "14px", fontWeight: "700", cursor: "pointer", letterSpacing: "0.05em", textTransform: "uppercase", boxShadow: "0 8px 24px rgba(0,0,0,0.3)" }}>Publish Premium Event</button>
+            <p style={{ fontSize: "13px", color: "rgba(255,255,255,0.5)", marginBottom: "16px", lineHeight: "1.5" }}>Add ticket types above, then publish your event to open registrations.</p>
+            <button onClick={handlePublish} style={{ width: "100%", padding: "16px", borderRadius: "14px", background: "linear-gradient(135deg, #221b0f, #13100b)", color: "#D4AF37", border: "1px solid rgba(212,175,55,0.35)", fontSize: "14px", fontWeight: "700", cursor: "pointer", letterSpacing: "0.05em", textTransform: "uppercase", boxShadow: "0 8px 24px rgba(0,0,0,0.3)" }}>Publish Event</button>
           </div>
         )}
 
-        {/* Corporate Activation Export Subsystem */}
         <div style={{ background: "rgba(255,255,255,0.01)", borderRadius: "20px", padding: "20px", marginBottom: "40px", border: "1px solid rgba(255,255,255,0.03)" }}>
-          <p style={{ fontSize: "10px", fontWeight: "700", color: "rgba(255,255,255,0.4)", letterSpacing: "0.12em", textTransform: "uppercase", marginBottom: "6px" }}>Activation Insights Report</p>
-          <p style={{ fontSize: "12px", color: "rgba(255,255,255,0.45)", marginBottom: "16px" }}>Download a raw text data metric log tracking entry gates, revenue metrics, and handshake counters.</p>
-          <button onClick={downloadReport} style={{ width: "100%", padding: "14px", borderRadius: "12px", background: "rgba(255,255,255,0.03)", color: "#f3f4f6", border: "1px solid rgba(255,255,255,0.05)", fontSize: "13px", fontWeight: "600", cursor: "pointer", letterSpacing: "0.01em" }}>⬇ Export Performance Manifest</button>
+          <p style={{ fontSize: "10px", fontWeight: "700", color: "rgba(255,255,255,0.4)", letterSpacing: "0.12em", textTransform: "uppercase", marginBottom: "6px" }}>Activation Report</p>
+          <p style={{ fontSize: "12px", color: "rgba(255,255,255,0.45)", marginBottom: "16px" }}>Download a summary of registrations and networking activity.</p>
+          <button onClick={downloadReport} style={{ width: "100%", padding: "14px", borderRadius: "12px", background: "rgba(255,255,255,0.03)", color: "#f3f4f6", border: "1px solid rgba(255,255,255,0.05)", fontSize: "13px", fontWeight: "600", cursor: "pointer", letterSpacing: "0.01em" }}>⬇ Download Report</button>
         </div>
 
       </div>
