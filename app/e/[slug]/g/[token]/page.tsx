@@ -15,7 +15,7 @@ export default function GuestView() {
       const { data: entry } = await supabase
         .from("registrations")
         .select("*, events(*)")
-        .eq("guest_access_link", token)
+        .ilike("guest_access_link", `%${token}`)
         .single();
       setData(entry);
     }
