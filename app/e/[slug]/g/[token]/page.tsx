@@ -42,7 +42,6 @@ export default function GuestExperienceEngine() {
       {/* Dynamic Content */}
       <div className="p-6">
         {activeTab === "scene" && <div><h3>Live Scene</h3></div>}
-        
         {activeTab === "networking" && (
           <div className="flex flex-col items-center justify-center min-h-[400px]">
             {!auraActive ? (
@@ -51,25 +50,23 @@ export default function GuestExperienceEngine() {
                 <button onClick={toggleAura} className="px-8 py-3 rounded-full border border-white/10 bg-white/5">Start Networking</button>
               </div>
             ) : (
-              <div className="w-full text-center">
+              <div className="text-center">
                 <button onClick={toggleAura} className="mb-8 text-white/50 text-xs">Stop Networking</button>
                 <div className="text-white/20">Radar Active (Scanning...)</div>
               </div>
             )}
           </div>
         )}
-
-        {activeTab === "ticket" && <div><h3>Ticket Access</h3></div>}
-        {activeTab === "profile" && <div><h3>My Profile</h3></div>}
+        {activeTab === "ticket" && <div><h3>Ticket View</h3></div>}
+        {activeTab === "profile" && <div><h3>Profile View</h3></div>}
       </div>
 
-      {/* Navigation */}
-      <div className="fixed bottom-6 left-4 right-4 bg-[#0B0A0E]/80 backdrop-blur-xl border border-white/10 p-4 rounded-2xl flex justify-between px-6">
-        {["scene", "networking", "ticket", "profile"].map((tab) => (
-          <button key={tab} onClick={() => setActiveTab(tab as any)} className={activeTab === tab ? "text-white" : "text-white/40"}>
-            {tab.charAt(0).toUpperCase() + tab.slice(1)}
-          </button>
-        ))}
+      {/* Navigation Bar */}
+      <div className="fixed bottom-0 w-full bg-[#0B0A0E] border-t border-white/10 p-4 flex justify-around">
+        <button onClick={() => setActiveTab("scene")}>Scene</button>
+        <button onClick={() => setActiveTab("networking")}>Networking</button>
+        <button onClick={() => setActiveTab("ticket")}>Ticket</button>
+        <button onClick={() => setActiveTab("profile")}>Profile</button>
       </div>
     </div>
   );
