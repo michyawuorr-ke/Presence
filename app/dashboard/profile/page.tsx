@@ -1,5 +1,4 @@
 'use client';
-
 import { useState, useEffect } from 'react';
 import { supabase } from '@/lib/supabase/client';
 
@@ -32,12 +31,17 @@ export default function OrganizerProfile() {
     setSaving(true);
     const { data: { user } } = await supabase.auth.getUser();
     if (user) {
-      await supabase.from('profiles').update({
+      // Fixed: Swapped update() for upsert() so initial edits create the row instead of failing silently
+      await supabase.from('profiles').upsert({
+        id: user.id,
         display_name: displayName,
         bio: bio,
         organisation: organisation,
         platform_value: platformValue
-      }).eq('id', user.id);
+      });
+      
+      // Locally update profile state so changes match database immediately
+      setProfile({ display_name: displayName, bio, organisation, platform_value: platformValue });
     }
     setSaving(false);
     setEditing(false);
@@ -46,23 +50,20 @@ export default function OrganizerProfile() {
   return (
     <div style={{ padding: "24px 16px", background: "#08080a", minHeight: "100vh" }}>
       <p style={{ fontSize: "11px", letterSpacing: "0.3em", color: "#666", textTransform: "uppercase", marginBottom: "32px", textAlign: "center", fontWeight: "600" }}>Organizer Identity</p>
-
+      
       <div style={{ background: "linear-gradient(160deg, #16151a 0%, #0f0e12 100%)", borderRadius: "28px", padding: "28px 24px 20px 24px", marginBottom: "24px", border: "1px solid rgba(255, 255, 255, 0.04)", position: "relative" }}>
         <button onClick={() => setEditing(!editing)} style={{ position: "absolute", top: "24px", right: "24px", width: "38px", height: "38px", borderRadius: "50%", background: "rgba(255, 255, 255, 0.03)", border: "1px solid rgba(255, 255, 255, 0.06)", display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer", color: "rgba(255, 255, 255, 0.45)", zIndex: 10 }}>{editing ? "✕" : "✎"}</button>
-
+        
         <div style={{ display: "flex", alignItems: "center", gap: "16px", marginBottom: "24px" }}>
           <div style={{ width: "56px", height: "56px", borderRadius: "50%", background: "#1a1813", border: "1px solid rgba(212,175,55,0.22)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "22px", fontWeight: "600", color: "#D4AF37" }}>{displayName.charAt(0).toUpperCase() || "O"}</div>
-          
-          {/* Text container with right padding to prevent Edit button overlap */}
           <div style={{ flex: 1, paddingRight: "45px" }}>
             <p style={{ fontSize: "18px", fontWeight: "600", color: "#f3f4f6", margin: "0 0 4px", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{displayName || "Unnamed Organizer"}</p>
             <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
-                <span style={{ fontSize: "10px", fontWeight: "700", letterSpacing: "0.08em", color: "#d4af37", background: "rgba(212,175,55,0.07)", padding: "2px 8px", borderRadius: "20px" }}>ORGANIZER</span>
-                {organisation && <span style={{ fontSize: "12px", color: "rgba(255,255,255,0.4)" }}>{organisation}</span>}
+              <span style={{ fontSize: "10px", fontWeight: "700", letterSpacing: "0.08em", color: "#d4af37", background: "rgba(212,175,55,0.07)", padding: "2px 8px", borderRadius: "20px" }}>ORGANIZER</span>
+              {organisation && <span style={{ fontSize: "12px", color: "rgba(255,255,255,0.4)" }}>{organisation}</span>}
             </div>
           </div>
         </div>
-
         {bio && <p style={{ fontSize: "14px", lineHeight: "1.6", color: "rgba(255, 255, 255, 0.55)", margin: "0 0 20px 0" }}>{bio}</p>}
         {platformValue && <p style={{ fontSize: "13px", color: "#93c5fd", margin: 0, textAlign: "center" }}>{platformValue}</p>}
       </div>
