@@ -22,7 +22,7 @@ export default function CreateEvent() {
       start_time: startTime + ":00+03:00",
       end_time: endTime + ":00+03:00",
       slug, status: "draft",
-      organizer_id: user?.id
+      host_id: user?.id
     });
     router.push("/dashboard/events");
   }
