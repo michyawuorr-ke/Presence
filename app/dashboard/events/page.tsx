@@ -71,7 +71,7 @@ export default function EventsPage() {
         opacity: event.is_hidden ? 0.4 : 1,
         transition: "all 0.15s",
       }}>
-        <div style={{ display: "flex", justifyBox: "space-between", alignItems: "flex-start" }}>
+        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start" }}>
           <div style={{ flex: 1, minWidth: 0 }} onClick={() => router.push("/dashboard/events/" + event.id)}>
             <div style={{ display: "flex", alignItems: "center", gap: "8px", marginBottom: "6px" }}>
               <h2 style={{ fontSize: "15px", fontWeight: "600", color: "var(--text-primary)", letterSpacing: "-0.01em", margin: 0 }}>{event.title}</h2>
