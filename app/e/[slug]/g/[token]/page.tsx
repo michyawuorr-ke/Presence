@@ -3,96 +3,177 @@ import { useEffect, useState } from "react";
 import { useParams } from "next/navigation";
 import { supabase } from "@/lib/supabase/client";
 
-export default function GuestExperience() {
+export default function GuestExperienceEngine() {
   const [data, setData] = useState<any>(null);
   const [activeTab, setActiveTab] = useState<"scene" | "networking" | "ticket" | "profile">("scene");
   const [loading, setLoading] = useState(true);
+  
+  // Real-time Anonymous Scene Metrics
+  const [auraActiveCount, setAuraActiveCount] = useState(0);
+  const [handshakeCount, setHandshakeCount] = useState(0);
+  const [metricsLoading, setMetricsLoading] = useState(false);
+
   const params = useParams();
   const { slug, token } = params;
 
+  // Real-time Context & Aggregation Engine
+  async function syncSceneMetrics(eventId: string) {
+    setMetricsLoading(true);
+    try {
+      const [auraRes, handshakeRes] = await Promise.all([
+        supabase.from("guest_profiles").select("id", { count: "exact", head: true }).eq("event_id", eventId).eq("aura_active", true),
+        supabase.from("handshakes").select("id", { count: "exact", head: true }).eq("event_id", eventId)
+      ]);
+      setAuraActiveCount(auraRes.count ?? 0);
+      setHandshakeCount(handshakeRes.count ?? 0);
+    } catch (err) {
+      console.error("Metrics sync failure", err);
+    }
+    setMetricsLoading(false);
+  }
+
   useEffect(() => {
-    async function load() {
-      const { data: entry, error } = await supabase
+    async function initExperience() {
+      const { data: entry } = await supabase
         .from("registrations")
-        .select("*, events(*)")
+        .select(`
+          *,
+          events(*)
+        `)
         .ilike("guest_access_link", `%${token}`)
         .single();
       
-      if (entry) setData(entry);
+      if (entry?.events) {
+        setData(entry);
+        await syncSceneMetrics(entry.event_id);
+      }
       setLoading(false);
     }
-    load();
+    initExperience();
   }, [token]);
 
-  if (loading) return <div style={{ minHeight: "100vh", background: "#060608", display: "flex", alignItems: "center", justifyContent: "center", color: "rgba(255,255,255,0.4)", fontSize: "14px" }}>Authenticating Pass...</div>;
-  if (!data) return <div style={{ minHeight: "100vh", background: "#060608", display: "flex", alignItems: "center", justifyContent: "center", color: "#ef4444", fontSize: "14px" }}>Pass Invalid or Expired</div>;
+  // Keep numbers fresh whenever user switches back to the Scene
+  useEffect(() => {
+    if (data?.event_id && activeTab === "scene") {
+      syncSceneMetrics(data.event_id);
+    }
+  }, [activeTab]);
+
+  // Helper to format date/time into a premium minimalist string
+  const formatEventTime = (startStr: string, endStr: string) => {
+    if (!startStr) return "";
+    const start = new Date(startStr);
+    const dateOptions: Intl.DateTimeFormatOptions = { weekday: 'short', month: 'short', day: 'numeric' };
+    const timeOptions: Intl.DateTimeFormatOptions = { hour: 'numeric', minute: '2-digit', hour12: true };
+    
+    const formattedDate = start.toLocaleDateString('en-US', dateOptions);
+    const formattedStart = start.toLocaleTimeString('en-US', timeOptions);
+    
+    if (endStr) {
+      const end = new Date(endStr);
+      const formattedEnd = end.toLocaleTimeString('en-US', timeOptions);
+      return `${formattedDate} • ${formattedStart} - ${formattedEnd}`;
+    }
+    return `${formattedDate} • ${formattedStart}`;
+  };
+
+  if (loading) return <div style={{ minHeight: "100vh", background: "#060608", display: "flex", alignItems: "center", justifyContent: "center", color: "rgba(255,255,255,0.4)", fontSize: "14px", fontFamily: "system-ui" }}>Syncing Atmosphere Context...</div>;
+  if (!data || !data.events) return <div style={{ minHeight: "100vh", background: "#060608", display: "flex", alignItems: "center", justifyContent: "center", color: "#ef4444", fontSize: "14px", fontFamily: "system-ui" }}>Pass Link Invalid or Expired</div>;
 
   return (
-    <div style={{ background: "#060608", minHeight: "100vh", color: "#f3f4f6", padding: "24px 16px 120px 16px", fontFamily: "system-ui, sans-serif" }}>
+    <div style={{ background: "#060608", minHeight: "100vh", color: "#fff", padding: "32px 16px 140px 16px", fontFamily: "system-ui, -apple-system, sans-serif", boxSizing: "border-box" }}>
       <div style={{ maxWidth: "420px", margin: "0 auto" }}>
-        
-        {/* Dynamic Context Header */}
-        <div style={{ marginBottom: "32px", textAlign: "center" }}>
-          <span style={{ fontSize: "10px", fontWeight: "700", color: "#D4AF37", letterSpacing: "0.2em" }}>{data.events.title}</span>
-        </div>
 
-        {/* Tab 1: The Scene */}
+        {/* ========================================================= */}
+        {/* TAB 1: THE SCENE */}
         {activeTab === "scene" && (
           <div>
-            <h2 style={{ fontSize: "22px", fontWeight: "600", marginBottom: "8px", letterSpacing: "-0.02em" }}>The Scene</h2>
-            <p style={{ fontSize: "14px", color: "rgba(255,255,255,0.45)", lineHeight: "1.6" }}>You are securely checked into the atmosphere. Physical discovery updates are handled live.</p>
-            <div style={{ marginTop: "40px", padding: "32px", textAlign: "center", background: "rgba(255,255,255,0.02)", borderRadius: "24px", border: "1px dashed rgba(255,255,255,0.06)" }}>
-              <p style={{ fontSize: "13px", color: "rgba(255,255,255,0.3)" }}>Atmospheric discovery engine ready</p>
+            {/* Context Metadata Block */}
+            <div style={{ marginBottom: "36px", borderBottom: "1px solid rgba(255,255,255,0.04)", paddingBottom: "24px" }}>
+              <span style={{ fontSize: "10px", fontWeight: "700", color: "#D4AF37", letterSpacing: "0.2em", textTransform: "uppercase", display: "block", marginBottom: "8px" }}>YOU ARE CHECKED IN</span>
+              <h1 style={{ fontSize: "26px", fontWeight: "600", margin: "0 0 10px 0", letterSpacing: "-0.02em", color: "#fff", lineHeight: "1.2" }}>
+                {data.events.title}
+              </h1>
+              
+              <div style={{ display: "flex", flexDirection: "column", gap: "6px" }}>
+                <div style={{ display: "flex", alignItems: "center", gap: "8px", color: "rgba(255,255,255,0.55)", fontSize: "14px" }}>
+                  <span>📍</span>
+                  <span>{data.events.venue || "Venue Room Framework"}</span>
+                </div>
+                <div style={{ display: "flex", alignItems: "center", gap: "8px", color: "rgba(255,255,255,0.45)", fontSize: "13px" }}>
+                  <span>🕒</span>
+                  <span>{formatEventTime(data.events.start_time, data.events.end_time)}</span>
+                </div>
+              </div>
+            </div>
+
+            {/* Atmospheric Velocity Metrics Block */}
+            <div>
+              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline", marginBottom: "16px" }}>
+                <h3 style={{ fontSize: "13px", fontWeight: "700", color: "rgba(255,255,255,0.4)", letterSpacing: "0.08em", textTransform: "uppercase", margin: 0 }}>Room Density</h3>
+                {metricsLoading && <span style={{ fontSize: "11px", color: "#D4AF37" }}>syncing...</span>}
+              </div>
+
+              <div style={{ display: "flex", flexDirection: "column", gap: "14px" }}>
+                {/* Metric Item 1: Active Networkers */}
+                <div style={{ background: "linear-gradient(145deg, #121116 0%, #09090c 100%)", borderRadius: "20px", padding: "22px 20px", border: "1px solid rgba(255, 255, 255, 0.04)" }}>
+                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                    <p style={{ fontSize: "14px", color: "rgba(255,255,255,0.6)", margin: 0, fontWeight: "500" }}>⚡ Actively Networking</p>
+                    <span style={{ fontSize: "28px", fontWeight: "500", color: "#fff", fontFamily: "monospace" }}>{auraActiveCount}</span>
+                  </div>
+                  <p style={{ fontSize: "12px", color: "rgba(255,255,255,0.35)", margin: "6px 0 0 0", lineHeight: "1.4" }}>Minds currently projecting an active Aura visibility signal.</p>
+                </div>
+
+                {/* Metric Item 2: Handshakes Exchanged */}
+                <div style={{ background: "linear-gradient(145deg, #121116 0%, #09090b 100%)", borderRadius: "20px", padding: "22px 20px", border: "1px solid rgba(255, 255, 255, 0.04)" }}>
+                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                    <p style={{ fontSize: "14px", color: "rgba(255,255,255,0.6)", margin: 0, fontWeight: "500" }}>🤝 Handshakes Exchanged</p>
+                    <span style={{ fontSize: "28px", fontWeight: "500", color: "#D4AF37", fontFamily: "monospace" }}>{handshakeCount}</span>
+                  </div>
+                  <p style={{ fontSize: "12px", color: "rgba(255,255,255,0.35)", margin: "6px 0 0 0", lineHeight: "1.4" }}>Successful mutual handshake profiles unlocked inside the space.</p>
+                </div>
+              </div>
             </div>
           </div>
         )}
 
-        {/* Tab 2: Networking */}
+        {/* ========================================================= */}
+        {/* PLACEHOLDER STATES FOR OTHER TABS */}
         {activeTab === "networking" && (
-          <div>
-            <h2 style={{ fontSize: "22px", fontWeight: "600", marginBottom: "8px", letterSpacing: "-0.02em" }}>Aura Connections</h2>
-            <p style={{ fontSize: "14px", color: "rgba(255,255,255,0.45)", lineHeight: "1.6" }}>Mutual proximity-validated connection hub.</p>
-            <div style={{ marginTop: "24px", padding: "20px", background: "#111015", borderRadius: "16px", border: "1px solid rgba(255,255,255,0.04)" }}>
-              <p style={{ fontSize: "14px", fontWeight: "500", color: "#D4AF37" }}>Opt-In Presence</p>
-              <p style={{ fontSize: "12px", color: "rgba(255,255,255,0.4)", marginTop: "4px" }}>Activate mutual radar scanning to link profiles.</p>
-            </div>
+          <div style={{ padding: "40px 0", textAlign: "center", color: "rgba(255,255,255,0.3)" }}>
+            <h3>Radar Networking Framework</h3>
+            <p style={{ fontSize: "13px" }}>Ready for integration stage.</p>
           </div>
         )}
 
-        {/* Tab 3: Ticket Pass */}
         {activeTab === "ticket" && (
-          <div style={{ background: "linear-gradient(165deg, #121115 0%, #09090b 100%)", borderRadius: "24px", border: "1px solid rgba(255,255,255,0.05)", padding: "24px", boxShadow: "0 25px 50px -12px rgba(0,0,0,0.5)" }}>
-            <span style={{ fontSize: "10px", fontWeight: "700", color: "#D4AF37", letterSpacing: "0.15em" }}>VERIFIED PASS</span>
-            <h3 style={{ fontSize: "20px", fontWeight: "600", margin: "6px 0" }}>{data.guest_name}</h3>
-            <p style={{ fontSize: "13px", color: "rgba(255,255,255,0.4)", marginBottom: "24px" }}>{data.ticket_type_id ? "Premium Admission" : "General Access"}</p>
-            <div style={{ background: "#fff", padding: "12px", borderRadius: "16px", display: "inline-block", margin: "0 auto 16px auto", width: "160px", height: "160px" }}>
-              <div style={{ width: "100%", height: "100%", background: "#1a1a1a", borderRadius: "8px" }} />
-            </div>
+          <div style={{ padding: "40px 0", textAlign: "center", color: "rgba(255,255,255,0.3)" }}>
+            <h3>Secure QR Access Ticket</h3>
+            <p style={{ fontSize: "13px" }}>Ready for integration stage.</p>
           </div>
         )}
 
-        {/* Tab 4: Profile */}
         {activeTab === "profile" && (
-          <div>
-            <h2 style={{ fontSize: "22px", fontWeight: "600", marginBottom: "8px", letterSpacing: "-0.02em" }}>Guest Identity</h2>
-            <p style={{ fontSize: "14px", color: "rgba(255,255,255,0.45)", marginBottom: "24px" }}>Manage your temporary session card details.</p>
-            <input defaultValue={data.guest_name} style={{ width: "100%", padding: "16px", background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.06)", borderRadius: "12px", color: "#fff", fontSize: "15px", outline: "none" }} placeholder="Your Display Name" />
+          <div style={{ padding: "40px 0", textAlign: "center", color: "rgba(255,255,255,0.3)" }}>
+            <h3>Identity Configuration Profile</h3>
+            <p style={{ fontSize: "13px" }}>Ready for integration stage.</p>
           </div>
         )}
 
-        {/* 40% Thumb-Zone Ergonomic Navigation Law Bar */}
-        <div style={{ position: "fixed", bottom: "24px", left: "16px", right: "16px", background: "rgba(14, 13, 18, 0.85)", backdropFilter: "blur(20px)", borderRadius: "20px", padding: "8px", border: "1px solid rgba(255,255,255,0.06)", display: "flex", justifyContent: "space-between", zIndex: 100 }}>
+        {/* ========================================================= */}
+        {/* RIGID 40% ERGONOMIC THUMB-ZONE NAVIGATION BAR */}
+        <div style={{ position: "fixed", bottom: "28px", left: "16px", right: "16px", background: "rgba(11, 10, 14, 0.88)", backdropFilter: "blur(24px)", WebkitBackdropFilter: "blur(24px)", borderRadius: "24px", padding: "6px 10px", border: "1px solid rgba(255,255,255,0.06)", display: "flex", justifyContent: "space-between", zIndex: 1000, boxShadow: "0 20px 40px rgba(0,0,0,0.7)" }}>
           {[
             { id: "scene", label: "Scene", icon: "✨" },
             { id: "networking", label: "Radar", icon: "📡" },
             { id: "ticket", label: "Pass", icon: "🎟️" },
             { id: "profile", label: "Profile", icon: "👤" }
-          ].map((tab) => {
-            const isSel = activeTab === tab.id;
+          ].map((t) => {
+            const isSelected = activeTab === t.id;
             return (
-              <button key={tab.id} onClick={() => setActiveTab(tab.id as any)} style={{ flex: 1, background: "transparent", border: "none", display: "flex", flexDirection: "column", alignItems: "center", gap: "4px", padding: "12px 0", cursor: "pointer", outline: "none" }}>
-                <span style={{ fontSize: "18px", opacity: isSel ? 1 : 0.4 }}>{tab.icon}</span>
-                <span style={{ fontSize: "10px", fontWeight: "600", color: isSel ? "#D4AF37" : "rgba(255,255,255,0.3)" }}>{tab.label}</span>
+              <button key={t.id} onClick={() => setActiveTab(t.id as any)} style={{ flex: 1, background: "transparent", border: "none", display: "flex", flexDirection: "column", alignItems: "center", gap: "4px", padding: "10px 0", cursor: "pointer", outline: "none", WebkitTapHighlightColor: "transparent" }}>
+                <span style={{ fontSize: "18px", opacity: isSelected ? 1 : 0.35, transform: isSelected ? "scale(1.08)" : "scale(1)", transition: "all 0.2s ease" }}>{t.icon}</span>
+                <span style={{ fontSize: "10px", fontWeight: "600", color: isSelected ? "#D4AF37" : "rgba(255,255,255,0.3)", transition: "all 0.2s ease", letterSpacing: "0.02em" }}>{t.label}</span>
               </button>
             );
           })}
