@@ -9,15 +9,9 @@ export default function GuestExperienceEngine() {
   const [loading, setLoading] = useState(true);
   const [auraActive, setAuraActive] = useState(false);
   const [networkingLoading, setNetworkingLoading] = useState(false);
-  const [auraActiveCount, setAuraActiveCount] = useState(0);
 
   const params = useParams();
   const { token } = params;
-
-  async function syncSceneMetrics(eventId: string) {
-    const { count } = await supabase.from("guest_profiles").select("id", { count: "exact", head: true }).eq("event_id", eventId).eq("aura_active", true);
-    setAuraActiveCount(count ?? 0);
-  }
 
   const toggleAura = async () => {
     if (!data) return;
@@ -25,45 +19,57 @@ export default function GuestExperienceEngine() {
     const nextStatus = !auraActive;
     await supabase.from("guest_profiles").update({ aura_active: nextStatus }).eq("id", data.id);
     setAuraActive(nextStatus);
-    syncSceneMetrics(data.event_id);
     setNetworkingLoading(false);
   };
 
   useEffect(() => {
     async function initExperience() {
       const { data: entry } = await supabase.from("registrations").select("*, events(*)").ilike("guest_access_link", `%${token}`).single();
-      if (entry?.events) {
+      if (entry) {
         setData(entry);
-        await syncSceneMetrics(entry.event_id);
+        const { data: profile } = await supabase.from("guest_profiles").select("aura_active").eq("id", entry.id).single();
+        if (profile) setAuraActive(profile.aura_active);
       }
       setLoading(false);
     }
     initExperience();
   }, [token]);
 
-  if (loading) return <div>Loading...</div>;
+  if (loading) return <div className="p-8 text-white">Loading...</div>;
 
   return (
-    <div className="min-h-screen bg-[#0B0A0E] text-white">
-      {activeTab === "networking" && (
-        <div className="flex flex-col items-center justify-center min-h-[400px]">
-          {!auraActive ? (
-            <button onClick={toggleAura} className="px-8 py-4 rounded-full border border-white/10 bg-white/5 backdrop-blur-md">
-              Start Networking
-            </button>
-          ) : (
-            <div className="w-full text-center">
-              <button onClick={toggleAura} className="mb-4 text-white/50 underline text-xs">Stop Networking</button>
-              <div className="text-white/20">Radar Active...</div>
-            </div>
-          )}
-        </div>
-      )}
-      
-      {/* NAVIGATION BAR */}
-      <div className="fixed bottom-8 left-4 right-4 bg-[#0B0A0E]/90 border border-white/10 backdrop-blur-xl p-4 rounded-2xl flex justify-around">
-        <button onClick={() => setActiveTab("scene")}>Scene</button>
-        <button onClick={() => setActiveTab("networking")}>Networking</button>
+    <div className="min-h-screen bg-[#0B0A0E] text-white pb-24">
+      {/* Dynamic Content */}
+      <div className="p-6">
+        {activeTab === "scene" && <div><h3>Live Scene</h3></div>}
+        
+        {activeTab === "networking" && (
+          <div className="flex flex-col items-center justify-center min-h-[400px]">
+            {!auraActive ? (
+              <div className="text-center">
+                <p className="text-white/30 mb-6">Status: Dissolved</p>
+                <button onClick={toggleAura} className="px-8 py-3 rounded-full border border-white/10 bg-white/5">Start Networking</button>
+              </div>
+            ) : (
+              <div className="w-full text-center">
+                <button onClick={toggleAura} className="mb-8 text-white/50 text-xs">Stop Networking</button>
+                <div className="text-white/20">Radar Active (Scanning...)</div>
+              </div>
+            )}
+          </div>
+        )}
+
+        {activeTab === "ticket" && <div><h3>Ticket Access</h3></div>}
+        {activeTab === "profile" && <div><h3>My Profile</h3></div>}
+      </div>
+
+      {/* Navigation */}
+      <div className="fixed bottom-6 left-4 right-4 bg-[#0B0A0E]/80 backdrop-blur-xl border border-white/10 p-4 rounded-2xl flex justify-between px-6">
+        {["scene", "networking", "ticket", "profile"].map((tab) => (
+          <button key={tab} onClick={() => setActiveTab(tab as any)} className={activeTab === tab ? "text-white" : "text-white/40"}>
+            {tab.charAt(0).toUpperCase() + tab.slice(1)}
+          </button>
+        ))}
       </div>
     </div>
   );
