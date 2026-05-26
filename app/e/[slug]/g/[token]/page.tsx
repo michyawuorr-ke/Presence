@@ -813,7 +813,7 @@ function ProfileTab({profile,event,onProfileUpdate,isEnded,registration}:any){
         <div style={{height:"1px",background:"linear-gradient(90deg,transparent,rgba(255,255,255,0.03) 20%,rgba(255,255,255,0.03) 80%,transparent)",margin:"0 0 14px"}}/>
 
         {/* Bio */}
-        {profile?.bio&&<p style={{fontSize:"13px",lineHeight:"1.65",color:"rgba(244,244,245,0.65)",lineHeight:"1.7",fontWeight:"300",margin:"0 0 16px",letterSpacing:"0.01em"}}>{profile.bio}</p>}
+        {profile?.bio&&<p style={{fontSize:"13px",color:"rgba(244,244,245,0.65)",lineHeight:"1.7",fontWeight:"300",margin:"0 0 16px",letterSpacing:"0.01em"}}>{profile.bio}</p>}
 
         {/* Link row */}
         {profile?.platform_value&&(
