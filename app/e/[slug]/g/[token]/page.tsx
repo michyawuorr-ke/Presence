@@ -896,10 +896,10 @@ function EditProfile({profile,onSave}:any){
     setSaving(false);
   }
 
-  const inp={width:"100%",padding:"12px",borderRadius:"12px",border:"1px solid #e5e7eb",fontSize:"14px",outline:"none",marginBottom:"10px",boxSizing:"border-box" as const};
+  const inp={width:"100%",padding:"12px",borderRadius:"12px",border:"1px solid rgba(255,255,255,0.06)",background:"rgba(255,255,255,0.02)",color:"#fafafa",fontSize:"14px",outline:"none",marginBottom:"12px",boxSizing:"border-box" as const};
 
   return(
-    <div style={{background:"#f9fafb",borderRadius:"20px",padding:"20px"}}>
+    <div style={{background:"#0c0c0f",borderRadius:"20px",padding:"20px",border:"1px solid rgba(255,255,255,0.04)",marginTop:"12px"}}>
       <input value={displayName} onChange={e=>setDisplayName(e.target.value)} placeholder="Your name" style={inp}/>
       <input value={role} onChange={e=>setRole(e.target.value)} placeholder="Your role or title" style={inp}/>
       <input value={organisation} onChange={e=>setOrganisation(e.target.value)} placeholder="Organisation" style={inp}/>
