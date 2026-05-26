@@ -761,14 +761,14 @@ function ProfileTab({profile,event,onProfileUpdate,isEnded,registration}:any){
 
       {/* ── Premium profile card ── */}
       <div style={{
-        background:"linear-gradient(145deg,#1a1820 0%,#141218 60%,#111016 100%)",
+        background:"#0c0c0f",
         borderRadius:"22px",padding:"20px",marginBottom:"12px",
         border:"1px solid rgba(255,255,255,0.07)",
         boxShadow:"0 1px 0 rgba(255,255,255,0.05) inset,0 4px 8px rgba(0,0,0,0.35),0 16px 48px rgba(0,0,0,0.5)",
         position:"relative",overflow:"hidden",
       }}>
         {/* Top edge shimmer */}
-        <div style={{position:"absolute",top:0,left:0,right:0,height:"1px",background:"linear-gradient(90deg,transparent,rgba(255,255,255,0.1) 40%,rgba(255,255,255,0.07) 60%,transparent)",pointerEvents:"none"}}/>
+        <div style={{position:"absolute",top:0,left:0,right:0,height:"1px",background:"linear-gradient(90deg,transparent,rgba(255,255,255,0.04) 30%,rgba(255,255,255,0.04) 70%,transparent)",pointerEvents:"none"}}/>
         {/* Host ambient glow */}
         {isHost&&<div style={{position:"absolute",top:"-50px",right:"-50px",width:"140px",height:"140px",background:"radial-gradient(circle,rgba(212,175,55,0.07) 0%,transparent 70%)",pointerEvents:"none"}}/>}
 
@@ -791,7 +791,7 @@ function ProfileTab({profile,event,onProfileUpdate,isEnded,registration}:any){
             {profile?.role_title&&(
               <span style={{
                 display:"inline-block",
-                fontSize:"10px",fontWeight:"700",letterSpacing:"0.06em",textTransform:"uppercase",
+                fontSize:"9px",fontWeight:"600",letterSpacing:"0.12em",textTransform:"uppercase",
                 color:accent,background:accentBg,
                 border:"1px solid "+accentBorder,
                 padding:"3px 9px",borderRadius:"6px",
@@ -810,10 +810,10 @@ function ProfileTab({profile,event,onProfileUpdate,isEnded,registration}:any){
         </div>
 
         {/* Divider */}
-        <div style={{height:"1px",background:"linear-gradient(90deg,transparent,rgba(255,255,255,0.06) 30%,rgba(255,255,255,0.06) 70%,transparent)",margin:"0 0 14px"}}/>
+        <div style={{height:"1px",background:"linear-gradient(90deg,transparent,rgba(255,255,255,0.03) 20%,rgba(255,255,255,0.03) 80%,transparent)",margin:"0 0 14px"}}/>
 
         {/* Bio */}
-        {profile?.bio&&<p style={{fontSize:"13px",lineHeight:"1.65",color:"rgba(240,237,232,0.58)",margin:"0 0 14px"}}>{profile.bio}</p>}
+        {profile?.bio&&<p style={{fontSize:"13px",lineHeight:"1.65",color:"rgba(244,244,245,0.65)",lineHeight:"1.7",fontWeight:"300",margin:"0 0 16px",letterSpacing:"0.01em"}}>{profile.bio}</p>}
 
         {/* Link row */}
         {profile?.platform_value&&(
