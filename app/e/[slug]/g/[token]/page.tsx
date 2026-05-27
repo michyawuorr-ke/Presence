@@ -836,6 +836,16 @@ function ProfileTab({profile,event,onProfileUpdate,isEnded,registration}:any){
           )}
         </div>
       </div>
+
+      {editing && (
+        <EditProfile 
+          profile={profile} 
+          onSave={(p: any) => {
+            onProfileUpdate(p);
+            setEditing(false);
+          }} 
+        />
+      )}
       <div style={{marginTop:"16px"}}>
         <p style={{fontSize:"10px",fontWeight:"600",color:"rgba(255,255,255,0.45)",letterSpacing:"0.12em",textTransform:"uppercase",marginBottom:"12px"}}>Connections</p>
         {connections.length===0?(
