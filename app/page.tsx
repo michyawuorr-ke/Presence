@@ -1,5 +1,6 @@
 import React from 'react';
 import Link from 'next/link';
+import OreetiLogo from "@/components/OreetiLogo";
 
 export default function Home() {
   return (
@@ -14,46 +15,29 @@ export default function Home() {
       boxSizing: 'border-box',
       fontFamily: 'sans-serif'
     }}>
-      {/* Upper Third: Brand Architecture */}
-      <div style={{ marginTop: '40px', textAlign: 'center' }}>
-        <h1 style={{ 
-          fontSize: '14px', 
-          letterSpacing: '0.3em', 
-          color: '#E26D34', 
-          textTransform: 'uppercase', 
-          fontWeight: '600',
-          margin: 0 
-        }}>
-          OREETI
-        </h1>
+      {/* Top Section: Original Logo & Tagline */}
+      <div style={{ marginTop: '56px', textAlign: 'center', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '16px' }}>
+        <OreetiLogo size="sm" />
         <p style={{ 
           fontSize: '11px', 
-          color: 'rgba(255,255,255,0.3)', 
-          marginTop: '12px', 
-          letterSpacing: '0.05em' 
+          letterSpacing: '0.2em', 
+          color: '#D4AF37', 
+          textTransform: 'uppercase', 
+          fontWeight: '500', 
+          opacity: 0.8,
+          margin: 0
         }}>
-          SOVEREIGN NETWORKING SYSTEMS
+          The room activated
         </p>
       </div>
 
-      {/* Middle Third: Minimal Ambient Graphic */}
-      <div style={{ 
-        display: 'flex', 
-        justifyContent: 'center', 
-        alignItems: 'center',
-        flexGrow: 1
-      }}>
-        <div style={{ 
-          width: '1px', 
-          height: '80px', 
-          background: 'linear-gradient(to bottom, transparent, rgba(226,109,52,0.4), transparent)' 
-        }} />
-      </div>
+      {/* Center Space */}
+      <div style={{ flexGrow: 1 }} />
 
-      {/* Lower 40%: Ergonomic Interaction Zone */}
+      {/* Bottom 40% Interactive Area: Original Actions */}
       <div style={{ 
         width: '100%', 
-        maxWidth: '340px', 
+        maxWidth: '300px', 
         margin: '0 auto 20px auto',
         display: 'flex',
         flexDirection: 'column',
@@ -61,49 +45,39 @@ export default function Home() {
       }}>
         <Link href="/login" style={{ textDecoration: 'none' }}>
           <div style={{ 
-            background: '#fff', 
-            color: '#000', 
-            textAlign: 'center', 
-            padding: '16px', 
+            width: '100%', 
+            padding: '14px', 
             borderRadius: '6px', 
-            fontSize: '12px', 
-            fontWeight: '600', 
-            textTransform: 'uppercase', 
-            letterSpacing: '0.08em',
-            transition: 'background 0.2s'
-          }}>
-            Access Console
-          </div>
-        </Link>
-
-        <Link href="/register/live" style={{ textDecoration: 'none' }}>
-          <div style={{ 
             background: 'transparent', 
-            color: '#fff', 
-            border: '1px solid rgba(255,255,255,0.15)', 
-            textAlign: 'center', 
-            padding: '16px', 
-            borderRadius: '6px', 
+            color: '#E26D34', 
+            border: '1px solid rgba(226,109,52,0.45)', 
             fontSize: '12px', 
-            fontWeight: '600', 
+            fontWeight: '500', 
+            letterSpacing: '0.06em', 
             textTransform: 'uppercase', 
-            letterSpacing: '0.08em',
-            transition: 'border 0.2s'
+            textAlign: 'center',
+            boxSizing: 'border-box'
           }}>
-            Register Presence
+            Create an Account
           </div>
         </Link>
 
-        <p style={{ 
-          color: 'rgba(255,255,255,0.2)', 
-          fontSize: '9px', 
-          textAlign: 'center', 
-          letterSpacing: '0.02em', 
-          marginTop: '16px',
-          lineHeight: '1.5'
-        }}>
-          By interacting with this space you establish a sovereign data-sharing handshake.
-        </p>
+        <Link href="/login" style={{ textDecoration: 'none' }}>
+          <div style={{ 
+            width: '100%', 
+            padding: '12px', 
+            background: 'transparent', 
+            color: 'rgba(255,255,255,0.4)', 
+            border: 'none', 
+            fontSize: '12px', 
+            fontWeight: '500', 
+            letterSpacing: '0.06em', 
+            textTransform: 'uppercase', 
+            textAlign: 'center'
+          }}>
+            Sign In
+          </div>
+        </Link>
       </div>
     </div>
   );
