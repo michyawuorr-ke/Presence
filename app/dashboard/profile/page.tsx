@@ -11,8 +11,8 @@ export default function OrganizerProfile() {
   const [platformValue, setPlatformValue] = useState('');
   const [saving, setSaving] = useState(false);
 
-  useEffect(() => {
-    async function loadProfile() {
+  async function loadProfile() {
+    try {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) return;
       const { data } = await supabase.from('profiles').select('*').eq('id', user.id).single();
@@ -22,8 +22,17 @@ export default function OrganizerProfile() {
         setBio(data.bio || '');
         setOrganisation(data.organisation || '');
         setPlatformValue(data.platform_value || '');
+      } else {
+        // Create an empty reference profile state so it renders gracefully if new
+        setProfile({});
       }
+    } catch (err) {
+      console.error(err);
+      setProfile({});
     }
+  }
+
+  useEffect(() => {
     loadProfile();
   }, []);
 
@@ -43,6 +52,8 @@ export default function OrganizerProfile() {
     setSaving(false);
     setEditing(false);
   }
+
+  if (!profile) return <div style={{ padding: "40px", color: "#D4AF37", textAlign: "center", fontSize: "12px", letterSpacing: "0.1em" }}>LOADING IDENTITY...</div>;
 
   return (
     <div style={{ padding: "32px 16px", background: "#000", minHeight: "100vh" }}>
@@ -67,8 +78,8 @@ export default function OrganizerProfile() {
               {displayName || "Unnamed Organizer"}
             </p>
             <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
-              <span style={{ fontSize: "9px", fontWeight: "600", letterSpacing: "0.08em", color: "#D4AF37", textTransform: "uppercase" }}>
-                Host
+              <span style={{ fontSize: "10px", fontWeight: "700", letterSpacing: "0.08em", color: "#D4AF37", textTransform: "uppercase" }}>
+                ORGANIZER
               </span>
               {organisation && <span style={{ fontSize: "12px", color: "rgba(255,255,255,0.35)", letterSpacing: "0.01em" }}>{organisation}</span>}
             </div>
@@ -112,7 +123,7 @@ export default function OrganizerProfile() {
             disabled={saving} 
             style={{ width: "100%", padding: "12px", borderRadius: "6px", background: "transparent", color: "#D4AF37", border: "1px solid rgba(212,175,55,0.45)", fontWeight: "500", fontSize: "12px", letterSpacing: "0.06em", textTransform: "uppercase", cursor: "pointer", transition: "all 0.2s" }}
           >
-            {saving ? "Saving Changes..." : "Commit Structure"}
+            {saving ? "Saving..." : "Save Changes"}
           </button>
         </div>
       )}
