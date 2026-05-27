@@ -154,6 +154,9 @@ export default function RegisterPage() {
 
   if (success) return (
     <div style={{ minHeight: "100vh", background: "#000", display: "flex", flexDirection: "column", padding: "40px 24px", maxWidth: "420px", margin: "0 auto", justifyContent: "space-between", boxSizing: "border-box" }}>
+      <style>{`
+        .living-tagline { display: none !important; opacity: 0 !important; animation: none !important; }
+      `}</style>
       <div style={{ display: "flex", flexDirection: "column", alignItems: "center", width: "100%", marginTop: "auto", marginBottom: "auto" }}>
         <p style={{ fontSize: "11px", letterSpacing: "0.2em", color: "#E26D34", textTransform: "uppercase", marginBottom: "40px" }}>Oreeti</p>
         <div style={{ fontSize: "24px", color: "#4ade80", marginBottom: "16px" }}>✓</div>
@@ -168,6 +171,18 @@ export default function RegisterPage() {
         <button
           onClick={() => {
             const accessToken = Array.from(crypto.getRandomValues(new Uint8Array(32))).map(b => b.toString(16).padStart(2, "0")).join("");
+            window.location.href = window.location.origin + "/e/" + event.slug + "/g/" + accessToken;
+          }}
+          style={{ width: "100%", padding: "14px", borderRadius: "6px", background: "#fff", color: "#000", border: "none", fontSize: "12px", fontWeight: "600", letterSpacing: "0.06em", textTransform: "uppercase", cursor: "pointer" }}
+        >
+          Enter PWA Gateway →
+        </button>
+        <button onClick={resetForm} style={{ background: "transparent", border: "none", color: "rgba(255,255,255,0.3)", fontSize: "11px", letterSpacing: "0.06em", textTransform: "uppercase", cursor: "pointer", padding: "8px" }}>
+          ← Return to Registration
+        </button>
+      </div>
+    </div>
+  );
             window.location.href = window.location.origin + "/e/" + event.slug + "/g/" + accessToken;
           }}
           style={{ width: "100%", padding: "14px", borderRadius: "6px", background: "#fff", color: "#000", border: "none", fontSize: "12px", fontWeight: "600", letterSpacing: "0.06em", textTransform: "uppercase", cursor: "pointer" }}
