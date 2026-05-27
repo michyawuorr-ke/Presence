@@ -136,8 +136,8 @@ export default function EventsPage() {
     <div style={{ maxWidth: "600px", margin: "0 auto", padding: "24px 16px" }}>
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "32px" }}>
         <div>
-          <h1 style={{ fontSize: "14px", fontWeight: "600", color: "#fff", letterSpacing: "0.15em", textTransform: "uppercase", margin: "0 0 4px" }}>Your Domains</h1>
-          <p style={{ fontSize: "11px", color: "#D4AF37", letterSpacing: "0.06em", textTransform: "uppercase", fontWeight: "500", opacity: 0.85 }}>Ecosystem Presence / {visibleEvents.length} Tracks</p>
+          <h1 style={{ fontSize: "14px", fontWeight: "600", color: "#fff", letterSpacing: "0.15em", textTransform: "uppercase", margin: "0 0 4px" }}>Your Events</h1>
+          <p style={{ fontSize: "11px", color: "#D4AF37", letterSpacing: "0.06em", textTransform: "uppercase", fontWeight: "500", opacity: 0.85 }}>Active Events ({visibleEvents.length})</p>
         </div>
         <button onClick={() => router.push("/dashboard/events/create")} style={{ padding: "8px 16px", borderRadius: "6px", background: "transparent", color: "#E26D34", border: "1px solid rgba(226,109,52,0.45)", fontSize: "12px", fontWeight: "500", letterSpacing: "0.06em", textTransform: "uppercase", cursor: "pointer" }}>
           + Create Event
