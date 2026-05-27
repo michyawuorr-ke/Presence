@@ -358,11 +358,18 @@ const[tab,setTab]=useState<Tab>("scene");
               <p style={{color:"#555",fontSize:"11px",marginBottom:"12px"}}>Show at entrance</p>
               {entryQR?<img src={entryQR} style={{width:"130px",height:"130px",margin:"0 auto",display:"block"}}/>:<p style={{color:"#666",fontSize:"12px"}}>Generating...</p>}
             </div>
-            <div style={{background:"#111",borderRadius:"10px",padding:"12px"}}>
-              <p style={{color:"#fff",fontSize:"12px",fontWeight:"500",marginBottom:"4px"}}>Networking QR</p>
-              <p style={{color:"#555",fontSize:"11px",marginBottom:"12px"}}>For profile unlocks</p>
-              {networkingQR?<img src={networkingQR} style={{width:"130px",height:"130px",margin:"0 auto",display:"block"}}/>:<p style={{color:"#666",fontSize:"12px"}}>Generating...</p>}
-            </div>
+            <details style={{background:"#111",borderRadius:"10px",padding:"12px",border:"1px solid rgba(240,237,232,0.03)"}}>
+              <summary style={{listStyle:"none",display:"flex",justifyContent:"space-between",alignItems:"center",cursor:"pointer",userSelect:"none"}}>
+                <div>
+                  <p style={{color:"#fff",fontSize:"12px",fontWeight:"500",margin:0}}>Networking QR</p>
+                  <p style={{color:"#555",fontSize:"11px",margin:"4px 0 0"}}>For profile unlocks</p>
+                </div>
+                <span style={{fontSize:"11px",color:"#f0ede8",fontWeight:"600",textTransform:"uppercase",letterSpacing:"0.05em",background:"rgba(255,255,255,0.05)",padding:"4px 8px",borderRadius:"6px"}}>Toggle ⊙</span>
+              </summary>
+              <div style={{marginTop:"12px",paddingTop:"12px",borderTop:"1px solid rgba(255,255,255,0.05)"}}>
+                {networkingQR?<img src={networkingQR} style={{width:"130px",height:"130px",margin:"0 auto",display:"block"}}/>:<p style={{color:"#666",fontSize:"12px"}}>Generating...</p>}
+              </div>
+            </details>
           </div>
         </div>
       )}
