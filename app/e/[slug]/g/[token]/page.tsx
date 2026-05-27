@@ -606,8 +606,8 @@ function NetworkingTab({event,profile,isLive,isEnded,registration}:any){
         const firstName=getFirstName(node.display_name);
         return(
           <div key={node.id} style={{position:"absolute",left:node.x+"%",top:node.y+"%",transform:"translate(-50%,-50%)",animation:"float 4s ease-in-out infinite",zIndex:2}}>
-            <button onClick={()=>!isSent&&setConfirmNode(node)} style={{width:"56px",height:"56px",borderRadius:"50%",background:"linear-gradient(135deg,#E26D34,#c85a24)",border:"none",cursor:isSent?"default":"pointer",display:"flex",alignItems:"center",justifyContent:"center",animation:"pulse 2s infinite",opacity:isSent?0.5:1}}>
-              <span style={{color:"#fff",fontSize:"13px",fontWeight:"500"}}>{firstName.charAt(0)}</span>
+            <button onClick={()=>!isSent&&setConfirmNode(node)} style={{width:"44px",height:"44px",borderRadius:"50%",background:"transparent",border:isSent?"1px solid rgba(255,255,255,0.1)":"1px solid rgba(226,109,52,0.45)",cursor:isSent?"default":"pointer",display:"flex",alignItems:"center",justifyContent:"center",animation:isSent?"none":"pulse 2s infinite",opacity:isSent?0.4:1}}>
+              <span style={{color:isSent?"rgba(255,255,255,0.4)":"#E26D34",fontSize:"13px",fontWeight:"600"}}>{firstName.charAt(0)}</span>
             </button>
             <p style={{color:"rgba(255,255,255,0.6)",fontSize:"10px",textAlign:"center",marginTop:"4px"}}>{isSent?"sent":firstName}</p>
           </div>
@@ -622,7 +622,7 @@ function NetworkingTab({event,profile,isLive,isEnded,registration}:any){
 
       {confirmNode&&(
         <div style={{position:"fixed",inset:0,background:"rgba(0,0,0,0.7)",display:"flex",alignItems:"flex-end",zIndex:20}} onClick={()=>setConfirmNode(null)}>
-          <div style={{background:"#1a1a1a",borderRadius:"24px 24px 0 0",padding:"28px",width:"100%",animation:"slideUp 0.3s ease"}} onClick={e=>e.stopPropagation()}>
+          <div style={{background:"#0c0c0f",borderRadius:"24px 24px 0 0",padding:"24px",width:"100%",borderTop:"1px solid rgba(255,255,255,0.05)",animation:"slideUp 0.3s ease"}} onClick={e=>e.stopPropagation()}>
             <div style={{display:"flex",alignItems:"center",gap:"8px",marginBottom:"8px"}}>
               <p style={{color:"#fff",fontSize:"18px",fontWeight:"500"}}>Connect with {getFirstName(confirmNode.display_name)}?</p>
               {confirmNode.is_host&&<span style={{background:"linear-gradient(135deg,#D4AF37,#b8962e)",color:"#000",fontSize:"10px",fontWeight:"700",padding:"3px 10px",borderRadius:"6px",letterSpacing:"0.05em"}}>ORGANIZER</span>}
@@ -630,8 +630,8 @@ function NetworkingTab({event,profile,isLive,isEnded,registration}:any){
             <p style={{color:"#666",fontSize:"14px",marginBottom:"4px"}}>{confirmNode.role_title||""}</p>
             {confirmNode.is_host&&<p style={{color:"#E26D34",fontSize:"12px",marginBottom:"8px"}}>★ Event organizer</p>}
             <div style={{display:"flex",gap:"12px"}}>
-              <button onClick={()=>setConfirmNode(null)} style={{flex:1,padding:"14px",borderRadius:"14px",background:"#333",color:"#fff",border:"none",fontSize:"15px",cursor:"pointer"}}>Cancel</button>
-              <button onClick={()=>sendRequest(confirmNode)} style={{flex:1,padding:"14px",borderRadius:"14px",background:"#fff",color:"#000",border:"none",fontSize:"15px",fontWeight:"500",cursor:"pointer"}}>Send Request →</button>
+              <button onClick={()=>setConfirmNode(null)} style={{flex:1,padding:"11px",borderRadius:"10px",background:"transparent",color:"rgba(240,237,232,0.5)",border:"1px solid rgba(240,237,232,0.15)",fontSize:"13px",fontWeight:"500",letterSpacing:"0.08em",textTransform:"uppercase",cursor:"pointer"}}>Cancel</button>
+              <button onClick={()=>sendRequest(confirmNode)} style={{flex:1,padding:"11px",borderRadius:"10px",background:"transparent",color:"#E26D34",border:"1px solid rgba(226,109,52,0.4)",fontSize:"13px",fontWeight:"500",letterSpacing:"0.08em",textTransform:"uppercase",cursor:"pointer"}}>Send Request →</button>
             </div>
           </div>
         </div>
