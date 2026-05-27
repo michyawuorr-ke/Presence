@@ -194,7 +194,7 @@ function Identity({registration,event,onComplete}:any){
 
   return(
     <div style={{minHeight:"100vh",background:"#000",color:"#fff",padding: "48px 24px",display:"flex",flexDirection:"column"}}>
-      <p style={{fontSize:"11px",letterSpacing:"0.2em",color:"#E26D34",textTransform:"uppercase",marginBottom:"48px",textAlign:"center",fontWeight:"600"}} style={{color: "#E26D34"}}>OREETI</p>
+      <p style={{fontSize:"11px",letterSpacing:"0.2em",color:"#E26D34",textTransform:"uppercase",marginBottom:"48px",textAlign:"center",fontWeight:"600"}}>OREETI</p>
       <p style={{fontSize:"11px",letterSpacing:"0.1em",color:"rgba(255,255,255,0.35)",textTransform:"uppercase",marginBottom:"40px",textAlign:"center"}}>Set up your profile</p>
       
       <div style={{maxWidth:"400px",margin:"0 auto",width:"100%",flex:1}}>
