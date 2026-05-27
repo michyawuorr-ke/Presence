@@ -165,18 +165,15 @@ export default function RegisterPage() {
       <h1 style={{ fontSize: "16px", fontWeight: "600", color: "#fff", textAlign: "center", marginBottom: "8px", letterSpacing: "0.06em", textTransform: "uppercase" }}>Pass Secured</h1>
       <p style={{ color: "rgba(255,255,255,0.4)", textAlign: "center", marginBottom: "32px", fontSize: "13px" }}>{event.title}</p>
       
-      <div style={{ background: "transparent", border: "1px solid rgba(255,255,255,0.06)", borderRadius: "8px", padding: "24px", width: "100%", maxWidth: "340px", marginBottom: "24px", boxSizing: "border-box" }}>
-        <p style={{ fontSize: "10px", color: "rgba(255,255,255,0.3)", marginBottom: "8px", letterSpacing: "0.08em" }}>IDENTITY PASS COORDINATES</p>
-        <p style={{ fontSize: "12px", color: "#D4AF37", wordBreak: "break-all", marginBottom: "20px", fontFamily: "monospace" }}>{guestLink.replace("https://", "").replace("http://", "")}</p>
-        <div style={{ display: "flex", gap: "12px" }}>
-          <button onClick={() => copyLink(guestLink)} style={{ flex: 1, padding: "10px", borderRadius: "6px", background: "#fff", color: "#000", border: "none", fontSize: "11px", fontWeight: "600", textTransform: "uppercase", letterSpacing: "0.04em", cursor: "pointer" }}>Copy coordinates</button>
-          {typeof navigator !== "undefined" && navigator.share && (
-            <button onClick={() => navigator.share({ title: "My Pass", text: "Joining " + event.title, url: guestLink })} style={{ padding: "10px 16px", borderRadius: "6px", background: "transparent", color: "rgba(255,255,255,0.6)", border: "1px solid rgba(255,255,255,0.15)", fontSize: "11px", textTransform: "uppercase", letterSpacing: "0.04em", cursor: "pointer" }}>Share</button>
-          )}
-        </div>
+      <div style={{ background: "transparent", border: "1px solid rgba(255,255,255,0.06)", borderRadius: "8px", padding: "32px 24px", width: "100%", maxWidth: "340px", marginBottom: "32px", boxSizing: "border-box", textAlign: "center" }}>
+        <p style={{ fontSize: "11px", color: "#D4AF37", marginBottom: "12px", letterSpacing: "0.08em", textTransform: "uppercase", fontWeight: "600" }}>Pass Dispatched</p>
+        <p style={{ fontSize: "13px", color: "rgba(255,255,255,0.5)", lineHeight: "1.6", margin: 0 }}>
+          Your unique secure coordinate link has been routed directly to your registered Gmail address.
+        </p>
       </div>
-      <p style={{ color: "rgba(255,255,255,0.25)", fontSize: "11px", textAlign: "center", marginBottom: "32px", letterSpacing: "0.02em", maxWidth: "280px" }}>This coordinate link functions as your live identity synchronization pass inside the room.</p>
-      <a href={guestLink} style={{ display: "block", textAlign: "center", padding: "14px", borderRadius: "6px", background: "transparent", color: "#E26D34", border: "1px solid rgba(226,109,52,0.45)", textDecoration: "none", fontSize: "12px", fontWeight: "500", width: "100%", maxWidth: "340px", boxSizing: "border-box", textTransform: "uppercase", letterSpacing: "0.06em" }}>Manifest Presence →</a>
+      <p style={{ color: "rgba(255,255,255,0.25)", fontSize: "10px", textAlign: "center", letterSpacing: "0.04em", textTransform: "uppercase", maxWidth: "260px", lineHeight: "1.6" }}>
+        Please check your inbox to access your networking card and sync with the room.
+      </p>
     </div>
   );
 
