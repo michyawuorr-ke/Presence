@@ -60,11 +60,11 @@ export default function Home() {
       {/* Center Space */}
       <div style={{ flexGrow: 1 }} />
 
-      {/* Bottom 40% Interactive Area */}
+      {/* Raised Bottom Interactive Area */}
       <div style={{ 
         width: '100%', 
         maxWidth: '300px', 
-        margin: '0 auto 20px auto',
+        margin: '0 auto 64px auto', /* Raised from 20px to 64px to clear frame space */
         display: 'flex',
         flexDirection: 'column',
         alignItems: 'center',
