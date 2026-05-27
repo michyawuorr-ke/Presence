@@ -799,8 +799,9 @@ function ProfileTab({profile,event,onProfileUpdate,isEnded,registration}:any){
                 display:"inline-block",
                 fontSize:"9px",fontWeight:"600",letterSpacing:"0.08em",textTransform:"uppercase",
                 color: isHost ? "#D4AF37" : "#FFBF00",
-                background: isHost ? "rgba(212, 175, 55, 0.1)" : "rgba(255, 191, 0, 0.1)",
-                border: isHost ? "1px solid rgba(212, 175, 55, 0.3)" : "1px solid rgba(255, 191, 0, 0.3)",padding:"3px 8px",borderRadius:"5px"
+                background: isHost ? "rgba(212, 175, 55, 0.08)" : "rgba(255, 191, 0, 0.08)",
+                border: isHost ? "1px solid rgba(212, 175, 55, 0.25)" : "1px solid rgba(255, 191, 0, 0.25)",
+                padding:"3px 8px",borderRadius:"5px"
               }}>{isHost ? "ORGANIZER" : profile.role_title}</span>
             )}
             {profile?.organisation && (
