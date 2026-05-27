@@ -76,7 +76,7 @@ export default function OrganizerProfile() {
         </div>
 
         {bio && <p style={{ fontSize: "14px", lineHeight: "1.6", color: "rgba(255, 255, 255, 0.45)", margin: "0 0 16px 0", fontWeight: "400" }}>{bio}</p>}
-        {platformValue && <p style={{ fontSize: "12px", color: "#E26D34", margin: 0, letterSpacing: "0.04em" }}>{platformValue}</p>}
+        {platformValue && <p style={{ fontSize: "12px", color: "#D4AF37", margin: 0, letterSpacing: "0.04em" }}>{platformValue}</p>}
       </div>
 
       {editing && (
