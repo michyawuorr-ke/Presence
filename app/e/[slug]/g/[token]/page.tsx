@@ -364,7 +364,7 @@ const[tab,setTab]=useState<Tab>("scene");
                   <p style={{color:"#fff",fontSize:"12px",fontWeight:"500",margin:0}}>Networking QR</p>
                   <p style={{color:"#555",fontSize:"11px",margin:"4px 0 0"}}>For profile unlocks</p>
                 </div>
-                <span style={{fontSize:"11px",color:accent,fontWeight:"600",textTransform:"uppercase",letterSpacing:"0.05em",background:"rgba(255,255,255,0.05)",padding:"4px 8px",borderRadius:"6px"}}>Toggle ⊙</span>
+                <span style={{fontSize:"11px",color:"#FFBF00",fontWeight:"600",textTransform:"uppercase",letterSpacing:"0.05em",background:"rgba(255,255,255,0.05)",padding:"4px 8px",borderRadius:"6px"}}>Toggle ⊙</span>
               </summary>
               <div style={{marginTop:"12px",paddingTop:"12px",borderTop:"1px solid rgba(255,255,255,0.05)"}}>
                 {networkingQR?<img src={networkingQR} style={{width:"130px",height:"130px",margin:"0 auto",display:"block"}}/>:<p style={{color:"#666",fontSize:"12px"}}>Generating...</p>}
@@ -907,7 +907,7 @@ function EditProfile({profile,onSave}:any){
       <input value={organisation} onChange={e=>setOrganisation(e.target.value)} placeholder="Organisation" style={inp}/>
       <textarea value={bio} onChange={e=>setBio(e.target.value)} placeholder="Short bio" style={{...inp,minHeight:"60px",resize:"vertical"}}/>
       <input value={link} onChange={e=>setLink(e.target.value)} placeholder="LinkedIn, Instagram, or your website" style={inp}/>
-      <button onClick={save} disabled={saving} style={{width:"100%",padding:"14px",borderRadius:"14px",background:saving?"#999":"#E26D34",color:"#fff",border:"none",fontSize:"14px",cursor:"pointer",fontWeight:"500"}}>{saving?"Saving...":"Save changes"}</button>
+      <button onClick={save} disabled={saving} style={{width:"100%",padding:"11px",borderRadius:"10px",background:"transparent",color:saving?"rgba(240,237,232,0.3)":"#E26D34",border:saving?"1px solid rgba(240,237,232,0.1)":"1px solid rgba(226,109,52,0.35)",fontSize:"13px",cursor:saving?"not-allowed":"pointer",fontWeight:"500",letterSpacing:"0.08em",textTransform:"uppercase",transition:"all 0.2s ease"}}>{saving?"Saving...":"Save changes"}</button>
     </div>
   );
 }
