@@ -1,4 +1,4 @@
-'use client';
+"use client";
 import { useState, useEffect } from 'react';
 import { supabase } from '@/lib/supabase/client';
 
@@ -31,7 +31,6 @@ export default function OrganizerProfile() {
     setSaving(true);
     const { data: { user } } = await supabase.auth.getUser();
     if (user) {
-      // Fixed: Swapped update() for upsert() so initial edits create the row instead of failing silently
       await supabase.from('profiles').upsert({
         id: user.id,
         display_name: displayName,
@@ -39,8 +38,6 @@ export default function OrganizerProfile() {
         organisation: organisation,
         platform_value: platformValue
       });
-      
-      // Locally update profile state so changes match database immediately
       setProfile({ display_name: displayName, bio, organisation, platform_value: platformValue });
     }
     setSaving(false);
@@ -48,33 +45,75 @@ export default function OrganizerProfile() {
   }
 
   return (
-    <div style={{ padding: "24px 16px", background: "#08080a", minHeight: "100vh" }}>
-      <p style={{ fontSize: "11px", letterSpacing: "0.3em", color: "#666", textTransform: "uppercase", marginBottom: "32px", textAlign: "center", fontWeight: "600" }}>Organizer Identity</p>
-      
-      <div style={{ background: "linear-gradient(160deg, #16151a 0%, #0f0e12 100%)", borderRadius: "28px", padding: "28px 24px 20px 24px", marginBottom: "24px", border: "1px solid rgba(255, 255, 255, 0.04)", position: "relative" }}>
-        <button onClick={() => setEditing(!editing)} style={{ position: "absolute", top: "24px", right: "24px", width: "38px", height: "38px", borderRadius: "50%", background: "rgba(255, 255, 255, 0.03)", border: "1px solid rgba(255, 255, 255, 0.06)", display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer", color: "rgba(255, 255, 255, 0.45)", zIndex: 10 }}>{editing ? "✕" : "✎"}</button>
-        
-        <div style={{ display: "flex", alignItems: "center", gap: "16px", marginBottom: "24px" }}>
-          <div style={{ width: "56px", height: "56px", borderRadius: "50%", background: "#1a1813", border: "1px solid rgba(212,175,55,0.22)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "22px", fontWeight: "600", color: "#D4AF37" }}>{displayName.charAt(0).toUpperCase() || "O"}</div>
+    <div style={{ padding: "32px 16px", background: "#000", minHeight: "100vh" }}>
+      <p style={{ fontSize: "11px", letterSpacing: "0.15em", color: "rgba(255,255,255,0.4)", textTransform: "uppercase", marginBottom: "40px", textAlign: "center", fontWeight: "500" }}>
+        Organizer Identity
+      </p>
+
+      <div style={{ background: "transparent", padding: "0 0 24px 0", marginBottom: "32px", borderBottom: "1px solid rgba(255, 255, 255, 0.04)", position: "relative" }}>
+        <button 
+          onClick={() => setEditing(!editing)} 
+          style={{ position: "absolute", top: "0", right: "0", width: "36px", height: "36px", borderRadius: "50%", background: "transparent", border: "1px solid rgba(255, 255, 255, 0.1)", display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer", color: "rgba(255, 255, 255, 0.6)", zIndex: 10, fontSize: "12px" }}
+        >
+          {editing ? "✕" : "✎"}
+        </button>
+
+        <div style={{ display: "flex", alignItems: "center", gap: "20px", marginBottom: "28px" }}>
+          <div style={{ width: "60px", height: "60px", borderRadius: "50%", background: "transparent", border: "1px solid rgba(212,175,55,0.45)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "20px", fontWeight: "400", color: "#D4AF37", letterSpacing: "0.02em" }}>
+            {displayName.charAt(0).toUpperCase() || "O"}
+          </div>
           <div style={{ flex: 1, paddingRight: "45px" }}>
-            <p style={{ fontSize: "18px", fontWeight: "600", color: "#f3f4f6", margin: "0 0 4px", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{displayName || "Unnamed Organizer"}</p>
-            <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
-              <span style={{ fontSize: "10px", fontWeight: "700", letterSpacing: "0.08em", color: "#d4af37", background: "rgba(212,175,55,0.07)", padding: "2px 8px", borderRadius: "20px" }}>ORGANIZER</span>
-              {organisation && <span style={{ fontSize: "12px", color: "rgba(255,255,255,0.4)" }}>{organisation}</span>}
+            <p style={{ fontSize: "16px", fontWeight: "500", color: "#f0ede8", margin: "0 0 6px", letterSpacing: "0.01em" }}>
+              {displayName || "Unnamed Organizer"}
+            </p>
+            <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
+              <span style={{ fontSize: "9px", fontWeight: "600", letterSpacing: "0.08em", color: "#D4AF37", textTransform: "uppercase" }}>
+                Host
+              </span>
+              {organisation && <span style={{ fontSize: "12px", color: "rgba(255,255,255,0.35)", letterSpacing: "0.01em" }}>{organisation}</span>}
             </div>
           </div>
         </div>
-        {bio && <p style={{ fontSize: "14px", lineHeight: "1.6", color: "rgba(255, 255, 255, 0.55)", margin: "0 0 20px 0" }}>{bio}</p>}
-        {platformValue && <p style={{ fontSize: "13px", color: "#93c5fd", margin: 0, textAlign: "center" }}>{platformValue}</p>}
+
+        {bio && <p style={{ fontSize: "14px", lineHeight: "1.6", color: "rgba(255, 255, 255, 0.45)", margin: "0 0 16px 0", fontWeight: "400" }}>{bio}</p>}
+        {platformValue && <p style={{ fontSize: "12px", color: "#E26D34", margin: 0, letterSpacing: "0.04em" }}>{platformValue}</p>}
       </div>
 
       {editing && (
-        <div style={{ background: "#111015", borderRadius: "20px", padding: "20px", border: "1px solid rgba(255,255,255,0.04)" }}>
-          <input value={displayName} onChange={e => setDisplayName(e.target.value)} placeholder="Display Name" style={{ width: "100%", padding: "12px", marginBottom: "8px", borderRadius: "10px", border: "1px solid rgba(255,255,255,0.06)", background: "rgba(255,255,255,0.03)", color: "#fff" }} />
-          <input value={organisation} onChange={e => setOrganisation(e.target.value)} placeholder="Organisation" style={{ width: "100%", padding: "12px", marginBottom: "8px", borderRadius: "10px", border: "1px solid rgba(255,255,255,0.06)", background: "rgba(255,255,255,0.03)", color: "#fff" }} />
-          <input value={platformValue} onChange={e => setPlatformValue(e.target.value)} placeholder="Website URL" style={{ width: "100%", padding: "12px", marginBottom: "8px", borderRadius: "10px", border: "1px solid rgba(255,255,255,0.06)", background: "rgba(255,255,255,0.03)", color: "#fff" }} />
-          <textarea value={bio} onChange={e => setBio(e.target.value)} placeholder="Short Bio" style={{ width: "100%", padding: "12px", marginBottom: "16px", borderRadius: "10px", border: "1px solid rgba(255,255,255,0.06)", background: "rgba(255,255,255,0.03)", color: "#fff", height: "80px" }} />
-          <button onClick={handleSave} disabled={saving} style={{ width: "100%", padding: "14px", borderRadius: "12px", background: "#D4AF37", color: "#000", fontWeight: "700", cursor: "pointer", border: "none" }}>{saving ? "Saving..." : "Save Changes"}</button>
+        <div style={{ background: "transparent", marginTop: "16px" }}>
+          <div style={{ display: "flex", flexDirection: "column", gap: "16px", marginBottom: "28px" }}>
+            <input 
+              value={displayName} 
+              onChange={e => setDisplayName(e.target.value)} 
+              placeholder="Display Name" 
+              style={{ width: "100%", padding: "12px 0", background: "transparent", border: "none", borderBottom: "1px solid rgba(255,255,255,0.08)", color: "#fff", fontSize: "14px", borderRadius: 0, outline: "none" }} 
+            />
+            <input 
+              value={organisation} 
+              onChange={e => setOrganisation(e.target.value)} 
+              placeholder="Organisation" 
+              style={{ width: "100%", padding: "12px 0", background: "transparent", border: "none", borderBottom: "1px solid rgba(255,255,255,0.08)", color: "#fff", fontSize: "14px", borderRadius: 0, outline: "none" }} 
+            />
+            <input 
+              value={platformValue} 
+              onChange={e => setPlatformValue(e.target.value)} 
+              placeholder="Website URL" 
+              style={{ width: "100%", padding: "12px 0", background: "transparent", border: "none", borderBottom: "1px solid rgba(255,255,255,0.08)", color: "#fff", fontSize: "14px", borderRadius: 0, outline: "none" }} 
+            />
+            <textarea 
+              value={bio} 
+              onChange={e => setBio(e.target.value)} 
+              placeholder="Short Bio" 
+              style={{ width: "100%", padding: "12px 0", background: "transparent", border: "none", borderBottom: "1px solid rgba(255,255,255,0.08)", color: "#fff", fontSize: "14px", height: "70px", resize: "none", borderRadius: 0, outline: "none" }} 
+            />
+          </div>
+          <button 
+            onClick={handleSave} 
+            disabled={saving} 
+            style={{ width: "100%", padding: "12px", borderRadius: "6px", background: "transparent", color: "#D4AF37", border: "1px solid rgba(212,175,55,0.45)", fontWeight: "500", fontSize: "12px", letterSpacing: "0.06em", textTransform: "uppercase", cursor: "pointer", transition: "all 0.2s" }}
+          >
+            {saving ? "Saving Changes..." : "Commit Structure"}
+          </button>
         </div>
       )}
     </div>
