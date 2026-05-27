@@ -769,88 +769,69 @@ function ProfileTab({profile,event,onProfileUpdate,isEnded,registration}:any){
       {/* ── Premium profile card ── */}
       <div style={{
         background:"#0c0c0f",
-        borderRadius:"22px",padding:"20px",marginBottom:"12px",
+        borderRadius:"22px",padding:"24px",marginBottom:"12px",
         border:"1px solid rgba(255,255,255,0.07)",
         boxShadow:"0 1px 0 rgba(255,255,255,0.05) inset,0 4px 8px rgba(0,0,0,0.35),0 16px 48px rgba(0,0,0,0.5)",
-        position:"relative",overflow:"hidden",
+        position:"relative",overflow:"hidden"
       }}>
         {/* Top edge shimmer */}
         <div style={{position:"absolute",top:0,left:0,right:0,height:"1px",background:"linear-gradient(90deg,transparent,rgba(255,255,255,0.04) 30%,rgba(255,255,255,0.04) 70%,transparent)",pointerEvents:"none"}}/>
-        {/* Host ambient glow */}
-        {isHost&&<div style={{position:"absolute",top:"-50px",right:"-50px",width:"140px",height:"140px",background:"radial-gradient(circle,rgba(212,175,55,0.07) 0%,transparent 70%)",pointerEvents:"none"}}/>}
-
-        {/* Row 1: avatar + name + edit icon */}
-        <div style={{display:"flex",alignItems:"flex-start",gap:"14px",marginBottom:"14px"}}>
-          <div style={{
-            width:"50px",height:"50px",borderRadius:"14px",flexShrink:0,
-            background:isHost?"linear-gradient(145deg,#2c2410,#1e1a0c)":"linear-gradient(145deg,#2a1e18,#1e1510)",
-            border:"1px solid "+(isHost?"rgba(212,175,55,0.2)":"rgba(226,109,52,0.2)"),
-            display:"flex",alignItems:"center",justifyContent:"center",
-            fontSize:"20px",fontWeight:"700",color:accent,
-            boxShadow:"0 2px 8px rgba(0,0,0,0.4)",
-          }}>
-            {profile?.display_name?.charAt(0)?.toUpperCase()}
-          </div>
-          <div style={{flex:1,minWidth:0}}>
-            {/* Name — most prominent */}
-            <p style={{fontSize:"17px",fontWeight:"700",color:"#f0ede8",letterSpacing:"-0.02em",margin:"0 0 6px"}}>{profile?.display_name}</p>
-            {/* Role pill */}
-            {profile?.role_title&&(
-              <span style={{
-                display:"inline-block",
-                fontSize:"9px",fontWeight:"600",letterSpacing:"0.12em",textTransform:"uppercase",
-                color:accent,background:accentBg,
-                border:"1px solid "+accentBorder,
-                padding:"3px 9px",borderRadius:"6px",
-              }}>{isHost?"ORGANIZER":profile.role_title}</span>
-            )}
-            {/* Org — quiet, below role */}
-            {profile?.organisation&&<p style={{fontSize:"12px",color:"rgba(240,237,232,0.38)",margin:"5px 0 0"}}>{profile.organisation}</p>}
-          </div>
-          {/* Edit icon button */}
+        
+        {/* Upper Right Edit Icon Action */}
+        <div style={{position:"absolute",top:"20px",right:"20px",zIndex:10}}>
           <button onClick={()=>setEditing(!editing)} style={{
-            width:"30px",height:"30px",borderRadius:"9px",flexShrink:0,
-            background:"rgba(255,255,255,0.05)",border:"1px solid rgba(255,255,255,0.07)",
+            width:"32px",height:"32px",borderRadius:"9px",
+            background:"rgba(255,255,255,0.04)",border:"1px solid rgba(255,255,255,0.06)",
             display:"flex",alignItems:"center",justifyContent:"center",
-            cursor:"pointer",color:"rgba(255,255,255,0.35)",fontSize:"14px",
+            cursor:"pointer",color:"rgba(240,237,232,0.4)",fontSize:"13px"
           }}>{editing?"✕":"✎"}</button>
         </div>
 
-        {/* Divider */}
-
-        {/* Bio */}
-        {profile?.bio&&<p style={{fontSize:"13px",color:"rgba(244,244,245,0.65)",lineHeight:"1.7",fontWeight:"300",margin:"0 0 16px",letterSpacing:"0.01em"}}>{profile.bio}</p>}
-
-        {/* Link row */}
-        {profile?.platform_value&&(
-          <div style={{display:"flex",alignItems:"center",gap:"10px"}}>
-            <div style={{
-              width:"30px",height:"30px",borderRadius:"9px",flexShrink:0,
-              background:"rgba(255,255,255,0.05)",border:"1px solid rgba(255,255,255,0.07)",
-              display:"flex",alignItems:"center",justifyContent:"center",
-              fontSize:"14px",color:accent,
-            }}>↗</div>
-            <span style={{fontSize:"13px",color:"rgba(240,237,232,0.48)"}}>{cleanUrl(profile.platform_value)}</span>
+        {/* Card Body Content */}
+        <div>
+          {/* 1. Name: Deeply Prominent */}
+          <p style={{fontSize:"22px",fontWeight:"700",color:"#f0ede8",letterSpacing:"-0.02em",margin:"0 0 8px",paddingRight:"40px"}}>{profile?.display_name}</p>
+          
+          {/* 2. Professional Row: Role & Organisation horizontally aligned */}
+          <div style={{display:"flex",alignItems:"center",gap:"10px",flexWrap:"wrap",marginBottom:"18px"}}>
+            {profile?.role_title && (
+              <span style={{
+                display:"inline-block",
+                fontSize:"9px",fontWeight:"600",letterSpacing:"0.08em",textTransform:"uppercase",
+                color:"#f0ede8",background:"rgba(240,237,232,0.06)",
+                border:"1px solid rgba(240,237,232,0.1)",
+                padding:"3px 8px",borderRadius:"5px"
+              }}>{isHost ? "ORGANIZER" : profile.role_title}</span>
+            )}
+            {profile?.organisation && (
+              <p style={{fontSize:"13px",color:"rgba(240,237,232,0.45)",margin:0,fontWeight:"400"}}>
+                {profile.role_title && <span style={{marginRight:"8px",color:"rgba(240,237,232,0.2)"}}>|</span>}
+                {profile.organisation}
+              </p>
+            )}
           </div>
-        )}
-      </div>
 
-      {editing&&<EditProfile profile={profile} onSave={(p:any)=>{onProfileUpdate(p);setEditing(false);}}/>}
-      {scanning&&(
-        <div style={{position:"fixed",inset:0,background:"rgba(0,0,0,0.95)",zIndex:1000,display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",padding:"24px"}}>
-          <p style={{color:"#fff",fontSize:"18px",fontWeight:"600",marginBottom:"4px",textAlign:"center"}}>Scan {scanTarget?.display_name}'s QR</p>
-          <p style={{color:"#666",fontSize:"13px",marginBottom:"24px",textAlign:"center"}}>Ask them to open Ticket tab → show Networking QR</p>
-          <div style={{position:"relative",width:"280px",height:"280px",marginBottom:"24px"}}>
-            <div id="qr-reader" style={{width:"280px",height:"280px",borderRadius:"16px",overflow:"hidden",background:"#111"}}></div>
-            <div style={{position:"absolute",top:0,left:0,right:0,bottom:0,border:"2px solid #E26D34",borderRadius:"16px",pointerEvents:"none"}}/>
-            <div style={{position:"absolute",top:"50%",left:"50%",transform:"translate(-50%,-50%)",width:"160px",height:"160px",border:"2px solid rgba(255,255,255,0.3)",borderRadius:"8px",pointerEvents:"none"}}/>
-          </div>
-          <p style={{color:"#555",fontSize:"12px",marginBottom:"24px",textAlign:"center"}}>Point camera at their QR code</p>
-          <button onClick={stopScan} style={{padding:"14px 40px",background:"transparent",border:"1px solid #333",borderRadius:"14px",color:"#999",fontSize:"14px",cursor:"pointer"}}>Cancel</button>
+          {/* 3. Bio Space */}
+          {profile?.bio && (
+            <p style={{fontSize:"13px",color:"rgba(244,244,245,0.65)",lineHeight:"1.6",fontWeight:"300",margin:"0 0 20px",letterSpacing:"0.01em"}}>
+              {profile.bio}
+            </p>
+          )}
+
+          {/* 4. Social / Platform Link Row */}
+          {profile?.platform_value && (
+            <div style={{display:"flex",alignItems:"center",gap:"8px",paddingTop:"14px",borderTop:"1px solid rgba(255,255,255,0.03)"}}>
+              <div style={{
+                width:"24px",height:"24px",borderRadius:"6px",flexShrink:0,
+                background:"rgba(255,255,255,0.03)",border:"1px solid rgba(255,255,255,0.05)",
+                display:"flex",alignItems:"center",justifyContent:"center",
+                fontSize:"11px",color:"#f0ede8"
+              }}>↗</div>
+              <span style={{fontSize:"12px",color:"rgba(240,237,232,0.4)"}}>{cleanUrl(profile.platform_value)}</span>
+            </div>
+          )}
         </div>
-      )}
-      {scanMsg&&<div style={{position:"fixed",bottom:"120px",left:"50%",transform:"translateX(-50%)",background:"#1a1a1a",color:"#fff",padding:"12px 24px",borderRadius:"12px",fontSize:"14px",zIndex:999,whiteSpace:"nowrap"}}>{scanMsg}</div>}
-      {reportMsg&&<div style={{position:"fixed",bottom:"160px",left:"50%",transform:"translateX(-50%)",background:"#1a1a1a",color:"#E26D34",padding:"12px 24px",borderRadius:"12px",fontSize:"14px",zIndex:999,whiteSpace:"nowrap"}}>{reportMsg}</div>}
+      </div>
 
       <div style={{marginTop:"16px"}}>
         <p style={{fontSize:"10px",fontWeight:"600",color:"rgba(255,255,255,0.45)",letterSpacing:"0.12em",textTransform:"uppercase",marginBottom:"12px"}}>Connections</p>
