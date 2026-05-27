@@ -1,4 +1,18 @@
 {
+  "app/dashboard/scanner/[eventId]/page.tsx -> html5-qrcode": {
+    "id": 1935,
+    "files": [
+      "static/chunks/7cb1fa1f.b551510ecfa58069.js",
+      "static/chunks/935.d931066253f46190.js"
+    ]
+  },
+  "app/e/[slug]/g/[token]/page.tsx -> html5-qrcode": {
+    "id": 1935,
+    "files": [
+      "static/chunks/7cb1fa1f.b551510ecfa58069.js",
+      "static/chunks/935.d931066253f46190.js"
+    ]
+  },
   "node_modules/next/dist/client/index.js -> ../pages/_app": {
     "id": 1966,
     "files": [
