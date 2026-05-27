@@ -195,6 +195,18 @@ export default function RegisterPage() {
       </div>
     </div>
   );
+            window.location.href = window.location.origin + "/e/" + event.slug + "/g/" + accessToken;
+          }}
+          style={{ width: "100%", padding: "14px", borderRadius: "6px", background: "#fff", color: "#000", border: "none", fontSize: "12px", fontWeight: "600", letterSpacing: "0.06em", textTransform: "uppercase", cursor: "pointer" }}
+        >
+          Enter PWA Gateway →
+        </button>
+        <button onClick={resetForm} style={{ background: "transparent", border: "none", color: "rgba(255,255,255,0.3)", fontSize: "11px", letterSpacing: "0.06em", textTransform: "uppercase", cursor: "pointer", padding: "8px" }}>
+          ← Return to Registration
+        </button>
+      </div>
+    </div>
+  );
   return (
     <main style={{ minHeight: "100vh", background: "#000", display: "flex", flexDirection: "column", padding: "40px 24px", maxWidth: "420px", margin: "0 auto", justifyContent: "space-between" }}>
       {/* Dynamic Fluid Tagline CSS Engine */}
