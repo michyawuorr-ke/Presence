@@ -97,7 +97,7 @@ export default function EventsPage() {
                       {event.status}
                     </span>
                   </div>
-                  <p style={{ fontSize: "13px", color: "#666", margin: "8px 0 0", fontSize: "12px", color: "rgba(255,255,255,0.4)", letterSpacing: "0.02em" }}>📍 {event.venue || "No Venue Specified"}</p>
+                  <p style={{ margin: "8px 0 0", fontSize: "12px", color: "rgba(255,255,255,0.4)", letterSpacing: "0.02em" }}>📍 {event.venue || "No Venue Specified"}</p>
                 </div>
                 
                 <div style={{ display: "flex", gap: "8px", marginLeft: "12px" }}>
