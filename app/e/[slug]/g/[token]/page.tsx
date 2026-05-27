@@ -294,9 +294,9 @@ const[tab,setTab]=useState<Tab>("scene");
       {tab==="scene"&&(
         <div style={{padding:"24px 20px"}}>
           <p style={{fontSize:"18px",fontWeight:"700",letterSpacing:"-0.02em",marginBottom:"20px",fontFamily:"'Helvetica Neue',Arial,sans-serif"}}><span style={{color:"#ffffff"}}>Or</span><span style={{color:"#E26D34"}}>ee</span><span style={{color:"#ffffff"}}>ti</span></p>
-          <h1 style={{fontSize:"30px",fontWeight:"600",color:"#ffffff",marginBottom:"8px",letterSpacing:"-0.02em",lineHeight:"1.1"}}>{event?.title}</h1>
-          <p style={{fontSize:"14px",color:"rgba(255,255,255,0.6)",marginBottom:"2px"}}>📍 {event?.venue}</p>
-          <p style={{fontSize:"14px",color:"rgba(255,255,255,0.45)",marginBottom:"32px"}}>{event&&new Date(event.start_time).toLocaleDateString("en-KE",{weekday:"long",day:"numeric",month:"long"})}</p>
+          <h1 style={{fontSize:"28px",fontWeight:"500",color:"#f0ede8",marginBottom:"8px",letterSpacing:"-0.03em",lineHeight:"1.15"}}>{event?.title}</h1>
+          <p style={{fontSize:"13px",color:"rgba(240,237,232,0.5)",marginBottom:"4px",letterSpacing:"0.01em"}}>📍 {event?.venue}</p>
+          <p style={{fontSize:"13px",color:"rgba(240,237,232,0.35)",marginBottom:"28px",letterSpacing:"0.01em"}}>{event&&new Date(event.start_time).toLocaleDateString("en-KE",{weekday:"long",day:"numeric",month:"long"})}</p>
           
           {isEnded?(
             <div style={{background:"linear-gradient(135deg, #0a0a0b 0%, #1a1a1a 100%)",borderRadius:"24px",padding:"28px",marginBottom:"16px",textAlign:"center",boxShadow:"0 8px 24px rgba(0,0,0,0.15)"}}>
@@ -305,7 +305,7 @@ const[tab,setTab]=useState<Tab>("scene");
               <button onClick={()=>setTab("profile")} style={{padding:"12px 24px",borderRadius:"14px",background:"#fff",color:"#000",border:"none",fontSize:"14px",cursor:"pointer",fontWeight:"500"}}>View connections →</button>
             </div>
           ):isLive?(
-            <div style={{background:"linear-gradient(135deg, #0a0a0b 0%, #1a1a1a 100%)",borderRadius:"24px",padding:"20px",marginBottom:"16px",display:"flex",alignItems:"center",gap:"12px",boxShadow:"0 8px 24px rgba(0,0,0,0.15)"}}>
+            <div style={{background:"#0c0c10",borderRadius:"12px",padding:"12px 16px",marginBottom:"16px",display:"flex",alignItems:"center",gap:"10px",border:"1px solid rgba(240,237,232,0.04)"}}>
               <span style={{width:"10px",height:"10px",borderRadius:"50%",background:"#4ade80",display:"inline-block",boxShadow:"0 0 0 0 rgba(74,222,128,0.7)",animation:"pulse 2s infinite"}}/><style>{`@keyframes pulse{0%,100%{box-shadow:0 0 0 0 rgba(74,222,128,0.7)}50%{box-shadow:0 0 0 8px rgba(74,222,128,0)}}`}</style>
               <p style={{color:"#fff",fontSize:"16px",fontWeight:"500"}}>Event is live</p>
             </div>
@@ -324,14 +324,14 @@ const[tab,setTab]=useState<Tab>("scene");
           )}
           
           {isLive&&(
-            <div style={{background:"linear-gradient(135deg,rgba(22,18,28,0.9) 0%,rgba(18,16,22,0.9) 100%)",borderRadius:"18px",padding:"20px",marginBottom:"12px",border:"1px solid rgba(255,255,255,0.06)",boxShadow:"var(--shadow-card), inset 0 1px 0 rgba(255,255,255,0.04)",backdropFilter:"blur(20px)"}}>
+            <div style={{background:"#0c0c10",borderRadius:"16px",padding:"20px",marginBottom:"12px",border:"1px solid rgba(240,237,232,0.04)",boxShadow:"var(--shadow-card), inset 0 1px 0 rgba(255,255,255,0.04)",backdropFilter:"blur(20px)"}}>
               <p style={{fontSize:"10px",color:"#E26D34",marginBottom:"12px",letterSpacing:"0.15em",fontWeight:"600"}}>LIVE NOW</p>
               <div style={{display:"flex",flexDirection:"column",gap:"12px",marginBottom:"20px"}}>
-                <div style={{background:"rgba(226,109,52,0.1)",borderRadius:"12px",padding:"14px",border:"1px solid rgba(226,109,52,0.12)"}}>
-                  <p style={{fontSize:"28px",fontWeight:"700",color:"#E26D34",lineHeight:"1",marginBottom:"2px"}}>{networkingCount}</p>
-                  <p style={{fontSize:"12px",color:"#E26D34",fontWeight:"500"}}>networking now</p>
+                <div style={{background:"rgba(226,109,52,0.03)",borderRadius:"10px",padding:"12px 16px",border:"1px solid rgba(226,109,52,0.08)",display:"flex",alignItems:"center",justifyContent:"space-between"}}>
+                  <p style={{fontSize:"13px",color:"#E26D34",fontWeight:"500",margin:0,letterSpacing:"0.02em"}}>networking now</p>
+                  <p style={{fontSize:"22px",fontWeight:"300",color:"#E26D34",lineHeight:"1",margin:0}}>{networkingCount}</p>
                 </div>
-                <div style={{background:"rgba(226,109,52,0.12)",borderRadius:"12px",padding:"14px",border:"1px solid rgba(226,109,52,0.12)"}}>
+                <div style={{background:"rgba(226,109,52,0.03)",borderRadius:"10px",padding:"12px 16px",border:"1px solid rgba(226,109,52,0.08)",display:"flex",alignItems:"center",justifyContent:"space-between"}}>
                   <p style={{fontSize:"28px",fontWeight:"700",color:"#E26D34",lineHeight:"1",marginBottom:"2px"}}>{connectionsCount}</p>
                   <p style={{fontSize:"12px",color:"#E26D34",fontWeight:"500"}}>handshakes exchanged</p>
                 </div>
