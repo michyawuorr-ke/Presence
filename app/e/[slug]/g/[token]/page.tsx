@@ -349,7 +349,7 @@ const[tab,setTab]=useState<Tab>("scene");
       {tab==="ticket"&&(
         <div style={{padding:"12px"}}>
           <p style={{fontSize:"10px",letterSpacing:"0.3em",color:"#999",textTransform:"uppercase",marginBottom:"12px",textAlign:"center"}}>Your Ticket</p>
-          <div style={{background:"#fff",borderRadius:"16px",padding:"16px",border:"1px solid rgba(0,0,0,0.06)",textAlign:"center",marginBottom:"8px"}}>
+          <div style={{background:"#141416",borderRadius:"20px",padding:"20px",border:"1px solid rgba(240,237,232,0.05)",boxShadow:"0 12px 40px rgba(0,0,0,0.5)",textAlign:"center",marginBottom:"8px"}}>
             <h2 style={{fontSize:"17px",fontWeight:"600",marginBottom:"2px"}}>{event?.title}</h2>
             <p style={{fontSize:"12px",color:"#666",marginBottom:"2px"}}>📍 {event?.venue}</p>
             <p style={{fontSize:"12px",color:"#999",marginBottom:"16px"}}>{event&&new Date(event.start_time).toLocaleDateString("en-KE",{day:"numeric",month:"short",year:"numeric"})}</p>
@@ -810,7 +810,6 @@ function ProfileTab({profile,event,onProfileUpdate,isEnded,registration}:any){
         </div>
 
         {/* Divider */}
-        <div style={{height:"1px",background:"linear-gradient(90deg,transparent,rgba(255,255,255,0.03) 20%,rgba(255,255,255,0.03) 80%,transparent)",margin:"0 0 14px"}}/>
 
         {/* Bio */}
         {profile?.bio&&<p style={{fontSize:"13px",color:"rgba(244,244,245,0.65)",lineHeight:"1.7",fontWeight:"300",margin:"0 0 16px",letterSpacing:"0.01em"}}>{profile.bio}</p>}
