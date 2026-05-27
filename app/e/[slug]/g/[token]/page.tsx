@@ -776,22 +776,22 @@ function ProfileTab({profile,event,onProfileUpdate,isEnded,registration}:any){
       }}>
         {/* Top edge shimmer */}
         <div style={{position:"absolute",top:0,left:0,right:0,height:"1px",background:"linear-gradient(90deg,transparent,rgba(255,255,255,0.04) 30%,rgba(255,255,255,0.04) 70%,transparent)",pointerEvents:"none"}}/>
-        
-        {/* Upper Right Edit Icon Action */}
-        <div style={{position:"absolute",top:"20px",right:"20px",zIndex:10}}>
+
+        {/* Upper Right Edit Action Button — High zIndex to clear container overlay */}
+        <div style={{position:"absolute",top:"20px",right:"20px",zIndex:50}}>
           <button onClick={()=>setEditing(!editing)} style={{
             width:"32px",height:"32px",borderRadius:"9px",
             background:"rgba(255,255,255,0.04)",border:"1px solid rgba(255,255,255,0.06)",
             display:"flex",alignItems:"center",justifyContent:"center",
-            cursor:"pointer",color:"rgba(240,237,232,0.4)",fontSize:"13px"
+            cursor:"pointer",color:"rgba(240,237,232,0.6)",fontSize:"13px"
           }}>{editing?"✕":"✎"}</button>
         </div>
 
         {/* Card Body Content */}
         <div>
           {/* 1. Name: Deeply Prominent */}
-          <p style={{fontSize:"22px",fontWeight:"700",color:"#f0ede8",letterSpacing:"-0.02em",margin:"0 0 8px",paddingRight:"40px"}}>{profile?.display_name}</p>
-          
+          <p style={{fontSize:"22px",fontWeight:"700",color:"#f0ede8",letterSpacing:"-0.02em",margin:"0 0 8px",paddingRight:"44px"}}>{profile?.display_name}</p>
+
           {/* 2. Professional Row: Role & Organisation horizontally aligned */}
           <div style={{display:"flex",alignItems:"center",gap:"10px",flexWrap:"wrap",marginBottom:"18px"}}>
             {profile?.role_title && (
@@ -799,8 +799,7 @@ function ProfileTab({profile,event,onProfileUpdate,isEnded,registration}:any){
                 display:"inline-block",
                 fontSize:"9px",fontWeight:"600",letterSpacing:"0.08em",textTransform:"uppercase",
                 color:"#f0ede8",background:"rgba(240,237,232,0.06)",
-                border:"1px solid rgba(240,237,232,0.1)",
-                padding:"3px 8px",borderRadius:"5px"
+                border:"1px solid rgba(240,237,232,0.1)",padding:"3px 8px",borderRadius:"5px"
               }}>{isHost ? "ORGANIZER" : profile.role_title}</span>
             )}
             {profile?.organisation && (
@@ -818,9 +817,14 @@ function ProfileTab({profile,event,onProfileUpdate,isEnded,registration}:any){
             </p>
           )}
 
-          {/* 4. Social / Platform Link Row */}
+          {/* 4. Social / Platform Link Row — Active Clickable Anchor with Icon */}
           {profile?.platform_value && (
-            <div style={{display:"flex",alignItems:"center",gap:"8px",paddingTop:"14px",borderTop:"1px solid rgba(255,255,255,0.03)"}}>
+            <a 
+              href={profile.platform_value.startsWith('http') ? profile.platform_value : 'https://' + profile.platform_value}
+              target="_blank"
+              rel="noopener noreferrer"
+              style={{display:"inline-flex",alignItems:"center",gap:"8px",paddingTop:"14px",borderTop:"1px solid rgba(255,255,255,0.03)",textDecoration:"none",cursor:"pointer",width:"100%"}}
+            >
               <div style={{
                 width:"24px",height:"24px",borderRadius:"6px",flexShrink:0,
                 background:"rgba(255,255,255,0.03)",border:"1px solid rgba(255,255,255,0.05)",
@@ -828,11 +832,10 @@ function ProfileTab({profile,event,onProfileUpdate,isEnded,registration}:any){
                 fontSize:"11px",color:"#f0ede8"
               }}>↗</div>
               <span style={{fontSize:"12px",color:"rgba(240,237,232,0.4)"}}>{cleanUrl(profile.platform_value)}</span>
-            </div>
+            </a>
           )}
         </div>
       </div>
-
       <div style={{marginTop:"16px"}}>
         <p style={{fontSize:"10px",fontWeight:"600",color:"rgba(255,255,255,0.45)",letterSpacing:"0.12em",textTransform:"uppercase",marginBottom:"12px"}}>Connections</p>
         {connections.length===0?(
