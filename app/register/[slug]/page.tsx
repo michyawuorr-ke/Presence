@@ -1,4 +1,5 @@
 "use client";
+
 import { useEffect, useState } from "react";
 import { useParams } from "next/navigation";
 import { supabase } from "@/lib/supabase/client";
@@ -18,6 +19,10 @@ export default function RegisterPage() {
   const [error, setError] = useState("");
   const [acceptedTerms, setAcceptedTerms] = useState(false);
   const [paymentState, setPaymentState] = useState<"idle" | "waiting" | "success" | "failed">("idle");
+  
+  // Native state to hold the real validated access token for redirection
+  const [confirmedToken, setConfirmedToken] = useState("");
+
   const params = useParams();
   const slug = params.slug as string;
 
@@ -65,13 +70,17 @@ export default function RegisterPage() {
     if (!name || !email) { setError("Please fill in your name and email"); return; }
     const isPaid = Number(selectedTicket?.price) > 0;
     if (isPaid && !phone) { setError("Phone number required for M-Pesa payment"); return; }
-    
+
     setSubmitting(true);
     setError("");
 
+    // Generate the unique secure token once natively
     const accessToken = Array.from(crypto.getRandomValues(new Uint8Array(32))).map(b => b.toString(16).padStart(2, "0")).join("");
     const guestUrl = window.location.origin + "/e/" + event.slug + "/g/" + accessToken;
     const totalAmount = Number(selectedTicket?.price ?? 0) * quantity;
+
+    // Persist it into the state context immediately so the success UI can read it
+    setConfirmedToken(accessToken);
 
     const { data: reg, error: regError } = await supabase.from("registrations").insert({
       event_id: event.id,
@@ -100,6 +109,7 @@ export default function RegisterPage() {
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ phone: norm, amount: totalAmount, registration_id: reg.id })
     });
+
     const data = await res.json();
     if (!res.ok) { setError(data.error || "Payment initiation failed"); setSubmitting(false); return; }
     setPaymentState("waiting");
@@ -112,6 +122,7 @@ export default function RegisterPage() {
     setSubmitting(false);
     setError("");
     setAcceptedTerms(false);
+    setConfirmedToken("");
   }
 
   const inp = {
@@ -170,8 +181,9 @@ export default function RegisterPage() {
       <div style={{ width: "100%", display: "flex", flexDirection: "column", gap: "12px", marginBottom: "16px" }}>
         <button
           onClick={() => {
-            const accessToken = Array.from(crypto.getRandomValues(new Uint8Array(32))).map(b => b.toString(16).padStart(2, "0")).join("");
-            window.location.href = window.location.origin + "/e/" + event.slug + "/g/" + accessToken;
+            if (confirmedToken) {
+              window.location.href = window.location.origin + "/e/" + event.slug + "/g/" + confirmedToken;
+            }
           }}
           style={{ width: "100%", padding: "14px", borderRadius: "6px", background: "#fff", color: "#000", border: "none", fontSize: "12px", fontWeight: "600", letterSpacing: "0.06em", textTransform: "uppercase", cursor: "pointer" }}
         >
@@ -186,7 +198,6 @@ export default function RegisterPage() {
 
   return (
     <main style={{ minHeight: "100vh", background: "#000", display: "flex", flexDirection: "column", padding: "40px 24px", maxWidth: "420px", margin: "0 auto", justifyContent: "space-between" }}>
-      {/* Dynamic Fluid Tagline CSS Engine */}
       <style>{`
         @keyframes organicFlow {
           0% { opacity: 0; letter-spacing: -0.05em; transform: translateY(12px) scaleY(0.8); filter: blur(4px); }
@@ -209,49 +220,46 @@ export default function RegisterPage() {
       <div>
         <div style={{ marginBottom: "40px", textAlign: "center", display: "flex", flexDirection: "column", alignItems: "center", gap: "16px" }}>
           <OreetiLogo size="sm" />
-          <p className="living-tagline">
-            The room activated
-          </p>
+          <p className="living-tagline">The room activated</p>
           <h1 style={{ fontSize: "18px", fontWeight: "600", color: "#fff", letterSpacing: "0.08em", textTransform: "uppercase", marginTop: "24px", marginBottom: "6px" }}>
             Register
           </h1>
           <p style={{ color: "rgba(255,255,255,0.6)", fontSize: "14px", margin: 0 }}>Event: {event.title}</p>
         </div>
-        
+
         <input value={name} onChange={e => setName(e.target.value)} placeholder="Your Name" type="text" style={inp} />
         <input value={email} onChange={e => setEmail(e.target.value)} placeholder="Email Address" type="email" style={inp} />
         <input value={phone} onChange={e => setPhone(e.target.value)} placeholder="M-Pesa Number" type="tel" style={inp} />
       </div>
 
-      {/* Interactive Cluster Container */}
       <div style={{ width: "100%", marginBottom: "24px" }}>
         {error && <p style={{ color: "#ef4444", fontSize: "12px", marginBottom: "16px", textAlign: "center" }}>{error}</p>}
-        
+
         <label style={{ display: "flex", alignItems: "center", gap: "12px", color: "rgba(255,255,255,0.7)", fontSize: "12px", marginBottom: "20px", cursor: "pointer" }}>
-          <input 
-            type="checkbox" 
-            checked={acceptedTerms} 
-            onChange={e => setAcceptedTerms(e.target.checked)} 
-            style={{ width: "18px", height: "18px", accentColor: "#E26D34" }} 
+          <input
+            type="checkbox"
+            checked={acceptedTerms}
+            onChange={e => setAcceptedTerms(e.target.checked)}
+            style={{ width: "18px", height: "18px", accentColor: "#E26D34" }}
           />
           <span>I accept the <a href="/terms" target="_blank" style={{ color: "#E26D34", textDecoration: "none" }}>Terms and Conditions</a></span>
         </label>
 
-        <button 
-          onClick={handleRegister} 
+        <button
+          onClick={handleRegister}
           disabled={submitting || !acceptedTerms}
-          style={{ 
-            width: "100%", 
-            padding: "14px", 
-            borderRadius: "6px", 
-            background: (!acceptedTerms || submitting) ? "rgba(255,255,255,0.15)" : "#fff", 
-            color: (!acceptedTerms || submitting) ? "rgba(255,255,255,0.3)" : "#000", 
-            border: "none", 
-            fontSize: "12px", 
-            fontWeight: "600", 
-            letterSpacing: "0.06em", 
-            textTransform: "uppercase", 
-            cursor: (!acceptedTerms || submitting) ? "not-allowed" : "pointer" 
+          style={{
+            width: "100%",
+            padding: "14px",
+            borderRadius: "6px",
+            background: (!acceptedTerms || submitting) ? "rgba(255,255,255,0.15)" : "#fff",
+            color: (!acceptedTerms || submitting) ? "rgba(255,255,255,0.3)" : "#000",
+            border: "none",
+            fontSize: "12px",
+            fontWeight: "600",
+            letterSpacing: "0.06em",
+            textTransform: "uppercase",
+            cursor: (!acceptedTerms || submitting) ? "not-allowed" : "pointer"
           }}
         >
           {submitting ? "Processing..." : "Register Now →"}
