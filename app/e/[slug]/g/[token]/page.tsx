@@ -790,7 +790,7 @@ function ProfileTab({profile,event,onProfileUpdate,isEnded,registration}:any){
         {/* Card Body Content */}
         <div>
           {/* 1. Name: Deeply Prominent */}
-          <p style={{fontSize:"22px",fontWeight:"700",color:"#FFBF00",letterSpacing:"-0.02em",margin:"0 0 8px",paddingRight:"44px"}}>{profile?.display_name}</p>
+          <p style={{fontSize:"22px",fontWeight:"700",color:"#f0ede8",letterSpacing:"-0.02em",margin:"0 0 8px",paddingRight:"44px"}}>{profile?.display_name}</p>
 
           {/* 2. Professional Row: Role & Organisation horizontally aligned */}
           <div style={{display:"flex",alignItems:"center",gap:"10px",flexWrap:"wrap",marginBottom:"18px"}}>
