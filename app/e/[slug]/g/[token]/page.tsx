@@ -364,7 +364,7 @@ const[tab,setTab]=useState<Tab>("scene");
                   <p style={{color:"#fff",fontSize:"12px",fontWeight:"500",margin:0}}>Networking QR</p>
                   <p style={{color:"#555",fontSize:"11px",margin:"4px 0 0"}}>For profile unlocks</p>
                 </div>
-                <span style={{fontSize:"11px",color:"#f0ede8",fontWeight:"600",textTransform:"uppercase",letterSpacing:"0.05em",background:"rgba(255,255,255,0.05)",padding:"4px 8px",borderRadius:"6px"}}>Toggle ⊙</span>
+                <span style={{fontSize:"11px",color:"#FFBF00",fontWeight:"600",textTransform:"uppercase",letterSpacing:"0.05em",background:"rgba(255,255,255,0.05)",padding:"4px 8px",borderRadius:"6px"}}>Toggle ⊙</span>
               </summary>
               <div style={{marginTop:"12px",paddingTop:"12px",borderTop:"1px solid rgba(255,255,255,0.05)"}}>
                 {networkingQR?<img src={networkingQR} style={{width:"130px",height:"130px",margin:"0 auto",display:"block"}}/>:<p style={{color:"#666",fontSize:"12px"}}>Generating...</p>}
@@ -770,7 +770,7 @@ function ProfileTab({profile,event,onProfileUpdate,isEnded,registration}:any){
       <div style={{
         background:"#0c0c0f",
         borderRadius:"22px",padding:"24px",marginBottom:"12px",
-        border:"1px solid rgba(255,255,255,0.07)",
+        border:"1px solid rgba(255,191,0,0.15)",
         boxShadow:"0 1px 0 rgba(255,255,255,0.05) inset,0 4px 8px rgba(0,0,0,0.35),0 16px 48px rgba(0,0,0,0.5)",
         position:"relative",overflow:"hidden"
       }}>
@@ -783,14 +783,14 @@ function ProfileTab({profile,event,onProfileUpdate,isEnded,registration}:any){
             width:"32px",height:"32px",borderRadius:"9px",
             background:"rgba(255,255,255,0.04)",border:"1px solid rgba(255,255,255,0.06)",
             display:"flex",alignItems:"center",justifyContent:"center",
-            cursor:"pointer",color:"rgba(240,237,232,0.6)",fontSize:"13px"
+            cursor:"pointer",color:"#FFBF00",fontSize:"13px"
           }}>{editing?"✕":"✎"}</button>
         </div>
 
         {/* Card Body Content */}
         <div>
           {/* 1. Name: Deeply Prominent */}
-          <p style={{fontSize:"22px",fontWeight:"700",color:"#f0ede8",letterSpacing:"-0.02em",margin:"0 0 8px",paddingRight:"44px"}}>{profile?.display_name}</p>
+          <p style={{fontSize:"22px",fontWeight:"700",color:"#FFBF00",letterSpacing:"-0.02em",margin:"0 0 8px",paddingRight:"44px"}}>{profile?.display_name}</p>
 
           {/* 2. Professional Row: Role & Organisation horizontally aligned */}
           <div style={{display:"flex",alignItems:"center",gap:"10px",flexWrap:"wrap",marginBottom:"18px"}}>
@@ -798,8 +798,9 @@ function ProfileTab({profile,event,onProfileUpdate,isEnded,registration}:any){
               <span style={{
                 display:"inline-block",
                 fontSize:"9px",fontWeight:"600",letterSpacing:"0.08em",textTransform:"uppercase",
-                color:"#f0ede8",background:"rgba(240,237,232,0.06)",
-                border:"1px solid rgba(240,237,232,0.1)",padding:"3px 8px",borderRadius:"5px"
+                color: isHost ? "#D4AF37" : "#FFBF00",
+                background: isHost ? "rgba(212, 175, 55, 0.1)" : "rgba(255, 191, 0, 0.1)",
+                border: isHost ? "1px solid rgba(212, 175, 55, 0.3)" : "1px solid rgba(255, 191, 0, 0.3)",padding:"3px 8px",borderRadius:"5px"
               }}>{isHost ? "ORGANIZER" : profile.role_title}</span>
             )}
             {profile?.organisation && (
@@ -829,9 +830,9 @@ function ProfileTab({profile,event,onProfileUpdate,isEnded,registration}:any){
                 width:"24px",height:"24px",borderRadius:"6px",flexShrink:0,
                 background:"rgba(255,255,255,0.03)",border:"1px solid rgba(255,255,255,0.05)",
                 display:"flex",alignItems:"center",justifyContent:"center",
-                fontSize:"11px",color:"#f0ede8"
+                fontSize:"11px",color:"#FFBF00"
               }}>↗</div>
-              <span style={{fontSize:"12px",color:"rgba(240,237,232,0.4)"}}>{cleanUrl(profile.platform_value)}</span>
+              <span style={{fontSize:"12px",color:"rgba(255, 191, 0, 0.6)"}}>{cleanUrl(profile.platform_value)}</span>
             </a>
           )}
         </div>
