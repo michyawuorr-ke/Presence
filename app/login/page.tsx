@@ -72,7 +72,7 @@ export default function LoginPage() {
     <main style={{ minHeight: "100vh", background: "#000", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", padding: "32px 24px" }}>
       <div style={{ marginBottom: "56px", textAlign: "center", display: "flex", flexDirection: "column", alignItems: "center", gap: "16px" }}>
         <OreetiLogo size="sm" />
-        <p style={{ fontSize: "11px", letterSpacing: "0.2em", color: "#D4AF37", textTransform: "uppercase", fontWeight: "500", opacity: 0.8 }}>
+        <p style={{ fontSize: "11px", letterSpacing: "0.2em", color: "#E26D34", textTransform: "uppercase", fontWeight: "500", opacity: 0.9 }}>
           The room activated
         </p>
       </div>
@@ -89,10 +89,10 @@ export default function LoginPage() {
 
   if (mode === "sent") return (
     <main style={{ minHeight: "100vh", background: "#000", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", padding: "32px 24px" }}>
-      <div style={{ fontSize: "24px", color: "#D4AF37", marginBottom: "24px", opacity: 0.85 }}>✉</div>
+      <div style={{ fontSize: "24px", color: "#E26D34", marginBottom: "24px", opacity: 0.85 }}>✉</div>
       <h2 style={{ fontSize: "14px", fontWeight: "600", color: "#fff", textAlign: "center", marginBottom: "8px", letterSpacing: "0.1em", textTransform: "uppercase" }}>Check your email</h2>
       <p style={{ color: "rgba(255,255,255,0.4)", textAlign: "center", marginBottom: "4px", fontSize: "13px" }}>We sent an access verification link to</p>
-      <p style={{ color: "#D4AF37", textAlign: "center", marginBottom: "32px", fontSize: "14px", fontWeight: "500" }}>{email}</p>
+      <p style={{ color: "#E26D34", textAlign: "center", marginBottom: "32px", fontSize: "14px", fontWeight: "500" }}>{email}</p>
       <button onClick={() => { setMode("landing"); setEmail(""); setName(""); setPhone(""); }} style={{ background: "transparent", border: "none", color: "rgba(255,255,255,0.3)", fontSize: "11px", letterSpacing: "0.06em", textTransform: "uppercase", cursor: "pointer" }}>
         ← Return
       </button>
@@ -107,7 +107,7 @@ export default function LoginPage() {
         </button>
         <div style={{ marginBottom: "40px", textAlign: "center", display: "flex", flexDirection: "column", alignItems: "center", gap: "16px" }}>
           <OreetiLogo size="sm" />
-          <p style={{ fontSize: "11px", letterSpacing: "0.2em", color: "#D4AF37", textTransform: "uppercase", fontWeight: "500", opacity: 0.8 }}>
+          <p style={{ fontSize: "11px", letterSpacing: "0.2em", color: "#E26D34", textTransform: "uppercase", fontWeight: "500", opacity: 0.9 }}>
             The room activated
           </p>
           <h1 style={{ fontSize: "18px", fontWeight: "600", color: "#fff", letterSpacing: "0.08em", textTransform: "uppercase", marginTop: "16px", marginBottom: "6px" }}>

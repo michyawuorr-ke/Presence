@@ -15,29 +15,46 @@ export default function Home() {
       boxSizing: 'border-box',
       fontFamily: 'sans-serif'
     }}>
-      {/* Top Section: Branding with Amber-Orange Floating Tagline */}
+      {/* Structural Styles for Living Organism Flow */}
+      <style>{`
+        @keyframes organicFlow {
+          0% {
+            opacity: 0;
+            letter-spacing: -0.05em;
+            transform: translateY(12px) scaleY(0.8);
+            filter: blur(4px);
+          }
+          60% {
+            opacity: 0.8;
+            letter-spacing: 0.25em;
+            filter: blur(1px);
+          }
+          100% {
+            opacity: 1;
+            letter-spacing: 0.2em;
+            transform: translateY(0px) scaleY(1);
+            filter: blur(0px);
+          }
+        }
+        .living-tagline {
+          font-size: 11px;
+          color: #E26D34;
+          text-transform: uppercase;
+          font-weight: 500;
+          margin: 0;
+          opacity: 0;
+          animation: organicFlow 1.6s cubic-bezier(0.25, 1, 0.5, 1) forwards;
+          animation-delay: 0.4s;
+          text-shadow: 0 0 8px rgba(226,109,52,0.2);
+        }
+      `}</style>
+
+      {/* Top Section: Branding with Organic Flow Tagline */}
       <div style={{ marginTop: '56px', textAlign: 'center', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '16px' }}>
         <OreetiLogo size="sm" />
-        <p style={{ 
-          fontSize: '11px', 
-          letterSpacing: '0.2em', 
-          color: '#E26D34', 
-          textTransform: 'uppercase', 
-          fontWeight: '500', 
-          animation: 'pulse 2s infinite ease-in-out',
-          margin: 0
-        }}>
+        <p className="living-tagline">
           The room activated
         </p>
-        
-        {/* Simple CSS block for the floating/breathing animation effect */}
-        <style>{`
-          @keyframes pulse {
-            0% { opacity: 0.6; transform: translateY(0px); }
-            50% { opacity: 1; transform: translateY(-2px); }
-            100% { opacity: 0.6; transform: translateY(0px); }
-          }
-        `}</style>
       </div>
 
       {/* Center Space */}
@@ -54,7 +71,6 @@ export default function Home() {
         gap: '16px'
       }}>
         
-        {/* Core Actions */}
         <Link href="/login" style={{ textDecoration: 'none', width: '100%' }}>
           <div style={{ 
             width: '100%', 
@@ -91,7 +107,6 @@ export default function Home() {
           </div>
         </Link>
 
-        {/* Clear Option to Read External Legal Files */}
         <p style={{ 
           color: "rgba(255,255,255,0.2)", 
           fontSize: "10px", 
