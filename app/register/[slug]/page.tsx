@@ -106,6 +106,14 @@ export default function RegisterPage() {
     pollPayment(data.checkout_request_id, guestUrl);
   }
 
+  function resetForm() {
+    setSuccess(false);
+    setPaymentState("idle");
+    setSubmitting(false);
+    setError("");
+    setAcceptedTerms(false);
+  }
+
   const inp = {
     width: "100%",
     padding: "12px 0",
@@ -134,7 +142,7 @@ export default function RegisterPage() {
 
   if (paymentState === "waiting") return (
     <div style={{ minHeight: "100vh", background: "#000", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", padding: "24px" }}>
-      <p style={{ fontSize: "11px", letterSpacing: "0.2em", color: "#D4AF37", textTransform: "uppercase", marginBottom: "40px" }}>Oreeti</p>
+      <p style={{ fontSize: "11px", letterSpacing: "0.2em", color: "#E26D34", textTransform: "uppercase", marginBottom: "40px" }}>Oreeti</p>
       <div style={{ fontSize: "24px", color: "#E26D34", marginBottom: "24px" }}>📱</div>
       <h1 style={{ fontSize: "15px", fontWeight: "600", color: "#fff", textAlign: "center", marginBottom: "8px", letterSpacing: "0.08em", textTransform: "uppercase" }}>Check your device</h1>
       <p style={{ color: "rgba(255,255,255,0.4)", textAlign: "center", marginBottom: "4px", fontSize: "13px" }}>An M-Pesa prompt has been routed to</p>
@@ -145,27 +153,55 @@ export default function RegisterPage() {
   );
 
   if (success) return (
-    <div style={{ minHeight: "100vh", background: "#000", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", padding: "24px" }}>
-      <p style={{ fontSize: "11px", letterSpacing: "0.2em", color: "#D4AF37", textTransform: "uppercase", marginBottom: "40px" }}>Oreeti</p>
+    <div style={{ minHeight: "100vh", background: "#000", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", padding: "24px", boxSizing: "border-box" }}>
+      <p style={{ fontSize: "11px", letterSpacing: "0.2em", color: "#E26D34", textTransform: "uppercase", marginBottom: "40px" }}>Oreeti</p>
       <div style={{ fontSize: "24px", color: "#4ade80", marginBottom: "16px" }}>✓</div>
       <h1 style={{ fontSize: "16px", fontWeight: "600", color: "#fff", textAlign: "center", marginBottom: "8px", letterSpacing: "0.06em", textTransform: "uppercase" }}>Pass Secured</h1>
       <p style={{ color: "rgba(255,255,255,0.4)", textAlign: "center", marginBottom: "32px", fontSize: "13px" }}>{event.title}</p>
       <div style={{ background: "transparent", border: "1px solid rgba(255,255,255,0.06)", borderRadius: "8px", padding: "32px 24px", width: "100%", maxWidth: "340px", marginBottom: "32px", boxSizing: "border-box", textAlign: "center" }}>
-        <p style={{ fontSize: "11px", color: "#D4AF37", marginBottom: "12px", letterSpacing: "0.08em", textTransform: "uppercase", fontWeight: "600" }}>Pass Dispatched</p>
-        <p style={{ fontSize: "13px", color: "rgba(255,255,255,0.5)", lineHeight: "1.6", margin: 0 }}>Your unique secure coordinate link has been routed directly to your registered Gmail address.</p>
+        <p style={{ fontSize: "11px", color: "#E26D34", marginBottom: "12px", letterSpacing: "0.08em", textTransform: "uppercase", fontWeight: "600" }}>Pass Dispatched</p>
+        <p style={{ fontSize: "13px", color: "rgba(255,255,255,0.5)", lineHeight: "1.6", margin: 0 }}>Your unique secure coordinate link has been routed directly to your registered address.</p>
       </div>
+
+      {/* Action to unlock user if stuck or email fails */}
+      <button 
+        onClick={resetForm}
+        style={{ marginTop: "24px", background: "transparent", border: "none", color: "rgba(255,255,255,0.4)", fontSize: "11px", letterSpacing: "0.06em", textTransform: "uppercase", cursor: "pointer", padding: "12px 24px" }}
+      >
+        ← Return to Registration
+      </button>
     </div>
   );
 
   return (
     <main style={{ minHeight: "100vh", background: "#000", display: "flex", flexDirection: "column", padding: "40px 24px", maxWidth: "420px", margin: "0 auto", justifyContent: "space-between" }}>
+      {/* Dynamic Fluid Tagline CSS Engine */}
+      <style>{`
+        @keyframes organicFlow {
+          0% { opacity: 0; letter-spacing: -0.05em; transform: translateY(12px) scaleY(0.8); filter: blur(4px); }
+          60% { opacity: 0.8; letter-spacing: 0.25em; filter: blur(1px); }
+          100% { opacity: 1; letter-spacing: 0.2em; transform: translateY(0px) scaleY(1); filter: blur(0px); }
+        }
+        .living-tagline {
+          font-size: 11px;
+          color: #E26D34;
+          text-transform: uppercase;
+          font-weight: 500;
+          margin: 0;
+          opacity: 0;
+          animation: organicFlow 1.6s cubic-bezier(0.25, 1, 0.5, 1) forwards;
+          animation-delay: 0.4s;
+          text-shadow: 0 0 8px rgba(226,109,52,0.2);
+        }
+      `}</style>
+
       <div>
         <div style={{ marginBottom: "40px", textAlign: "center", display: "flex", flexDirection: "column", alignItems: "center", gap: "16px" }}>
           <OreetiLogo size="sm" />
-          <p style={{ fontSize: "11px", letterSpacing: "0.2em", color: "#D4AF37", textTransform: "uppercase", fontWeight: "500", opacity: 0.8 }}>
+          <p className="living-tagline">
             The room activated
           </p>
-          <h1 style={{ fontSize: "18px", fontWeight: "600", color: "#fff", letterSpacing: "0.08em", textTransform: "uppercase", marginTop: "16px", marginBottom: "6px" }}>
+          <h1 style={{ fontSize: "18px", fontWeight: "600", color: "#fff", letterSpacing: "0.08em", textTransform: "uppercase", marginTop: "24px", marginBottom: "6px" }}>
             Register
           </h1>
           <p style={{ color: "rgba(255,255,255,0.6)", fontSize: "14px", margin: 0 }}>Event: {event.title}</p>
@@ -176,7 +212,8 @@ export default function RegisterPage() {
         <input value={phone} onChange={e => setPhone(e.target.value)} placeholder="M-Pesa Number" type="tel" style={inp} />
       </div>
 
-      <div style={{ width: "100%" }}>
+      {/* Interactive Cluster Container */}
+      <div style={{ width: "100%", marginBottom: "24px" }}>
         {error && <p style={{ color: "#ef4444", fontSize: "12px", marginBottom: "16px", textAlign: "center" }}>{error}</p>}
         
         <label style={{ display: "flex", alignItems: "center", gap: "12px", color: "rgba(255,255,255,0.7)", fontSize: "12px", marginBottom: "20px", cursor: "pointer" }}>
