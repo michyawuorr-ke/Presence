@@ -15,7 +15,14 @@ export default function OrganizerProfile() {
     try {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) return;
-      const { data } = await supabase.from('profiles').select('*').eq('id', user.id).single();
+
+      // Target the authentic host_profiles table matching your system schema
+      const { data } = await supabase
+        .from('host_profiles')
+        .select('*')
+        .eq('host_id', user.id)
+        .maybeSingle();
+
       if (data) {
         setProfile(data);
         setDisplayName(data.display_name || '');
@@ -23,11 +30,11 @@ export default function OrganizerProfile() {
         setOrganisation(data.organisation || '');
         setPlatformValue(data.platform_value || '');
       } else {
-        // Create an empty reference profile state so it renders gracefully if new
+        // Fallback reference if the host profile row doesn't exist yet
         setProfile({});
       }
     } catch (err) {
-      console.error(err);
+      console.error("Profile load error:", err);
       setProfile({});
     }
   }
@@ -38,19 +45,29 @@ export default function OrganizerProfile() {
 
   async function handleSave() {
     setSaving(true);
-    const { data: { user } } = await supabase.auth.getUser();
-    if (user) {
-      await supabase.from('profiles').upsert({
-        id: user.id,
-        display_name: displayName,
-        bio: bio,
-        organisation: organisation,
-        platform_value: platformValue
-      });
-      setProfile({ display_name: displayName, bio, organisation, platform_value: platformValue });
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (user) {
+        const profileData = {
+          host_id: user.id,
+          display_name: displayName,
+          bio: bio,
+          organisation: organisation,
+          platform_value: platformValue
+        };
+
+        await supabase
+          .from('host_profiles')
+          .upsert(profileData, { onConflict: 'host_id' });
+
+        setProfile(profileData);
+      }
+    } catch (err) {
+      console.error("Profile save error:", err);
+    } finally {
+      setSaving(false);
+      setEditing(false);
     }
-    setSaving(false);
-    setEditing(false);
   }
 
   if (!profile) return <div style={{ padding: "40px", color: "#D4AF37", textAlign: "center", fontSize: "12px", letterSpacing: "0.1em" }}>LOADING IDENTITY...</div>;
