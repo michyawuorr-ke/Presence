@@ -336,7 +336,7 @@ const[tab,setTab]=useState<Tab>("scene");
                   <p style={{fontSize:"12px",color:"#E26D34",fontWeight:"500"}}>handshakes exchanged</p>
                 </div>
               </div>
-              <button onClick={()=>setTab("networking")} style={{width:"100%",padding:"14px",borderRadius:"14px",background:"linear-gradient(135deg,#E26D34,#c85a24)",color:"#fff",border:"none",fontSize:"14px",cursor:"pointer",fontWeight:"600",boxShadow:"0 8px 24px rgba(226,109,52,0.3)"}}>Start Networking →</button>
+              <button onClick={()=>setTab("networking")} style={{width:"100%",padding:"11px",borderRadius:"10px",background:"transparent",color:"#E26D34",border:"1px solid rgba(226,109,52,0.35)",fontSize:"13px",cursor:"pointer",fontWeight:"500",letterSpacing:"0.08em",textTransform:"uppercase",transition:"all 0.2s ease"}}>Start Networking →</button>
             </div>
           )}
         </div>
