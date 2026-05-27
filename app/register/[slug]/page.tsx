@@ -2,6 +2,7 @@
 import { useEffect, useState } from "react";
 import { useParams } from "next/navigation";
 import { supabase } from "@/lib/supabase/client";
+import OreetiLogo from "@/components/OreetiLogo";
 
 export default function RegisterPage() {
   const [event, setEvent] = useState<any>(null);
@@ -159,15 +160,22 @@ export default function RegisterPage() {
   return (
     <main style={{ minHeight: "100vh", background: "#000", display: "flex", flexDirection: "column", padding: "40px 24px", maxWidth: "420px", margin: "0 auto", justifyContent: "space-between" }}>
       <div>
-        <h1 style={{ fontSize: "18px", fontWeight: "600", color: "#fff", letterSpacing: "0.08em", textTransform: "uppercase", marginBottom: "24px" }}>Register</h1>
-        <p style={{ color: "rgba(255,255,255,0.6)", fontSize: "14px", marginBottom: "24px" }}>Event: {event.title}</p>
+        <div style={{ marginBottom: "40px", textAlign: "center", display: "flex", flexDirection: "column", alignItems: "center", gap: "16px" }}>
+          <OreetiLogo size="sm" />
+          <p style={{ fontSize: "11px", letterSpacing: "0.2em", color: "#D4AF37", textTransform: "uppercase", fontWeight: "500", opacity: 0.8 }}>
+            The room activated
+          </p>
+          <h1 style={{ fontSize: "18px", fontWeight: "600", color: "#fff", letterSpacing: "0.08em", textTransform: "uppercase", marginTop: "16px", marginBottom: "6px" }}>
+            Register
+          </h1>
+          <p style={{ color: "rgba(255,255,255,0.6)", fontSize: "14px", margin: 0 }}>Event: {event.title}</p>
+        </div>
         
         <input value={name} onChange={e => setName(e.target.value)} placeholder="Your Name" type="text" style={inp} />
         <input value={email} onChange={e => setEmail(e.target.value)} placeholder="Email Address" type="email" style={inp} />
         <input value={phone} onChange={e => setPhone(e.target.value)} placeholder="M-Pesa Number" type="tel" style={inp} />
       </div>
 
-      {/* Lower 40% Action & Terms Container */}
       <div style={{ width: "100%" }}>
         {error && <p style={{ color: "#ef4444", fontSize: "12px", marginBottom: "16px", textAlign: "center" }}>{error}</p>}
         

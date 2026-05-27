@@ -105,9 +105,12 @@ export default function LoginPage() {
         <button onClick={() => { setMode("landing"); setError(""); }} style={{ background: "none", border: "none", color: "rgba(255,255,255,0.3)", fontSize: "11px", letterSpacing: "0.06em", textTransform: "uppercase", cursor: "pointer", marginBottom: "48px", padding: "0" }}>
           ← Cancel
         </button>
-        <div style={{ marginBottom: "40px" }}>
-          <div style={{ marginBottom: "24px" }}><OreetiLogo size="sm" /></div>
-          <h1 style={{ fontSize: "18px", fontWeight: "600", color: "#fff", letterSpacing: "0.08em", textTransform: "uppercase", marginBottom: "6px" }}>
+        <div style={{ marginBottom: "40px", textAlign: "center", display: "flex", flexDirection: "column", alignItems: "center", gap: "16px" }}>
+          <OreetiLogo size="sm" />
+          <p style={{ fontSize: "11px", letterSpacing: "0.2em", color: "#D4AF37", textTransform: "uppercase", fontWeight: "500", opacity: 0.8 }}>
+            The room activated
+          </p>
+          <h1 style={{ fontSize: "18px", fontWeight: "600", color: "#fff", letterSpacing: "0.08em", textTransform: "uppercase", marginTop: "16px", marginBottom: "6px" }}>
             {mode === "signup" ? "Create Account" : "Sign In"}
           </h1>
         </div>
@@ -125,7 +128,6 @@ export default function LoginPage() {
         </div>
       </div>
 
-      {/* Lower 40% Action & Terms Container */}
       <div style={{ width: "100%" }}>
         {error && <p style={{ color: "#ef4444", fontSize: "12px", marginBottom: "16px", textAlign: "center" }}>{error}</p>}
         
