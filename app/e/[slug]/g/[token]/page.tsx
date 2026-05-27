@@ -160,7 +160,7 @@ function Identity({registration,event,onComplete}:any){
 
   async function save(){
     if(!displayName.trim()){setError("Name is required");return;}
-      if(!link.trim()){setError("A link is required (LinkedIn, website, etc)");return;}
+    if(!link.trim()){setError("A link is required (LinkedIn, website, etc)");return;}
     setSaving(true);
     setError("");
     const{data,error:err}=await supabase.from("guest_profiles").insert({
@@ -180,30 +180,41 @@ function Identity({registration,event,onComplete}:any){
 
   const inp = {
     width: "100%",
-    padding: "14px 16px",
-    borderRadius: "14px",
-    background: "rgba(255, 255, 255, 0.02)",
+    padding: "12px 0",
+    background: "transparent",
+    border: "none",
+    borderBottom: "1px solid rgba(255, 255, 255, 0.08)",
     color: "#f0ede8",
-    fontSize: "15px",
+    fontSize: "14px",
     outline: "none",
-    border: "1px solid rgba(255, 255, 255, 0.07)",
-    boxShadow: "0 2px 8px rgba(0, 0, 0, 0.2), inset 0 1px 0 rgba(255, 255, 255, 0.03)",
+    borderRadius: 0,
     boxSizing: "border-box" as const,
-    marginBottom: "14px",
-    transition: "all 0.2s ease"
+    marginBottom: "20px"
   };
 
   return(
-    <div style={{minHeight:"100vh",background:"#000",color:"#fff",padding:"40px 20px"}}>
-      <p style={{fontSize:"11px",letterSpacing:"0.3em",color:"#666",textTransform:"uppercase",marginBottom:"32px",textAlign:"center"}}>Set up your profile</p>
-      <div style={{maxWidth:"400px",margin:"0 auto"}}>
+    <div style={{minHeight:"100vh",background:"#000",color:"#fff",padding: "48px 24px",display:"flex",flexDirection:"column"}}>
+      <p style={{fontSize:"11px",letterSpacing:"0.2em",color:"#E26D34",textTransform:"uppercase",marginBottom:"48px",textAlign:"center",fontWeight:"600"}} style={{color: "#E26D34"}}>OREETI</p>
+      <p style={{fontSize:"11px",letterSpacing:"0.1em",color:"rgba(255,255,255,0.35)",textTransform:"uppercase",marginBottom:"40px",textAlign:"center"}}>Set up your profile</p>
+      
+      <div style={{maxWidth:"400px",margin:"0 auto",width:"100%",flex:1}}>
         <input value={displayName} onChange={e=>setDisplayName(e.target.value)} placeholder="Your name" style={inp}/>
         <input value={role} onChange={e=>setRole(e.target.value)} placeholder="Your role or title" style={inp}/>
         <input value={organisation} onChange={e=>setOrganisation(e.target.value)} placeholder="Organisation" style={inp}/>
-        <textarea value={bio} onChange={e=>setBio(e.target.value)} placeholder="Short bio" style={{...inp,minHeight:"80px",resize:"vertical"}}/>
-        <input value={link} onChange={e=>setLink(e.target.value)} placeholder="LinkedIn, YouTube, Instagram, website..." style={{...inp,border:"1px solid "+(link?"#4ade80":"#333")}}/>
-        {error&&<p style={{color:"#ef4444",fontSize:"13px",marginBottom:"12px"}}>{error}</p>}
-        <button onClick={save} disabled={saving||!displayName.trim()||!link.trim()} style={{width:"100%",padding:"16px",borderRadius:"16px",background:saving||!displayName.trim()||!link.trim()?"#333":"#fff",color:saving||!displayName.trim()||!link.trim()?"#666":"#000",border:"none",fontSize:"15px",cursor:saving||!displayName.trim()||!link.trim()?"not-allowed":"pointer",fontWeight:"600",marginTop:"8px"}}>{saving?"Saving...":"Continue →"}</button>
+        <textarea value={bio} onChange={e=>setBio(e.target.value)} placeholder="Short bio" style={{...inp,minHeight:"64px",resize:"none"}}/>
+        <input value={link} onChange={e=>setLink(e.target.value)} placeholder="LinkedIn, YouTube, Instagram, website..." style={inp}/>
+        
+        {error&&<p style={{color:"#ef4444",fontSize:"12px",marginBottom:"16px",letterSpacing:"0.01em"}}>{error}</p>}
+      </div>
+
+      <div style={{maxWidth:"400px",margin:"0 auto",width:"100%",paddingTop:"24px"}}>
+        <button 
+          onClick={save} 
+          disabled={saving||!displayName.trim()||!link.trim()} 
+          style={{width:"100%",padding:"14px",borderRadius:"6px",background:saving||!displayName.trim()||!link.trim()?"transparent":"#fff",color:saving||!displayName.trim()||!link.trim()?"rgba(255,255,255,0.2)":"#000",border:saving||!displayName.trim()||!link.trim()?"1px solid rgba(255,255,255,0.08)":"none",fontSize:"12px",cursor:saving||!displayName.trim()||!link.trim()?"not-allowed":"pointer",fontWeight:"600",letterSpacing:"0.06em",textTransform:"uppercase"}}
+        >
+          {saving?"Saving...":"Continue →"}
+        </button>
       </div>
     </div>
   );
