@@ -53,21 +53,20 @@ export default function OreetiLogo({ size = "md" }: OreetiLogoProps) {
         d="M 132 72 C 136 50, 150 48, 168 52"
       />
 
-      {/* THIRD & FOURTH LETTERS: 'ee' (Pulsing, Conjoined, with Open Ending Terminal Loop on Second e) */}
+      {/* THIRD & FOURTH LETTERS: 'ee' (Naturally Conjoined, Perfect Same-Level Alignment, Open Normal Ending Curve) */}
       <g className="ee">
         <path stroke="#EAE6DF" strokeLinecap="round" strokeLinejoin="round" fill="none"
           d="M 174 90
              L 212 90
              C 212 66, 196 64, 186 66
              C 174 68, 172 80, 174 88
-             C 176 102, 186 110, 202 108
-             C 212 106, 218 96, 220 84
-             L 226 84
-             L 264 84
-             C 264 60, 248 58, 238 60
-             C 226 62, 224 74, 226 82
-             C 228 96, 238 104, 254 102
-             C 262 100, 268 94, 270 84"
+             C 176 102, 186 110, 202 110
+             C 214 110, 220 100, 222 90
+             L 260 90
+             C 260 66, 244 64, 234 66
+             C 222 68, 220 80, 222 88
+             C 224 102, 234 110, 250 110
+             C 258 110, 264 102, 264 96"
         />
       </g>
 
@@ -79,7 +78,7 @@ export default function OreetiLogo({ size = "md" }: OreetiLogoProps) {
         d="M 280 68 L 318 68"
       />
 
-      {/* SIXTH LETTER: 'i' (Stem - Ivory Linen) */}
+      {/* SIXTH LETTER: 'i' (Stem) */}
       <path stroke="#EAE6DF" strokeWidth="10.5" strokeLinecap="round" strokeLinejoin="round"
         d="M 342 78 L 342 132"
       />
