@@ -37,7 +37,7 @@ export default function OreetiLogo({ size = "md" }: OreetiLogoProps) {
         d="M 56 36 C 24 36, 6 58, 6 84 C 6 110, 24 132, 56 132"
       />
 
-      {/* FIRST LETTER: 'O' (Right Half - Slightly Raised Pulsing Amber Orange Accent) */}
+      {/* FIRST LETTER: 'O' (Right Half - Slightly Raised Pulsing Amber Orange) */}
       <g className="rO">
         <path stroke="#E26D34" strokeWidth="10.5" strokeLinecap="round" strokeLinejoin="round"
           d="M 60 28 C 92 28, 110 50, 110 76 C 110 102, 92 124, 60 124"
@@ -45,7 +45,7 @@ export default function OreetiLogo({ size = "md" }: OreetiLogoProps) {
         />
       </g>
 
-      {/* SECOND LETTER: 'r' (Fluid Typographic Shoulder - Ivory Linen) */}
+      {/* SECOND LETTER: 'r' (Ivory Linen) */}
       <path stroke="#EAE6DF" strokeWidth="10.5" strokeLinecap="round" strokeLinejoin="round"
         d="M 132 132 L 132 54"
       />
@@ -53,10 +53,10 @@ export default function OreetiLogo({ size = "md" }: OreetiLogoProps) {
         d="M 132 72 C 136 50, 150 48, 168 52"
       />
 
-      {/* THIRD & FOURTH LETTERS: 'ee' (Symmetrical Twins Transitioned to Ivory Linen) */}
+      {/* THIRD & FOURTH LETTERS: 'ee' (Your Exact Symmetrical Twin Structure - Color Swapped to Ivory Linen) */}
       <g className="ee">
         {/* First e */}
-        <path stroke="#EAE6DF" strokeWidth="10.5" strokeLinecap="round" strokeLinejoin="round" fill="none"
+        <path stroke="#EAE6DF" strokeLinecap="round" strokeLinejoin="round" fill="none"
           d="M 174 104
              L 212 104
              C 212 78, 196 74, 186 76
@@ -65,7 +65,7 @@ export default function OreetiLogo({ size = "md" }: OreetiLogoProps) {
              C 214 132, 220 122, 222 110"
         />
         {/* Second e */}
-        <path stroke="#EAE6DF" strokeWidth="10.5" strokeLinecap="round" strokeLinejoin="round" fill="none"
+        <path stroke="#EAE6DF" strokeLinecap="round" strokeLinejoin="round" fill="none"
           d="M 226 104
              L 264 104
              C 264 78, 248 74, 238 76
@@ -75,7 +75,7 @@ export default function OreetiLogo({ size = "md" }: OreetiLogoProps) {
         />
       </g>
 
-      {/* FIFTH LETTER: 't' (Ivory Linen - Level Curved Bottom Tail) */}
+      {/* FIFTH LETTER: 't' (Ivory Linen) */}
       <path stroke="#EAE6DF" strokeWidth="10.5" strokeLinecap="round" strokeLinejoin="round"
         d="M 298 40 L 298 116 C 298 128, 302 132, 314 132"
       />
@@ -88,7 +88,7 @@ export default function OreetiLogo({ size = "md" }: OreetiLogoProps) {
         d="M 342 78 L 342 132"
       />
 
-      {/* SIXTH LETTER: 'i' (Dot - Amber Orange Accent Landing Circle) */}
+      {/* SIXTH LETTER: 'i' (Dot - Amber Orange Accent) */}
       <circle className="idot" cx="342" cy="54" r="8" fill="#E26D34" filter="url(#ga)"/>
     </svg>
   );
