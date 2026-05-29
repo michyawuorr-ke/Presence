@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import "./globals.css";
 import { Inter } from "next/font/google";
+import { Analytics } from "@vercel/analytics/next";
 
 const inter = Inter({ subsets: ["latin"], variable: "--font-inter" });
 
@@ -16,7 +17,10 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en" className={inter.variable}>
-      <body style={{fontFamily:"var(--font-inter),-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif"}}>{children}</body>
+      <body style={{fontFamily:"var(--font-inter),-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif"}}>
+        {children}
+        <Analytics />
+      </body>
     </html>
   );
 }
