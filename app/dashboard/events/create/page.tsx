@@ -13,25 +13,48 @@ export default function CreateEvent() {
   const router = useRouter();
 
   async function handleCreate() {
-    setLoading(true);
-    const slug = title.toLowerCase().replace(/\s+/g, "-").replace(/[^a-z0-9-]/g, "") + "-" + Date.now();
-    const { data: { user } } = await supabase.auth.getUser();
+    if (!title || !venue) {
+      alert("Please specify a title and venue.");
+      return;
+    }
     
-    await supabase.from("events").insert({
-      title, venue, description,
-      start_time: startTime + ":00+03:00",
-      end_time: endTime + ":00+03:00",
-      slug, status: "draft",
-      host_id: user?.id
-    });
-    router.push("/dashboard/events");
+    setLoading(true);
+    try {
+      const slug = title.toLowerCase().replace(/\s+/g, "-").replace(/[^a-z0-9-]/g, "") + "-" + Date.now();
+      const { data: { user } } = await supabase.auth.getUser();
+
+      if (!user) {
+        alert("Session expired. Please log in again.");
+        router.push("/login");
+        return;
+      }
+
+      // Securely await the database insertion completion block
+      const { error } = await supabase.from("events").insert({
+        title, 
+        venue, 
+        description,
+        start_time: startTime ? startTime + ":00+03:00" : null,
+        end_time: endTime ? endTime + ":00+03:00" : null,
+        slug, 
+        status: "draft",
+        host_id: user.id
+      });
+
+      if (error) throw error;
+      
+      router.push("/dashboard/events");
+    } catch (err: any) {
+      alert("Database Insertion Failed: " + (err.message || err));
+      setLoading(false);
+    }
   }
 
   return (
     <div style={{ padding: "40px 24px", background: "#060608", minHeight: "100vh", color: "#f3f4f6" }}>
       <div style={{ maxWidth: "500px", margin: "0 auto" }}>
         <button onClick={() => router.back()} style={{ background: "transparent", border: "none", color: "rgba(255,255,255,0.3)", cursor: "pointer", marginBottom: "32px", fontSize: "14px" }}>← Back</button>
-        
+
         <h1 style={{ fontSize: "28px", fontWeight: "600", marginBottom: "8px", letterSpacing: "-0.02em" }}>New Activation</h1>
         <p style={{ fontSize: "14px", color: "rgba(255,255,255,0.45)", marginBottom: "40px" }}>Define the event parameters.</p>
 
@@ -39,7 +62,7 @@ export default function CreateEvent() {
           <input placeholder="Event Title" value={title} onChange={e => setTitle(e.target.value)} style={{ background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.06)", padding: "16px", borderRadius: "12px", color: "#fff", outline: "none" }} />
           <input placeholder="Venue" value={venue} onChange={e => setVenue(e.target.value)} style={{ background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.06)", padding: "16px", borderRadius: "12px", color: "#fff", outline: "none" }} />
           <textarea placeholder="Event Description" value={description} onChange={e => setDescription(e.target.value)} style={{ background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.06)", padding: "16px", borderRadius: "12px", color: "#fff", outline: "none", minHeight: "100px" }} />
-          
+
           <div style={{ display: "flex", flexDirection: "column", gap: "16px" }}>
             <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
               <label style={{ fontSize: "10px", color: "#D4AF37", textTransform: "uppercase", letterSpacing: "0.1em" }}>Start Time</label>
