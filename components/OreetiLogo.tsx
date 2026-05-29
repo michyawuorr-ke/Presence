@@ -53,18 +53,18 @@ export default function OreetiLogo({ size = "md" }: OreetiLogoProps) {
         d="M 118 52 C 122 36, 136 28, 154 36"
       />
 
-      {/* THIRD & FOURTH LETTERS: 'ee' (Completely Separate, Independent Twins - Ivory Linen) */}
+      {/* THIRD & FOURTH LETTERS: 'ee' (Completely Standalone, Separated Lowercase Shapes - Ivory Linen) */}
       <g className="ee">
-        {/* First e */}
+        {/* First e - Isolated structural loop */}
         <path stroke="#EAE6DF" strokeLinecap="round" strokeLinejoin="round" fill="none"
-          d="M 162 68
-             L 192 68
-             C 192 44, 178 42, 168 44
-             C 158 46, 156 58, 158 66
-             C 160 80, 170 88, 182 86
-             C 190 84, 194 78, 196 72"
+          d="M 160 68
+             L 190 68
+             C 190 44, 176 42, 166 44
+             C 156 46, 154 58, 156 66
+             C 158 80, 168 88, 180 86
+             C 188 84, 192 78, 194 72"
         />
-        {/* Second e (Clean identical clone, shifted cleanly to parallel position) */}
+        {/* Second e - Shifted with explicit negative space gap to break the connection entirely */}
         <path stroke="#EAE6DF" strokeLinecap="round" strokeLinejoin="round" fill="none"
           d="M 210 68
              L 240 68
@@ -75,7 +75,7 @@ export default function OreetiLogo({ size = "md" }: OreetiLogoProps) {
         />
       </g>
 
-      {/* FIFTH LETTER: 't' (Ivory Linen - Smooth Bottom Curve) */}
+      {/* FIFTH LETTER: 't' (Ivory Linen) */}
       <path stroke="#EAE6DF" strokeWidth="8" strokeLinecap="round" strokeLinejoin="round"
         d="M 262 18 L 262 98 C 262 106, 266 110, 276 110"
       />
@@ -88,7 +88,7 @@ export default function OreetiLogo({ size = "md" }: OreetiLogoProps) {
         d="M 302 56 L 302 110"
       />
 
-      {/* SIXTH LETTER: 'i' (Dot - Pulsing Amber Orange Landing Animation) */}
+      {/* SIXTH LETTER: 'i' (Dot - Pulsing Amber Orange) */}
       <circle className="idot" cx="302" cy="36" r="7" fill="#E26D34" filter="url(#ga)"/>
     </svg>
   );
