@@ -53,23 +53,29 @@ export default function OreetiLogo({ size = "md" }: OreetiLogoProps) {
         d="M 118 52 C 122 36, 136 28, 154 36"
       />
 
-      {/* THIRD & FOURTH LETTERS: 'ee' (Your Exact Master Paths - Ivory Linen) */}
-      <path className="ee" stroke="#EAE6DF" strokeLinecap="round" strokeLinejoin="round" fill="none"
-        d="M 162 68
-           L 192 68
-           C 192 44, 178 42, 168 44
-           C 158 46, 156 58, 158 66
-           C 160 80, 170 88, 182 86
-           C 190 84, 194 78, 196 72
-           C 198 66, 200 62, 206 64
-           L 240 68
-           C 240 44, 226 42, 216 44
-           C 206 46, 204 58, 206 66
-           C 208 80, 218 88, 230 86
-           C 238 84, 242 78, 244 72"
-      />
+      {/* THIRD & FOURTH LETTERS: 'ee' (Completely Separate, Independent Twins - Ivory Linen) */}
+      <g className="ee">
+        {/* First e */}
+        <path stroke="#EAE6DF" strokeLinecap="round" strokeLinejoin="round" fill="none"
+          d="M 162 68
+             L 192 68
+             C 192 44, 178 42, 168 44
+             C 158 46, 156 58, 158 66
+             C 160 80, 170 88, 182 86
+             C 190 84, 194 78, 196 72"
+        />
+        {/* Second e (Clean identical clone, shifted cleanly to parallel position) */}
+        <path stroke="#EAE6DF" strokeLinecap="round" strokeLinejoin="round" fill="none"
+          d="M 210 68
+             L 240 68
+             C 240 44, 226 42, 216 44
+             C 206 46, 204 58, 206 66
+             C 208 80, 218 88, 230 86
+             C 238 84, 242 78, 244 72"
+        />
+      </g>
 
-      {/* FIFTH LETTER: 't' (Ivory Linen - Refined with elegant curve on the bottom right) */}
+      {/* FIFTH LETTER: 't' (Ivory Linen - Smooth Bottom Curve) */}
       <path stroke="#EAE6DF" strokeWidth="8" strokeLinecap="round" strokeLinejoin="round"
         d="M 262 18 L 262 98 C 262 106, 266 110, 276 110"
       />
