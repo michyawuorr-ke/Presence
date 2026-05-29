@@ -24,7 +24,7 @@ export default function OreetiLogo({ size = "md" }: OreetiLogoProps) {
       </defs>
 
       <style>{`
-        @keyframes pulseUp{0%,100%{transform:translateY(0)}50%{transform:translateY(-14px)}}
+        @keyframes pulseUp{0%,100%{transform:translateY(0)}50%{transform:translateY(-6px)}}
         .rO{animation:pulseUp 3s ease-in-out infinite;transform-origin:94px 86px;}
         @keyframes breathe{0%,100%{opacity:1;transform:scale(1)}50%{opacity:0.85;transform:scale(1.02)}}
         .ee{animation:breathe 2.8s ease-in-out infinite;transform-origin:200px 120px;}
@@ -46,7 +46,7 @@ export default function OreetiLogo({ size = "md" }: OreetiLogoProps) {
           d="M 52 44 C 22 44, 4 66, 4 92 C 4 118, 22 140, 52 140"
         />
 
-        {/* FIRST LETTER: 'O' (Right Half - Pulsing Amber Orange Accent) */}
+        {/* FIRST LETTER: 'O' (Right Half - Subdued Pulsing Amber Orange Accent) */}
         <g className="rO">
           <path stroke="#E26D34" strokeWidth="8" strokeLinecap="round"
             d="M 56 36 C 86 36, 104 58, 104 84 C 104 110, 86 132, 56 132"
