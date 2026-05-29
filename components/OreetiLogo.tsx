@@ -37,7 +37,7 @@ export default function OreetiLogo({ size = "md" }: OreetiLogoProps) {
         d="M 52 14 C 22 14, 4 36, 4 62 C 4 88, 22 110, 52 110"
       />
 
-      {/* FIRST LETTER: 'O' (Right Half - Slightly Raised Pulsing Amber Orange Accent) */}
+      {/* FIRST LETTER: 'O' (Right Half - Slightly Raised Pulsing Amber Orange) */}
       <g className="rO">
         <path stroke="#E26D34" strokeWidth="8" strokeLinecap="round"
           d="M 56 6 C 86 6, 104 28, 104 54 C 104 80, 86 102, 56 102"
@@ -53,7 +53,7 @@ export default function OreetiLogo({ size = "md" }: OreetiLogoProps) {
         d="M 118 52 C 122 36, 136 28, 154 36"
       />
 
-      {/* THIRD & FOURTH LETTERS: 'ee' (Your Original Untouched Beautiful Curves - Now Ivory Linen) */}
+      {/* THIRD & FOURTH LETTERS: 'ee' (Exactly Your Paths - Color Changed to Linen Ivory Only) */}
       <path className="ee" stroke="#EAE6DF" strokeLinecap="round" strokeLinejoin="round" fill="none"
         d="M 162 68
            L 192 68
@@ -82,7 +82,7 @@ export default function OreetiLogo({ size = "md" }: OreetiLogoProps) {
         d="M 302 56 L 302 110"
       />
 
-      {/* SIXTH LETTER: 'i' (Dot - Amber Orange Accent) */}
+      {/* SIXTH LETTER: 'i' (Dot - Pulsing Amber Orange Landing Animation) */}
       <circle className="idot" cx="302" cy="36" r="7" fill="#E26D34" filter="url(#ga)"/>
     </svg>
   );
