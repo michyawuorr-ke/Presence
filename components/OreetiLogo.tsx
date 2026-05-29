@@ -48,7 +48,7 @@ export default function OreetiLogo({ size = "md" }: OreetiLogoProps) {
           />
         </g>
 
-        {/* SECOND LETTER: 'r' (Bespoke Vector - Ivory Linen) */}
+        {/* SECOND LETTER: 'r' (Ivory Linen) */}
         <path stroke="#EAE6DF" strokeWidth="8" strokeLinecap="round" strokeLinejoin="round"
           d="M 118 140 L 118 62"
         />
@@ -56,25 +56,15 @@ export default function OreetiLogo({ size = "md" }: OreetiLogoProps) {
           d="M 118 82 C 122 66, 136 58, 154 66"
         />
 
-        {/* THIRD & FOURTH LETTERS: 'ee' (Custom Luxury Typography - Open-Ended & Distinct) */}
+        {/* THIRD & FOURTH LETTERS: 'ee' (True Typographic Open Lowercase Shapes) */}
         <g className="ee">
-          {/* First e */}
+          {/* First e: Linear horizontal crossbar, crisp top dome, wide flare terminal */}
           <path stroke="#EAE6DF" strokeWidth="8" strokeLinecap="round" strokeLinejoin="round" fill="none"
-            d="M 164 98 
-               L 196 98 
-               C 196 74, 182 72, 172 74 
-               C 160 76, 158 88, 160 98 
-               C 162 112, 172 120, 186 118 
-               C 194 116, 196 108, 196 102"
+            d="M 160 102 L 194 102 C 194 76, 160 72, 160 98 C 160 124, 192 124, 194 112"
           />
-          {/* Second e (Perfected matching geometry, cleanly detached to breathe) */}
+          {/* Second e: Parallel layout tracking perfectly with identical terminal spacing */}
           <path stroke="#EAE6DF" strokeWidth="8" strokeLinecap="round" strokeLinejoin="round" fill="none"
-            d="M 210 98 
-               L 242 98 
-               C 242 74, 228 72, 218 74 
-               C 206 76, 204 88, 206 98 
-               C 208 112, 218 120, 232 118 
-               C 240 116, 242 108, 242 102"
+            d="M 206 102 L 240 102 C 240 76, 206 72, 206 98 C 206 124, 238 124, 240 112"
           />
         </g>
 
