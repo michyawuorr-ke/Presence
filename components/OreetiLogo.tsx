@@ -53,25 +53,25 @@ export default function OreetiLogo({ size = "md" }: OreetiLogoProps) {
         d="M 132 72 C 136 50, 150 48, 168 52"
       />
 
-      {/* THIRD & FOURTH LETTERS: 'ee' (Your Exact Symmetrical Twin Structure - Color Swapped to Ivory Linen) */}
+      {/* THIRD & FOURTH LETTERS: 'ee' (Restored to Original High Baseline - Ivory Linen) */}
       <g className="ee">
         {/* First e */}
         <path stroke="#EAE6DF" strokeLinecap="round" strokeLinejoin="round" fill="none"
-          d="M 174 104
-             L 212 104
-             C 212 78, 196 74, 186 76
-             C 174 78, 172 94, 174 106
-             C 176 124, 188 132, 204 132
-             C 214 132, 220 122, 222 110"
+          d="M 174 90
+             L 212 90
+             C 212 66, 196 64, 186 66
+             C 174 68, 172 80, 174 88
+             C 176 102, 186 110, 202 108
+             C 212 106, 218 96, 220 84"
         />
         {/* Second e */}
         <path stroke="#EAE6DF" strokeLinecap="round" strokeLinejoin="round" fill="none"
-          d="M 226 104
-             L 264 104
-             C 264 78, 248 74, 238 76
-             C 226 78, 224 94, 226 106
-             C 228 124, 240 132, 256 132
-             C 266 132, 272 122, 274 110"
+          d="M 226 90
+             L 264 90
+             C 264 66, 248 64, 238 66
+             C 226 68, 224 80, 226 88
+             C 228 102, 238 110, 254 108
+             C 264 106, 270 96, 272 84"
         />
       </g>
 
