@@ -53,7 +53,7 @@ export default function OreetiLogo({ size = "md" }: OreetiLogoProps) {
         d="M 118 52 C 122 36, 136 28, 154 36"
       />
 
-      {/* THIRD & FOURTH LETTERS: 'ee' (Exactly Your Paths - Color Changed to Linen Ivory Only) */}
+      {/* THIRD & FOURTH LETTERS: 'ee' (Your Exact Master Paths - Ivory Linen) */}
       <path className="ee" stroke="#EAE6DF" strokeLinecap="round" strokeLinejoin="round" fill="none"
         d="M 162 68
            L 192 68
@@ -69,9 +69,9 @@ export default function OreetiLogo({ size = "md" }: OreetiLogoProps) {
            C 238 84, 242 78, 244 72"
       />
 
-      {/* FIFTH LETTER: 't' (Ivory Linen) */}
-      <path stroke="#EAE6DF" strokeWidth="8" strokeLinecap="round"
-        d="M 262 18 L 262 110"
+      {/* FIFTH LETTER: 't' (Ivory Linen - Refined with elegant curve on the bottom right) */}
+      <path stroke="#EAE6DF" strokeWidth="8" strokeLinecap="round" strokeLinejoin="round"
+        d="M 262 18 L 262 98 C 262 106, 266 110, 276 110"
       />
       <path stroke="#EAE6DF" strokeWidth="8" strokeLinecap="round"
         d="M 246 46 L 280 46"
