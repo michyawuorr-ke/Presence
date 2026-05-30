@@ -17,7 +17,7 @@ export default function CreateEvent() {
       alert("Please specify a title and venue.");
       return;
     }
-    
+
     setLoading(true);
     try {
       const slug = title.toLowerCase().replace(/\s+/g, "-").replace(/[^a-z0-9-]/g, "") + "-" + Date.now();
@@ -29,21 +29,21 @@ export default function CreateEvent() {
         return;
       }
 
-      // Securely await the database insertion completion block
-      const { error } = await supabase.from("events").insert({
-        title, 
-        venue, 
+      const { data, error } = await supabase.from("events").insert({
+        title,
+        venue,
         description,
         start_time: startTime ? startTime + ":00+03:00" : null,
         end_time: endTime ? endTime + ":00+03:00" : null,
-        slug, 
+        slug,
         status: "draft",
         host_id: user.id
-      });
+      }).select("id").single();
 
       if (error) throw error;
-      
-      router.push("/dashboard/events");
+
+      // Direct structural redirect into the newly initiated workspace
+      router.push(`/dashboard/events/${data.id}`);
     } catch (err: any) {
       alert("Database Insertion Failed: " + (err.message || err));
       setLoading(false);

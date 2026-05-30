@@ -8,11 +8,24 @@ export default function EventDetailPage() {
   const [ticketTypes, setTicketTypes] = useState<any[]>([]);
   const [stats, setStats] = useState({registrations:0, confirmed:0, pending:0, revenue:0, checkins:0, onAura:0, handshakes:0, unlocked:0});
   const [loading, setLoading] = useState(true);
+  
+  // Ticket Form Configuration
   const [showAddTicket, setShowAddTicket] = useState(false);
   const [ticketName, setTicketName] = useState("");
   const [ticketPrice, setTicketPrice] = useState("");
   const [ticketQty, setTicketQty] = useState("");
   const [saving, setSaving] = useState(false);
+
+  // Colorless Networking Stations State
+  const [stations, setStations] = useState<any[]>([]);
+  const [stationName, setStationName] = useState("");
+  const [stationSubtitle, setStationSubtitle] = useState("");
+  const [savingStation, setSavingStation] = useState(false);
+
+  // Banner Upload State
+  const [bannerUrl, setBannerUrl] = useState("");
+  const [uploadingBanner, setUploadingBanner] = useState(false);
+
   const [hostLink, setHostLink] = useState("");
   const [timeToLive, setTimeToLive] = useState("");
   const [ending, setEnding] = useState(false);
@@ -20,14 +33,27 @@ export default function EventDetailPage() {
   const params = useParams();
   const id = params.id as string;
 
+  async function loadStations() {
+    const { data } = await supabase
+      .from("event_stations")
+      .select("*")
+      .eq("event_id", id)
+      .order("created_at", { ascending: true });
+    setStations(data || []);
+  }
+
   useEffect(() => {
     async function load() {
       const { data: ev } = await supabase.from("events").select("*").eq("id", id).single();
       const { data: tickets } = await supabase.from("ticket_types").select("*").eq("event_id", id);
       setEvent(ev);
       setTicketTypes(tickets ?? []);
-      if (ev) { await loadStats(ev.id); }
-      
+      if (ev) { 
+        setBannerUrl(ev.banner_url || "");
+        await loadStats(ev.id); 
+        await loadStations();
+      }
+
       const { data: { user } } = await supabase.auth.getUser();
       if (user && ev?.status === "live") {
         const { data: hostReg } = await supabase.from("registrations").select("guest_access_link").eq("event_id", id).eq("guest_email", user.email).eq("status", "host").single();
@@ -83,6 +109,61 @@ export default function EventDetailPage() {
     setStats({ registrations: total || 0, confirmed: confirmed || 0, pending: (total || 0) - (confirmed || 0), revenue, checkins: checkins || 0, onAura: onAura || 0, handshakes: handshakes || 0, unlocked: unlocked || 0 });
   }
 
+  async function handleBannerUpload(e: React.ChangeEvent<HTMLInputElement>) {
+    if (!e.target.files || e.target.files.length === 0) return;
+    setUploadingBanner(true);
+    try {
+      const file = e.target.files[0];
+      const fileExt = file.name.split('.').pop();
+      const filePath = `${id}/banner.${fileExt}`;
+
+      const { error: uploadError } = await supabase.storage
+        .from('event-banners')
+        .upload(filePath, file, { upsert: true });
+
+      if (uploadError) throw uploadError;
+
+      const { data: { publicUrl } } = supabase.storage
+        .from('event-banners')
+        .getPublicUrl(filePath);
+
+      await supabase.from('events').update({ banner_url: publicUrl }).eq('id', id);
+      setBannerUrl(publicUrl);
+    } catch (err) {
+      console.error("Banner system processing failure:", err);
+    } finally {
+      setUploadingBanner(false);
+    }
+  }
+
+  async function handleAddStation(e: React.FormEvent) {
+    e.preventDefault();
+    if (!stationName) return;
+    setSavingStation(true);
+    try {
+      const { data, error } = await supabase.from("event_stations").insert({
+        event_id: id,
+        name: stationName,
+        subtitle: stationSubtitle
+      }).select().single();
+
+      if (!error && data) {
+        setStations([...stations, data]);
+        setStationName("");
+        setStationSubtitle("");
+      }
+    } catch (err) {
+      console.error(err);
+    } finally {
+      setSavingStation(false);
+    }
+  }
+
+  async function handleDeleteStation(stationId: string) {
+    const { error } = await supabase.from("event_stations").delete().eq("id", stationId);
+    if (!error) setStations(prev => prev.filter(s => s.id !== stationId));
+  }
+
   async function handleEndEvent() {
     setEnding(true);
     await supabase.from("events").update({ status: "ended" }).eq("id", id);
@@ -121,140 +202,168 @@ export default function EventDetailPage() {
     const engagementRate = stats.registrations > 0 ? Math.round((stats.checkins / stats.registrations) * 100) : 0;
     const connectionRate = stats.checkins > 0 ? Math.round((stats.handshakes / stats.checkins) * 100) : 0;
     const unlockRate = stats.handshakes > 0 ? Math.round((stats.unlocked / stats.handshakes) * 100) : 0;
-    const activationLevel = stats.handshakes === 0 ? "No networking data recorded." : stats.handshakes < 5 ? "Early connections were made. A great start." : stats.handshakes < 20 ? "Solid networking activity. Your guests were engaged." : stats.handshakes < 50 ? "Strong activation. Your room came alive." : "Exceptional activation. This event created lasting connections.";
+    const activationLevel = stats.handshakes === 0 ? "No networking data recorded." : stats.handshakes < 5 ? "Early connections were made." : stats.handshakes < 20 ? "Solid networking activity." : stats.handshakes < 50 ? "Strong activation. Your room came alive." : "Exceptional activation.";
 
     const content = [
       "OREETI — EVENT ACTIVATION REPORT",
       "The room, activated.",
       "=".repeat(40), "",
-      event.title, event.venue, new Date(event.start_time).toLocaleDateString("en-KE", { weekday: "long", day: "numeric", month: "long", year: "numeric" }),
-      "", "━".repeat(40), "ATTENDANCE", "━".repeat(40),
-      "Total Registrations:  " + stats.registrations, "Confirmed:            " + stats.confirmed,
+      event.title, event.venue, new Date(event.start_time).toLocaleDateString("en-KE"),
+      "", "ATTENDANCE",
+      "Total Registrations:  " + stats.registrations,
       "Checked In:           " + stats.checkins, "Attendance Rate:      " + engagementRate + "%",
-      stats.revenue > 0 ? "Total Revenue:        KES " + stats.revenue.toLocaleString() : "", "",
-      "━".repeat(40), "NETWORKING", "━".repeat(40),
+      "", "NETWORKING",
       "Guests Who Networked: " + stats.onAura, "Handshakes Exchanged: " + stats.handshakes,
-      "Profiles Unlocked:    " + stats.unlocked, "Connection Rate:      " + connectionRate + "% of attendees connected",
-      "Unlock Rate:          " + unlockRate + "% of connections went deeper", "",
-      "━".repeat(40), "ACTIVATION SUMMARY", "━".repeat(40),
-      activationLevel, stats.unlocked > 0 ? "\n" + stats.unlocked + " people walked out with real contact details." : "", "",
-      "━".repeat(40), "Generated by Oreeti · " + new Date().toLocaleDateString("en-KE"),
-      "hello.oreeti@gmail.com · The room, activated.",
-    ].filter(Boolean).join("\n").trim();
+      "Connection Rate:      " + connectionRate + "%",
+      "", "ACTIVATION SUMMARY", activationLevel
+    ].join("\n").trim();
     const blob = new Blob([content], { type: "text/plain" });
     const url = URL.createObjectURL(blob);
     const a = document.createElement("a");
-    a.href = url; a.download = event.title.replace(/\s+/g, "-") + "-oreeti-report.txt";
+    a.href = url; a.download = event.title.replace(/\s+/g, "-") + "-report.txt";
     document.body.appendChild(a); a.click(); document.body.removeChild(a); URL.revokeObjectURL(url);
   }
 
-  if (loading) return <div style={{ textAlign: "center", padding: "60px", color: "rgba(255,255,255,0.4)" }}>Loading...</div>;
-  if (!event) return <div style={{ textAlign: "center", padding: "60px", color: "rgba(255,255,255,0.4)" }}>Event not found</div>;
+  if (loading) return <div style={{ textAlign: "center", padding: "60px", color: "rgba(255,255,255,0.4)" }}>Loading Workspace...</div>;
+  if (!event) return <div style={{ textAlign: "center", padding: "60px", color: "rgba(255,255,255,0.4)" }}>Event Missing</div>;
 
   const statusColor: any = { draft: "rgba(255,255,255,0.4)", scheduled: "#D4AF37", live: "#D4AF37", ended: "rgba(255,255,255,0.3)" };
   const statusBg: any = { draft: "rgba(255,255,255,0.04)", scheduled: "rgba(212,175,55,0.08)", live: "rgba(212,175,55,0.12)", ended: "rgba(255,255,255,0.02)" };
   const registrationLink = `${typeof window !== "undefined" ? window.location.origin : ""}/register/${event.slug}`;
 
   const card = (label: string, value: any, color: string = "#f3f4f6") => (
-    <div style={{ background: "linear-gradient(160deg, #16151a 0%, #0f0e12 100%)", borderRadius: "14px", padding: "16px", border: "1px solid rgba(255, 255, 255, 0.04)", boxShadow: "0 10px 30px rgba(0,0,0,0.5)" }}>
+    <div style={{ background: "linear-gradient(160deg, #16151a 0%, #0f0e12 100%)", borderRadius: "14px", padding: "16px", border: "1px solid rgba(255, 255, 255, 0.04)" }}>
       <p style={{ fontSize: "24px", fontWeight: "700", color, lineHeight: "1", marginBottom: "6px" }}>{value}</p>
       <p style={{ fontSize: "11px", color: "rgba(255,255,255,0.45)", fontWeight: "500", letterSpacing: "0.02em" }}>{label}</p>
     </div>
   );
 
   return (
-    <div style={{ padding: "40px 24px 120px 24px", background: "#060608", minHeight: "100vh" }}>
-      <div style={{ maxWidth: "600px", margin: "0 auto" }}>
-        
+    <div style={{ background: "#060608", minHeight: "100vh", color: "#f3f4f6" }}>
+      
+      {/* 1. CINEMATIC EVENT BANNER VIEWPORT (ABSOLUTE TOP EDGE-TO-EDGE) */}
+      <div style={{ width: "100%", height: "220px", background: "#111014", position: "relative", overflow: "hidden", borderBottom: "1px solid rgba(255,255,255,0.04)" }}>
+        {bannerUrl ? (
+          <img src={bannerUrl} alt="Event Workspace Horizon" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+        ) : (
+          <div style={{ width: "100%", height: "100%", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", padding: "20px" }}>
+            <p style={{ fontSize: "10px", color: "rgba(255,255,255,0.3)", letterSpacing: "0.15em", textTransform: "uppercase", margin: "0 0 12px" }}>Atmospheric Workspace Banner Missing</p>
+            <label style={{ padding: "8px 16px", border: "1px dashed rgba(255,255,255,0.15)", borderRadius: "6px", fontSize: "11px", textTransform: "uppercase", letterSpacing: "0.05em", cursor: "pointer", color: "rgba(255,255,255,0.5)" }}>
+              {uploadingBanner ? "Processing Upload..." : "Upload Canvas"}
+              <input type="file" accept="image/*" onChange={handleBannerUpload} style={{ display: "none" }} />
+            </label>
+          </div>
+        )}
+      </div>
+
+      {/* CORE 600px CONTROL HOUSING */}
+      <div style={{ maxWidth: "600px", margin: "0 auto", padding: "24px 24px 120px 24px" }}>
+
         <button onClick={() => router.back()} style={{ background: "rgba(255, 255, 255, 0.03)", border: "1px solid rgba(255,255,255,0.05)", color: "rgba(255,255,255,0.5)", fontSize: "15px", cursor: "pointer", marginBottom: "24px", width: "38px", height: "38px", borderRadius: "50%", display: "flex", alignItems: "center", justifyContent: "center" }}>←</button>
 
-        <div style={{ background: "linear-gradient(160deg, #16151a 0%, #0f0e12 100%)", borderRadius: "24px", padding: "24px", marginBottom: "16px", border: "1px solid rgba(255, 255, 255, 0.04)", boxShadow: "0 20px 40px rgba(0,0,0,0.6)" }}>
+        {/* METADATA BLOCK */}
+        <div style={{ background: "linear-gradient(160deg, #16151a 0%, #0f0e12 100%)", borderRadius: "24px", padding: "24px", marginBottom: "16px", border: "1px solid rgba(255, 255, 255, 0.04)" }}>
           <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: "16px" }}>
             <h1 style={{ fontSize: "22px", fontWeight: "600", color: "#f3f4f6", letterSpacing: "-0.01em", flex: 1, marginRight: "16px", margin: 0 }}>{event.title}</h1>
-            <span style={{ fontSize: "10px", textTransform: "uppercase", fontWeight: "700", color: statusColor[event.status], background: statusBg[event.status], padding: "4px 10px", borderRadius: "20px", letterSpacing: "0.08em", border: event.status !== "draft" ? "1px solid rgba(212,175,55,0.2)" : "1px solid rgba(255,255,255,0.05)", whiteSpace: "nowrap" }}>{event.status}</span>
+            <span style={{ fontSize: "10px", textTransform: "uppercase", fontWeight: "700", color: statusColor[event.status], background: statusBg[event.status], padding: "4px 10px", borderRadius: "20px", letterSpacing: "0.08em", border: event.status !== "draft" ? "1px solid rgba(212,175,55,0.2)" : "1px solid rgba(255,255,255,0.05)" }}>{event.status}</span>
           </div>
-          <div style={{ height: "1px", background: "rgba(255,255,255,0.04)", marginBottom: "16px" }} />
-          <p style={{ fontSize: "13px", color: "rgba(255,255,255,0.5)", marginBottom: "6px", display: "flex", alignItems: "center", gap: "6px" }}>📍 {event.venue}</p>
-          <p style={{ fontSize: "13px", color: "rgba(255,255,255,0.5)", marginBottom: "6px", display: "flex", alignItems: "center", gap: "6px" }}>🗓 {new Date(event.start_time).toLocaleDateString("en-KE", { weekday: "short", day: "numeric", month: "short", year: "numeric" })}</p>
-          <p style={{ fontSize: "13px", color: "rgba(255,255,255,0.5)", margin: 0, display: "flex", alignItems: "center", gap: "6px" }}>🕐 {new Date(event.start_time).toLocaleTimeString("en-KE", { hour: "2-digit", minute: "2-digit" })} — {new Date(event.end_time).toLocaleTimeString("en-KE", { hour: "2-digit", minute: "2-digit" })}</p>
+          <p style={{ fontSize: "13px", color: "rgba(255,255,255,0.5)", marginBottom: "6px" }}>📍 {event.venue}</p>
+          <p style={{ fontSize: "13px", color: "rgba(255,255,255,0.5)", margin: 0 }}>🗓 {new Date(event.start_time).toLocaleDateString("en-KE", { weekday: "short", day: "numeric", month: "short", year: "numeric" })}</p>
         </div>
 
+        {/* LIFECYCLE CONTROLLER */}
         <div style={{ marginBottom: "16px" }}>
           {event.status === "scheduled" && (
             <div style={{ background: "rgba(212,175,55,0.05)", borderRadius: "16px", padding: "20px", border: "1px solid rgba(212,175,55,0.15)", textAlign: "center" }}>
               <p style={{ fontSize: "10px", color: "#D4AF37", fontWeight: "700", letterSpacing: "0.1em", textTransform: "uppercase", marginBottom: "6px" }}>Live Sync Launch Sequence In</p>
-              <p style={{ fontSize: "36px", fontWeight: "700", color: "#D4AF37", letterSpacing: "-0.02em", margin: 0 }}>{timeToLive || "..."}</p>
-              <p style={{ fontSize: "11px", color: "rgba(255,255,255,0.35)", marginTop: "6px" }}>at {new Date(event.start_time).toLocaleTimeString("en-KE", { hour: "2-digit", minute: "2-digit" })}</p>
+              <p style={{ fontSize: "36px", fontWeight: "700", color: "#D4AF37", margin: 0 }}>{timeToLive || "..."}</p>
             </div>
           )}
           {event.status === "live" && (
-            <button onClick={handleEndEvent} disabled={ending} style={{ width: "100%", padding: "16px", borderRadius: "14px", background: "rgba(248,113,113,0.06)", color: "#f87171", border: "1px solid rgba(248,113,113,0.15)", fontSize: "14px", fontWeight: "600", cursor: "pointer", letterSpacing: "0.02em" }}>
+            <button onClick={handleEndEvent} disabled={ending} style={{ width: "100%", padding: "16px", borderRadius: "14px", background: "rgba(248,113,113,0.06)", color: "#f87171", border: "1px solid rgba(248,113,113,0.15)", fontSize: "14px", fontWeight: "600", cursor: "pointer" }}>
               {ending ? "Closing Pipeline..." : "End Current Event"}
             </button>
           )}
         </div>
 
+        {/* HOST LINKS */}
         {hostLink && (
           <div style={{ background: "rgba(212,175,55,0.06)", borderRadius: "18px", padding: "18px", marginBottom: "16px", border: "1px solid rgba(212,175,55,0.12)" }}>
-            <p style={{ fontSize: "11px", color: "#D4AF37", fontWeight: "700", letterSpacing: "0.08em", textTransform: "uppercase", marginBottom: "4px" }}>★ Your Host Link</p>
-            <p style={{ fontSize: "11px", color: "rgba(255,255,255,0.4)", marginBottom: "12px" }}>Open this terminal to assume verified host credentials in the room</p>
-            <p style={{ fontSize: "12px", color: "#93c5fd", wordBreak: "break-all", marginBottom: "16px", fontFamily: "monospace" }}>{hostLink.replace("https://", "")}</p>
-            <div style={{ display: "flex", gap: "10px" }}>
-              <button onClick={() => copyLink(hostLink)} style={{ flex: 1, padding: "12px", borderRadius: "10px", background: "rgba(212,175,55,0.12)", color: "#D4AF37", border: "1px solid rgba(212,175,55,0.2)", fontSize: "12px", cursor: "pointer", fontWeight: "600" }}>Copy link</button>
-              {typeof navigator !== "undefined" && navigator.share && <button onClick={() => navigator.share({ title: "My Host Link", url: hostLink })} style={{ padding: "12px 18px", borderRadius: "10px", background: "rgba(255,255,255,0.04)", color: "rgba(255,255,255,0.5)", border: "1px solid rgba(255,255,255,0.06)", fontSize: "12px", cursor: "pointer" }}>Share</button>}
-            </div>
+            <p style={{ fontSize: "11px", color: "#D4AF37", fontWeight: "700", letterSpacing: "0.08em", textTransform: "uppercase", marginBottom: "4px" }}>★ Verified Host Credentials</p>
+            <p style={{ fontSize: "12px", color: "#93c5fd", wordBreak: "break-all", marginBottom: "12px", fontFamily: "monospace" }}>{hostLink.replace("https://", "")}</p>
+            <button onClick={() => copyLink(hostLink)} style={{ width: "100%", padding: "12px", borderRadius: "10px", background: "rgba(212,175,55,0.12)", color: "#D4AF37", border: "1px solid rgba(212,175,55,0.2)", fontSize: "12px", cursor: "pointer", fontWeight: "600" }}>Copy Host Key Link</button>
           </div>
         )}
 
         {event.status !== "draft" && event.status !== "ended" && (
           <div style={{ background: "rgba(255,255,255,0.02)", borderRadius: "18px", padding: "18px", marginBottom: "16px", border: "1px solid rgba(255,255,255,0.04)" }}>
-            <p style={{ fontSize: "11px", color: "rgba(255,255,255,0.45)", fontWeight: "700", letterSpacing: "0.08em", textTransform: "uppercase", marginBottom: "4px" }}>Registration Link</p>
-            <p style={{ fontSize: "12px", color: "#93c5fd", wordBreak: "break-all", marginBottom: "16px", fontFamily: "monospace" }}>{registrationLink.replace("https://", "")}</p>
-            <div style={{ display: "flex", gap: "10px" }}>
-              <button onClick={() => copyLink(registrationLink)} style={{ flex: 1, padding: "12px", borderRadius: "10px", background: "rgba(255,255,255,0.04)", color: "#f3f4f6", border: "1px solid rgba(255,255,255,0.06)", fontSize: "12px", cursor: "pointer", fontWeight: "600" }}>Copy link</button>
-              {typeof navigator !== "undefined" && navigator.share && <button onClick={() => navigator.share({ title: event.title, text: "Register for " + event.title, url: registrationLink })} style={{ padding: "12px 18px", borderRadius: "10px", background: "rgba(255,255,255,0.04)", color: "rgba(255,255,255,0.5)", border: "none", fontSize: "12px", cursor: "pointer" }}>Share</button>}
-            </div>
+            <p style={{ fontSize: "11px", color: "rgba(255,255,255,0.45)", fontWeight: "700", letterSpacing: "0.08em", textTransform: "uppercase", marginBottom: "4px" }}>Registration Gateway Link</p>
+            <p style={{ fontSize: "12px", color: "#93c5fd", wordBreak: "break-all", marginBottom: "12px", fontFamily: "monospace" }}>{registrationLink.replace("https://", "")}</p>
+            <button onClick={() => copyLink(registrationLink)} style={{ width: "100%", padding: "12px", borderRadius: "10px", background: "rgba(255,255,255,0.04)", color: "#f3f4f6", border: "1px solid rgba(255,255,255,0.06)", fontSize: "12px", cursor: "pointer", fontWeight: "600" }}>Copy Registration Link</button>
           </div>
         )}
 
         {(event.status === "live" || event.status === "ended") && (
-          <div style={{ background: "#111015", borderRadius: "16px", padding: "18px", marginBottom: "16px", border: "1px solid rgba(255,255,255,0.04)", display: "flex", justifyContent: "space-between", alignItems: "center", boxShadow: "0 10px 30px rgba(0,0,0,0.3)" }}>
+          <div style={{ background: "#111015", borderRadius: "16px", padding: "18px", marginBottom: "16px", border: "1px solid rgba(255,255,255,0.04)", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
             <div>
-              <p style={{ fontSize: "14px", fontWeight: "600", color: "#f1f0f5", margin: "0 0 2px 0" }}>Gate Scanner</p>
-              <p style={{ fontSize: "12px", color: "rgba(255,255,255,0.4)" }}>Check in guests at entrance</p>
+              <p style={{ fontSize: "14px", fontWeight: "600", color: "#f1f0f5", margin: 0 }}>Gate Access Scanner</p>
+              <p style={{ fontSize: "12px", color: "rgba(255,255,255,0.4)", margin: 0 }}>Check in inbound arrivals</p>
             </div>
-            <button onClick={() => router.push("/dashboard/scanner/" + id)} style={{ padding: "12px 20px", borderRadius: "12px", background: "linear-gradient(135deg, #221b0f, #13100b)", color: "#D4AF37", border: "1px solid rgba(212,175,55,0.25)", fontSize: "12px", cursor: "pointer", fontWeight: "700", letterSpacing: "0.05em" }}>Open →</button>
+            <button onClick={() => router.push("/dashboard/scanner/" + id)} style={{ padding: "12px 20px", borderRadius: "12px", background: "linear-gradient(135deg, #221b0f, #13100b)", color: "#D4AF37", border: "1px solid rgba(212,175,55,0.25)", fontSize: "12px", cursor: "pointer", fontWeight: "700" }}>Open Scanner →</button>
           </div>
         )}
 
-        <div style={{ background: "linear-gradient(160deg, #16151a 0%, #0f0e12 100%)", borderRadius: "20px", padding: "20px", marginBottom: "16px", border: "1px solid rgba(255, 255, 255, 0.04)", boxShadow: "0 15px 35px rgba(0,0,0,0.4)" }}>
-          <p style={{ fontSize: "10px", fontWeight: "700", color: "rgba(255,255,255,0.4)", letterSpacing: "0.12em", textTransform: "uppercase", marginBottom: "14px" }}>Registrations</p>
-          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "10px", marginBottom: "10px" }}>
-            {card("Total", stats.registrations)}
-            {card("Confirmed", stats.confirmed, "#D4AF37")}
-            {card("Pending", stats.pending, "rgba(255,255,255,0.6)")}
+        {/* REGISTRATION COUNTERS */}
+        <div style={{ background: "linear-gradient(160deg, #16151a 0%, #0f0e12 100%)", borderRadius: "20px", padding: "20px", marginBottom: "16px", border: "1px solid rgba(255, 255, 255, 0.04)" }}>
+          <p style={{ fontSize: "10px", fontWeight: "700", color: "rgba(255,255,255,0.4)", letterSpacing: "0.12em", textTransform: "uppercase", marginBottom: "14px" }}>Telemetry Metrics</p>
+          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "10px" }}>
+            {card("Total Registrations", stats.registrations)}
             {card("Checked In", stats.checkins, "#D4AF37")}
           </div>
-          {stats.revenue > 0 && (
-            <div style={{ background: "rgba(212,175,55,0.06)", borderRadius: "12px", padding: "14px", border: "1px solid rgba(212,175,55,0.15)", marginTop: "10px" }}>
-              <p style={{ fontSize: "22px", fontWeight: "700", color: "#D4AF37", margin: "0 0 2px 0" }}>KES {stats.revenue.toLocaleString()}</p>
-              <p style={{ fontSize: "11px", color: "rgba(255,255,255,0.45)" }}>Total Revenue</p>
-            </div>
-          )}
         </div>
 
+        {/* NETWORKING METRICS */}
         <div style={{ background: "linear-gradient(160deg, #16151a 0%, #0f0e12 100%)", borderRadius: "20px", padding: "20px", marginBottom: "16px", border: "1px solid rgba(255, 255, 255, 0.04)" }}>
-          <p style={{ fontSize: "10px", fontWeight: "700", color: "rgba(255,255,255,0.4)", letterSpacing: "0.12em", textTransform: "uppercase", marginBottom: "14px" }}>Networking</p>
+          <p style={{ fontSize: "10px", fontWeight: "700", color: "rgba(255,255,255,0.4)", letterSpacing: "0.12em", textTransform: "uppercase", marginBottom: "14px" }}>Aura Interaction Data</p>
           <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: "8px" }}>
-            {card("Networking", stats.onAura, "#D4AF37")}
+            {card("Active", stats.onAura, "#D4AF37")}
             {card("Handshakes", stats.handshakes, "#D4AF37")}
             {card("Unlocked", stats.unlocked, "#D4AF37")}
           </div>
         </div>
 
+        {/* 2. NEW ZONE: SIMPLIFIED NETWORKING STATIONS SECTION (CENTERED STACK) */}
+        <div style={{ background: "linear-gradient(160deg, #16151a 0%, #0f0e12 100%)", borderRadius: "20px", padding: "20px", marginBottom: "16px", border: "1px solid rgba(255, 255, 255, 0.04)" }}>
+          <p style={{ fontSize: "10px", fontWeight: "700", color: "rgba(255,255,255,0.4)", letterSpacing: "0.12em", textTransform: "uppercase", marginBottom: "16px" }}>Physical Networking Stations</p>
+          
+          {/* Colorless repeating entry row form fields */}
+          <form onSubmit={handleAddStation} style={{ display: "flex", flexWrap: "wrap", gap: "8px", background: "rgba(255,255,255,0.01)", padding: "12px", borderRadius: "12px", marginBottom: "16px", border: "1px solid rgba(255,255,255,0.03)" }}>
+            <input value={stationName} onChange={e => setStationName(e.target.value)} placeholder="Station Name (e.g. Zone A)" style={{ flex: "1 1 180px", padding: "10px", borderRadius: "8px", border: "1px solid rgba(255,255,255,0.05)", background: "#060608", color: "#fff", fontSize: "12px", outline: "none" }} required />
+            <input value={stationSubtitle} onChange={e => setStationSubtitle(e.target.value)} placeholder="Subtitle Context (e.g. Fashion & Design)" style={{ flex: "2 1 240px", padding: "10px", borderRadius: "8px", border: "1px solid rgba(255,255,255,0.05)", background: "#060608", color: "#fff", fontSize: "12px", outline: "none" }} />
+            <button type="submit" disabled={savingStation} style={{ padding: "0 16px", height: "36px", borderRadius: "8px", background: "rgba(255,255,255,0.03)", color: "#D4AF37", border: "1px solid rgba(212,175,55,0.2)", fontSize: "11px", fontWeight: "600", textTransform: "uppercase", letterSpacing: "0.05em", cursor: "pointer", marginLeft: "auto" }}>
+              {savingStation ? "Anchoring..." : "+ Anchor Station"}
+            </button>
+          </form>
+
+          {/* Render Active Anchored Stations Without Hard Inner Borders */}
+          <div style={{ display: "flex", flexDirection: "column", gap: "10px" }}>
+            {stations.map(s => (
+              <div key={s.id} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "8px 4px" }}>
+                <div>
+                  <h4 style={{ fontSize: "13px", fontWeight: "600", margin: "0 0 2px 0", color: "#f3f4f6" }}>{s.name}</h4>
+                  <p style={{ fontSize: "11px", color: "rgba(255,255,255,0.4)", margin: 0 }}>{s.subtitle || "Ambient Location Matrix"}</p>
+                </div>
+                <button onClick={() => handleDeleteStation(s.id)} style={{ background: "transparent", border: "none", color: "rgba(248,113,113,0.45)", fontSize: "11px", cursor: "pointer" }}>Remove</button>
+              </div>
+            ))}
+            {stations.length === 0 && <p style={{ fontSize: "12px", color: "rgba(255,255,255,0.35)", margin: "4px 0 0 0" }}>No physical routing zones mapped into this venue layout yet.</p>}
+          </div>
+        </div>
+
+        {/* TICKET TYPES MANAGEMENT */}
         <div style={{ background: "linear-gradient(160deg, #16151a 0%, #0f0e12 100%)", borderRadius: "20px", padding: "20px", marginBottom: "16px", border: "1px solid rgba(255, 255, 255, 0.04)" }}>
           <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "16px" }}>
-            <p style={{ fontSize: "10px", fontWeight: "700", color: "rgba(255,255,255,0.4)", letterSpacing: "0.12em", textTransform: "uppercase", margin: 0, flex: 1 }}>Ticket Types</p>
+            <p style={{ fontSize: "10px", fontWeight: "700", color: "rgba(255,255,255,0.4)", letterSpacing: "0.12em", textTransform: "uppercase", margin: 0, flex: 1 }}>Ticket Access Tiers</p>
             <button onClick={() => setShowAddTicket(!showAddTicket)} style={{ padding: "6px 14px", borderRadius: "8px", background: "rgba(212,175,55,0.08)", color: "#D4AF37", border: "1px solid rgba(212,175,55,0.2)", fontSize: "12px", cursor: "pointer", fontWeight: "600" }}>
               {showAddTicket ? "Cancel" : "+ Add"}
             </button>
@@ -266,37 +375,35 @@ export default function EventDetailPage() {
               <input value={ticketPrice} onChange={e => setTicketPrice(e.target.value)} placeholder="Price in KES (0 for free)" type="number" style={{ width: "100%", padding: "12px", borderRadius: "10px", border: "1px solid rgba(255,255,255,0.06)", background: "rgba(255,255,255,0.03)", color: "#f3f4f6", fontSize: "13px", outline: "none", marginBottom: "8px", boxSizing: "border-box" }} />
               <input value={ticketQty} onChange={e => setTicketQty(e.target.value)} placeholder="Quantity (empty = unlimited)" type="number" style={{ width: "100%", padding: "12px", borderRadius: "10px", border: "1px solid rgba(255,255,255,0.06)", background: "rgba(255,255,255,0.03)", color: "#f3f4f6", fontSize: "13px", outline: "none", marginBottom: "14px", boxSizing: "border-box" }} />
               <button onClick={handleAddTicket} disabled={saving} style={{ width: "100%", padding: "12px", borderRadius: "10px", background: "linear-gradient(135deg, #221b0f, #13100b)", color: "#D4AF37", border: "1px solid rgba(212,175,55,0.25)", fontSize: "13px", cursor: "pointer", fontWeight: "700" }}>
-                {saving ? "Saving..." : "Save"}
+                Save Tier
               </button>
             </div>
           )}
 
-          {ticketTypes.length === 0 && !showAddTicket && <p style={{ color: "rgba(255,255,255,0.35)", fontSize: "13px", margin: "8px 0 0 0" }}>No ticket types yet.</p>}
-          
           <div style={{ display: "flex", flexDirection: "column" }}>
             {ticketTypes.map(t => (
-              <div key={t.id} style={{ display: "flex", justifyContent: "space-between", padding: "12px 0", borderBottom: "1px solid rgba(255,255,255,0.03)" }}>
+              <div key={t.id} style={{ display: "flex", justifyContent: "space-between", padding: "12px 0", borderBottom: "1px solid rgba(255,255,255,0.02)" }}>
                 <div>
                   <p style={{ fontSize: "14px", fontWeight: "500", color: "#f3f4f6", margin: "0 0 2px 0" }}>{t.name}</p>
-                  <p style={{ fontSize: "11px", color: "rgba(255,255,255,0.35)", margin: 0 }}>{t.quantity ? `Quantity: ${t.quantity}` : "Unlimited"}</p>
+                  <p style={{ fontSize: "11px", color: "rgba(255,255,255,0.35)", margin: 0 }}>{t.quantity ? `Quantity: ${t.quantity}` : "Unlimited Available"}</p>
                 </div>
-                <p style={{ fontSize: "14px", color: "#D4AF37", fontWeight: "600", margin: 0 }}>{t.price > 0 ? "KES " + t.price.toLocaleString() : "Free"}</p>
+                <p style={{ fontSize: "14px", color: "#D4AF37", fontWeight: "600", margin: 0 }}>{t.price > 0 ? "KES " + t.price.toLocaleString() : "Free Access"}</p>
               </div>
             ))}
           </div>
         </div>
 
+        {/* RECRUITMENT PUBLISH DRAWER */}
         {event.status === "draft" && (
-          <div style={{ background: "#111015", borderRadius: "20px", padding: "20px", marginBottom: "16px", border: "1px solid rgba(212,175,55,0.2)", boxShadow: "0 15px 30px rgba(0,0,0,0.4)" }}>
-            <p style={{ fontSize: "13px", color: "rgba(255,255,255,0.5)", marginBottom: "16px", lineHeight: "1.5" }}>Add ticket types above, then publish your event to open registrations.</p>
-            <button onClick={handlePublish} style={{ width: "100%", padding: "16px", borderRadius: "14px", background: "linear-gradient(135deg, #221b0f, #13100b)", color: "#D4AF37", border: "1px solid rgba(212,175,55,0.35)", fontSize: "14px", fontWeight: "700", cursor: "pointer", letterSpacing: "0.05em", textTransform: "uppercase", boxShadow: "0 8px 24px rgba(0,0,0,0.3)" }}>Publish Event</button>
+          <div style={{ background: "#111015", borderRadius: "20px", padding: "20px", marginBottom: "16px", border: "1px solid rgba(212,175,55,0.2)" }}>
+            <button onClick={handlePublish} style={{ width: "100%", padding: "16px", borderRadius: "14px", background: "linear-gradient(135deg, #221b0f, #13100b)", color: "#D4AF37", border: "1px solid rgba(212,175,55,0.35)", fontSize: "14px", fontWeight: "700", cursor: "pointer", textTransform: "uppercase", letterSpacing: "0.05em" }}>Publish Activation</button>
           </div>
         )}
 
+        {/* EXPORT WORKSPACE */}
         <div style={{ background: "rgba(255,255,255,0.01)", borderRadius: "20px", padding: "20px", marginBottom: "40px", border: "1px solid rgba(255,255,255,0.03)" }}>
-          <p style={{ fontSize: "10px", fontWeight: "700", color: "rgba(255,255,255,0.4)", letterSpacing: "0.12em", textTransform: "uppercase", marginBottom: "6px" }}>Activation Report</p>
-          <p style={{ fontSize: "12px", color: "rgba(255,255,255,0.45)", marginBottom: "16px" }}>Download a summary of registrations and networking activity.</p>
-          <button onClick={downloadReport} style={{ width: "100%", padding: "14px", borderRadius: "12px", background: "rgba(255,255,255,0.03)", color: "#f3f4f6", border: "1px solid rgba(255,255,255,0.05)", fontSize: "13px", fontWeight: "600", cursor: "pointer", letterSpacing: "0.01em" }}>⬇ Download Report</button>
+          <p style={{ fontSize: "10px", fontWeight: "700", color: "rgba(255,255,255,0.4)", letterSpacing: "0.12em", textTransform: "uppercase", marginBottom: "6px" }}>Activation Report Summary</p>
+          <button onClick={downloadReport} style={{ width: "100%", padding: "14px", borderRadius: "12px", background: "rgba(255,255,255,0.03)", color: "#f3f4f6", border: "1px solid rgba(255,255,255,0.05)", fontSize: "13px", fontWeight: "600", cursor: "pointer" }}>⬇ Download Activation Text Summary</button>
         </div>
 
       </div>
