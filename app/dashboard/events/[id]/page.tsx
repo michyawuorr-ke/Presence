@@ -108,7 +108,6 @@ export default function EventDetailPage() {
     const revenue = (revenueData || []).reduce((sum: number, r: any) => sum + (r.amount || 0), 0);
     setStats({ registrations: total || 0, confirmed: confirmed || 0, pending: (total || 0) - (confirmed || 0), revenue, checkins: checkins || 0, onAura: onAura || 0, handshakes: handshakes || 0, unlocked: unlocked || 0 });
   }
-
   async function handleBannerUpload(e: React.ChangeEvent<HTMLInputElement>) {
     if (!e.target.files || e.target.files.length === 0) return;
     setUploadingBanner(true);
