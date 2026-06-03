@@ -114,7 +114,7 @@ export default function EventDetailPage() {
     try {
       const file = e.target.files[0];
       const fileExt = file.name.split('.').pop();
-      const filePath = `${id}/banner.${fileExt}`;
+      const filePath = `${id}/banner_${Date.now()}.${fileExt}`;
 
       const { error: uploadError } = await supabase.storage
         .from('event-banners')
@@ -130,7 +130,7 @@ export default function EventDetailPage() {
       setBannerUrl(publicUrl);
       setEvent((prev: any) => prev ? { ...prev, banner_url: publicUrl } : prev);
     } catch (err) {
-      console.error("Banner system processing failure:", err);
+      console.error("Banner deployment system error details:", err);
     } finally {
       setUploadingBanner(false);
     }
