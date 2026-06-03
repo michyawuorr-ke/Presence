@@ -19,8 +19,7 @@ export default function RegisterPage() {
   const [error, setError] = useState("");
   const [acceptedTerms, setAcceptedTerms] = useState(false);
   const [paymentState, setPaymentState] = useState<"idle" | "waiting" | "success" | "failed">("idle");
-  
-  // Native state to hold the real validated access token for redirection
+
   const [confirmedToken, setConfirmedToken] = useState("");
 
   const params = useParams();
@@ -68,52 +67,73 @@ export default function RegisterPage() {
   async function handleRegister() {
     if (!acceptedTerms) { setError("You must accept the terms to continue"); return; }
     if (!name || !email) { setError("Please fill in your name and email"); return; }
-    const isPaid = Number(selectedTicket?.price) > 0;
-    if (isPaid && !phone) { setError("Phone number required for M-Pesa payment"); return; }
 
     setSubmitting(true);
     setError("");
 
-    // Generate the unique secure token once natively
-    const accessToken = Array.from(crypto.getRandomValues(new Uint8Array(32))).map(b => b.toString(16).padStart(2, "0")).join("");
-    const guestUrl = window.location.origin + "/e/" + event.slug + "/g/" + accessToken;
-    const totalAmount = Number(selectedTicket?.price ?? 0) * quantity;
+    try {
+      const randomBytes = Array.from(crypto.getRandomValues(new Uint8Array(16))).map(b => b.toString(16).padStart(2, "0")).join("");
+      const accessToken = Date.now().toString(16) + "-" + randomBytes;
+      const guestUrl = window.location.origin + "/e/" + event.slug + "/g/" + accessToken;
+      
+      setConfirmedToken(accessToken);
 
-    // Persist it into the state context immediately so the success UI can read it
-    setConfirmedToken(accessToken);
+      const isFreeEvent = !selectedTicket || Number(selectedTicket.price) <= 0;
 
-    const { data: reg, error: regError } = await supabase.from("registrations").insert({
-      event_id: event.id,
-      ticket_type_id: selectedTicket?.id,
-      guest_name: name,
-      guest_email: email,
-      guest_phone: phone,
-      status: isPaid ? "pending" : "confirmed",
-      amount: totalAmount,
-      paid: !isPaid,
-      access_token: accessToken,
-      guest_access_link: guestUrl,
-    }).select().single();
+      if (isFreeEvent) {
+        const { error: freeError } = await supabase.from("registrations").insert({
+          event_id: event.id,
+          ticket_type_id: selectedTicket?.id || null,
+          guest_name: name,
+          guest_email: email,
+          guest_phone: phone,
+          status: "confirmed",
+          amount: 0,
+          paid: true,
+          access_token: accessToken,
+          guest_access_link: guestUrl,
+        });
 
-    if (regError) { setError(regError.message); setSubmitting(false); return; }
+        if (freeError) throw new Error(freeError.message);
+        
+        setSuccess(true);
+        setSubmitting(false);
+        return;
+      }
 
-    if (!isPaid) {
-      setSuccess(true);
+      const totalAmount = Number(selectedTicket?.price ?? 0) * quantity;
+      const { data: reg, error: regError } = await supabase.from("registrations").insert({
+        event_id: event.id,
+        ticket_type_id: selectedTicket?.id,
+        guest_name: name,
+        guest_email: email,
+        guest_phone: phone,
+        status: "pending",
+        amount: totalAmount,
+        paid: false,
+        access_token: accessToken,
+        guest_access_link: guestUrl,
+      }).select().single();
+
+      if (regError) throw new Error(regError.message);
+
+      const res = await fetch("/api/payments/initiate", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ phone: normalizePhone(phone), amount: totalAmount, registration_id: reg.id })
+      });
+
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || "Payment initiation failed");
+
+      setPaymentState("waiting");
+      pollPayment(data.checkout_request_id, guestUrl);
+
+    } catch (err) {
+      console.error("Registration failed:", err);
+      setError((err as any).message || "Registration failed. Please try again.");
       setSubmitting(false);
-      return;
     }
-
-    const norm = normalizePhone(phone);
-    const res = await fetch("/api/payments/initiate", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ phone: norm, amount: totalAmount, registration_id: reg.id })
-    });
-
-    const data = await res.json();
-    if (!res.ok) { setError(data.error || "Payment initiation failed"); setSubmitting(false); return; }
-    setPaymentState("waiting");
-    pollPayment(data.checkout_request_id, guestUrl);
   }
 
   function resetForm() {
@@ -127,14 +147,14 @@ export default function RegisterPage() {
 
   const inp = {
     width: "100%",
-    padding: "12px 0",
+    padding: "14px 0",
     background: "transparent",
     border: "none",
     borderBottom: "1px solid rgba(255,255,255,0.08)",
     color: "#fff",
     fontSize: "14px",
     outline: "none",
-    marginBottom: "16px",
+    marginBottom: "20px",
     boxSizing: "border-box" as const,
     borderRadius: 0
   };
@@ -226,6 +246,42 @@ export default function RegisterPage() {
           </h1>
           <p style={{ color: "rgba(255,255,255,0.6)", fontSize: "14px", margin: 0 }}>Event: {event.title}</p>
         </div>
+
+        {/* HIGH-END MINIMALISTIC TICKET TIER SELECTOR */}
+        {ticketTypes.length > 0 && (
+          <div style={{ marginBottom: "8px", position: "relative", width: "100%" }}>
+            <select
+              value={selectedTicket?.id || ""}
+              onChange={(e) => {
+                const selected = ticketTypes.find(t => t.id === e.target.value);
+                setSelectedTicket(selected);
+              }}
+              style={{
+                width: "100%",
+                padding: "14px 0",
+                background: "transparent",
+                border: "none",
+                borderBottom: "1px solid rgba(255,255,255,0.08)",
+                color: "#fff",
+                fontSize: "14px",
+                outline: "none",
+                borderRadius: 0,
+                cursor: "pointer",
+                appearance: "none",
+                WebkitAppearance: "none"
+              }}
+            >
+              {ticketTypes.map((t) => (
+                <option key={t.id} value={t.id} style={{ background: "#000", color: "#fff" }}>
+                  {t.name} — {Number(t.price) <= 0 ? "Complimentary" : `${t.price} KES`}
+                </option>
+              ))}
+            </select>
+            <div style={{ position: "absolute", right: "0", top: "50%", transform: "translateY(-50%)", color: "rgba(255,255,255,0.25)", fontSize: "11px", pointerEvents: "none", letterSpacing: "0.05em" }}>
+              [SELECT TIER]
+            </div>
+          </div>
+        )}
 
         <input value={name} onChange={e => setName(e.target.value)} placeholder="Your Name" type="text" style={inp} />
         <input value={email} onChange={e => setEmail(e.target.value)} placeholder="Email Address" type="email" style={inp} />
