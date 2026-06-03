@@ -130,7 +130,7 @@ export default function EventDetailPage() {
       setBannerUrl(publicUrl);
       setEvent((prev: any) => prev ? { ...prev, banner_url: publicUrl } : prev);
     } catch (err) {
-      console.error("Banner deployment system error details:", err);
+      console.error("Banner deployment system error details:", err); alert("Upload Error: " + ((err as any).message || JSON.stringify(err)));
     } finally {
       setUploadingBanner(false);
     }
