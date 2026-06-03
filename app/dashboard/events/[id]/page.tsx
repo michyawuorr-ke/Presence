@@ -243,8 +243,8 @@ export default function EventDetailPage() {
       
       {/* 1. CINEMATIC EVENT BANNER VIEWPORT (ABSOLUTE TOP EDGE-TO-EDGE) */}
       <div style={{ width: "100%", height: "220px", background: "#111014", position: "relative", overflow: "hidden", borderBottom: "1px solid rgba(255,255,255,0.04)" }}>
-        {bannerUrl ? (
-          <img src={bannerUrl} alt="Event Workspace Horizon" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+        {(bannerUrl || event?.banner_url) ? (
+          <img src={bannerUrl || event?.banner_url} alt="Event Workspace Horizon" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
         ) : (
           <div style={{ width: "100%", height: "100%", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", padding: "20px" }}>
             <p style={{ fontSize: "10px", color: "rgba(255,255,255,0.3)", letterSpacing: "0.15em", textTransform: "uppercase", margin: "0 0 12px" }}>Atmospheric Workspace Banner Missing</p>
