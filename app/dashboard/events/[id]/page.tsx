@@ -128,6 +128,7 @@ export default function EventDetailPage() {
 
       await supabase.from('events').update({ banner_url: publicUrl }).eq('id', id);
       setBannerUrl(publicUrl);
+      setEvent((prev: any) => prev ? { ...prev, banner_url: publicUrl } : prev);
     } catch (err) {
       console.error("Banner system processing failure:", err);
     } finally {
