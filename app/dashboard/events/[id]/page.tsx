@@ -244,7 +244,28 @@ export default function EventDetailPage() {
       {/* 1. CINEMATIC EVENT BANNER VIEWPORT (ABSOLUTE TOP EDGE-TO-EDGE) */}
       <div style={{ width: "100%", height: "220px", background: "#111014", position: "relative", overflow: "hidden", borderBottom: "1px solid rgba(255,255,255,0.04)" }}>
         {(bannerUrl || event?.banner_url) ? (
-          <img src={bannerUrl || event?.banner_url} alt="Event Workspace Horizon" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+          
+          <div style={{ width: "100%", height: "100%", position: "relative", backgroundColor: "#000", display: "flex", alignItems: "center", justifyContent: "center" }}>
+            <img src={bannerUrl || event?.banner_url} alt="Event Workspace Horizon" style={{ width: "100%", height: "100%", objectFit: "contain" }} />
+            
+            <button 
+              onClick={async () => {
+                if(confirm("Remove this canvas layout?")) {
+                  try {
+                    await supabase.from('events').update({ banner_url: null }).eq('id', id);
+                    setBannerUrl("");
+                    setEvent((prev: any) => prev ? { ...prev, banner_url: null } : prev);
+                  } catch(e) {
+                    alert("Error clearing canvas");
+                  }
+                }
+              }}
+              style={{ position: "absolute", bottom: "12px", right: "12px", backgroundColor: "rgba(0,0,0,0.75)", color: "#fff", border: "1px solid rgba(255,255,255,0.2)", padding: "6px 12px", borderRadius: "6px", fontSize: "12px", cursor: "pointer" }}
+            >
+              Remove Canvas
+            </button>
+          </div>
+
         ) : (
           <div style={{ width: "100%", height: "100%", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", padding: "20px" }}>
             <p style={{ fontSize: "10px", color: "rgba(255,255,255,0.3)", letterSpacing: "0.15em", textTransform: "uppercase", margin: "0 0 12px" }}>Atmospheric Workspace Banner Missing</p>
