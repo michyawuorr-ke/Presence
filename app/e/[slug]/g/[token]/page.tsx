@@ -638,7 +638,8 @@ function NetworkingTab({event,profile,isLive,isEnded,registration}:any){
 
       {confirmNode&&(
         <div style={{position:"fixed",inset:0,background:"rgba(0,0,0,0.7)",display:"flex",alignItems:"flex-end",zIndex:20}} onClick={()=>setConfirmNode(null)}>
-          <div style={{background:"#0c0c0f",borderRadius:"24px 24px 0 0",padding:"24px",width:"100%",borderTop:"1px solid rgba(255,255,255,0.05)",animation:"slideUp 0.3s ease"}} onClick={e=>e.stopPropagation()}>
+          {/* Forced Host Card Render */}
+<div style={{background:"#0c0c0f",borderRadius:"24px 24px 0 0",padding:"24px",width:"100%",borderTop:"1px solid rgba(255,255,255,0.05)",animation:"slideUp 0.3s ease"}} onClick={e=>e.stopPropagation()}>
             <div style={{display:"flex",alignItems:"center",gap:"8px",marginBottom:"8px"}}>
               <p style={{color:"#fff",fontSize:"18px",fontWeight:"500"}}>Connect with {getFirstName(confirmNode.display_name)}?</p>
               {confirmNode.is_host&&<span style={{background:"linear-gradient(135deg,#D4AF37,#b8962e)",color:"#000",fontSize:"10px",fontWeight:"700",padding:"3px 10px",borderRadius:"6px",letterSpacing:"0.05em"}}>ORGANIZER</span>}
