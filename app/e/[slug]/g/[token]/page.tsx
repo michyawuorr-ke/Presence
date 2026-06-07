@@ -774,8 +774,10 @@ function ProfileTab({profile,event,onProfileUpdate,isEnded,registration}:any){
     setScanTarget(null);
   }
 
-  const isHost=registration?.status==="host";
-  const accent=isHost?"#D4AF37":"#E26D34";
+    const isHost = registration?.status === "host";
+  const accent = isHost ? "#D4AF37" : "#E26D34";
+  const accentBg = isHost ? "rgba(212,175,55,0.08)" : "rgba(226,109,52,0.08)";
+  const accentBorder = isHost ? "rgba(212,175,55,0.15)" : "rgba(226,109,52,0.15)";
   const accentBg=isHost?"rgba(212,175,55,0.08)":"rgba(226,109,52,0.08)";
   const accentBorder=isHost?"rgba(212,175,55,0.15)":"rgba(226,109,52,0.15)";
 
@@ -806,7 +808,7 @@ function ProfileTab({profile,event,onProfileUpdate,isEnded,registration}:any){
         {/* Card Body Content */}
         <div>
           {/* 1. Name: Deeply Prominent */}
-          <p style={{fontSize:"22px",fontWeight:"700",color:"#f0ede8",letterSpacing:"-0.02em",margin:"0 0 8px",paddingRight:"44px"}}>{profile?.display_name}</p>
+          <p style={{fontSize:"22px",fontWeight:"700",color:"#f0ede8",letterSpacing:"-0.02em",margin:"0 0 8px",paddingRight:"44px"}}>{profile?.display_name || profile?.name || "Host Organizer"}</p>
 
           {/* 2. Professional Row: Role & Organisation horizontally aligned */}
           <div style={{display:"flex",alignItems:"center",gap:"10px",flexWrap:"wrap",marginBottom:"18px"}}>
