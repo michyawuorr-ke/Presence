@@ -304,6 +304,11 @@ const[tab,setTab]=useState<Tab>("scene");
 
       {tab==="scene"&&(
         <div style={{padding:"24px 20px"}}>
+          {event?.banner_url && (
+            <div style={{width:"100%", height:"160px", borderRadius:"16px", overflow:"hidden", marginBottom:"24px", border:"1px solid rgba(255,255,255,0.05)"}}>
+              <img src={event.banner_url} alt="" style={{width:"100%", height:"100%", objectFit:"cover"}} />
+            </div>
+          )}
           <p style={{fontSize:"18px",fontWeight:"700",letterSpacing:"-0.02em",marginBottom:"20px",fontFamily:"'Helvetica Neue',Arial,sans-serif"}}><span style={{color:"#ffffff"}}>Or</span><span style={{color:"#E26D34"}}>ee</span><span style={{color:"#ffffff"}}>ti</span></p>
           <h1 style={{fontSize:"28px",fontWeight:"500",color:"#f0ede8",marginBottom:"8px",letterSpacing:"-0.03em",lineHeight:"1.15"}}>{event?.title}</h1>
           <p style={{fontSize:"13px",color:"rgba(240,237,232,0.5)",marginBottom:"4px",letterSpacing:"0.01em"}}>📍 {event?.venue}</p>
