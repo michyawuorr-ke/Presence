@@ -305,8 +305,8 @@ const[tab,setTab]=useState<Tab>("scene");
       {tab==="scene"&&(
         <div style={{padding:"24px 20px"}}>
           {event?.banner_url && (
-            <div style={{width:"100%", height:"160px", borderRadius:"16px", overflow:"hidden", marginBottom:"24px", border:"1px solid rgba(255,255,255,0.05)"}}>
-              <img src={event.banner_url} alt="" style={{width:"100%", height:"100%", objectFit:"cover"}} />
+            <div style={{width:"100%", height:"auto", maxHeight:"220px", borderRadius:"12px", overflow:"hidden", marginBottom:"16px", background:"rgba(255,255,255,0.02)", border:"1px solid rgba(255,255,255,0.04)"}}>
+              <img src={event.banner_url} alt="" style={{width:"100%", height:"auto", display:"block", objectFit:"contain"}} />
             </div>
           )}
           <p style={{fontSize:"18px",fontWeight:"700",letterSpacing:"-0.02em",marginBottom:"20px",fontFamily:"'Helvetica Neue',Arial,sans-serif"}}><span style={{color:"#ffffff"}}>Or</span><span style={{color:"#E26D34"}}>ee</span><span style={{color:"#ffffff"}}>ti</span></p>
