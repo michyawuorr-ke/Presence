@@ -881,7 +881,7 @@ function ProfileTab({profile,event,onProfileUpdate,isEnded,registration}:any){
                   {isUnlocked&&c.platform_value&&<p style={{fontSize:"13px",color:"#E26D34",marginTop:"4px"}}>{cleanUrl(c.platform_value)}</p>}
                 </div>
                 {!isUnlocked&&<button onClick={()=>startScan(c)} style={{background:"rgba(226,109,52,0.15)",color:"#E26D34",border:"1px solid rgba(226,109,52,0.15)",borderRadius:"8px",padding:"5px 10px",fontSize:"11px",fontWeight:"600",cursor:"pointer",whiteSpace:"nowrap",marginLeft:"8px"}}>Scan to unlock</button>}
-                {isUnlocked&&<span style={{fontSize:"10px",color:"#E26D34",fontWeight:"600",marginLeft:"8px",background:"rgba(226,109,52,0.12)",padding:"2px 8px",borderRadius:"6px"}}>✓ Unlocked</span>}
+                {isUnlocked&&<span style={{fontSize:"10px",color:accent,fontWeight:"600",marginLeft:"8px",background:accentBg,padding:"2px 8px",borderRadius:"6px"}}>✓ Unlocked</span>}
               </div>
             </div>
           );}
