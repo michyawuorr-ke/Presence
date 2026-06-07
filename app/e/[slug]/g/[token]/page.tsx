@@ -778,8 +778,7 @@ function ProfileTab({profile,event,onProfileUpdate,isEnded,registration}:any){
   const accent = isHost ? "#D4AF37" : "#E26D34";
   const accentBg = isHost ? "rgba(212,175,55,0.08)" : "rgba(226,109,52,0.08)";
   const accentBorder = isHost ? "rgba(212,175,55,0.15)" : "rgba(226,109,52,0.15)";
-  const accentBg=isHost?"rgba(212,175,55,0.08)":"rgba(226,109,52,0.08)";
-  const accentBorder=isHost?"rgba(212,175,55,0.15)":"rgba(226,109,52,0.15)";
+  
 
   return(
     <div style={{padding:"16px",background:"#08080a",minHeight:"100vh"}}>
