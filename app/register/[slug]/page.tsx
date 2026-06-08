@@ -18,6 +18,10 @@ export default function RegisterPage() {
   const [success, setSuccess] = useState(false);
   const [error, setError] = useState("");
   const [acceptedTerms, setAcceptedTerms] = useState(false);
+  const [manualMpesaCode, setManualMpesaCode] = useState("");
+  const [isSavingCode, setIsSavingCode] = useState(false);
+  const [currentRegId, setCurrentRegId] = useState("");
+  const [currentAccessToken, setCurrentAccessToken] = useState("");
   const [paymentState, setPaymentState] = useState<"idle" | "waiting" | "success" | "failed">("idle");
 
   const [confirmedToken, setConfirmedToken] = useState("");
@@ -117,6 +121,16 @@ export default function RegisterPage() {
 
       if (regError) throw new Error(regError.message);
 
+      // Local Testing Feature Toggle
+      const USE_MANUAL_FLOW = true; 
+      if (USE_MANUAL_FLOW && totalAmount > 0) {
+        setCurrentRegId(reg.id);
+        setCurrentAccessToken(accessToken);
+        setPaymentState("waiting");
+        setSubmitting(false);
+        return;
+      }
+
       const res = await fetch("/api/payments/initiate", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -170,6 +184,45 @@ export default function RegisterPage() {
       <p style={{ color: "rgba(255,255,255,0.4)", fontSize: "12px", letterSpacing: "0.05em" }}>DOMAIN NOT ESTABLISHED</p>
     </div>
   );
+
+  if (paymentState === "waiting") {
+    const totalAmount = Number(selectedTicket?.price ?? 0) * quantity;
+    const USE_MANUAL_FLOW = true;
+
+    if (USE_MANUAL_FLOW) {
+      const handleConfirmManualPayment = async () => {
+        if (!manualMpesaCode || manualMpesaCode.length < 8) return;
+        setIsSavingCode(true);
+        try {
+          await supabase.from("registrations").update({ mpesa_receipt: manualMpesaCode, status: "pending_verification" }).eq("id", currentRegId);
+          setSuccess(true);
+          setConfirmedToken(currentAccessToken);
+        } catch (err) {
+          console.error(err);
+        } finally {
+          setIsSavingCode(false);
+        }
+      };
+
+      return (
+        <div style={{ minHeight: "100vh", background: "#000", display: "flex", flexDirection: "column", padding: "40px 24px", maxWidth: "420px", margin: "0 auto", boxSizing: "border-box", justifyContent: "center" }}>
+          <p style={{ fontSize: "11px", letterSpacing: "0.2em", color: "#E26D34", textTransform: "uppercase", marginBottom: "32px", textAlign: "center" }}>Oreeti Gateway</p>
+          <div style={{ background: "#0a0a0c", border: "1px solid rgba(226, 109, 52, 0.15)", borderRadius: "20px", padding: "24px" }}>
+            <h2 style={{ fontSize: "15px", fontWeight: "600", color: "#fff", margin: "0 0 8px 0", textTransform: "uppercase" }}>Verify Ticket Payment</h2>
+            <p style={{ color: "rgba(255,255,255,0.4)", fontSize: "13px", lineHeight: "1.5", marginBottom: "20px" }}>Send your ticket payment to our production routing platform below:</p>
+            <div style={{ display: "flex", flexDirection: "column", gap: "10px", marginBottom: "20px" }}>
+              <div style={{ display: "flex", justifyContent: "space-between", background: "rgba(255,255,255,0.02)", padding: "12px 16px", borderRadius: "10px" }}><span style={{ color: "rgba(255,255,255,0.4)" }}>DTB Paybill</span><span style={{ color: "#fff", fontFamily: "monospace" }}>516600</span></div>
+              <div style={{ display: "flex", justifyContent: "space-between", background: "rgba(255,255,255,0.02)", padding: "12px 16px", borderRadius: "10px" }}><span style={{ color: "rgba(255,255,255,0.4)" }}>Account</span><span style={{ color: "#fff", fontFamily: "monospace" }}>955154</span></div>
+              <div style={{ display: "flex", justifyContent: "space-between", background: "rgba(226, 109, 52, 0.05)", padding: "12px 16px", borderRadius: "10px", border: "1px solid rgba(226, 109, 52, 0.2)" }}><span style={{ color: "#fff" }}>Amount</span><span style={{ color: "#E26D34", fontWeight: "700" }}>{totalAmount} KES</span></div>
+            </div>
+            <input type="text" value={manualMpesaCode} onChange={(e) => setManualMpesaCode(e.target.value.toUpperCase())} placeholder="M-Pesa Code (e.g. SFF7X892JK)" maxLength={12} style={{ width: "100%", padding: "14px", borderRadius: "10px", border: "1px solid rgba(255,255,255,0.08)", background: "rgba(255,255,255,0.04)", color: "#fff", fontFamily: "monospace", boxSizing: "border-box", marginBottom: "16px", outline: "none" }} />
+            <button onClick={handleConfirmManualPayment} disabled={manualMpesaCode.length < 8 || isSavingCode} style={{ width: "100%", padding: "14px", borderRadius: "10px", background: manualMpesaCode.length >= 8 ? "#fff" : "rgba(255,255,255,0.04)", color: manualMpesaCode.length >= 8 ? "#000" : "rgba(255,255,255,0.2)", fontWeight: "600", border: "none", cursor: "pointer" }}>{isSavingCode ? "Linking Pass..." : "Confirm Payment"}</button>
+          </div>
+          <button onClick={() => { setPaymentState("idle"); setSubmitting(false); }} style={{ background: "transparent", border: "none", color: "rgba(255,255,255,0.4)", fontSize: "11px", marginTop: "24px", cursor: "pointer" }}>Go Back</button>
+        </div>
+      );
+    }
+  }
 
   if (paymentState === "waiting") return (
     <div style={{ minHeight: "100vh", background: "#000", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", padding: "24px" }}>

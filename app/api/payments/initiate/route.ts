@@ -7,7 +7,7 @@ const supabase=createClient(process.env.NEXT_PUBLIC_SUPABASE_URL!,process.env.SU
 
 async function getToken(){
   const auth=Buffer.from(process.env.MPESA_CONSUMER_KEY+':'+process.env.MPESA_CONSUMER_SECRET).toString('base64');
-  const res=await fetch('https://sandbox.safaricom.co.ke/oauth/v1/generate?grant_type=client_credentials',{headers:{Authorization:'Basic '+auth}});
+  const res=await fetch('https://api.safaricom.co.ke/oauth/v1/generate?grant_type=client_credentials',{headers:{Authorization:'Basic '+auth}});
   const data=await res.json();
   return data.access_token;
 }
@@ -48,7 +48,7 @@ export async function POST(req:NextRequest){
       TransactionDesc:'Event Ticket'
     };
 
-    const stkRes=await fetch('https://sandbox.safaricom.co.ke/mpesa/stkpush/v1/processrequest',{
+    const stkRes=await fetch('https://api.safaricom.co.ke/mpesa/stkpush/v1/processrequest',{
       method:'POST',
       headers:{Authorization:'Bearer '+token,'Content-Type':'application/json'},
       body:JSON.stringify(body)
