@@ -1,2 +1,6 @@
 .env.local
 .vercel
+
+.env.production.local
+.next/
+tsconfig.tsbuildinfo
