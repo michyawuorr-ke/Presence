@@ -109,7 +109,7 @@ export default function TicketsAndRevenuePage() {
         
         {/* Header Section */}
         <div style={{ marginBottom: "40px" }}>
-          <p style={{ fontSize: "11px", letterSpacing: "0.2em", color: "#E26D34", textTransform: "uppercase", marginBottom: "8px" }}>Oreeti Managed Workspace</p>
+          <p style={{ fontSize: "11px", letterSpacing: "0.2em", color: "#F59E0B", textTransform: "uppercase", marginBottom: "8px" }}>Oreeti Managed Workspace</p>
           <h1 style={{ fontSize: "24px", fontWeight: "600", letterSpacing: "-0.02em", margin: 0 }}>Tickets & Revenue</h1>
         </div>
 
@@ -123,8 +123,8 @@ export default function TicketsAndRevenuePage() {
               <span style={{ fontSize: "22px", fontWeight: "700", fontFamily: "monospace" }}>{grossRevenue.toLocaleString()} KES</span>
             </div>
             <div>
-              <span style={{ display: "block", color: "#E26D34", fontSize: "12px", marginBottom: "4px" }}>Your Net Balance (95%)</span>
-              <span style={{ fontSize: "22px", fontWeight: "700", fontFamily: "monospace", color: "#E26D34" }}>{hostPayout.toLocaleString()} KES</span>
+              <span style={{ display: "block", color: "#F59E0B", fontSize: "12px", marginBottom: "4px" }}>Your Net Balance (95%)</span>
+              <span style={{ fontSize: "22px", fontWeight: "700", fontFamily: "monospace", color: "#F59E0B" }}>{hostPayout.toLocaleString()} KES</span>
             </div>
           </div>
 
@@ -158,7 +158,7 @@ export default function TicketsAndRevenuePage() {
                     </div>
                     <div style={{ textAlign: "right" }}>
                       <span style={{ display: "block", fontSize: "11px", color: "rgba(255,255,255,0.3)", textTransform: "uppercase", marginBottom: "2px" }}>Ticket Tier</span>
-                      <span style={{ fontSize: "14px", fontWeight: "600", color: "#E26D34" }}>{reg.tierName}</span>
+                      <span style={{ fontSize: "14px", fontWeight: "600", color: "#F59E0B" }}>{reg.tierName}</span>
                       <span style={{ fontSize: "12px", color: "rgba(255,255,255,0.4)", display: "block" }}>{reg.eventName}</span>
                     </div>
                   </div>
