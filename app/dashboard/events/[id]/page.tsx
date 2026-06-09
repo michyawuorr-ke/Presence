@@ -370,9 +370,7 @@ export default function EventDetailPage() {
         </button>
         </div>
 
-        {/* NETWORKING METRICS */}
-        <div style={{ background: "linear-gradient(160deg, #16151a 0%, #0f0e12 100%)", borderRadius: "20px", padding: "20px", marginBottom: "16px", border: "1px solid rgba(255, 255, 255, 0.04)" }}>
-        </div>
+
 
         {/* 2. NEW ZONE: SIMPLIFIED NETWORKING STATIONS SECTION (CENTERED STACK) */}
         <div style={{ background: "linear-gradient(160deg, #16151a 0%, #0f0e12 100%)", borderRadius: "20px", padding: "20px", marginBottom: "16px", border: "1px solid rgba(255, 255, 255, 0.04)" }}>
