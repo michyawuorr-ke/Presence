@@ -69,7 +69,7 @@ export default function TicketsRevenueHub({ params }: { params: { id: string } }
   const filteredRegs = regs.filter((r: Registration) => {
     if (!search || search.trim() === "") return true;
     const term = search.toLowerCase().trim();
-    const nameMatch = (r.full_name || "").toLowerCase().includes(term);
+    const nameMatch = ((r as any).full_name || (r as any).name || (r as any).guest_name || "").toLowerCase().includes(term);
     const typeMatch = ((r as any).ticket_types?.name || "").toLowerCase().includes(term);
     const phoneMatch = (r.phone_number || "").includes(term);
     return nameMatch || typeMatch || phoneMatch;
@@ -106,7 +106,7 @@ export default function TicketsRevenueHub({ params }: { params: { id: string } }
         <div style={{ marginBottom: '16px' }}>
           <input 
             type="text" 
-            placeholder="Search guest, ticket, or phone..." 
+            placeholder="Search attendee..." 
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             style={{ 
