@@ -150,71 +150,238 @@ function Splash(){
 }
 
 function Identity({registration,event,onComplete}:any){
-  const[displayName,setDisplayName]=useState("");
-  const[role,setRole]=useState("");
-  const[organisation,setOrganisation]=useState("");
-  const[bio,setBio]=useState("");
-  const[link,setLink]=useState("");
-  const[saving,setSaving]=useState(false);
-  const[error,setError]=useState("");
+  const [step, setStep] = useState(1);
+  const [displayName, setDisplayName] = useState(""); 
+  const [role, setRole] = useState("");               
+  const [organisation, setOrganisation] = useState("");                                                     
+  const [bio, setBio] = useState("");                 
+  
+  // Professional Presence Link Matrix
+  const [linkedin, setLinkedin] = useState("");
+  const [website, setWebsite] = useState("");
+  const [portfolio, setPortfolio] = useState("");
+
+  const [intent, setIntent] = useState("");
+  const [stations, setStations] = useState<any[]>([]);
+  const [selectedStationId, setSelectedStationId] = useState("");
+  
+  const [saving, setSaving] = useState(false);        
+  const [loadingStations, setLoadingStations] = useState(true);
+  const [error, setError] = useState("");
+
+  // Pull active venue stations exactly as named on the host dashboard
+  useEffect(() => {
+    async function pullStations() {
+      if (!registration?.event_id) return;
+      try {
+        const { data, error: err } = await supabase
+          .from("event_stations")
+          .select("id, name, context")
+          .eq("event_id", registration.event_id);
+        if (data) setStations(data);
+      } catch (e) {
+        console.error("Error fetching host setup:", e);
+      } finally {
+        setLoadingStations(false);
+      }
+    }
+    pullStations();
+  }, [registration]);
+
+  // VALIDATION MECHANICS
+  const hasCoreIdentity = displayName.trim() !== "" && role.trim() !== "";
+  const hasAtLeastOneLink = linkedin.trim() !== "" || website.trim() !== "" || portfolio.trim() !== "";
+  
+  const isStep1Valid = hasCoreIdentity && hasAtLeastOneLink;
+  const isStep2Valid = intent !== "";
+  const isStep3Valid = selectedStationId !== "";
+
+  // Dynamic composition of your preferred platform values
+  const primaryLinkValue = linkedin.trim() || website.trim() || portfolio.trim() || "";
 
   async function save(){
-    if(!displayName.trim()){setError("Name is required");return;}
-    if(!link.trim()){setError("A link is required (LinkedIn, website, etc)");return;}
+    if(!isStep1Valid || !isStep2Valid || !isStep3Valid) return;
     setSaving(true);
     setError("");
-    const{data,error:err}=await supabase.from("guest_profiles").insert({
-      registration_id:registration.id,
-      event_id:registration.event_id,
-      display_name:displayName,
-      role_title:role,
+
+    const { data, error: err } = await supabase.from("guest_profiles").insert({
+      registration_id: registration.id,            
+      event_id: registration.event_id,
+      display_name: displayName,                   
+      role_title: role,
       organisation,
       bio,
-      platform_type:"link",
-      platform_value:link,
-      aura_active:false,
-    }).select().single();
-    if(err){setError(err.message);setSaving(false);return;}
-    onComplete(data);
+      platform_type: "link",
+      platform_value: primaryLinkValue,                        
+      aura_active: false,
+      // Metadata payload binding tracking intent and target anchors
+      networking_intent: intent,
+      target_station_id: selectedStationId,
+      linkedin_url: linkedin,
+      website_url: website,
+      portfolio_url: portfolio
+    }).select().single();                         
+    
+    if(err) {
+      setError(err.message);
+      setSaving(false);
+      return;
+    }
+    onComplete(data);                             
   }
 
   const inp = {
-    width: "100%",
+    width: "100%",                                
     padding: "12px 0",
     background: "transparent",
     border: "none",
     borderBottom: "1px solid rgba(255, 255, 255, 0.08)",
-    color: "#f0ede8",
+    color: "#f0ede8",                             
     fontSize: "14px",
-    outline: "none",
+    outline: "none",                              
     borderRadius: 0,
     boxSizing: "border-box" as const,
-    marginBottom: "20px"
+    marginBottom: "20px"                          
+  };
+
+  const linkInp = {
+    ...inp,
+    borderBottom: "1px solid rgba(255, 255, 255, 0.04)",
+    fontSize: "13px",
+    marginBottom: "12px",
+    color: "rgba(255,255,255,0.7)"
+  };
+
+  const cardStyle = (isActive: boolean) => ({
+    width: "100%",
+    textAlign: "left" as const,
+    padding: "18px",
+    background: "rgba(255,255,255,0.01)",
+    border: isActive ? "1px solid rgba(249, 115, 22, 0.25)" : "1px solid rgba(255,255,255,0.03)",
+    backgroundColor: isActive ? "rgba(249, 115, 22, 0.02)" : "transparent",
+    borderRadius: "3px",
+    marginBottom: "12px",
+    cursor: "pointer",
+    outline: "none",
+    transition: "all 0.3s ease"
+  });
+
+  const footerActionZone = {
+    position: "fixed" as const,
+    bottom: 0, left: 0, right: 0,
+    height: "110px",
+    background: "rgba(10,10,10,0.92)",
+    backdropFilter: "blur(12px)",
+    borderTop: "1px solid rgba(255,255,255,0.02)",
+    padding: "0 24px",
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "space-between",
+    zIndex: 100
   };
 
   return(
-    <div style={{minHeight:"100vh",background:"#000",color:"#fff",padding: "48px 24px",display:"flex",flexDirection:"column"}}>
-      <p style={{fontSize:"11px",letterSpacing:"0.2em",color:"#E26D34",textTransform:"uppercase",marginBottom:"48px",textAlign:"center",fontWeight:"600"}}>OREETI</p>
-      <p style={{fontSize:"11px",letterSpacing:"0.1em",color:"rgba(255,255,255,0.35)",textTransform:"uppercase",marginBottom:"40px",textAlign:"center"}}>Set up your profile</p>
+    <div style={{minHeight:"100vh", background:"#0A0A0A", color:"#FDFBF7", padding: "48px 24px", display:"flex", flexDirection:"column", boxSizing: "border-box"}}>
+      <p style={{fontSize:"11px", letterSpacing:"0.2em", color:"#F97316", textTransform:"uppercase", marginBottom:"40px", textAlign:"center", fontWeight:"600"}}>OREETI</p>
       
-      <div style={{maxWidth:"400px",margin:"0 auto",width:"100%",flex:1}}>
-        <input value={displayName} onChange={e=>setDisplayName(e.target.value)} placeholder="Your name" style={inp}/>
-        <input value={role} onChange={e=>setRole(e.target.value)} placeholder="Your role or title" style={inp}/>
-        <input value={organisation} onChange={e=>setOrganisation(e.target.value)} placeholder="Organisation" style={inp}/>
-        <textarea value={bio} onChange={e=>setBio(e.target.value)} placeholder="Short bio" style={{...inp,minHeight:"64px",resize:"none"}}/>
-        <input value={link} onChange={e=>setLink(e.target.value)} placeholder="LinkedIn, YouTube, Instagram, website..." style={inp}/>
-        
-        {error&&<p style={{color:"#ef4444",fontSize:"12px",marginBottom:"16px",letterSpacing:"0.01em"}}>{error}</p>}
+      <div style={{width:"100%", height:"20px", marginBottom:"32px"}}>
+        <span style={{fontFamily:"monospace", fontSize:"9px", color:"rgba(255,255,255,0.25)", letterSpacing:"2px"}}>
+          COHORT INDUCTION • {step}/3
+        </span>
       </div>
 
-      <div style={{maxWidth:"400px",margin:"0 auto",width:"100%",paddingTop:"24px"}}>
-        <button 
-          onClick={save} 
-          disabled={saving||!displayName.trim()||!link.trim()} 
-          style={{width:"100%",padding:"14px",borderRadius:"6px",background:saving||!displayName.trim()||!link.trim()?"transparent":"#fff",color:saving||!displayName.trim()||!link.trim()?"rgba(255,255,255,0.2)":"#000",border:saving||!displayName.trim()||!link.trim()?"1px solid rgba(255,255,255,0.08)":"none",fontSize:"12px",cursor:saving||!displayName.trim()||!link.trim()?"not-allowed":"pointer",fontWeight:"600",letterSpacing:"0.06em",textTransform:"uppercase"}}
-        >
-          {saving?"Saving...":"Continue →"}
-        </button>
+      <div style={{maxWidth:"400px", margin:"0 auto", width:"100%", flex:1, paddingBottom: "140px"}}>
+        
+        {/* STEP 1: IDENTITY CANVAS */}
+        {step === 1 && (
+          <div>
+            <h1 style={{fontSize:"24px", fontWeight:300, letterSpacing:"-0.5px", marginBottom:"6px"}}>Manifest Identity</h1>
+            <p style={{fontSize:"13px", color:"rgba(255,255,255,0.38)", marginBottom:"28px"}}>Who are you entering the room as?</p>
+
+            <input value={displayName} onChange={e=>setDisplayName(e.target.value)} placeholder="Your name" style={inp} autoComplete="off"/>
+            <input value={role} onChange={e=>setRole(e.target.value)} placeholder="Your role or title" style={inp} autoComplete="off"/>
+            <input value={organisation} onChange={e=>setOrganisation(e.target.value)} placeholder="Organisation / Studio" style={inp} autoComplete="off"/>
+            <textarea value={bio} onChange={e=>setBio(e.target.value)} placeholder="Short Bio" rows={2} style={{...inp, resize:"none", height:"60px"}} autoComplete="off"/>
+
+            <label style={{display:"block", fontFamily:"monospace", fontSize:"10px", color:"rgba(255,255,255,0.4)", letterSpacing:"1.5px", marginTop:"24px", marginBottom:"12px", textTransform:"uppercase"}}>
+              Professional Presence (Provide at least one link)
+            </label>
+            <input value={linkedin} onChange={e=>setLinkedin(e.target.value)} placeholder="LinkedIn URL" style={linkInp} autoComplete="off"/>
+            <input value={website} onChange={e=>setWebsite(e.target.value)} placeholder="Website URL" style={linkInp} autoComplete="off"/>
+            <input value={portfolio} onChange={e=>setPortfolio(e.target.value)} placeholder="Portfolio URL" style={linkInp} autoComplete="off"/>
+          </div>
+        )}
+
+        {/* STEP 2: INTENT VECTOR */}
+        {step === 2 && (
+          <div>
+            <h1 style={{fontSize:"24px", fontWeight:300, letterSpacing:"-0.5px", marginBottom:"6px"}}>State Intention</h1>
+            <p style={{fontSize:"13px", color:"rgba(255,255,255,0.38)", marginBottom:"28px"}}>What primary vector brings you to this gathering?</p>
+
+            {[
+              { id: "Capital", label: "Capital", desc: "Fundraising, investors, and strategic ideas." },
+              { id: "Synergy", label: "Synergy", desc: "Collaborators, co-founders, and deep execution partnerships." },
+              { id: "Mentorship", label: "Mentorship", desc: "Actively seeking guidance or looking to offer perspective." },
+              { id: "Opportunities", label: "Opportunities", desc: "Career growth, partnerships, and introductions." }
+            ].map((item) => (
+              <button key={item.id} onClick={() => setIntent(item.id)} style={cardStyle(intent === item.id)}>
+                <h3 style={{fontSize:"15px", fontWeight:500, margin:0, color: intent === item.id ? "#F97316" : "#FDFBF7"}}>{item.label}</h3>
+                <p style={{fontSize:"12px", color:"rgba(255,255,255,0.35)", margin:"4px 0 0 0", lineHeight:"16px"}}>{item.desc}</p>
+              </button>
+            ))}
+          </div>
+        )}
+
+        {/* STEP 3: PROXIMITY ANCHORS */}
+        {step === 3 && (
+          <div>
+            <h1 style={{fontSize:"24px", fontWeight:300, letterSpacing:"-0.5px", marginBottom:"6px"}}>Target Proximity</h1>
+            <p style={{fontSize:"13px", color:"rgba(255,255,255,0.38)", marginBottom:"28px"}}>Select the host environment containing the minds you need to be around.</p>
+
+            {loadingStations ? (
+              <p style={{fontSize:"13px", color:"rgba(255,255,255,0.25)", fontStyle:"italic"}}>Reading dashboard configurations···</p>
+            ) : stations.length === 0 ? (
+              <p style={{fontSize:"13px", color:"rgba(255,255,255,0.25)", fontStyle:"italic"}}>No specific stations active. Ready to enter space.</p>
+            ) : (
+              stations.map((station: any) => (
+                <button key={station.id} onClick={() => setSelectedStationId(station.id)} style={cardStyle(selectedStationId === station.id)}>
+                  <h3 style={{fontSize:"15px", fontWeight:500, margin:0, color: selectedStationId === station.id ? "#F97316" : "#FDFBF7"}}>{station.name}</h3>
+                  <p style={{fontSize:"12px", color:"rgba(255,255,255,0.35)", margin:"4px 0 0 0", lineHeight:"16px"}}>{station.context}</p>
+                </button>
+              ))
+            )}
+            {error && <p style={{color:"#F97316", fontSize:"12px", marginTop:"12px"}}>{error}</p>}
+          </div>
+        )}
+
+      </div>
+
+      {/* FIXED LOW BEZIAL ACTION TIER */}
+      <div style={footerActionZone}>
+        <div style={{maxWidth:"400px", width:"100%", margin:"0 auto", display:"flex", alignItems:"center", justifyContent:"space-between", gap:"16px"}}>
+          {step > 1 ? (
+            <button onClick={() => setStep(s => s - 1)} style={{background:"none", border:"none", color:"rgba(255,255,255,0.35)", fontFamily:"monospace", fontSize:"11px", letterSpacing:"1.5px", cursor:"pointer"}}>
+              BACK
+            </button>
+          ) : (
+            <div style={{width:"40px"}} />
+          )}
+
+          <button 
+            disabled={step === 1 ? !isStep1Valid : step === 2 ? !isStep2Valid : (!isStep3Valid || saving)}
+            onClick={step === 3 ? save : () => setStep(s => s + 1)}
+            style={{
+              flex: 1, height: "46px", background: "rgba(255,255,255,0.03)", 
+              border: (step === 3 && isStep3Valid) ? "1px solid rgba(249, 115, 22, 0.4)" : "1px solid rgba(255,255,255,0.08)",
+              borderRadius: "2px", color: (step === 3 && isStep3Valid) ? "#F97316" : "#FDFBF7", fontFamily: "monospace", fontSize: "11px", 
+              letterSpacing: "2px", fontWeight: "600", cursor: "pointer",
+              opacity: (step === 1 ? isStep1Valid : step === 2 ? isStep2Valid : isStep3Valid) ? 1 : 0.15,
+              transition: "all 0.2s"
+            }}
+          >
+            {saving ? "SAVING···" : step === 3 ? "ENTER SPACE" : "CONTINUE"}
+          </button>
+        </div>
       </div>
     </div>
   );
