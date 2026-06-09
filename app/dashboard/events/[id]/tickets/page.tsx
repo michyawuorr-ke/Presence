@@ -144,12 +144,12 @@ export default function TicketsRevenueHub({ params }: { params: { id: string } }
                 {/* GUEST INFO BLOCK */}
                 <div style={{ flex: 1, minWidth: 0 }}>
                   <div style={{ fontWeight: '600', fontSize: '13px', color: '#f3f4f6', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
-                    {(r.full_name || r.id.substring(0,8) + ' (Guest)')}
+                    {((r as any).full_name || (r as any).name || (r as any).guest_name || r.id.substring(0,8) + ' (Guest)')}
                   </div>
                   <div style={{ display: 'flex', gap: '8px', marginTop: '2px', fontSize: '11px', color: 'rgba(255,255,255,0.4)' }}>
-                    <span>{r.phone_number || 'No Phone'}</span>
+                    <span>{((r as any).phone_number || (r as any).phone || (r as any).guest_phone || 'No Phone')}</span>
                     <span style={{ color: 'rgba(255,255,255,0.2)' }}>•</span>
-                    <span style={{ color: '#D4AF37', fontWeight: '500' }}>{r.ticket_type || 'General'}</span>
+                    <span style={{ color: '#D4AF37', fontWeight: '500' }}>{((r as any).ticket_type || (r as any).ticket_name || (r as any).ticket_type_id || 'General')}</span>
                   </div>
                 </div>
 
