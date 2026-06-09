@@ -149,7 +149,7 @@ export default function TicketsRevenueHub({ params }: { params: { id: string } }
                   <div style={{ display: 'flex', gap: '8px', marginTop: '2px', fontSize: '11px', color: 'rgba(255,255,255,0.4)' }}>
                     <span>{((r as any).phone_number || (r as any).phone || (r as any).guest_phone || 'No Phone')}</span>
                     <span style={{ color: 'rgba(255,255,255,0.2)' }}>•</span>
-                    <span style={{ color: '#D4AF37', fontWeight: '500' }}>{((r as any).ticket_type || (r as any).ticket_name || (r as any).ticket_type_id || 'General')}</span>
+                    <span style={{ color: '#D4AF37', fontWeight: '500' }}>{((r as any).ticket_type_id === '17d2640d-2f2e-4ca6-b90b-093174995c04' ? 'VIP Ticket' : 'Regular Ticket')}</span>
                   </div>
                 </div>
 
