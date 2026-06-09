@@ -22,52 +22,67 @@ export default function GuestOnboardingPage() {
   const [eventId, setEventId] = useState<string | null>(null);
   const [error, setError] = useState("");
 
-  // Step 1: Core Clean Identity
+  // Step 1: About You Fields
   const [displayName, setDisplayName] = useState("");
   const [role, setRole] = useState("");
   const [organisation, setOrganisation] = useState("");
   const [bio, setBio] = useState("");
 
-  // Step 2: Presence Bottom Sheet Matrices
+  // Step 2: Professional Presence Links (Bottom Sheet)
   const [isPresenceOpen, setIsPresenceOpen] = useState(false);
   const [linkedin, setLinkedin] = useState("");
   const [website, setWebsite] = useState("");
   const [portfolio, setPortfolio] = useState("");
 
-  // Step 4: Intent Bottom Sheet Matrices
+  // Step 3: What Brings You Here? Intents (Bottom Sheet)
   const [isIntentOpen, setIsIntentOpen] = useState(false);
   const [selectedIntents, setSelectedIntents] = useState<string[]>([]);
 
-  // Step 3: Host Dashboard Dynamic Stations (CRITICAL FIX)
+  // Step 4: Live Networking Stations (Fixed Pipeline)
   const [stations, setStations] = useState<Station[]>([]);
   const [selectedStationId, setSelectedStationId] = useState("");
 
-  // Fetch Host Dashboard Configurations dynamically based on the active event slug
+  // PIPELINE FIX: Resolve absolute structural event token down to station configurations
   useEffect(() => {
     async function pullHostVenueConfig() {
       if (!slug) return;
       try {
-        const { data: eventData } = await supabase
+        // 1. Determine which event they are joining via slug
+        const { data: eventData, error: eventErr } = await supabase
           .from("events")
           .select("id")
           .eq("slug", slug)
           .single();
 
+        if (eventErr) {
+          console.error("Pipeline failure finding event boundary:", eventErr);
+          setError("Could not locate event parameters.");
+          return;
+        }
+
         if (eventData) {
           setEventId(eventData.id);
 
-          // CRITICAL FIX: Pull directly from the active host venue's station list
-          const { data: stationData } = await supabase
+          // 2. Load networking stations configured by the Host for that event id
+          const { data: stationData, error: stationErr } = await supabase
             .from("event_stations")
             .select("id, name, context")
             .eq("event_id", eventData.id);
 
+          if (stationErr) {
+            console.error("Pipeline failure fetching host configurations:", stationErr);
+            setError("Could not read host configuration setup.");
+            return;
+          }
+
+          // 3. Bind live database rows into active state (No fallbacks, no placeholders)
           if (stationData) {
             setStations(stationData);
           }
         }
       } catch (err) {
         console.error("Critical error mapping event perimeter rules:", err);
+        setError("Network connection issue reading setup data.");
       } finally {
         setLoadingConfig(false);
       }
@@ -75,19 +90,18 @@ export default function GuestOnboardingPage() {
     pullHostVenueConfig();
   }, [slug]);
 
-  // Presence Status String Composer
+  // Labels
   const getPresenceLabel = () => {
     const added = [];
     if (linkedin.trim()) added.push("LinkedIn");
     if (website.trim()) added.push("Website");
     if (portfolio.trim()) added.push("Portfolio");
     
-    if (added.length === 0) return "Select Presence Links";
+    if (added.length === 0) return "Select Links";
     if (added.length === 1) return `✓ ${added[0]} Added`;
-    return `✓ ${added.length} Professional Links Added`;
+    return `✓ ${added.length} Links Added`;
   };
 
-  // Intent Selection Handler
   const toggleIntent = (id: string) => {
     setSelectedIntents(prev => 
       prev.includes(id) ? prev.filter(item => item !== id) : [...prev, id]
@@ -95,12 +109,12 @@ export default function GuestOnboardingPage() {
   };
 
   const getIntentLabel = () => {
-    if (selectedIntents.length === 0) return "Select Intent";
+    if (selectedIntents.length === 0) return "Select Options";
     if (selectedIntents.length === 1) return `✓ ${selectedIntents[0]} Selected`;
-    return `✓ ${selectedIntents.join(" + ")} Selected`;
+    return `✓ ${selectedIntents.length} Selected`;
   };
 
-  // STRICT VALIDATION ENGINE
+  // Validation
   const isIdentityValid = displayName.trim() !== "" && role.trim() !== "";
   const isPresenceValid = linkedin.trim() !== "" || website.trim() !== "" || portfolio.trim() !== "";
   const isIntentValid = selectedIntents.length > 0;
@@ -108,7 +122,8 @@ export default function GuestOnboardingPage() {
   
   const canSubmit = isIdentityValid && isPresenceValid && isIntentValid && isStationValid && !saving;
 
-  const handleManifestation = async () => {
+  // 5. Save the selected station and properties into your core table
+  const handleFinalSubmission = async () => {
     if (!canSubmit) return;
     setSaving(true);
     setError("");
@@ -125,7 +140,7 @@ export default function GuestOnboardingPage() {
         platform_value: linkedin.trim() || website.trim() || portfolio.trim() || "",                        
         aura_active: false,
         networking_intents: selectedIntents,
-        target_station_id: selectedStationId,
+        target_station_id: selectedStationId, // Explicit persistent foreign key storage
         linkedin_url: linkedin,
         website_url: website,
         portfolio_url: portfolio
@@ -133,9 +148,10 @@ export default function GuestOnboardingPage() {
 
       if (err) throw err;
 
+      // Routing into active event workspace
       router.push(`/e/${slug}/scene`);
     } catch (err: any) {
-      setError(err.message || "Failed to manifest identity.");
+      setError(err.message || "Failed to complete your profile setup.");
       setSaving(false);
     }
   };
@@ -155,10 +171,10 @@ export default function GuestOnboardingPage() {
   };
 
   const triggerBtnStyle = (hasValue: boolean) => ({
-    width: "100%", display: "flex", alignItems: "center", justifyContent: "space-between",
-    padding: "16px", background: "rgba(255,255,255,0.01)", border: "1px solid rgba(255,255,255,0.04)",
-    borderRadius: "3px", color: hasValue ? "#F97316" : "rgba(255,255,255,0.4)",
-    fontSize: "14px", cursor: "pointer", marginBottom: "20px", textAlign: "left" as const
+    width: "100%", padding: "16px", background: "rgba(255,255,255,0.01)", 
+    border: "1px solid rgba(255,255,255,0.04)", borderRadius: "3px", 
+    color: hasValue ? "#F97316" : "rgba(255,255,255,0.4)", fontSize: "14px", 
+    cursor: "pointer", marginBottom: "20px", display: "flex", justifyContent: "space-between"
   });
 
   const cardStyle = (isActive: boolean) => ({
@@ -178,42 +194,44 @@ export default function GuestOnboardingPage() {
 
       <main className="w-full max-w-md mx-auto flex-1 pt-8 pb-36 overflow-y-auto">
         
-        {/* STEP 1: ABOUT YOU */}
+        {/* SECTION 1: ABOUT YOU */}
         <section className="mb-8">
-          <h1 className="text-2xl font-light tracking-tight text-[#FDFBF7] mb-1">Manifest Identity</h1>
-          <p className="text-sm text-white/35 mb-6">Who are you entering the room as?</p>
+          <h1 className="text-xl font-medium tracking-tight text-[#FDFBF7] mb-1">About You</h1>
+          <p className="text-xs text-white/35 mb-6">Introduce yourself to the space.</p>
           
-          <input value={displayName} onChange={e => setDisplayName(e.target.value)} placeholder="Your name" style={inpStyle} autoComplete="off" />
-          <input value={role} onChange={e => setRole(e.target.value)} placeholder="Your role or title" style={inpStyle} autoComplete="off" />
+          <input value={displayName} onChange={e => setDisplayName(e.target.value)} placeholder="Your Name" style={inpStyle} autoComplete="off" />
+          <input value={role} onChange={e => setRole(e.target.value)} placeholder="Role or Title" style={inpStyle} autoComplete="off" />
           <input value={organisation} onChange={e => setOrganisation(e.target.value)} placeholder="Organisation / Studio" style={inpStyle} autoComplete="off" />
           <textarea value={bio} onChange={e => setBio(e.target.value)} placeholder="Short Bio" rows={2} style={{ ...inpStyle, height: "64px", resize: "none" }} autoComplete="off" />
         </section>
 
-        {/* STEP 2: PROFESSIONAL PRESENCE DISCLOSURE */}
+        {/* SECTION 2: PROFESSIONAL PRESENCE */}
         <section className="mb-6">
-          <label className="block text-[10px] font-mono tracking-wider text-white/30 uppercase mb-3">Professional Presence</label>
+          <label className="block text-[10px] font-mono tracking-wider text-white/30 uppercase mb-2">Professional Presence</label>
           <button onClick={() => setIsPresenceOpen(true)} style={triggerBtnStyle(isPresenceValid)}>
             <span>{getPresenceLabel()}</span>
             <span className="text-white/20 text-xs">➔</span>
           </button>
         </section>
 
-        {/* STEP 4: NETWORKING INTENT DISCLOSURE */}
+        {/* SECTION 3: WHAT BRINGS YOU HERE? */}
         <section className="mb-8">
-          <label className="block text-[10px] font-mono tracking-wider text-white/30 uppercase mb-3">What brings you to this event?</label>
+          <label className="block text-[10px] font-mono tracking-wider text-white/30 uppercase mb-2">What Brings You Here?</label>
           <button onClick={() => setIsIntentOpen(true)} style={triggerBtnStyle(isIntentValid)}>
             <span>{getIntentLabel()}</span>
             <span className="text-white/20 text-xs">➔</span>
           </button>
         </section>
 
-        {/* STEP 3: DYNAMIC HOST DASHBOARD STATIONS */}
+        {/* SECTION 4: LIVE NETWORKING STATIONS FROM HOST DASHBOARD */}
         <section className="mb-8">
-          <label className="block text-[10px] font-mono tracking-wider text-white/30 uppercase mb-3">Target Proximity</label>
-          <p className="text-xs text-white/40 mb-4">Select the host environment containing the minds you need to be around.</p>
+          <label className="block text-[10px] font-mono tracking-wider text-white/30 uppercase mb-1">Networking Station</label>
+          <p className="text-xs text-white/40 mb-4">Select your primary positioning zone inside the environment.</p>
           
           {stations.length === 0 ? (
-            <p className="text-sm text-white/20 italic">No custom host environments deployed yet.</p>
+            <div className="p-4 border border-white/5 rounded-sm bg-white/[0.01] text-center">
+              <p className="text-xs text-white/30 m-0 italic">Loading configured networking zones...</p>
+            </div>
           ) : (
             stations.map((station) => (
               <button type="button" key={station.id} onClick={() => setSelectedStationId(station.id)} style={cardStyle(selectedStationId === station.id)}>
@@ -228,15 +246,15 @@ export default function GuestOnboardingPage() {
           )}
         </section>
 
-        {error && <p className="text-xs text-[#F97316] text-center mt-4">{error}</p>}
+        {error && <p className="text-xs text-[#F97316] text-center mt-4 font-mono">{error}</p>}
       </main>
 
-      {/* ERGONOMIC BOTTOM BAR */}
+      {/* FOOTER INTERACTION ACTION ZONE */}
       <footer className="fixed bottom-0 left-0 right-0 h-28 bg-[#0A0A0A]/95 backdrop-blur-md border-t border-white/[0.02] px-6 flex items-center z-40">
         <div className="w-full max-w-md mx-auto">
           <button 
             disabled={!canSubmit} 
-            onClick={handleManifestation}
+            onClick={handleFinalSubmission}
             className="w-full h-12 font-mono text-xs tracking-[0.2em] font-semibold rounded-sm transition-all duration-300"
             style={{
               background: "rgba(255,255,255,0.01)",
@@ -246,12 +264,12 @@ export default function GuestOnboardingPage() {
               opacity: canSubmit ? 1 : 0.4
             }}
           >
-            {saving ? "MANIFESTING ID···" : "ENTER INDUCTION"}
+            {saving ? "SAVING..." : "COMPLETE PROFILE"}
           </button>
         </div>
       </footer>
 
-      {/* BOTTOM SHEET: PRESENCE LINKS */}
+      {/* PRESENCE LINKS BOTTOM SHEET */}
       {isPresenceOpen && (
         <div className="fixed inset-0 bg-black/70 backdrop-blur-sm z-50 flex flex-col justify-end" onClick={() => setIsPresenceOpen(false)}>
           <div className="w-full bg-[#0E0E0E] border-t border-white/[0.05] rounded-t-xl p-6 max-w-md mx-auto space-y-4" onClick={e => e.stopPropagation()}>
@@ -263,13 +281,13 @@ export default function GuestOnboardingPage() {
             <input value={website} onChange={e => setWebsite(e.target.value)} placeholder="Website URL" style={inpStyle} autoComplete="off" />
             <input value={portfolio} onChange={e => setPortfolio(e.target.value)} placeholder="Portfolio URL" style={inpStyle} autoComplete="off" />
             <button onClick={() => setIsPresenceOpen(false)} className="w-full h-11 bg-white/5 border border-white/10 rounded-sm font-mono text-[11px] tracking-widest text-[#FDFBF7] mt-2">
-              SAVE PRESENCE
+              DONE
             </button>
           </div>
         </div>
       )}
 
-      {/* BOTTOM SHEET: NETWORKING INTENT */}
+      {/* INTENT SELECTION BOTTOM SHEET */}
       {isIntentOpen && (
         <div className="fixed inset-0 bg-black/70 backdrop-blur-sm z-50 flex flex-col justify-end" onClick={() => setIsIntentOpen(false)}>
           <div className="w-full bg-[#0E0E0E] border-t border-white/[0.05] rounded-t-xl p-6 max-w-md mx-auto space-y-4" onClick={e => e.stopPropagation()}>
@@ -298,7 +316,7 @@ export default function GuestOnboardingPage() {
               })}
             </div>
             <button onClick={() => setIsIntentOpen(false)} className="w-full h-11 bg-white/5 border border-white/10 rounded-sm font-mono text-[11px] tracking-widest text-[#FDFBF7] mt-2">
-              CONFIRM INTENT
+              DONE
             </button>
           </div>
         </div>
