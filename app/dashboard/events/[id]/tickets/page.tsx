@@ -53,11 +53,11 @@ export default function TicketsRevenueHub({ params }: { params: { id: string } }
   const togglePaymentStatus = async (registration: Registration) => {
     setUpdatingId(registration.id);
     const targetStatus = registration.status === 'confirmed' ? 'pending' : 'confirmed';
-    const targetPaidStatus = !registration.paid;
+    const targetPAIDStatus = !registration.paid;
 
     const { error } = await supabase
       .from('registrations')
-      .update({ status: targetStatus, paid: targetPaidStatus })
+      .update({ status: targetStatus, paid: targetPAIDStatus })
       .eq('id', registration.id);
 
     if (!error) {
@@ -82,9 +82,7 @@ export default function TicketsRevenueHub({ params }: { params: { id: string } }
         {/* TOP COMPACT NAV */}
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '20px' }}>
           <button onClick={() => router.back()} style={{ background: 'none', border: 'none', color: 'rgba(255,255,255,0.4)', cursor: 'pointer', fontSize: '13px' }}>← Back</button>
-          <h1 style={{ fontSize: '14px', fontWeight: '600', letterSpacing: '0.05em', textTransform: 'uppercase', margin: 0 }}>
-            Revenue & Access <span style={{ color: '#D4AF37' }}>Hub</span>
-          </h1>
+          
         </div>
 
         {/* ULTRA-COMPACT TELEMETRY ROW */}
@@ -170,7 +168,7 @@ export default function TicketsRevenueHub({ params }: { params: { id: string } }
                     transition: 'all 0.2s ease'
                   }}
                 >
-                  {updatingId === r.id ? '...' : r.status === 'confirmed' ? 'Paid ✓' : r.status === 'pending_verification' ? 'Verify Pay' : 'Approve'}
+                  {updatingId === r.id ? '...' : r.status === 'confirmed' ? 'PAID' : r.status === 'pending_verification' ? 'VERIFY' : 'Approve'}
                 </button>
               </div>
             );
