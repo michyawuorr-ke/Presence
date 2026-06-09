@@ -70,7 +70,7 @@ export default function TicketsRevenueHub({ params }: { params: { id: string } }
     if (!search || search.trim() === "") return true;
     const term = search.toLowerCase().trim();
     const nameMatch = (r.full_name || "").toLowerCase().includes(term);
-    const typeMatch = (r.ticket_type || "").toLowerCase().includes(term);
+    const typeMatch = ((r as any).ticket_types?.name || "").toLowerCase().includes(term);
     const phoneMatch = (r.phone_number || "").includes(term);
     return nameMatch || typeMatch || phoneMatch;
   });
