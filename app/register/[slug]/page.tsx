@@ -226,18 +226,6 @@ export default function RegisterPage() {
     }
   }
 
-  if (paymentState === "waiting") return (
-    <div style={{ minHeight: "100vh", background: "#000", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", padding: "24px" }}>
-      <p style={{ fontSize: "11px", letterSpacing: "0.2em", color: "#E26D34", textTransform: "uppercase", marginBottom: "40px" }}>Oreeti</p>
-      <div style={{ fontSize: "24px", color: "#E26D34", marginBottom: "24px" }}>📱</div>
-      <h1 style={{ fontSize: "15px", fontWeight: "600", color: "#fff", textAlign: "center", marginBottom: "8px", letterSpacing: "0.08em", textTransform: "uppercase" }}>Check your device</h1>
-      <p style={{ color: "rgba(255,255,255,0.4)", textAlign: "center", marginBottom: "4px", fontSize: "13px" }}>An M-Pesa prompt has been routed to</p>
-      <p style={{ color: "#fff", fontSize: "15px", fontWeight: "500", marginBottom: "32px", letterSpacing: "0.02em" }}>{phone}</p>
-      <p style={{ color: "rgba(255,255,255,0.3)", fontSize: "11px", textAlign: "center", marginBottom: "32px", lineHeight: "1.6", maxWidth: "280px" }}>ENTER YOUR PIN TO AUTHORIZE ACCESS.</p>
-      <button onClick={() => { setPaymentState("idle"); setSubmitting(false); }} style={{ background: "transparent", border: "none", color: "rgba(255,255,255,0.4)", fontSize: "11px", letterSpacing: "0.06em", textTransform: "uppercase", cursor: "pointer" }}>Cancel</button>
-    </div>
-  );
-
   if (success) return (
     <div style={{ minHeight: "100vh", background: "#000", display: "flex", flexDirection: "column", padding: "40px 24px", maxWidth: "420px", margin: "0 auto", justifyContent: "space-between", boxSizing: "border-box" }}>
       <style>{`
@@ -268,6 +256,18 @@ export default function RegisterPage() {
           ← Return to Registration
         </button>
       </div>
+    </div>
+  );
+
+  if (paymentState === "waiting") return (
+    <div style={{ minHeight: "100vh", background: "#000", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", padding: "24px" }}>
+      <p style={{ fontSize: "11px", letterSpacing: "0.2em", color: "#E26D34", textTransform: "uppercase", marginBottom: "40px" }}>Oreeti</p>
+      <div style={{ fontSize: "24px", color: "#E26D34", marginBottom: "24px" }}>📱</div>
+      <h1 style={{ fontSize: "15px", fontWeight: "600", color: "#fff", textAlign: "center", marginBottom: "8px", letterSpacing: "0.08em", textTransform: "uppercase" }}>Check your device</h1>
+      <p style={{ color: "rgba(255,255,255,0.4)", textAlign: "center", marginBottom: "4px", fontSize: "13px" }}>An M-Pesa prompt has been routed to</p>
+      <p style={{ color: "#fff", fontSize: "15px", fontWeight: "500", marginBottom: "32px", letterSpacing: "0.02em" }}>{phone}</p>
+      <p style={{ color: "rgba(255,255,255,0.3)", fontSize: "11px", textAlign: "center", marginBottom: "32px", lineHeight: "1.6", maxWidth: "280px" }}>ENTER YOUR PIN TO AUTHORIZE ACCESS.</p>
+      <button onClick={() => { setPaymentState("idle"); setSubmitting(false); }} style={{ background: "transparent", border: "none", color: "rgba(255,255,255,0.4)", fontSize: "11px", letterSpacing: "0.06em", textTransform: "uppercase", cursor: "pointer" }}>Cancel</button>
     </div>
   );
 
