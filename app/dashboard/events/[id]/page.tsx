@@ -246,7 +246,7 @@ export default function EventDetailPage() {
       <div style={{ width: "100%", height: "220px", background: "#0a0a0c", position: "relative", overflow: "hidden", borderBottom: "1px solid rgba(255,255,255,0.04)" }}>
         {(bannerUrl || event?.banner_url) ? (
           <div style={{ width: "100%", height: "100%", position: "relative" }}>
-            <img src={bannerUrl || event?.banner_url} alt="Event Banner" style={{ width: "100%", height: "100%", objectFit: "cover", objectPosition: "center" }} />
+            <img src={bannerUrl || event?.banner_url} alt="Event Banner" style={{ width: "100%", height: "100%", objectFit: "cover", objectPosition: "top center" }} />
             <button onClick={async () => { if(confirm("Remove banner layout?")) { try { await supabase.from("events").update({ banner_url: null }).eq("id", id); setBannerUrl(""); setEvent((prev: any) => prev ? { ...prev, banner_url: null } : prev); } catch(e){} } }} style={{ position: "absolute", top: "16px", right: "16px", backgroundColor: "rgba(0, 0, 0, 0.5)", backdropFilter: "blur(12px)", WebkitBackdropFilter: "blur(12px)", color: "rgba(255,255,255,0.8)", border: "1px solid rgba(255,255,255,0.15)", padding: "6px 14px", borderRadius: "20px", fontSize: "11px", fontWeight: "600", cursor: "pointer" }}>Clear Canvas ×</button>
           </div>
         ) : (
