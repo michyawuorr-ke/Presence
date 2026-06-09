@@ -348,12 +348,6 @@ export default function EventDetailPage() {
 
         {/* NETWORKING METRICS */}
         <div style={{ background: "linear-gradient(160deg, #16151a 0%, #0f0e12 100%)", borderRadius: "20px", padding: "20px", marginBottom: "16px", border: "1px solid rgba(255, 255, 255, 0.04)" }}>
-          <p style={{ fontSize: "10px", fontWeight: "700", color: "rgba(255,255,255,0.4)", letterSpacing: "0.12em", textTransform: "uppercase", marginBottom: "14px" }}>Aura Interaction Data</p>
-          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: "8px" }}>
-            {card("Active", stats.onAura, "#D4AF37")}
-            {card("Handshakes", stats.handshakes, "#D4AF37")}
-            {card("Unlocked", stats.unlocked, "#D4AF37")}
-          </div>
         </div>
 
         {/* 2. NEW ZONE: SIMPLIFIED NETWORKING STATIONS SECTION (CENTERED STACK) */}
