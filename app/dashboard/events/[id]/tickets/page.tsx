@@ -35,7 +35,7 @@ export default function TicketsRevenueHub({ params }: { params: { id: string } }
       
       // Calculate revenue from verified paid or confirmed entries
       const paidTickets = typedRegs.filter(r => r.status === 'confirmed' || r.paid);
-      const grossRev = paidTickets.reduce((sum, r) => sum + (r.amount || 0), 0);
+      const grossRev = paidTickets.reduce((sum, r) => sum + (r.amount || 1500), 0);
       
       setStats({
         revenue: Math.round(grossRev * 0.95), // 5% Infrastructure Fee subtracted
@@ -141,7 +141,7 @@ export default function TicketsRevenueHub({ params }: { params: { id: string } }
                 {/* GUEST INFO BLOCK */}
                 <div style={{ flex: 1, minWidth: 0 }}>
                   <div style={{ fontWeight: '600', fontSize: '13px', color: '#f3f4f6', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
-                    {r.full_name}
+                    {(r.full_name || r.id.substring(0,8) + ' (Guest)')}
                   </div>
                   <div style={{ display: 'flex', gap: '8px', marginTop: '2px', fontSize: '11px', color: 'rgba(255,255,255,0.4)' }}>
                     <span>{r.phone_number || 'No Phone'}</span>
