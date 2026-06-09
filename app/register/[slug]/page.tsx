@@ -197,6 +197,7 @@ export default function RegisterPage() {
           const { error: dbError } = await supabase.from("registrations").update({ mpesa_receipt: manualMpesaCode, status: "pending_verification" }).eq("id", currentRegId);
           if (dbError) throw dbError;
           setSuccess(true);
+          setPaymentState("success");
           setConfirmedToken(currentAccessToken);
         } catch (err) {
           console.error(err);
