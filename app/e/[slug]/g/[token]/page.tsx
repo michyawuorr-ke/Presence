@@ -1,1098 +1,309 @@
 "use client";
-import{useEffect,useState,useRef,useCallback}from"react";
-import{useParams}from"next/navigation";
-import{supabase}from"@/lib/supabase/client";
-import QRCode from"qrcode";
-import OreetiLogo from"@/components/OreetiLogo";
 
-type Screen="splash"|"identity"|"scene";
-type Tab="scene"|"networking"|"ticket"|"profile";
+import { useEffect, useState } from "react";
+import { useParams, useRouter } from "next/navigation";
+import { supabase } from "@/lib/supabase/client";
 
-function cleanUrl(url:string){
-  if(!url)return"";
-  return url.replace("https://","").replace("http://","").replace("www.","");
+interface Station {
+  id: string;
+  name: string;
+  context: string;
 }
 
-function copyToClipboard(text:string){
-  const el=document.createElement("textarea");
-  el.value=text;
-  el.style.position="fixed";
-  el.style.opacity="0";
-  document.body.appendChild(el);
-  el.focus();
-  el.select();
-  try{document.execCommand("copy");}catch(e){}
-  document.body.removeChild(el);
-}
-
-function getFirstName(name:string){
-  if(!name)return"";
-  return name.split(" ")[0];
-}
-
-function generatePositions(count:number){
-  const zones=[
-    {x:15,y:20},{x:75,y:15},{x:85,y:45},{x:70,y:75},
-    {x:30,y:80},{x:10,y:55},{x:50,y:25},{x:45,y:65},
-  ];
-  return zones.slice(0,count).map(z=>({
-    x:z.x+(Math.random()*10-5),
-    y:z.y+(Math.random()*10-5),
-  }));
-}
-
-export default function GuestEntryPage(){
-  const[screen,setScreen]=useState<Screen>("splash");
-  const[registration,setRegistration]=useState<any>(null);
-  const[profile,setProfile]=useState<any>(null);
-  const[event,setEvent]=useState<any>(null);
-  const[loading,setLoading]=useState(true);
-  const params=useParams();
-  const token=params.token as string;
-  const slug=params.slug as string;
-
-  useEffect(()=>{
-    async function load(){
-      const{data:reg}=await supabase.from("registrations").select("*").eq("access_token",token).single();
-      setRegistration(reg);
-      const{data:ev}=await supabase.from("events").select("*").eq("id",reg.event_id).single();
-      setEvent(ev);
-      const{data:prof}=await supabase.from("guest_profiles").select("*").eq("registration_id",reg.id).single();
-      if(prof){
-        setProfile(prof);
-      }else if(reg?.status==="host"){
-        const{data:evFull}=await supabase.from("events").select("host_id").eq("id",reg.event_id).single();
-        if(evFull){
-          const{data:h}=await supabase.from("hosts").select("*").eq("id",evFull.host_id).single();
-          if(h){
-            const{data:hp}=await supabase.from("host_profiles").select("*").eq("host_id",h.id).single();
-            const name=hp?.display_name||h.name||"Host";
-            // Try insert — if exists, fetch and update instead
-            const{data:newProf,error:insertErr}=await supabase.from("guest_profiles").insert({
-              registration_id:reg.id,
-              event_id:reg.event_id,
-              display_name:name,
-              role_title:hp?.role_title||"",
-              organisation:hp?.organisation||"",
-              bio:hp?.bio||"",
-              platform_type:"link",
-              platform_value:hp?.platform_value||"",
-              aura_active:false,
-            }).select().single();
-            if(newProf){
-              setProfile(newProf);
-            }else{
-              // Profile exists — fetch and update with latest host_profile data
-              const{data:existing}=await supabase.from("guest_profiles").select("*").eq("registration_id",reg.id).single();
-              if(existing){
-                const{data:updated}=await supabase.from("guest_profiles").update({
-                  display_name:name,
-                  role_title:hp?.role_title||"",
-                  organisation:hp?.organisation||"",
-                  bio:hp?.bio||"",
-                  platform_value:hp?.platform_value||"",
-                }).eq("registration_id",reg.id).select().single();
-                setProfile(updated||existing);
-              }
-            }
-          }
-        }
-      }
-      setLoading(false);
-    }
-    load();
-  },[token]);
-
-  useEffect(()=>{
-    if(loading)return;
-    const timer=setTimeout(()=>{
-      if(profile)setScreen("scene");
-      else if(registration?.status==="host")setScreen("scene");
-      else setScreen("identity");
-    },2200);
-    return()=>clearTimeout(timer);
-  },[loading,profile]);
-
-  if(screen==="splash")return<Splash/>;
-  if(screen==="identity")return<Identity registration={registration} event={event} onComplete={(p:any)=>{setProfile(p);setScreen("scene");}}/>;
-  return<Scene event={event} registration={registration} profile={profile} onProfileUpdate={setProfile}/>;
-}
-
-function Splash(){
-  return(
-    <div style={{position:"fixed",inset:0,background:"#0a0a0a",display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",zIndex:9999,gap:"20px"}}>
-      <style>{`
-        @keyframes logoSlide{
-          0%{opacity:0;transform:translateY(24px) scale(0.92);}
-          60%{opacity:1;transform:translateY(-4px) scale(1.02);}
-          100%{opacity:1;transform:translateY(0) scale(1);}
-        }
-        @keyframes tagSlide{
-          0%,40%{opacity:0;transform:translateY(12px);}
-          100%{opacity:0.8;transform:translateY(0);}
-        }
-        @keyframes dotPulse{
-          0%,100%{transform:scale(1);opacity:0.8;}
-          50%{transform:scale(1.4);opacity:1;}
-        }
-        .splash-logo{animation:logoSlide 1s cubic-bezier(0.34,1.56,0.64,1) forwards;}
-        .splash-tag{animation:tagSlide 1.6s ease forwards;}
-        .splash-dot{animation:dotPulse 1.2s ease-in-out infinite;animation-delay:1s;}
-      `}</style>
-      <div className="splash-logo">
-        <OreetiLogo size="sm"/>
-      </div>
-      <p className="splash-tag" style={{color:"#E26D34",fontSize:"11px",letterSpacing:"0.35em",textTransform:"uppercase",fontWeight:"400"}}>
-        The room activated<span className="splash-dot" style={{display:"inline-block",color:"#E26D34"}}>.</span>
-      </p>
-    </div>
-  );
-}
-
-function Identity({registration,event,onComplete}:any){
-  const [step, setStep] = useState(1);
-  const [displayName, setDisplayName] = useState(""); 
-  const [role, setRole] = useState("");               
-  const [organisation, setOrganisation] = useState("");                                                     
-  const [bio, setBio] = useState("");                 
+export default function GuestOnboardingPage() {
+  const params = useParams();
+  const router = useRouter();
   
-  // Professional Presence Link Matrix
+  const slug = params?.slug as string;
+  const token = params?.token as string;
+
+  const [loadingConfig, setLoadingConfig] = useState(true);
+  const [saving, setSaving] = useState(false);
+  const [eventId, setEventId] = useState<string | null>(null);
+  const [error, setError] = useState("");
+
+  // Step 1: Core Clean Identity
+  const [displayName, setDisplayName] = useState("");
+  const [role, setRole] = useState("");
+  const [organisation, setOrganisation] = useState("");
+  const [bio, setBio] = useState("");
+
+  // Step 2: Presence Bottom Sheet Matrices
+  const [isPresenceOpen, setIsPresenceOpen] = useState(false);
   const [linkedin, setLinkedin] = useState("");
   const [website, setWebsite] = useState("");
   const [portfolio, setPortfolio] = useState("");
 
-  const [intent, setIntent] = useState("");
-  const [stations, setStations] = useState<any[]>([]);
-  const [selectedStationId, setSelectedStationId] = useState("");
-  
-  const [saving, setSaving] = useState(false);        
-  const [loadingStations, setLoadingStations] = useState(true);
-  const [error, setError] = useState("");
+  // Step 4: Intent Bottom Sheet Matrices
+  const [isIntentOpen, setIsIntentOpen] = useState(false);
+  const [selectedIntents, setSelectedIntents] = useState<string[]>([]);
 
-  // Pull active venue stations exactly as named on the host dashboard
+  // Step 3: Host Dashboard Dynamic Stations (CRITICAL FIX)
+  const [stations, setStations] = useState<Station[]>([]);
+  const [selectedStationId, setSelectedStationId] = useState("");
+
+  // Fetch Host Dashboard Configurations dynamically based on the active event slug
   useEffect(() => {
-    async function pullStations() {
-      if (!registration?.event_id) return;
+    async function pullHostVenueConfig() {
+      if (!slug) return;
       try {
-        const { data, error: err } = await supabase
-          .from("event_stations")
-          .select("id, name, context")
-          .eq("event_id", registration.event_id);
-        if (data) setStations(data);
-      } catch (e) {
-        console.error("Error fetching host setup:", e);
+        const { data: eventData } = await supabase
+          .from("events")
+          .select("id")
+          .eq("slug", slug)
+          .single();
+
+        if (eventData) {
+          setEventId(eventData.id);
+
+          // CRITICAL FIX: Pull directly from the active host venue's station list
+          const { data: stationData } = await supabase
+            .from("event_stations")
+            .select("id, name, context")
+            .eq("event_id", eventData.id);
+
+          if (stationData) {
+            setStations(stationData);
+          }
+        }
+      } catch (err) {
+        console.error("Critical error mapping event perimeter rules:", err);
       } finally {
-        setLoadingStations(false);
+        setLoadingConfig(false);
       }
     }
-    pullStations();
-  }, [registration]);
+    pullHostVenueConfig();
+  }, [slug]);
 
-  // VALIDATION MECHANICS
-  const hasCoreIdentity = displayName.trim() !== "" && role.trim() !== "";
-  const hasAtLeastOneLink = linkedin.trim() !== "" || website.trim() !== "" || portfolio.trim() !== "";
+  // Presence Status String Composer
+  const getPresenceLabel = () => {
+    const added = [];
+    if (linkedin.trim()) added.push("LinkedIn");
+    if (website.trim()) added.push("Website");
+    if (portfolio.trim()) added.push("Portfolio");
+    
+    if (added.length === 0) return "Select Presence Links";
+    if (added.length === 1) return `✓ ${added[0]} Added`;
+    return `✓ ${added.length} Professional Links Added`;
+  };
+
+  // Intent Selection Handler
+  const toggleIntent = (id: string) => {
+    setSelectedIntents(prev => 
+      prev.includes(id) ? prev.filter(item => item !== id) : [...prev, id]
+    );
+  };
+
+  const getIntentLabel = () => {
+    if (selectedIntents.length === 0) return "Select Intent";
+    if (selectedIntents.length === 1) return `✓ ${selectedIntents[0]} Selected`;
+    return `✓ ${selectedIntents.join(" + ")} Selected`;
+  };
+
+  // STRICT VALIDATION ENGINE
+  const isIdentityValid = displayName.trim() !== "" && role.trim() !== "";
+  const isPresenceValid = linkedin.trim() !== "" || website.trim() !== "" || portfolio.trim() !== "";
+  const isIntentValid = selectedIntents.length > 0;
+  const isStationValid = selectedStationId !== "";
   
-  const isStep1Valid = hasCoreIdentity && hasAtLeastOneLink;
-  const isStep2Valid = intent !== "";
-  const isStep3Valid = selectedStationId !== "";
+  const canSubmit = isIdentityValid && isPresenceValid && isIntentValid && isStationValid && !saving;
 
-  // Dynamic composition of your preferred platform values
-  const primaryLinkValue = linkedin.trim() || website.trim() || portfolio.trim() || "";
-
-  async function save(){
-    if(!isStep1Valid || !isStep2Valid || !isStep3Valid) return;
+  const handleManifestation = async () => {
+    if (!canSubmit) return;
     setSaving(true);
     setError("");
 
-    const { data, error: err } = await supabase.from("guest_profiles").insert({
-      registration_id: registration.id,            
-      event_id: registration.event_id,
-      display_name: displayName,                   
-      role_title: role,
-      organisation,
-      bio,
-      platform_type: "link",
-      platform_value: primaryLinkValue,                        
-      aura_active: false,
-      // Metadata payload binding tracking intent and target anchors
-      networking_intent: intent,
-      target_station_id: selectedStationId,
-      linkedin_url: linkedin,
-      website_url: website,
-      portfolio_url: portfolio
-    }).select().single();                         
-    
-    if(err) {
-      setError(err.message);
+    try {
+      const { error: err } = await supabase.from("guest_profiles").insert({
+        registration_id: token,            
+        event_id: eventId,
+        display_name: displayName,                   
+        role_title: role,
+        organisation,
+        bio,
+        platform_type: "link",
+        platform_value: linkedin.trim() || website.trim() || portfolio.trim() || "",                        
+        aura_active: false,
+        networking_intents: selectedIntents,
+        target_station_id: selectedStationId,
+        linkedin_url: linkedin,
+        website_url: website,
+        portfolio_url: portfolio
+      });
+
+      if (err) throw err;
+
+      router.push(`/e/${slug}/scene`);
+    } catch (err: any) {
+      setError(err.message || "Failed to manifest identity.");
       setSaving(false);
-      return;
     }
-    onComplete(data);                             
+  };
+
+  if (loadingConfig) {
+    return (
+      <div className="min-h-screen bg-[#0A0A0A] flex items-center justify-center">
+        <div className="w-4 h-4 border-t-2 border-[#F97316] rounded-full animate-spin" />
+      </div>
+    );
   }
 
-  const inp = {
-    width: "100%",                                
-    padding: "12px 0",
-    background: "transparent",
-    border: "none",
-    borderBottom: "1px solid rgba(255, 255, 255, 0.08)",
-    color: "#f0ede8",                             
-    fontSize: "14px",
-    outline: "none",                              
-    borderRadius: 0,
-    boxSizing: "border-box" as const,
-    marginBottom: "20px"                          
+  const inpStyle = {
+    width: "100%", padding: "14px 0", background: "transparent", border: "none",
+    borderBottom: "1px solid rgba(255, 255, 255, 0.06)", color: "#FDFBF7",
+    fontSize: "15px", outline: "none", borderRadius: 0, marginBottom: "16px"
   };
 
-  const linkInp = {
-    ...inp,
-    borderBottom: "1px solid rgba(255, 255, 255, 0.04)",
-    fontSize: "13px",
-    marginBottom: "12px",
-    color: "rgba(255,255,255,0.7)"
-  };
+  const triggerBtnStyle = (hasValue: boolean) => ({
+    width: "100%", display: "flex", alignItems: "center", justifyContent: "space-between",
+    padding: "16px", background: "rgba(255,255,255,0.01)", border: "1px solid rgba(255,255,255,0.04)",
+    borderRadius: "3px", color: hasValue ? "#F97316" : "rgba(255,255,255,0.4)",
+    fontSize: "14px", cursor: "pointer", marginBottom: "20px", textAlign: "left" as const
+  });
 
   const cardStyle = (isActive: boolean) => ({
-    width: "100%",
-    textAlign: "left" as const,
-    padding: "18px",
+    width: "100%", textAlign: "left" as const, padding: "18px",
     background: "rgba(255,255,255,0.01)",
     border: isActive ? "1px solid rgba(249, 115, 22, 0.25)" : "1px solid rgba(255,255,255,0.03)",
     backgroundColor: isActive ? "rgba(249, 115, 22, 0.02)" : "transparent",
-    borderRadius: "3px",
-    marginBottom: "12px",
-    cursor: "pointer",
-    outline: "none",
-    transition: "all 0.3s ease"
+    borderRadius: "3px", marginBottom: "12px", cursor: "pointer", outline: "none"
   });
 
-  const footerActionZone = {
-    position: "fixed" as const,
-    bottom: 0, left: 0, right: 0,
-    height: "110px",
-    background: "rgba(10,10,10,0.92)",
-    backdropFilter: "blur(12px)",
-    borderTop: "1px solid rgba(255,255,255,0.02)",
-    padding: "0 24px",
-    display: "flex",
-    alignItems: "center",
-    justifyContent: "space-between",
-    zIndex: 100
-  };
-
-  return(
-    <div style={{minHeight:"100vh", background:"#0A0A0A", color:"#FDFBF7", padding: "48px 24px", display:"flex", flexDirection:"column", boxSizing: "border-box"}}>
-      <p style={{fontSize:"11px", letterSpacing:"0.2em", color:"#F97316", textTransform:"uppercase", marginBottom:"40px", textAlign:"center", fontWeight:"600"}}>OREETI</p>
+  return (
+    <div className="min-h-screen bg-[#0A0A0A] text-[#FDFBF7] px-6 flex flex-col items-center justify-between box-border relative overflow-x-hidden">
       
-      <div style={{width:"100%", height:"20px", marginBottom:"32px"}}>
-        <span style={{fontFamily:"monospace", fontSize:"9px", color:"rgba(255,255,255,0.25)", letterSpacing:"2px"}}>
-          COHORT INDUCTION • {step}/3
-        </span>
-      </div>
+      <header className="w-full pt-14 max-w-md mx-auto text-center">
+        <p className="text-[11px] font-semibold tracking-[0.25em] text-[#F97316] m-0 uppercase">OREETI</p>
+      </header>
 
-      <div style={{maxWidth:"400px", margin:"0 auto", width:"100%", flex:1, paddingBottom: "140px"}}>
+      <main className="w-full max-w-md mx-auto flex-1 pt-8 pb-36 overflow-y-auto">
         
-        {/* STEP 1: IDENTITY CANVAS */}
-        {step === 1 && (
-          <div>
-            <h1 style={{fontSize:"24px", fontWeight:300, letterSpacing:"-0.5px", marginBottom:"6px"}}>Manifest Identity</h1>
-            <p style={{fontSize:"13px", color:"rgba(255,255,255,0.38)", marginBottom:"28px"}}>Who are you entering the room as?</p>
+        {/* STEP 1: ABOUT YOU */}
+        <section className="mb-8">
+          <h1 className="text-2xl font-light tracking-tight text-[#FDFBF7] mb-1">Manifest Identity</h1>
+          <p className="text-sm text-white/35 mb-6">Who are you entering the room as?</p>
+          
+          <input value={displayName} onChange={e => setDisplayName(e.target.value)} placeholder="Your name" style={inpStyle} autoComplete="off" />
+          <input value={role} onChange={e => setRole(e.target.value)} placeholder="Your role or title" style={inpStyle} autoComplete="off" />
+          <input value={organisation} onChange={e => setOrganisation(e.target.value)} placeholder="Organisation / Studio" style={inpStyle} autoComplete="off" />
+          <textarea value={bio} onChange={e => setBio(e.target.value)} placeholder="Short Bio" rows={2} style={{ ...inpStyle, height: "64px", resize: "none" }} autoComplete="off" />
+        </section>
 
-            <input value={displayName} onChange={e=>setDisplayName(e.target.value)} placeholder="Your name" style={inp} autoComplete="off"/>
-            <input value={role} onChange={e=>setRole(e.target.value)} placeholder="Your role or title" style={inp} autoComplete="off"/>
-            <input value={organisation} onChange={e=>setOrganisation(e.target.value)} placeholder="Organisation / Studio" style={inp} autoComplete="off"/>
-            <textarea value={bio} onChange={e=>setBio(e.target.value)} placeholder="Short Bio" rows={2} style={{...inp, resize:"none", height:"60px"}} autoComplete="off"/>
+        {/* STEP 2: PROFESSIONAL PRESENCE DISCLOSURE */}
+        <section className="mb-6">
+          <label className="block text-[10px] font-mono tracking-wider text-white/30 uppercase mb-3">Professional Presence</label>
+          <button onClick={() => setIsPresenceOpen(true)} style={triggerBtnStyle(isPresenceValid)}>
+            <span>{getPresenceLabel()}</span>
+            <span className="text-white/20 text-xs">➔</span>
+          </button>
+        </section>
 
-            <label style={{display:"block", fontFamily:"monospace", fontSize:"10px", color:"rgba(255,255,255,0.4)", letterSpacing:"1.5px", marginTop:"24px", marginBottom:"12px", textTransform:"uppercase"}}>
-              Professional Presence (Provide at least one link)
-            </label>
-            <input value={linkedin} onChange={e=>setLinkedin(e.target.value)} placeholder="LinkedIn URL" style={linkInp} autoComplete="off"/>
-            <input value={website} onChange={e=>setWebsite(e.target.value)} placeholder="Website URL" style={linkInp} autoComplete="off"/>
-            <input value={portfolio} onChange={e=>setPortfolio(e.target.value)} placeholder="Portfolio URL" style={linkInp} autoComplete="off"/>
-          </div>
-        )}
+        {/* STEP 4: NETWORKING INTENT DISCLOSURE */}
+        <section className="mb-8">
+          <label className="block text-[10px] font-mono tracking-wider text-white/30 uppercase mb-3">What brings you to this event?</label>
+          <button onClick={() => setIsIntentOpen(true)} style={triggerBtnStyle(isIntentValid)}>
+            <span>{getIntentLabel()}</span>
+            <span className="text-white/20 text-xs">➔</span>
+          </button>
+        </section>
 
-        {/* STEP 2: INTENT VECTOR */}
-        {step === 2 && (
-          <div>
-            <h1 style={{fontSize:"24px", fontWeight:300, letterSpacing:"-0.5px", marginBottom:"6px"}}>State Intention</h1>
-            <p style={{fontSize:"13px", color:"rgba(255,255,255,0.38)", marginBottom:"28px"}}>What primary vector brings you to this gathering?</p>
-
-            {[
-              { id: "Capital", label: "Capital", desc: "Fundraising, investors, and strategic ideas." },
-              { id: "Synergy", label: "Synergy", desc: "Collaborators, co-founders, and deep execution partnerships." },
-              { id: "Mentorship", label: "Mentorship", desc: "Actively seeking guidance or looking to offer perspective." },
-              { id: "Opportunities", label: "Opportunities", desc: "Career growth, partnerships, and introductions." }
-            ].map((item) => (
-              <button key={item.id} onClick={() => setIntent(item.id)} style={cardStyle(intent === item.id)}>
-                <h3 style={{fontSize:"15px", fontWeight:500, margin:0, color: intent === item.id ? "#F97316" : "#FDFBF7"}}>{item.label}</h3>
-                <p style={{fontSize:"12px", color:"rgba(255,255,255,0.35)", margin:"4px 0 0 0", lineHeight:"16px"}}>{item.desc}</p>
-              </button>
-            ))}
-          </div>
-        )}
-
-        {/* STEP 3: PROXIMITY ANCHORS */}
-        {step === 3 && (
-          <div>
-            <h1 style={{fontSize:"24px", fontWeight:300, letterSpacing:"-0.5px", marginBottom:"6px"}}>Target Proximity</h1>
-            <p style={{fontSize:"13px", color:"rgba(255,255,255,0.38)", marginBottom:"28px"}}>Select the host environment containing the minds you need to be around.</p>
-
-            {loadingStations ? (
-              <p style={{fontSize:"13px", color:"rgba(255,255,255,0.25)", fontStyle:"italic"}}>Reading dashboard configurations···</p>
-            ) : stations.length === 0 ? (
-              <p style={{fontSize:"13px", color:"rgba(255,255,255,0.25)", fontStyle:"italic"}}>No specific stations active. Ready to enter space.</p>
-            ) : (
-              stations.map((station: any) => (
-                <button key={station.id} onClick={() => setSelectedStationId(station.id)} style={cardStyle(selectedStationId === station.id)}>
-                  <h3 style={{fontSize:"15px", fontWeight:500, margin:0, color: selectedStationId === station.id ? "#F97316" : "#FDFBF7"}}>{station.name}</h3>
-                  <p style={{fontSize:"12px", color:"rgba(255,255,255,0.35)", margin:"4px 0 0 0", lineHeight:"16px"}}>{station.context}</p>
-                </button>
-              ))
-            )}
-            {error && <p style={{color:"#F97316", fontSize:"12px", marginTop:"12px"}}>{error}</p>}
-          </div>
-        )}
-
-      </div>
-
-      {/* FIXED LOW BEZIAL ACTION TIER */}
-      <div style={footerActionZone}>
-        <div style={{maxWidth:"400px", width:"100%", margin:"0 auto", display:"flex", alignItems:"center", justifyContent:"space-between", gap:"16px"}}>
-          {step > 1 ? (
-            <button onClick={() => setStep(s => s - 1)} style={{background:"none", border:"none", color:"rgba(255,255,255,0.35)", fontFamily:"monospace", fontSize:"11px", letterSpacing:"1.5px", cursor:"pointer"}}>
-              BACK
-            </button>
+        {/* STEP 3: DYNAMIC HOST DASHBOARD STATIONS */}
+        <section className="mb-8">
+          <label className="block text-[10px] font-mono tracking-wider text-white/30 uppercase mb-3">Target Proximity</label>
+          <p className="text-xs text-white/40 mb-4">Select the host environment containing the minds you need to be around.</p>
+          
+          {stations.length === 0 ? (
+            <p className="text-sm text-white/20 italic">No custom host environments deployed yet.</p>
           ) : (
-            <div style={{width:"40px"}} />
+            stations.map((station) => (
+              <button type="button" key={station.id} onClick={() => setSelectedStationId(station.id)} style={cardStyle(selectedStationId === station.id)}>
+                <h4 style={{ fontSize: "14px", fontWeight: 500, margin: 0, color: selectedStationId === station.id ? "#F97316" : "#FDFBF7" }}>
+                  {station.name}
+                </h4>
+                <p style={{ fontSize: "12px", color: "rgba(255,255,255,0.35)", margin: "4px 0 0 0", lineHeight: "16px" }}>
+                  {station.context}
+                </p>
+              </button>
+            ))
           )}
+        </section>
 
+        {error && <p className="text-xs text-[#F97316] text-center mt-4">{error}</p>}
+      </main>
+
+      {/* ERGONOMIC BOTTOM BAR */}
+      <footer className="fixed bottom-0 left-0 right-0 h-28 bg-[#0A0A0A]/95 backdrop-blur-md border-t border-white/[0.02] px-6 flex items-center z-40">
+        <div className="w-full max-w-md mx-auto">
           <button 
-            disabled={step === 1 ? !isStep1Valid : step === 2 ? !isStep2Valid : (!isStep3Valid || saving)}
-            onClick={step === 3 ? save : () => setStep(s => s + 1)}
+            disabled={!canSubmit} 
+            onClick={handleManifestation}
+            className="w-full h-12 font-mono text-xs tracking-[0.2em] font-semibold rounded-sm transition-all duration-300"
             style={{
-              flex: 1, height: "46px", background: "rgba(255,255,255,0.03)", 
-              border: (step === 3 && isStep3Valid) ? "1px solid rgba(249, 115, 22, 0.4)" : "1px solid rgba(255,255,255,0.08)",
-              borderRadius: "2px", color: (step === 3 && isStep3Valid) ? "#F97316" : "#FDFBF7", fontFamily: "monospace", fontSize: "11px", 
-              letterSpacing: "2px", fontWeight: "600", cursor: "pointer",
-              opacity: (step === 1 ? isStep1Valid : step === 2 ? isStep2Valid : isStep3Valid) ? 1 : 0.15,
-              transition: "all 0.2s"
+              background: "rgba(255,255,255,0.01)",
+              border: canSubmit ? "1px solid rgba(249, 115, 22, 0.4)" : "1px solid rgba(255,255,255,0.06)",
+              color: canSubmit ? "#F97316" : "rgba(255,255,255,0.15)",
+              cursor: canSubmit ? "pointer" : "not-allowed",
+              opacity: canSubmit ? 1 : 0.4
             }}
           >
-            {saving ? "SAVING···" : step === 3 ? "ENTER SPACE" : "CONTINUE"}
+            {saving ? "MANIFESTING ID···" : "ENTER INDUCTION"}
           </button>
         </div>
-      </div>
-    </div>
-  );
-}
+      </footer>
 
-function Scene({event,registration,profile,onProfileUpdate}:any){
-const[entryQR,setEntryQR]=useState("");
-const[networkingQR,setNetworkingQR]=useState("");
-  useEffect(()=>{
-  if(!registration)return;
-  async function genQRs(){
-    // Generate signed QR payloads via API
-    const res=await fetch('/api/qr/generate?reg_id='+registration.id).catch(()=>null);
-    if(res?.ok){
-      const{entryPayload,unlockPayload}=await res.json();
-      QRCode.toDataURL(entryPayload,{errorCorrectionLevel:"H",margin:2,width:256}).then(setEntryQR).catch(console.error);
-      QRCode.toDataURL(unlockPayload,{errorCorrectionLevel:"H",margin:2,width:256}).then(setNetworkingQR).catch(console.error);
-    }else{
-      // Fallback to unsigned (backward compat)
-      QRCode.toDataURL("presence:entry:"+registration.id,{errorCorrectionLevel:"H",margin:2,width:256}).then(setEntryQR).catch(console.error);
-      QRCode.toDataURL("presence:unlock:"+registration.id,{errorCorrectionLevel:"H",margin:2,width:256}).then(setNetworkingQR).catch(console.error);
-    }
-  }
-  genQRs();
-},[registration]);
-const[tab,setTab]=useState<Tab>("scene");
-  const[editing,setEditing]=useState(false);
-  const[countdown,setCountdown]=useState({days:0,hours:0,minutes:0,seconds:0});
-  const[networkingCount,setNetworkingCount]=useState(0);
-  const[connectionsCount,setConnectionsCount]=useState(0);
-  const[fiveMin,setFiveMin]=useState(false);
-  const[eventStatus,setEventStatus]=useState(event?.status||"");
-  const isLive=eventStatus==="live";
-  const isEnded=eventStatus==="ended";
-  const nav=[
-    {id:"scene",l:"Scene",e:"✦"},
-    {id:"networking",l:"Networking",e:"◎"},
-    {id:"ticket",l:"Ticket",e:"🎟"},
-    {id:"profile",l:"Profile",e:"◐"}
-  ];
-
-  useEffect(()=>{
-    if(!event)return;
-    setEventStatus(event.status);
-    supabase.from("events").select("status").eq("id",event.id).single().then(({data})=>{if(data)setEventStatus(data.status);});
-    const evCh=supabase.channel("event-status:"+event.id).on("postgres_changes",{event:"UPDATE",schema:"public",table:"events",filter:"id=eq."+event.id},(p)=>{setEventStatus(p.new.status);}).subscribe();
-    const tick=setInterval(()=>{
-      const n=new Date();
-      const s=new Date(event.start_time);
-      const e2=new Date(event.end_time);
-      const diff=s.getTime()-n.getTime();
-      if(diff>0){
-        setCountdown({
-          days:Math.floor(diff/86400000),
-          hours:Math.floor((diff%86400000)/3600000),
-          minutes:Math.floor((diff%3600000)/60000),
-          seconds:Math.floor((diff%60000)/1000),
-        });
-      }
-      const toEnd=e2.getTime()-n.getTime();
-      if(toEnd>0&&toEnd<300000)setFiveMin(true);
-    },1000);
-    return()=>{clearInterval(tick);supabase.removeChannel(evCh);};
-  },[event]);
-
-  useEffect(()=>{
-    if(!event)return;
-    async function fetchCounts(){
-      const{count:nc}=await supabase.from("guest_profiles").select("*",{count:"exact",head:true}).eq("event_id",event.id).eq("aura_active",true);
-      setNetworkingCount(nc||0);
-      const{count:cc}=await supabase.from("handshakes").select("*",{count:"exact",head:true}).eq("event_id",event.id);
-      setConnectionsCount(cc||0);
-    }
-    fetchCounts();
-    const interval=setInterval(fetchCounts,15000);
-    // Realtime subscription for instant count updates
-    const hsCh=supabase.channel("handshakes-count:"+event.id)
-      .on("postgres_changes",{event:"INSERT",schema:"public",table:"handshakes",filter:"event_id=eq."+event.id},()=>fetchCounts())
-      .on("postgres_changes",{event:"INSERT",schema:"public",table:"guest_profiles",filter:"event_id=eq."+event.id},()=>fetchCounts())
-      .subscribe();
-    return()=>{clearInterval(interval);supabase.removeChannel(hsCh);};
-  },[event]);
-
-  return(
-    <div style={{minHeight:"100vh",background:"linear-gradient(170deg,#0a0a0c 0%,#0f0d14 40%,#0a0a0c 100%)",paddingBottom:"100px",fontFamily:"var(--font-inter),-apple-system,sans-serif"}}>
-      {fiveMin&&<div style={{background:"#E26D34",padding:"12px 20px",textAlign:"center"}}><p style={{color:"#000",fontSize:"13px",fontWeight:"500"}}>⏱ Event ends in 5 minutes</p></div>}
-
-      {tab==="scene"&&(
-        <div style={{padding:"24px 20px"}}>
-          
-          <p style={{fontSize:"18px",fontWeight:"700",letterSpacing:"-0.02em",marginBottom:"20px",fontFamily:"'Helvetica Neue',Arial,sans-serif"}}><span style={{color:"#ffffff"}}>Or</span><span style={{color:"#E26D34"}}>ee</span><span style={{color:"#ffffff"}}>ti</span></p>
-
-          {event?.banner_url && (
-            <img src={event.banner_url} alt="" style={{width:"100%", height:"auto", borderRadius:"12px", marginBottom:"20px"}} />
-          )}
-          <h1 style={{fontSize:"28px",fontWeight:"500",color:"#f0ede8",marginBottom:"8px",letterSpacing:"-0.03em",lineHeight:"1.15"}}>{event?.title}</h1>
-          <p style={{fontSize:"13px",color:"rgba(240,237,232,0.5)",marginBottom:"4px",letterSpacing:"0.01em"}}>📍 {event?.venue}</p>
-          <p style={{fontSize:"13px",color:"rgba(240,237,232,0.35)",marginBottom:"28px",letterSpacing:"0.01em"}}>{event&&new Date(event.start_time).toLocaleDateString("en-KE",{weekday:"long",day:"numeric",month:"long"})}</p>
-          
-          {isEnded?(
-            <div style={{background:"linear-gradient(135deg, #0a0a0b 0%, #1a1a1a 100%)",borderRadius:"24px",padding:"28px",marginBottom:"16px",textAlign:"center",boxShadow:"0 8px 24px rgba(0,0,0,0.15)"}}>
-              <p style={{color:"#fff",fontSize:"18px",marginBottom:"8px"}}>Event has ended</p>
-              <p style={{color:"#666",fontSize:"14px",marginBottom:"16px"}}>Your connections are saved</p>
-              <button onClick={()=>setTab("profile")} style={{padding:"12px 24px",borderRadius:"14px",background:"#fff",color:"#000",border:"none",fontSize:"14px",cursor:"pointer",fontWeight:"500"}}>View connections →</button>
+      {/* BOTTOM SHEET: PRESENCE LINKS */}
+      {isPresenceOpen && (
+        <div className="fixed inset-0 bg-black/70 backdrop-blur-sm z-50 flex flex-col justify-end" onClick={() => setIsPresenceOpen(false)}>
+          <div className="w-full bg-[#0E0E0E] border-t border-white/[0.05] rounded-t-xl p-6 max-w-md mx-auto space-y-4" onClick={e => e.stopPropagation()}>
+            <div className="flex justify-between items-center mb-2">
+              <h3 className="text-sm font-medium tracking-tight text-white/70">Professional Presence</h3>
+              <button onClick={() => setIsPresenceOpen(false)} className="text-[10px] font-mono text-white/30 hover:text-white tracking-widest">CLOSE</button>
             </div>
-          ):isLive?(
-            <div style={{background:"#0c0c10",borderRadius:"12px",padding:"12px 16px",marginBottom:"16px",display:"flex",alignItems:"center",gap:"10px",border:"1px solid rgba(240,237,232,0.04)"}}>
-              <span style={{width:"10px",height:"10px",borderRadius:"50%",background:"#4ade80",display:"inline-block",boxShadow:"0 0 0 0 rgba(74,222,128,0.7)",animation:"pulse 2s infinite"}}/><style>{`@keyframes pulse{0%,100%{box-shadow:0 0 0 0 rgba(74,222,128,0.7)}50%{box-shadow:0 0 0 8px rgba(74,222,128,0)}}`}</style>
-              <p style={{color:"#fff",fontSize:"16px",fontWeight:"500"}}>Event is live</p>
-            </div>
-          ):(
-            <div style={{background:"linear-gradient(135deg, #0a0a0b 0%, #1a1a1a 100%)",borderRadius:"24px",padding:"28px",marginBottom:"16px",boxShadow:"0 8px 24px rgba(0,0,0,0.15)"}}>
-              <p style={{fontSize:"12px",color:"#666",marginBottom:"16px",letterSpacing:"0.1em"}}>STARTS IN</p>
-              <div style={{display:"flex",gap:"16px",justifyContent:"center"}}>
-                {[{v:countdown.days,l:"Days"},{v:countdown.hours,l:"Hrs"},{v:countdown.minutes,l:"Min"},{v:countdown.seconds,l:"Sec"}].map(({v,l})=>(
-                  <div key={l} style={{textAlign:"center"}}>
-                    <p style={{fontSize:"32px",fontWeight:"300",color:"#fff",lineHeight:"1"}}>{String(v).padStart(2,"0")}</p>
-                    <p style={{fontSize:"11px",color:"#666",marginTop:"4px"}}>{l}</p>
-                  </div>
-                ))}
-              </div>
-            </div>
-          )}
-          
-          {isLive&&(
-            <div style={{background:"#0c0c10",borderRadius:"16px",padding:"20px",marginBottom:"12px",border:"1px solid rgba(240,237,232,0.04)",boxShadow:"var(--shadow-card), inset 0 1px 0 rgba(255,255,255,0.04)",backdropFilter:"blur(20px)"}}>
-              <p style={{fontSize:"10px",color:"#E26D34",marginBottom:"12px",letterSpacing:"0.15em",fontWeight:"600"}}>LIVE NOW</p>
-              <div style={{display:"flex",flexDirection:"column",gap:"12px",marginBottom:"20px"}}>
-                <div style={{background:"rgba(226,109,52,0.03)",borderRadius:"10px",padding:"12px 16px",border:"1px solid rgba(226,109,52,0.08)",display:"flex",alignItems:"center",justifyContent:"space-between"}}>
-                  <p style={{fontSize:"13px",color:"#E26D34",fontWeight:"500",margin:0,letterSpacing:"0.02em"}}>networking now</p>
-                  <p style={{fontSize:"22px",fontWeight:"300",color:"#E26D34",lineHeight:"1",margin:0}}>{networkingCount}</p>
-                </div>
-                <div style={{background:"rgba(226,109,52,0.03)",borderRadius:"10px",padding:"12px 16px",border:"1px solid rgba(226,109,52,0.08)",display:"flex",alignItems:"center",justifyContent:"space-between"}}>
-                  <p style={{fontSize:"28px",fontWeight:"700",color:"#E26D34",lineHeight:"1",marginBottom:"2px"}}>{connectionsCount}</p>
-                  <p style={{fontSize:"12px",color:"#E26D34",fontWeight:"500"}}>handshakes exchanged</p>
-                </div>
-              </div>
-              <button onClick={()=>setTab("networking")} style={{width:"100%",padding:"11px",borderRadius:"10px",background:"transparent",color:"#E26D34",border:"1px solid rgba(226,109,52,0.35)",fontSize:"13px",cursor:"pointer",fontWeight:"500",letterSpacing:"0.08em",textTransform:"uppercase",transition:"all 0.2s ease"}}>Start Networking →</button>
-            </div>
-          )}
-        </div>
-      )}
-
-      {tab==="networking"&&(
-        <NetworkingTab event={event} profile={profile} isLive={isLive} isEnded={isEnded} registration={registration}/>
-      )}
-
-      {tab==="ticket"&&(
-        <div style={{padding:"12px"}}>
-          <p style={{fontSize:"10px",letterSpacing:"0.3em",color:"#999",textTransform:"uppercase",marginBottom:"12px",textAlign:"center"}}>Your Ticket</p>
-          <div style={{background:"#141416",borderRadius:"20px",padding:"20px",border:"1px solid rgba(240,237,232,0.05)",boxShadow:"0 12px 40px rgba(0,0,0,0.5)",textAlign:"center",marginBottom:"8px"}}>
-            <h2 style={{fontSize:"17px",fontWeight:"600",marginBottom:"2px"}}>{event?.title}</h2>
-            <p style={{fontSize:"12px",color:"#666",marginBottom:"2px"}}>📍 {event?.venue}</p>
-            <p style={{fontSize:"12px",color:"#999",marginBottom:"16px"}}>{event&&new Date(event.start_time).toLocaleDateString("en-KE",{day:"numeric",month:"short",year:"numeric"})}</p>
-            <div style={{background:"#000",borderRadius:"10px",padding:"12px",marginBottom:"8px"}}>
-              <p style={{color:"#fff",fontSize:"12px",fontWeight:"500",marginBottom:"4px"}}>Entry QR</p>
-              <p style={{color:"#555",fontSize:"11px",marginBottom:"12px"}}>Show at entrance</p>
-              {entryQR?<img src={entryQR} style={{width:"130px",height:"130px",margin:"0 auto",display:"block"}}/>:<p style={{color:"#666",fontSize:"12px"}}>Generating...</p>}
-            </div>
-            <details style={{background:"#111",borderRadius:"10px",padding:"12px",border:"1px solid rgba(240,237,232,0.03)"}}>
-              <summary style={{listStyle:"none",display:"flex",justifyContent:"space-between",alignItems:"center",cursor:"pointer",userSelect:"none"}}>
-                <div>
-                  <p style={{color:"#fff",fontSize:"12px",fontWeight:"500",margin:0}}>Networking QR</p>
-                  <p style={{color:"#555",fontSize:"11px",margin:"4px 0 0"}}>For profile unlocks</p>
-                </div>
-                <span style={{fontSize:"11px",color:"#FFBF00",fontWeight:"600",textTransform:"uppercase",letterSpacing:"0.05em",background:"rgba(255,255,255,0.05)",padding:"4px 8px",borderRadius:"6px"}}>Toggle ⊙</span>
-              </summary>
-              <div style={{marginTop:"12px",paddingTop:"12px",borderTop:"1px solid rgba(255,255,255,0.05)"}}>
-                {networkingQR?<img src={networkingQR} style={{width:"130px",height:"130px",margin:"0 auto",display:"block"}}/>:<p style={{color:"#666",fontSize:"12px"}}>Generating...</p>}
-              </div>
-            </details>
-          </div>
-        </div>
-      )}
-
-      {tab==="profile"&&(
-        <ProfileTab profile={profile} event={event} onProfileUpdate={onProfileUpdate} isEnded={isEnded} registration={registration}/>
-      )}
-
-      <div style={{position:"fixed",bottom:"8px",left:"8px",right:"8px",background:"rgba(15,15,19,0.92)",backdropFilter:"blur(32px)",borderRadius:"20px",border:"1px solid rgba(255,255,255,0.08)",display:"flex",padding:"8px 4px",boxShadow:"0 8px 32px rgba(0,0,0,0.4)"}}>
-        {nav.map(item=>(
-          <button key={item.id} onClick={()=>{setTab(item.id as Tab);setEditing(false);}} style={{flex:1,display:"flex",flexDirection:"column",alignItems:"center",gap:"4px",background:tab===item.id?"rgba(226,109,52,0.1)":"none",border:"none",cursor:"pointer",padding:"8px 4px",borderRadius:"12px",transition:"all 0.15s ease",boxShadow:tab===item.id?"inset 0 0 0 1px rgba(226,109,52,0.15)":"none"}}>
-            <span style={{fontSize:"16px",opacity:tab===item.id?1:0.35,transform:tab===item.id?"scale(1.1)":"scale(1)",transition:"all 0.2s"}}>{item.e}</span>
-            <span style={{fontSize:"11px",color:tab===item.id?"#E26D34":"#999",fontWeight:tab===item.id?"600":"400",letterSpacing:"0.02em"}}>{item.l}</span>
-          </button>
-        ))}
-      </div>
-    </div>
-  );
-}
-
-function NetworkingTab({event,profile,isLive,isEnded,registration}:any){
-  const[networkingActive,setNetworkingActive]=useState(false);
-  const[auraLoaded,setAuraLoaded]=useState(false);
-  const isHostUser=registration?.status==="host";
-  const[nodes,setNodes]=useState<any[]>([]);
-  const[hostNode,setHostNode]=useState<any>(null);
-  const[incoming,setIncoming]=useState<any>(null);
-  const[confirmNode,setConfirmNode]=useState<any>(null);
-  const[sentRequests,setSentRequests]=useState<Set<string>>(new Set());
-  const[notification,setNotification]=useState<string>("");
-  const channelRef=useRef<any>(null);
-
-  const[declinedIds,setDeclinedIds]=useState<Set<string>>(new Set());
-
-  // Load aura state from DB on mount
-  useEffect(()=>{
-    if(!profile||auraLoaded)return;
-    async function loadAura(){
-      const{data:prof}=await supabase.from("guest_profiles").select("aura_active").eq("id",profile.id).single();
-      if(prof?.aura_active)setNetworkingActive(true);
-      // Load already-sent requests
-      const{data:sent}=await supabase.from("handshake_requests").select("recipient_id").eq("requester_id",profile.id).eq("event_id",event.id).in("status",["pending","approved"]);
-      setSentRequests(new Set((sent||[]).map((r:any)=>r.recipient_id)));
-      // Load declined requests (where I was requester and got declined)
-      const{data:declined}=await supabase.from("handshake_requests").select("recipient_id").eq("requester_id",profile.id).eq("event_id",event.id).eq("status","declined");
-      setDeclinedIds(new Set((declined||[]).map((r:any)=>r.recipient_id)));
-      // Host auto-starts networking
-      if(registration?.status==="host"&&!prof?.aura_active){
-        await supabase.from("guest_profiles").update({aura_active:true}).eq("id",profile.id);
-        setNetworkingActive(true);
-      }
-      setAuraLoaded(true);
-    }
-    loadAura();
-  },[profile,event,auraLoaded]);
-
-  const fetchNodes=useCallback(async()=>{
-    if(!profile||!event)return;
-    const{data:approved}=await supabase.from("handshakes").select("guest_a_id,guest_b_id").eq("event_id",event.id).or("guest_a_id.eq."+profile.id+",guest_b_id.eq."+profile.id);
-    const approvedSet=new Set<string>();
-    (approved||[]).forEach((h:any)=>{
-      if(h.guest_a_id!==profile.id)approvedSet.add(h.guest_a_id);
-      if(h.guest_b_id!==profile.id)approvedSet.add(h.guest_b_id);
-    });
-    const{data:sentReqs}=await supabase.from("handshake_requests").select("recipient_id").eq("requester_id",profile.id).eq("event_id",event.id).in("status",["pending","approved"]);
-    const sentSet=new Set((sentReqs||[]).map((r:any)=>r.recipient_id));
-    const{data:declinedReqs}=await supabase.from("handshake_requests").select("recipient_id").eq("requester_id",profile.id).eq("event_id",event.id).eq("status","declined");
-    const declinedSet=new Set((declinedReqs||[]).map((r:any)=>r.recipient_id));
-    setDeclinedIds(declinedSet);
-    setSentRequests(sentSet);
-    const{data}=await supabase.from("guest_profiles").select("*").eq("event_id",event.id).eq("aura_active",true).neq("id",profile.id).limit(8);
-    // Also fetch blocked users to hide them from aura
-    const{data:blockedData}=await supabase.from("guest_blocks").select("blocked_id").eq("blocker_id",profile.id).eq("event_id",event.id);
-    const blockedSet=new Set((blockedData||[]).map((b:any)=>b.blocked_id));
-    const filtered=(data||[]).filter((n:any)=>!approvedSet.has(n.id)&&!declinedSet.has(n.id)&&!blockedSet.has(n.id));
-    const positions=generatePositions(filtered.length);
-    setNodes(filtered.map((n:any,i:number)=>({...n,...positions[i]})));
-
-    // Fetch host VIP node
-    // Only show host star to non-host users
-    if(registration?.status!=="host"){
-      const hostRes=await fetch('/api/events/host-profile?event_id='+event.id);
-      const hostData=await hostRes.json();
-      if(hostData.host){
-        setHostNode({...hostData.host,x:50+Math.random()*10-5,y:50+Math.random()*10-5});
-      }
-    }
-  },[profile,event]);
-
-  useEffect(()=>{
-    if(!isLive||!event||!profile||!networkingActive)return;
-    fetchNodes();
-    const interval=setInterval(fetchNodes,60000);
-    const ch=supabase.channel("aura:"+event.id)
-      .on("broadcast",{event:"aura_ignited"},(payload:any)=>{
-        setNodes(prev=>{
-          if(prev.find((n:any)=>n.id===payload.payload.guest_profile_id))return prev;
-          if(payload.payload.guest_profile_id===profile.id)return prev;
-          const pos=generatePositions(1)[0];
-          return[...prev,{...payload.payload,...pos}].slice(0,8);
-        });
-      })
-      .on("broadcast",{event:"aura_invisible"},(payload:any)=>{
-        setNodes(prev=>prev.filter((n:any)=>n.id!==payload.payload.guest_profile_id));
-      })
-      .on("broadcast",{event:"handshake_requested"},(payload:any)=>{
-        if(payload.payload.recipient_id===profile.id){
-          setIncoming(payload.payload);
-          setTimeout(()=>setIncoming(null),300000);
-        }
-      })
-      .on("broadcast",{event:"handshake_declined"},(payload:any)=>{
-        if(payload.payload.requester_id===profile.id){
-          setNodes(prev=>prev.filter((n:any)=>n.id!==payload.payload.recipient_id));
-          setDeclinedIds(prev=>new Set([...prev,payload.payload.recipient_id]));
-        }
-      })
-      .on("broadcast",{event:"handshake_approved"},(payload:any)=>{
-        if(payload.payload.requester_id===profile.id){
-          setNotification("✓ Connected with "+getFirstName(payload.payload.recipient_name)+"! Open Profile tab → tap Scan to unlock their full profile");
-          setTimeout(()=>setNotification(""),10000);
-          fetchNodes();
-        }else if(payload.payload.recipient_id===profile.id){
-          setNotification("✓ Connected with "+getFirstName(payload.payload.requester_name)+"! Open Profile tab → tap Scan to unlock their full profile");
-          setTimeout(()=>setNotification(""),10000);
-          fetchNodes();
-        }
-      })
-      .subscribe();
-    channelRef.current=ch;
-    return()=>{
-      clearInterval(interval);
-      supabase.removeChannel(ch);
-    };
-  },[isLive,event,profile,networkingActive,fetchNodes]);
-
-  async function startNetworking(){
-    setNetworkingActive(true);
-    await supabase.from("guest_profiles").update({aura_active:true}).eq("id",profile.id);
-    await supabase.from("aura_status_logs").insert({guest_profile_id:profile.id,event_id:event.id,action:"ignited"});
-    await channelRef.current?.send({type:"broadcast",event:"aura_ignited",payload:{guest_profile_id:profile.id,display_name:profile.display_name}});
-  }
-
-  async function stopNetworking(){
-    await supabase.from("guest_profiles").update({aura_active:false}).eq("id",profile.id);
-    await supabase.from("aura_status_logs").insert({guest_profile_id:profile.id,event_id:event.id,action:"invisible"});
-    await channelRef.current?.send({type:"broadcast",event:"aura_invisible",payload:{guest_profile_id:profile.id}});
-    setNetworkingActive(false);
-  }
-
-  async function sendRequest(node:any){
-    if(sentRequests.has(node.id)||declinedIds.has(node.id))return;
-    setConfirmNode(null);
-    setSentRequests(prev=>new Set(prev).add(node.id));
-    const{data:req}=await supabase.from("handshake_requests").insert({requester_id:profile.id,recipient_id:node.id,event_id:event.id,status:"pending"}).select().single();
-    await channelRef.current?.send({type:"broadcast",event:"handshake_requested",payload:{request_id:req?.id,requester_id:profile.id,recipient_id:node.id,requester_name:profile.display_name}});
-  }
-
-  async function respondRequest(approved:boolean){
-    if(!incoming)return;
-    const status=approved?"approved":"declined";
-    await supabase.from("handshake_requests").update({status}).eq("id",incoming.request_id);
-    if(approved){
-      const{error:hsErr}=await supabase.from("handshakes").insert({event_id:event.id,request_id:incoming.request_id,guest_a_id:incoming.requester_id,guest_b_id:profile.id,networking_status:"connected"});
-      if(hsErr){setNotification("❌ Connect error: "+hsErr.message);setTimeout(()=>setNotification(""),8000);}else{setNotification("✓ Handshake created!");}
-      await channelRef.current?.send({type:"broadcast",event:"handshake_approved",payload:{requester_id:incoming.requester_id,recipient_id:profile.id,requester_name:incoming.requester_name,recipient_name:profile.display_name}});
-    }
-    setIncoming(null);
-    fetchNodes();
-  }
-
-  if(!isLive&&!isEnded){
-    return(
-      <div style={{padding:"24px 20px",textAlign:"center",background:"#0a0a0b",minHeight:"calc(100vh - 100px)",display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center"}}>
-        <p style={{fontSize:"48px",marginBottom:"16px",opacity:0.2}}>◎</p>
-        <p style={{fontSize:"16px",color:"#555",marginBottom:"8px"}}>Networking opens when event starts</p>
-      </div>
-    );
-  }
-
-  if(isEnded){
-    return(
-      <div style={{padding:"24px 20px",textAlign:"center",background:"#0a0a0b",minHeight:"calc(100vh - 100px)",display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center"}}>
-        <p style={{fontSize:"48px",marginBottom:"16px",opacity:0.2}}>◎</p>
-        <p style={{fontSize:"16px",color:"#555",marginBottom:"8px"}}>Networking has closed</p>
-        <p style={{fontSize:"14px",color:"#444"}}>Your connections are saved in Profile</p>
-      </div>
-    );
-  }
-
-  return(
-    <div style={{background:"linear-gradient(160deg,#0f0f13 0%,#12101a 100%)",minHeight:"calc(100vh - 100px)",position:"relative",overflow:"hidden"}}>
-      <style>{`
-        @keyframes float{0%,100%{transform:translateY(0px)}50%{transform:translateY(-8px)}}
-        @keyframes pulse{0%,100%{box-shadow:0 0 0 0 rgba(226,109,52,0.2)}50%{box-shadow:0 0 0 12px rgba(37,99,235,0)}}
-        @keyframes slideUp{from{transform:translateY(100%);opacity:0}to{transform:translateY(0);opacity:1}}
-        @keyframes fadeIn{from{opacity:0}to{opacity:1}}
-      `}</style>
-
-      <div style={{position:"absolute",top:"50%",left:"50%",transform:"translate(-50%,-50%)",width:"300px",height:"300px",background:"radial-gradient(circle,rgba(255,255,255,0.03) 0%,transparent 70%)",borderRadius:"50%",pointerEvents:"none"}}/>
-
-      <div style={{position:"absolute",top:"16px",right:"16px",background:"rgba(255,255,255,0.08)",borderRadius:"20px",padding:"6px 12px"}}>
-        <p style={{color:"#fff",fontSize:"12px"}}>{nodes.length} nearby</p>
-      </div>
-
-      {notification&&(
-        <div style={{position:"absolute",top:"16px",left:"50%",transform:"translateX(-50%)",background:"rgba(0,0,0,0.8)",border:"1px solid rgba(255,255,255,0.1)",borderRadius:"20px",padding:"8px 16px",animation:"fadeIn 0.4s ease",zIndex:10,maxWidth:"280px"}}>
-          <p style={{color:"#fff",fontSize:"12px",fontWeight:"500",textAlign:"center",lineHeight:"1.4"}}>{notification}</p>
-        </div>
-      )}
-
-      {!auraLoaded&&registration?.status!=="host"&&(
-        <div style={{position:"absolute",inset:0,zIndex:5,background:"rgba(10,10,11,0.85)"}}/>
-      )}
-      {auraLoaded&&!networkingActive&&registration?.status!=="host"&&(
-        <div style={{position:"absolute",inset:0,display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",backdropFilter:"blur(20px)",zIndex:5}}>
-          <p style={{fontSize:"48px",marginBottom:"16px",opacity:0.2}}>◎</p>
-          <p style={{color:"#fff",fontSize:"18px",fontWeight:"300",marginBottom:"8px"}}>Networking Off</p>
-          <p style={{color:"#555",fontSize:"14px",marginBottom:"40px"}}>Nobody can see you</p>
-          {registration?.status!=="host"&&<button onClick={startNetworking} style={{padding:"16px 40px",borderRadius:"50px",background:"#fff",color:"#000",border:"none",fontSize:"16px",fontWeight:"600",cursor:"pointer"}}>Start Networking</button>}
-        </div>
-      )}
-
-      {(networkingActive||registration?.status==="host")&&hostNode&&(
-        <div style={{position:"absolute",left:hostNode.x+"%",top:hostNode.y+"%",transform:"translate(-50%,-50%)",animation:"float 5s ease-in-out infinite",zIndex:3}}>
-          <button onClick={()=>setConfirmNode({...hostNode,is_host:true})} style={{width:"56px",height:"56px",background:"none",border:"none",cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center",position:"relative"}}>
-            <span style={{fontSize:"44px",color:"#0a0800",textShadow:"0 0 6px #D4AF37,0 0 18px #D4AF37,0 0 35px rgba(212,175,55,0.7),0 0 60px rgba(212,175,55,0.3)",lineHeight:"1",display:"block"}}>★</span>
-          </button>
-          <p style={{color:"#D4AF37",fontSize:"10px",textAlign:"center",marginTop:"2px",fontWeight:"600",letterSpacing:"0.05em",textShadow:"0 0 8px rgba(212,175,55,0.6)"}}>ORGANIZER</p>
-        </div>
-      )}
-      {networkingActive&&nodes.map((node:any)=>{
-        const isSent=sentRequests.has(node.id);
-        const firstName=getFirstName(node.display_name);
-        return(
-          <div key={node.id} style={{position:"absolute",left:node.x+"%",top:node.y+"%",transform:"translate(-50%,-50%)",animation:"float 4s ease-in-out infinite",zIndex:2}}>
-            <button onClick={()=>!isSent&&setConfirmNode(node)} style={{width:"44px",height:"44px",borderRadius:"50%",background:"transparent",border:isSent?"1px solid rgba(255,255,255,0.1)":"1px solid rgba(226,109,52,0.45)",cursor:isSent?"default":"pointer",display:"flex",alignItems:"center",justifyContent:"center",animation:isSent?"none":"pulse 2s infinite",opacity:isSent?0.4:1}}>
-              <span style={{color:isSent?"rgba(255,255,255,0.4)":"#E26D34",fontSize:"13px",fontWeight:"600"}}>{firstName.charAt(0)}</span>
+            <input value={linkedin} onChange={e => setLinkedin(e.target.value)} placeholder="LinkedIn URL" style={inpStyle} autoComplete="off" />
+            <input value={website} onChange={e => setWebsite(e.target.value)} placeholder="Website URL" style={inpStyle} autoComplete="off" />
+            <input value={portfolio} onChange={e => setPortfolio(e.target.value)} placeholder="Portfolio URL" style={inpStyle} autoComplete="off" />
+            <button onClick={() => setIsPresenceOpen(false)} className="w-full h-11 bg-white/5 border border-white/10 rounded-sm font-mono text-[11px] tracking-widest text-[#FDFBF7] mt-2">
+              SAVE PRESENCE
             </button>
-            <p style={{color:"rgba(255,255,255,0.6)",fontSize:"10px",textAlign:"center",marginTop:"4px"}}>{isSent?"sent":firstName}</p>
-          </div>
-        );
-      })}
-
-      {networkingActive&&(
-        <div style={{position:"absolute",bottom:"24px",left:"50%",transform:"translateX(-50%)"}}>
-          <button onClick={stopNetworking} style={{padding:"10px 24px",borderRadius:"50px",background:"rgba(255,255,255,0.06)",color:"#666",border:"1px solid rgba(255,255,255,0.08)",fontSize:"13px",cursor:"pointer",letterSpacing:"0.02em"}}>Turn off</button>
-        </div>
-      )}
-
-      {confirmNode&&(
-        <div style={{position:"fixed",inset:0,background:"rgba(0,0,0,0.7)",display:"flex",alignItems:"flex-end",zIndex:20}} onClick={()=>setConfirmNode(null)}>
-          {/* Forced Host Card Render */}
-<div style={{background:"#0c0c0f",borderRadius:"24px 24px 0 0",padding:"24px",width:"100%",borderTop:"1px solid rgba(255,255,255,0.05)",animation:"slideUp 0.3s ease"}} onClick={e=>e.stopPropagation()}>
-            <div style={{display:"flex",alignItems:"center",gap:"8px",marginBottom:"8px"}}>
-              <p style={{color:"#fff",fontSize:"18px",fontWeight:"500"}}>Connect with {getFirstName(confirmNode.display_name)}?</p>
-              {confirmNode.is_host&&<span style={{background:"linear-gradient(135deg,#D4AF37,#b8962e)",color:"#000",fontSize:"10px",fontWeight:"700",padding:"3px 10px",borderRadius:"6px",letterSpacing:"0.05em"}}>ORGANIZER</span>}
-            </div>
-            <p style={{color:"#666",fontSize:"14px",marginBottom:"4px"}}>{confirmNode.role_title||""}</p>
-            {confirmNode.is_host&&<p style={{color:"#E26D34",fontSize:"12px",marginBottom:"8px"}}>★ Event organizer</p>}
-            <div style={{display:"flex",gap:"12px"}}>
-              <button onClick={()=>setConfirmNode(null)} style={{flex:1,padding:"11px",borderRadius:"10px",background:"transparent",color:"rgba(240,237,232,0.5)",border:"1px solid rgba(240,237,232,0.15)",fontSize:"13px",fontWeight:"500",letterSpacing:"0.08em",textTransform:"uppercase",cursor:"pointer"}}>Cancel</button>
-              <button onClick={()=>sendRequest(confirmNode)} style={{flex:1,padding:"11px",borderRadius:"10px",background:"transparent",color:"#E26D34",border:"1px solid rgba(226,109,52,0.4)",fontSize:"13px",fontWeight:"500",letterSpacing:"0.08em",textTransform:"uppercase",cursor:"pointer"}}>Send Request →</button>
-            </div>
           </div>
         </div>
       )}
 
-      {incoming&&(
-        <div style={{position:"fixed",inset:0,background:"rgba(0,0,0,0.7)",display:"flex",alignItems:"flex-end",zIndex:20}}>
-          <div style={{background:"#1a1a1a",borderRadius:"24px 24px 0 0",padding:"28px",width:"100%",animation:"slideUp 0.3s ease"}}>
-            <p style={{color:"#fff",fontSize:"18px",fontWeight:"500",marginBottom:"8px"}}>{getFirstName(incoming.requester_name)} wants to connect</p>
-            <p style={{color:"#666",fontSize:"14px",marginBottom:"28px"}}>Connection request</p>
-            <div style={{display:"flex",gap:"12px"}}>
-              <button onClick={()=>respondRequest(false)} style={{flex:1,padding:"14px",borderRadius:"14px",background:"#333",color:"#fff",border:"none",fontSize:"15px",cursor:"pointer"}}>Decline</button>
-              <button onClick={()=>respondRequest(true)} style={{flex:1,padding:"14px",borderRadius:"14px",background:"#4ade80",color:"#000",border:"none",fontSize:"15px",fontWeight:"500",cursor:"pointer"}}>Approve ✓</button>
+      {/* BOTTOM SHEET: NETWORKING INTENT */}
+      {isIntentOpen && (
+        <div className="fixed inset-0 bg-black/70 backdrop-blur-sm z-50 flex flex-col justify-end" onClick={() => setIsIntentOpen(false)}>
+          <div className="w-full bg-[#0E0E0E] border-t border-white/[0.05] rounded-t-xl p-6 max-w-md mx-auto space-y-4" onClick={e => e.stopPropagation()}>
+            <div className="flex justify-between items-center mb-2">
+              <h3 className="text-sm font-medium tracking-tight text-white/70">What brings you to this event?</h3>
+              <button onClick={() => setIsIntentOpen(false)} className="text-[10px] font-mono text-white/30 hover:text-white tracking-widest">CLOSE</button>
             </div>
+            <div className="space-y-2 max-h-[280px] overflow-y-auto pr-1">
+              {[
+                { id: "Capital", label: "Capital", desc: "Fundraising, investors, and strategic ideas." },
+                { id: "Synergy", label: "Synergy", desc: "Collaborators, co-founders, and deep execution partnerships." },
+                { id: "Mentorship", label: "Mentorship", desc: "Actively seeking guidance or looking to offer perspective." },
+                { id: "Opportunities", label: "Opportunities", desc: "Career growth, partnerships, and introductions." }
+              ].map((item) => {
+                const isActive = selectedIntents.includes(item.id);
+                return (
+                  <button type="button" key={item.id} onClick={() => toggleIntent(item.id)} style={cardStyle(isActive)}>
+                    <h4 style={{ fontSize: "14px", fontWeight: 500, margin: 0, color: isActive ? "#F97316" : "#FDFBF7" }}>
+                      {item.label}
+                    </h4>
+                    <p style={{ fontSize: "11px", color: "rgba(255,255,255,0.35)", margin: "4px 0 0 0", lineHeight: "15px" }}>
+                      {item.desc}
+                    </p>
+                  </button>
+                );
+              })}
+            </div>
+            <button onClick={() => setIsIntentOpen(false)} className="w-full h-11 bg-white/5 border border-white/10 rounded-sm font-mono text-[11px] tracking-widest text-[#FDFBF7] mt-2">
+              CONFIRM INTENT
+            </button>
           </div>
         </div>
       )}
-    </div>
-  );
-}
 
-function ProfileTab({profile,event,onProfileUpdate,isEnded,registration}:any){
-  const[editing,setEditing]=useState(false);
-  const[connections,setConnections]=useState<any[]>([]);
-  const[unlocked,setUnlocked]=useState<Set<string>>(new Set());
-  const[scanning,setScanning]=useState(false);
-  const[scanTarget,setScanTarget]=useState<any>(null);
-  const[scanMsg,setScanMsg]=useState("");
-  const scannerRef=useRef<any>(null);
-  const[blocked,setBlocked]=useState<Set<string>>(new Set());
-  const[reportMsg,setReportMsg]=useState("");
-
-  useEffect(()=>{
-    if(!profile||!event)return;
-    async function loadConnections(){
-      const{data:handshakes}=await supabase.from("handshakes").select("id,guest_a_id,guest_b_id,networking_status").eq("event_id",event.id).or("guest_a_id.eq."+profile.id+",guest_b_id.eq."+profile.id);
-      const connectedIds=(handshakes||[]).map((h:any)=>h.guest_a_id===profile.id?h.guest_b_id:h.guest_a_id);
-      const unlockedSet=new Set((handshakes||[]).filter((h:any)=>h.networking_status==="unlocked").map((h:any)=>h.guest_a_id===profile.id?h.guest_b_id:h.guest_a_id) as string[]);
-      setUnlocked(unlockedSet);
-      if(connectedIds.length===0){setConnections([]);return;}
-      const{data:profiles}=await supabase.from("guest_profiles").select("*").in("id",connectedIds);
-      setConnections(profiles||[]);
-    }
-    loadConnections();
-    // Realtime - reload when new handshake created
-    const ch=supabase.channel("profile-handshakes:"+profile.id)
-      .on("postgres_changes",{event:"INSERT",schema:"public",table:"handshakes"},(payload:any)=>{
-        if(payload.new.guest_a_id===profile.id||payload.new.guest_b_id===profile.id){
-          loadConnections();
-        }
-      })
-      .on("postgres_changes",{event:"UPDATE",schema:"public",table:"handshakes"},(payload:any)=>{
-        if(payload.new.guest_a_id===profile.id||payload.new.guest_b_id===profile.id){
-          loadConnections();
-        }
-      })
-      .subscribe();
-    return()=>{supabase.removeChannel(ch);};
-  },[profile,event]);
-
-  async function blockUser(connId:string){
-    if(!profile||!event)return;
-    await supabase.from("guest_blocks").insert({
-      event_id:event.id,
-      blocker_id:profile.id,
-      blocked_id:connId,
-    });
-    setBlocked(prev=>new Set([...prev,connId]));
-    setReportMsg("User blocked");
-    setTimeout(()=>setReportMsg(""),3000);
-  }
-
-  async function reportUser(connId:string,name:string){
-    if(!profile||!event)return;
-    const reason=prompt("Why are you reporting "+name+"? (harassment, spam, inappropriate)");
-    if(!reason)return;
-    await supabase.from("guest_reports").insert({
-      event_id:event.id,
-      reporter_id:profile.id,
-      reported_id:connId,
-      reason,
-    });
-    setReportMsg("Report submitted. Thank you.");
-    setTimeout(()=>setReportMsg(""),3000);
-  }
-
-  async function startScan(conn:any){
-    setScanTarget(conn);
-    setScanning(true);
-    setScanMsg("");
-    await new Promise(r=>setTimeout(r,500));
-    const{Html5Qrcode}=await import("html5-qrcode");
-    const scanner=new Html5Qrcode("qr-reader");
-    scannerRef.current=scanner;
-    try{
-    scanner.start(
-        {facingMode:"environment"},
-        {fps:10,qrbox:{width:200,height:200}},
-        async(decoded:string)=>{
-          if(decoded.startsWith("presence:unlock:")){
-            const targetRegId=decoded.replace("presence:unlock:","");
-            await scanner.stop();
-            setScanning(false);
-            setScanMsg("Unlocking...");
-            const res=await fetch("/api/handshakes/unlock",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({scanner_registration_id:registration.id,target_registration_id:targetRegId})});
-            if(res.ok){
-              setUnlocked(prev=>new Set([...prev,conn.id]));
-              setScanMsg("✅ Profile unlocked!");
-              setScanTarget(null);
-            }else{
-              setScanMsg("❌ Could not unlock. Make sure you are connected first.");
-            }
-            setTimeout(()=>setScanMsg(""),3000);
-          }
-        },
-        ()=>{}
-      ).catch((err:any)=>{console.error(err);setScanning(false);setScanMsg("Camera not available — check permissions");});
-    }catch(err){setScanning(false);setScanMsg("Could not start camera");}
-  }
-
-  function stopScan(){
-    scannerRef.current?.stop().catch(()=>{});
-    setScanning(false);
-    setScanTarget(null);
-  }
-
-    const isHost = registration?.status === "host";
-  const accent = isHost ? "#D4AF37" : "#E26D34";
-  const accentBg = isHost ? "rgba(212,175,55,0.08)" : "rgba(226,109,52,0.08)";
-  const accentBorder = isHost ? "rgba(212,175,55,0.15)" : "rgba(226,109,52,0.15)";
-  
-
-  return(
-    <div style={{padding:"16px",background:"#08080a",minHeight:"100vh"}}>
-
-      {/* ── Premium profile card ── */}
-      <div style={{
-        background:"#0c0c0f",
-        borderRadius:"22px",padding:"24px",marginBottom:"12px",
-        border: "1px solid " + accentBorder,
-        boxShadow:"0 1px 0 rgba(255,255,255,0.05) inset,0 4px 8px rgba(0,0,0,0.35),0 16px 48px rgba(0,0,0,0.5)",
-        position:"relative",overflow:"hidden"
-      }}>
-        {/* Top edge shimmer */}
-        <div style={{position:"absolute",top:0,left:0,right:0,height:"1px",background:"linear-gradient(90deg,transparent,rgba(255,255,255,0.04) 30%,rgba(255,255,255,0.04) 70%,transparent)",pointerEvents:"none"}}/>
-
-        {/* Upper Right Edit Action Button — High zIndex to clear container overlay */}
-        <div style={{position:"absolute",top:"20px",right:"20px",zIndex:50}}>
-          <button onClick={()=>setEditing(!editing)} style={{
-            width:"32px",height:"32px",borderRadius:"9px",
-            background:"rgba(255,255,255,0.04)",border:"1px solid rgba(255,255,255,0.06)",
-            display:"flex",alignItems:"center",justifyContent:"center",
-            cursor:"pointer",color:accent,fontSize:"13px"
-          }}>{editing?"✕":"✎"}</button>
-        </div>
-
-        {/* Card Body Content */}
-        <div>
-          {/* 1. Name: Deeply Prominent */}
-          <p style={{fontSize:"22px",fontWeight:"700",color:"#f0ede8",letterSpacing:"-0.02em",margin:"0 0 8px",paddingRight:"44px"}}>{profile?.display_name || profile?.name || "Host Organizer"}</p>
-
-          {/* 2. Professional Row: Role & Organisation horizontally aligned */}
-          <div style={{display:"flex",alignItems:"center",gap:"10px",flexWrap:"wrap",marginBottom:"18px"}}>
-            {profile?.role_title && (
-              <span style={{
-                display:"inline-block",
-                fontSize:"9px",fontWeight:"600",letterSpacing:"0.08em",textTransform:"uppercase",
-                color: accent,
-                background: accentBg,
-                border: "1px solid " + accentBorder,
-                padding:"3px 8px",borderRadius:"5px"
-              }}>{isHost ? "ORGANIZER" : profile.role_title}</span>
-            )}
-            {profile?.organisation && (
-              <p style={{fontSize:"13px",color:"rgba(240,237,232,0.45)",margin:0,fontWeight:"400"}}>
-                {profile.role_title && <span style={{marginRight:"8px",color:"rgba(240,237,232,0.2)"}}>|</span>}
-                {profile.organisation}
-              </p>
-            )}
-          </div>
-
-          {/* 3. Bio Space */}
-          {profile?.bio && (
-            <p style={{fontSize:"13px",color:"rgba(244,244,245,0.65)",lineHeight:"1.6",fontWeight:"300",margin:"0 0 20px",letterSpacing:"0.01em"}}>
-              {profile.bio}
-            </p>
-          )}
-
-          {/* 4. Social / Platform Link Row — Active Clickable Anchor with Icon */}
-          {profile?.platform_value && (
-            <a 
-              href={profile.platform_value.startsWith('http') ? profile.platform_value : 'https://' + profile.platform_value}
-              target="_blank"
-              rel="noopener noreferrer"
-              style={{display:"inline-flex",alignItems:"center",gap:"8px",paddingTop:"14px",borderTop:"1px solid rgba(255,255,255,0.03)",textDecoration:"none",cursor:"pointer",width:"100%"}}
-            >
-              <div style={{
-                width:"24px",height:"24px",borderRadius:"6px",flexShrink:0,
-                background:"rgba(255,255,255,0.03)",border:"1px solid rgba(255,255,255,0.05)",
-                display:"flex",alignItems:"center",justifyContent:"center",
-                fontSize:"11px",color:"#FFBF00"
-              }}>↗</div>
-              <span style={{fontSize:"12px",color:accent,opacity:0.75}}>{cleanUrl(profile.platform_value)}</span>
-            </a>
-          )}
-        </div>
-      </div>
-
-      {editing && (
-        <EditProfile 
-          profile={profile} 
-          onSave={(p: any) => {
-            onProfileUpdate(p);
-            setEditing(false);
-          }} 
-        />
-      )}
-      <div style={{marginTop:"16px"}}>
-        <p style={{fontSize:"10px",fontWeight:"600",color:"rgba(255,255,255,0.45)",letterSpacing:"0.12em",textTransform:"uppercase",marginBottom:"12px"}}>Connections</p>
-        {connections.length===0?(
-          <p style={{color:"#999",fontSize:"14px",textAlign:"center",padding:"40px 0"}}>
-            {isEnded?"No connections from this event":"Connect with people to see them here"}
-          </p>
-        ):(
-          connections.map((c:any)=>{const isUnlocked=unlocked.has(c.id);return(
-            <div key={c.id} style={{background:isUnlocked?"rgba(226,109,52,0.08)":"rgba(26,26,36,0.9)",borderRadius:"14px",padding:"14px",marginBottom:"8px",border:isUnlocked?"1px solid rgba(226,109,52,0.25)":"1px solid rgba(255,255,255,0.06)"}}>
-              <div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-start"}}>
-                <div style={{flex:1}}>
-                  <p style={{fontSize:"14px",fontWeight:"600",marginBottom:"1px",color:"#f1f0f5"}}>{c.display_name}</p>
-                  {c.role_title&&<p style={{fontSize:"13px",color:"#666",marginBottom:"2px"}}>{c.role_title}</p>}
-                  {isUnlocked&&c.organisation&&<p style={{fontSize:"13px",color:"#999",marginBottom:"8px"}}>{c.organisation}</p>}
-                  {isUnlocked&&c.platform_value&&<p style={{fontSize:"13px",color:"#E26D34",marginTop:"4px"}}>{cleanUrl(c.platform_value)}</p>}
-                </div>
-                {!isUnlocked&&<button onClick={()=>startScan(c)} style={{background:"rgba(226,109,52,0.15)",color:"#E26D34",border:"1px solid rgba(226,109,52,0.15)",borderRadius:"8px",padding:"5px 10px",fontSize:"11px",fontWeight:"600",cursor:"pointer",whiteSpace:"nowrap",marginLeft:"8px"}}>Scan to unlock</button>}
-                {isUnlocked&&<span style={{fontSize:"10px",color:accent,fontWeight:"600",marginLeft:"8px",background:accentBg,padding:"2px 8px",borderRadius:"6px"}}>✓ Unlocked</span>}
-              </div>
-            </div>
-          );}
-          )
-        )}
-      </div>
-    </div>
-  );
-}
-
-function EditProfile({profile,onSave}:any){
-  const[displayName,setDisplayName]=useState(profile?.display_name??"");
-  const[role,setRole]=useState(profile?.role_title??"");
-  const[organisation,setOrganisation]=useState(profile?.organisation??"");
-  const[bio,setBio]=useState(profile?.bio??"");
-  const[link,setLink]=useState(profile?.platform_value??"");
-  const[saving,setSaving]=useState(false);
-
-  async function save(){
-    setSaving(true);
-    const{data}=await supabase.from("guest_profiles").update({
-      display_name:displayName,
-      role_title:role,
-      organisation,
-      bio,
-      platform_type:"link",
-      platform_value:link,
-    }).eq("id",profile.id).select().single();
-    if(data)onSave(data);
-    setSaving(false);
-  }
-
-  const inp={width:"100%",padding:"12px",borderRadius:"12px",border:"1px solid rgba(255,255,255,0.06)",background:"rgba(255,255,255,0.02)",color:"#fafafa",fontSize:"14px",outline:"none",marginBottom:"12px",boxSizing:"border-box" as const};
-
-  return(
-    <div style={{background:"#0c0c0f",borderRadius:"20px",padding:"20px",border:"1px solid rgba(255,255,255,0.04)",marginTop:"12px"}}>
-      <input value={displayName} onChange={e=>setDisplayName(e.target.value)} placeholder="Your name" style={inp}/>
-      <input value={role} onChange={e=>setRole(e.target.value)} placeholder="Your role or title" style={inp}/>
-      <input value={organisation} onChange={e=>setOrganisation(e.target.value)} placeholder="Organisation" style={inp}/>
-      <textarea value={bio} onChange={e=>setBio(e.target.value)} placeholder="Short bio" style={{...inp,minHeight:"60px",resize:"vertical"}}/>
-      <input value={link} onChange={e=>setLink(e.target.value)} placeholder="LinkedIn, Instagram, or your website" style={inp}/>
-      <button onClick={save} disabled={saving} style={{width:"100%",padding:"11px",borderRadius:"10px",background:"transparent",color:saving?"rgba(240,237,232,0.3)":"#E26D34",border:saving?"1px solid rgba(240,237,232,0.1)":"1px solid rgba(226,109,52,0.35)",fontSize:"13px",cursor:saving?"not-allowed":"pointer",fontWeight:"500",letterSpacing:"0.08em",textTransform:"uppercase",transition:"all 0.2s ease"}}>{saving?"Saving...":"Save changes"}</button>
     </div>
   );
 }
