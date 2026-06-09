@@ -4,7 +4,11 @@ import { useEffect, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { supabase } from "@/lib/supabase/client";
 
-interface Station { id: string; name: string; context: string; }
+interface Station {
+  id: string;
+  name: string;
+  context: string;
+}
 
 export default function GuestOnboardingPage() {
   const { slug, token } = useParams() as { slug: string; token: string };
@@ -12,86 +16,349 @@ export default function GuestOnboardingPage() {
   
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+  const [eventId, setEventId] = useState<string | null>(null);
+  const [error, setError] = useState("");
+
+  // Step 1: About You Fields Grouped Visually
   const [displayName, setDisplayName] = useState("");
   const [role, setRole] = useState("");
+  const [organisation, setOrganisation] = useState("");
   const [bio, setBio] = useState("");
   
+  // Step 2: Professional Presence Links (Managed via Bottom Sheet)
   const [presence, setPresence] = useState({ linkedin: "", website: "", portfolio: "" });
+  const [isPresenceOpen, setIsPresenceOpen] = useState(false);
+
+  // Step 3: What Brings You Here? Intents (Managed via Bottom Sheet)
   const [intents, setIntents] = useState<string[]>([]);
+  const [isIntentOpen, setIsIntentOpen] = useState(false);
+
+  // Step 4: Host Dashboard Dynamic Stations (Managed via Radio Selection)
   const [stationId, setStationId] = useState("");
   const [stations, setStations] = useState<Station[]>([]);
 
-  const [sheets, setSheets] = useState({ presence: false, intent: false });
-
+  // Absolute Event Mapping Configuration Pipeline
   useEffect(() => {
     async function init() {
-      const { data: ev } = await supabase.from("events").select("id").eq("slug", slug).single();
-      if (ev) {
-        const { data: st } = await supabase.from("event_stations").select("id, name, context").eq("event_id", ev.id);
-        setStations(st || []);
+      if (!slug) return;
+      try {
+        const { data: ev } = await supabase
+          .from("events")
+          .select("id")
+          .eq("slug", slug)
+          .single();
+
+        if (ev) {
+          setEventId(ev.id);
+          const { data: st } = await supabase
+            .from("event_stations")
+            .select("id, name, context")
+            .eq("event_id", ev.id);
+          
+          if (st) setStations(st);
+        }
+      } catch (err) {
+        console.error("Pipeline failure fetching host configurations:", err);
+      } finally {
+        setLoading(false);
       }
-      setLoading(false);
     }
     init();
   }, [slug]);
 
-  const canSubmit = displayName && role && (presence.linkedin || presence.website || presence.portfolio) && intents.length > 0 && stationId;
+  // Dynamic Presence Label Generator
+  const getPresenceLabel = () => {
+    const added = [];
+    if (presence.linkedin.trim()) added.push("LinkedIn");
+    if (presence.website.trim()) added.push("Website");
+    if (presence.portfolio.trim()) added.push("Portfolio");
+    
+    if (added.length === 0) return "Add Professional Links";
+    return `✓ ${added.join(" • ")} Added`;
+  };
+
+  // Dynamic Intent Label Generator
+  const getIntentLabel = () => {
+    if (intents.length === 0) return "Select Intent";
+    return `✓ ${intents.join(" + ")} Selected`;
+  };
+
+  const toggleIntent = (id: string) => {
+    setIntents(prev => 
+      prev.includes(id) ? prev.filter(item => item !== id) : [...prev, id]
+    );
+  };
+
+  // Core Submission Validations
+  const isIdentityValid = displayName.trim() !== "" && role.trim() !== "";
+  const isPresenceValid = presence.linkedin.trim() !== "" || presence.website.trim() !== "" || presence.portfolio.trim() !== "";
+  const isIntentValid = intents.length > 0;
+  const isStationValid = stationId !== "";
+  
+  const canSubmit = isIdentityValid && isPresenceValid && isIntentValid && isStationValid && !saving;
+
+  const handleFinalSubmission = async () => {
+    if (!canSubmit) return;
+    setSaving(true);
+    setError("");
+
+    try {
+      const { error: err } = await supabase.from("guest_profiles").insert({
+        registration_id: token,            
+        event_id: eventId,
+        display_name: displayName,                   
+        role_title: role,
+        organisation,
+        bio,
+        platform_type: "link",
+        platform_value: presence.linkedin.trim() || presence.website.trim() || presence.portfolio.trim() || "",                        
+        aura_active: false,
+        networking_intents: intents,
+        target_station_id: stationId,
+        linkedin_url: presence.linkedin,
+        website_url: presence.website,
+        portfolio_url: presence.portfolio
+      });
+
+      if (err) throw err;
+
+      router.push(`/e/${slug}/scene`);
+    } catch (err: any) {
+      setError(err.message || "Failed to complete profile registration.");
+      setSaving(false);
+    }
+  };
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-[#0A0A0A] flex items-center justify-center">
+        <div className="w-4 h-4 border-t-2 border-[#F97316] rounded-full animate-spin" />
+      </div>
+    );
+  }
+
+  // Pure Luxury Minimal Design Style Standards
+  const inpStyle = {
+    width: "100%", padding: "12px 0", background: "transparent", border: "none",
+    borderBottom: "1px solid rgba(255, 255, 255, 0.06)", color: "#FDFBF7",
+    fontSize: "14px", outline: "none", borderRadius: 0, transition: "border-color 0.3s"
+  };
 
   return (
-    <div className="min-h-screen bg-[#0A0A0A] text-[#FDFBF7] px-6 py-12 max-w-sm mx-auto">
-      <header className="mb-12">
-        <p className="text-[10px] font-bold tracking-[0.3em] text-[#F97316] uppercase">Oreeti</p>
+    <div className="min-h-screen bg-[#0A0A0A] text-[#FDFBF7] px-6 flex flex-col items-center box-border select-none relative overflow-x-hidden">
+      
+      {/* Inline Embedded Styles for Premium Micro-Animations */}
+      <style>{`
+        @keyframes slideUpLine {
+          from { height: 0%; }
+          to { height: 100%; }
+        }
+        @keyframes scalePop {
+          0% { transform: scale(0.8); opacity: 0; }
+          100% { transform: scale(1); opacity: 1; }
+        }
+        @keyframes sheetUp {
+          from { transform: translateY(100%); }
+          to { transform: translateY(0); }
+        }
+        .animate-slide-line { animation: slideUpLine 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards; }
+        .animate-scale-pop { animation: scalePop 0.25s cubic-bezier(0.34, 1.56, 0.64, 1) forwards; }
+        .animate-sheet-up { animation: sheetUp 0.35s cubic-bezier(0.16, 1, 0.3, 1) forwards; }
+        .focus-under:focus { border-bottom: 1px solid #F97316 !important; }
+      `}</style>
+
+      <header className="w-full pt-12 max-w-md mx-auto text-center">
+        <p className="text-[10px] font-bold tracking-[0.3em] text-[#F97316] m-0 uppercase">OREETI</p>
       </header>
 
-      {/* About You Section */}
-      <section className="space-y-4 mb-12">
-        <h2 className="text-lg font-light mb-6">About You</h2>
-        <input className="w-full bg-transparent border-b border-white/10 pb-2 text-sm focus:border-[#F97316] outline-none transition-colors" placeholder="Name" value={displayName} onChange={(e) => setDisplayName(e.target.value)} />
-        <input className="w-full bg-transparent border-b border-white/10 pb-2 text-sm focus:border-[#F97316] outline-none transition-colors" placeholder="Role" value={role} onChange={(e) => setRole(e.target.value)} />
-        <textarea className="w-full bg-transparent border-b border-white/10 pb-2 text-sm focus:border-[#F97316] outline-none transition-colors h-16 resize-none" placeholder="Short bio" value={bio} onChange={(e) => setBio(e.target.value)} />
-      </section>
-
-      {/* Interactive Rows */}
-      <section className="space-y-4 mb-12">
-        <button onClick={() => setSheets({ ...sheets, presence: true })} className="w-full flex justify-between items-center py-4 border-b border-white/10 text-sm">
-          <span className="text-white/50">Professional Presence</span>
-          <span className="text-[#F97316] font-mono text-[10px]">
-            {Object.values(presence).filter(Boolean).length > 0 ? "✓ UPDATED" : "ADD LINKS"}
-          </span>
-        </button>
+      <main className="w-full max-w-md mx-auto flex-1 pt-8 pb-36 overflow-y-auto">
         
-        <button onClick={() => setSheets({ ...sheets, intent: true })} className="w-full flex justify-between items-center py-4 border-b border-white/10 text-sm">
-          <span className="text-white/50">What Brings You Here?</span>
-          <span className="text-[#F97316] font-mono text-[10px]">{intents.length > 0 ? `✓ ${intents.length} SELECTED` : "SELECT"}</span>
-        </button>
-      </section>
+        {/* SECTION 1: ABOUT YOU */}
+        <section className="mb-10 bg-white/[0.01] border border-white/[0.03] p-5 rounded-md space-y-4">
+          <div>
+            <h2 className="text-sm font-medium tracking-tight text-white/80 m-0">About You</h2>
+            <p className="text-[11px] text-white/35 mt-1 mb-2">Introduce your professional presence to the workspace perimeter.</p>
+          </div>
+          
+          <input value={displayName} onChange={e => setDisplayName(e.target.value)} placeholder="Your Name" style={inpStyle} className="focus-under" autoComplete="off" />
+          <input value={role} onChange={e => setRole(e.target.value)} placeholder="Role or Title" style={inpStyle} className="focus-under" autoComplete="off" />
+          <input value={organisation} onChange={e => setOrganisation(e.target.value)} placeholder="Organisation / Studio" style={inpStyle} className="focus-under" autoComplete="off" />
+          <textarea value={bio} onChange={e => setBio(e.target.value)} placeholder="Short Bio" rows={2} style={{ ...inpStyle, height: "54px", resize: "none" }} className="focus-under" autoComplete="off" />
+        </section>
 
-      {/* Networking Stations */}
-      <section className="space-y-4 mb-24">
-        <h2 className="text-lg font-light mb-6">Networking Station</h2>
-        {stations.map((s) => (
-          <button key={s.id} onClick={() => setStationId(s.id)} className={`w-full text-left p-4 rounded-sm border transition-all duration-300 ${stationId === s.id ? "border-[#F97316] bg-[#F97316]/5" : "border-white/5 hover:border-white/20"}`}>
-            <div className="flex items-center gap-3">
-              <div className={`w-4 h-4 rounded-full border transition-all ${stationId === s.id ? "bg-[#F97316] border-[#F97316]" : "border-white/20"}`} />
-              <div>
-                <div className="text-sm font-medium">{s.name}</div>
-                <div className="text-[10px] text-white/40">{s.context}</div>
-              </div>
-            </div>
+        {/* SECTION 2: PROFESSIONAL PRESENCE TRIGGER ROW */}
+        <section className="mb-6">
+          <label className="block text-[10px] font-mono tracking-wider text-white/30 uppercase mb-2">Professional Presence</label>
+          <button 
+            type="button"
+            onClick={() => setIsPresenceOpen(true)} 
+            className="w-full flex items-center justify-between p-4 bg-white/[0.01] border border-white/[0.04] rounded-sm text-left transition-all duration-300 hover:border-white/10"
+            style={{ color: isPresenceValid ? "#F97316" : "rgba(255,255,255,0.4)" }}
+          >
+            <span className="text-sm font-light tracking-wide">{getPresenceLabel()}</span>
+            <span className="text-[10px] font-mono tracking-widest text-white/20">MANAGE</span>
           </button>
-        ))}
-      </section>
+        </section>
 
-      {/* Submit */}
-      <button 
-        disabled={!canSubmit}
-        onClick={() => router.push(`/e/${slug}/scene`)}
-        className="fixed bottom-6 left-6 right-6 h-12 bg-[#F97316] text-black font-bold text-xs tracking-widest uppercase disabled:opacity-20 transition-opacity"
-      >
-        Complete Profile
-      </button>
+        {/* SECTION 3: WHAT BRINGS YOU HERE TRIGGER ROW */}
+        <section className="mb-10">
+          <label className="block text-[10px] font-mono tracking-wider text-white/30 uppercase mb-2">What Brings You Here?</label>
+          <button 
+            type="button"
+            onClick={() => setIsIntentOpen(true)} 
+            className="w-full flex items-center justify-between p-4 bg-white/[0.01] border border-white/[0.04] rounded-sm text-left transition-all duration-300 hover:border-white/10"
+            style={{ color: isIntentValid ? "#F97316" : "rgba(255,255,255,0.4)" }}
+          >
+            <span className="text-sm font-light tracking-wide">{getIntentLabel()}</span>
+            <span className="text-[10px] font-mono tracking-widest text-white/20">SELECT</span>
+          </button>
+        </section>
 
-      {/* Bottom Sheet Logic simplified for brevity, logic remains identical */}
+        {/* SECTION 4: NETWORKING STATION SELECTION */}
+        <section className="mb-6">
+          <label className="block text-[10px] font-mono tracking-wider text-white/30 uppercase mb-3">Networking Station</label>
+          
+          <div className="space-y-3">
+            {stations.length === 0 ? (
+              <div className="p-4 border border-white/5 rounded-sm bg-white/[0.01] text-center">
+                <p className="text-xs text-white/30 m-0 italic">Reading host venue configuration streams...</p>
+              </div>
+            ) : (
+              stations.map((station) => {
+                const isSelected = stationId === station.id;
+                return (
+                  <button 
+                    type="button" 
+                    key={station.id} 
+                    onClick={() => setStationId(station.id)} 
+                    className="w-full text-left p-4 rounded-sm border flex items-start gap-4 transition-all duration-300 outline-none"
+                    style={{
+                      background: isSelected ? "rgba(249, 115, 22, 0.02)" : "rgba(255,255,255,0.01)",
+                      borderColor: isSelected ? "#F97316" : "rgba(255,255,255,0.03)"
+                    }}
+                  >
+                    {/* Immersive Tactile Indicator Circle */}
+                    <div 
+                      className="w-4 h-4 rounded-full border mt-0.5 flex items-center justify-center transition-all duration-300 shrink-0"
+                      style={{
+                        borderColor: isSelected ? "#F97316" : "rgba(255,255,255,0.2)",
+                        background: isSelected ? "#F97316" : "transparent"
+                      }}
+                    >
+                      {isSelected && (
+                        <span className="text-[9px] text-black font-bold animate-scale-pop">✓</span>
+                      )}
+                    </div>
+
+                    <div className="space-y-0.5">
+                      <h4 className="text-sm font-medium m-0 transition-colors duration-300" style={{ color: isSelected ? "#F97316" : "#FDFBF7" }}>
+                        {station.name}
+                      </h4>
+                      <p className="text-xs text-white/40 m-0 cubic-bezier leading-relaxed">
+                        {station.context}
+                      </p>
+                    </div>
+                  </button>
+                );
+              })
+            )}
+          </div>
+        </section>
+
+        {error && <p className="text-xs text-[#F97316] text-center mt-4 font-mono">{error}</p>}
+      </main>
+
+      {/* ERGONOMIC ANCHORED TIER */}
+      <footer className="fixed bottom-0 left-0 right-0 h-24 bg-[#0A0A0A]/95 backdrop-blur-md border-t border-white/[0.02] px-6 flex items-center z-40">
+        <div className="w-full max-w-md mx-auto">
+          <button 
+            disabled={!canSubmit} 
+            onClick={handleFinalSubmission}
+            className="w-full h-11 font-mono text-xs tracking-[0.22em] font-bold rounded-sm transition-all duration-300 text-center"
+            style={{
+              background: canSubmit ? "#F97316" : "rgba(255,255,255,0.02)",
+              border: canSubmit ? "1px solid #F97316" : "1px solid rgba(255,255,255,0.05)",
+              color: canSubmit ? "#000000" : "rgba(255,255,255,0.15)",
+              cursor: canSubmit ? "pointer" : "not-allowed"
+            }}
+          >
+            {saving ? "SAVING..." : "COMPLETE PROFILE"}
+          </button>
+        </div>
+      </footer>
+
+      {/* ================= BOTTOM SHEET: PROFESSIONAL PRESENCE LINKS ================= */}
+      {isPresenceOpen && (
+        <div className="fixed inset-0 bg-black/75 backdrop-blur-sm z-50 flex flex-col justify-end" onClick={() => setIsPresenceOpen(false)}>
+          <div className="w-full bg-[#0E0E0E] border-t border-white/[0.06] rounded-t-xl p-6 max-w-md mx-auto space-y-4 animate-sheet-up" onClick={e => e.stopPropagation()}>
+            <div className="flex justify-between items-center pb-2 border-b border-white/5">
+              <h3 className="text-sm font-medium tracking-wide text-white/80 m-0">Professional Presence</h3>
+              <button type="button" onClick={() => setIsPresenceOpen(false)} className="text-[10px] font-mono text-white/40 hover:text-white tracking-widest bg-transparent border-none cursor-pointer">CLOSE</button>
+            </div>
+            
+            <div className="space-y-1">
+              <input value={presence.linkedin} onChange={e => setPresence({ ...presence, linkedin: e.target.value })} placeholder="LinkedIn URL" style={inpStyle} className="focus-under" autoComplete="off" />
+              <input value={presence.website} onChange={e => setPresence({ ...presence, website: e.target.value })} placeholder="Website URL" style={inpStyle} className="focus-under" autoComplete="off" />
+              <input value={presence.portfolio} onChange={e => setPresence({ ...presence, portfolio: e.target.value })} placeholder="Portfolio URL" style={inpStyle} className="focus-under" autoComplete="off" />
+            </div>
+
+            <button type="button" onClick={() => setIsPresenceOpen(false)} className="w-full h-11 bg-white/5 border border-white/10 rounded-sm font-mono text-[11px] tracking-widest text-[#FDFBF7] mt-4 cursor-pointer hover:bg-white/10 transition-colors">
+              SAVE LINKS
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* ================= BOTTOM SHEET: WHAT BRINGS YOU HERE ================= */}
+      {isIntentOpen && (
+        <div className="fixed inset-0 bg-black/75 backdrop-blur-sm z-50 flex flex-col justify-end" onClick={() => setIsIntentOpen(false)}>
+          <div className="w-full bg-[#0E0E0E] border-t border-white/[0.06] rounded-t-xl p-6 max-w-md mx-auto space-y-4 animate-sheet-up" onClick={e => e.stopPropagation()}>
+            <div className="flex justify-between items-center pb-2 border-b border-white/5">
+              <h3 className="text-sm font-medium tracking-wide text-white/80 m-0">What Brings You Here?</h3>
+              <button type="button" onClick={() => setIsIntentOpen(false)} className="text-[10px] font-mono text-white/40 hover:text-white tracking-widest bg-transparent border-none cursor-pointer">CLOSE</button>
+            </div>
+            
+            <div className="space-y-3 max-h-[300px] overflow-y-auto pr-1">
+              {[
+                { id: "Capital", label: "Capital", desc: "Fundraising, investors, and strategic ideas." },
+                { id: "Synergy", label: "Synergy", desc: "Collaborators, co-founders, and deep execution partnerships." },
+                { id: "Mentorship", label: "Mentorship", desc: "Actively seeking guidance or looking to offer perspective." },
+                { id: "Opportunities", label: "Opportunities", desc: "Career growth, partnerships, and introductions." }
+              ].map((item) => {
+                const isActive = intents.includes(item.id);
+                return (
+                  <button 
+                    type="button" 
+                    key={item.id} 
+                    onClick={() => toggleIntent(item.id)} 
+                    className="w-full text-left p-4 bg-white/[0.01] border border-white/[0.03] rounded-sm relative outline-none flex items-center transition-all duration-300"
+                    style={{ paddingLeft: isActive ? "22px" : "16px" }}
+                  >
+                    {/* Animated Edge Vertical Accent Line */}
+                    {isActive && (
+                      <div className="absolute left-0 top-0 bottom-0 w-[2px] bg-[#F97316] animate-slide-line" />
+                    )}
+                    
+                    <div>
+                      <h4 className="text-sm font-medium m-0 transition-colors duration-300" style={{ color: isActive ? "#F97316" : "#FDFBF7" }}>
+                        {item.label}
+                      </h4>
+                      <p className="text-[11px] text-white/40 m-0 mt-1 leading-relaxed">
+                        {item.desc}
+                      </p>
+                    </div>
+                  </button>
+                );
+              })}
+            </div>
+
+            <button type="button" onClick={() => setIsIntentOpen(false)} className="w-full h-11 bg-white/5 border border-white/10 rounded-sm font-mono text-[11px] tracking-widest text-[#FDFBF7] mt-2 cursor-pointer hover:bg-white/10 transition-colors">
+              CONFIRM SELECTION
+            </button>
+          </div>
+        </div>
+      )}
+
     </div>
   );
 }
