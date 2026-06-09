@@ -35,7 +35,7 @@ export default function TicketsRevenueHub({ params }: { params: { id: string } }
       
       // Calculate revenue from verified paid or confirmed entries
       const paidTickets = typedRegs.filter(r => r.status === 'confirmed' || r.paid);
-      const grossRev = paidTickets.reduce((sum, r) => sum + (r.amount || 1500), 0);
+      const grossRev = paidTickets.reduce((sum, r) => sum + (r.amount || 0), 0);
       
       setStats({
         revenue: Math.round(grossRev * 0.95), // 5% Infrastructure Fee subtracted
@@ -66,11 +66,14 @@ export default function TicketsRevenueHub({ params }: { params: { id: string } }
     setUpdatingId(null);
   };
 
-  const filteredRegs = regs.filter((r: Registration) => 
-    (r.full_name?.toLowerCase().includes(search.toLowerCase()) || '') ||
-    (r.ticket_type?.toLowerCase().includes(search.toLowerCase()) || '') ||
-    (r.phone_number?.includes(search) || '')
-  );
+  const filteredRegs = regs.filter((r: Registration) => {
+    if (!search || search.trim() === "") return true;
+    const term = search.toLowerCase().trim();
+    const nameMatch = (r.full_name || "").toLowerCase().includes(term);
+    const typeMatch = (r.ticket_type || "").toLowerCase().includes(term);
+    const phoneMatch = (r.phone_number || "").includes(term);
+    return nameMatch || typeMatch || phoneMatch;
+  });
 
   return (
     <div style={{ minHeight: '100vh', background: '#060608', color: '#f3f4f6', padding: '24px 16px' }}>
