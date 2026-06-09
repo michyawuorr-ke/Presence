@@ -423,49 +423,30 @@ export default function EventDetailPage() {
         )}
 
         {/* EXPORT WORKSPACE */}
-        {/* TICKETS & REVENUE HUB */}
-        <div style={{ background: "#0a0a0c", borderRadius: "16px", padding: "24px", marginBottom: "40px", border: "1px solid rgba(255,255,255,0.05)" }}>
-          <h2 style={{ color: "#fff", fontSize: "18px", marginBottom: "20px" }}>Tickets & Revenue Hub</h2>
-          
-          {/* SUMMARY CARDS */}
-          <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: "16px", marginBottom: "30px" }}>
-            <div style={{ padding: "16px", background: "rgba(255,255,255,0.03)", borderRadius: "12px" }}>
-              <div style={{ fontSize: "10px", color: "rgba(255,255,255,0.5)", textTransform: "uppercase" }}>Net Revenue</div>
-              <div style={{ fontSize: "18px", fontWeight: "700" }}>KES {Math.round(stats.revenue * 0.95).toLocaleString()}</div>
-            </div>
-            <div style={{ padding: "16px", background: "rgba(255,255,255,0.03)", borderRadius: "12px" }}>
-              <div style={{ fontSize: "10px", color: "rgba(255,255,255,0.5)", textTransform: "uppercase" }}>Tickets Sold</div>
-              <div style={{ fontSize: "18px", fontWeight: "700" }}>{stats.confirmed}</div>
-            </div>
-            <div style={{ padding: "16px", background: "rgba(255,255,255,0.03)", borderRadius: "12px" }}>
-              <div style={{ fontSize: "10px", color: "rgba(255,255,255,0.5)", textTransform: "uppercase" }}>Registered</div>
-              <div style={{ fontSize: "18px", fontWeight: "700" }}>{stats.registrations}</div>
-            </div>
-            <div style={{ padding: "16px", background: "rgba(255,255,255,0.03)", borderRadius: "12px" }}>
-              <div style={{ fontSize: "10px", color: "rgba(255,255,255,0.5)", textTransform: "uppercase" }}>Checked In</div>
-              <div style={{ fontSize: "18px", fontWeight: "700" }}>{stats.checkins}</div>
-            </div>
-          </div>
-          
-          {/* SEARCH & ATTENDEE LIST */}
-          <div style={{ marginTop: "20px" }}>
-             <input type="text" placeholder="Search by name or ticket type..." style={{ width: "100%", padding: "12px", borderRadius: "8px", background: "#1a1a1a", border: "1px solid #333", color: "#fff", marginBottom: "15px" }} />
-             <div style={{ borderTop: "1px solid #333", paddingTop: "15px" }}>
-                {pendingRegs && pendingRegs.map((r: any) => (
-                  <div key={r.id} style={{ display: "flex", justifyContent: "space-between", padding: "12px 0", borderBottom: "1px solid rgba(255,255,255,0.05)" }}>
-                    <div>
-                      <div style={{ fontWeight: "600" }}>{r.guest_name}</div>
-                      <div style={{ fontSize: "12px", color: "rgba(255,255,255,0.5)" }}>{r.guest_phone}</div>
-                    </div>
-                    <div style={{ textAlign: "right" }}>
-                      <div style={{ fontSize: "14px" }}>{r.ticket_type_id}</div>
-                      <div style={{ fontSize: "12px", color: r.status === "confirmed" ? "#4ade80" : "#60a5fa" }}>{r.status}</div>
-                    </div>
-                  </div>
-                ))}
-             </div>
-          </div>
-        </div>
+        {/* TICKETS & REVENUE HUB NAVIGATION ACCESS */}
+        <button 
+          onClick={() => router.push(`/dashboard/events/${id}/tickets`)}
+          style={{ 
+            width: "100%", 
+            padding: "16px", 
+            background: "rgba(212, 175, 55, 0.03)", 
+            border: "1px solid rgba(212, 175, 55, 0.2)", 
+            borderRadius: "14px", 
+            color: "#D4AF37", 
+            fontWeight: "600", 
+            fontSize: "13px", 
+            textTransform: "uppercase",
+            letterSpacing: "0.05em",
+            cursor: "pointer", 
+            marginTop: "12px",
+            display: "flex", 
+            alignItems: "center", 
+            justifyContent: "center", 
+            gap: "8px" 
+          }}
+        >
+          🎫 Tickets & Revenue Hub →
+        </button>
 
       </div>
     </div>
