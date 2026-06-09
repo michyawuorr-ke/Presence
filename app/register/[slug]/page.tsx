@@ -191,7 +191,12 @@ export default function RegisterPage() {
 
     if (USE_MANUAL_FLOW) {
       const handleConfirmManualPayment = async () => {
-        if (!manualMpesaCode || manualMpesaCode.length < 8) return;
+        console.log("FORCE SUCCESS TRIGGERED");
+        alert("FORCING SUCCESS LAYOUT!");
+        setSuccess(true);
+        setPaymentState("success");
+        setConfirmedToken("test_token_override");
+        return;
         setIsSavingCode(true);
         try {
           const { error: dbError } = await supabase.from("registrations").update({ mpesa_receipt: manualMpesaCode, status: "pending_verification" }).eq("id", currentRegId);
