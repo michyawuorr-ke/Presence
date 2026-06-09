@@ -318,11 +318,32 @@ export default function EventDetailPage() {
 
         {/* REGISTRATION COUNTERS */}
         <div style={{ background: "linear-gradient(160deg, #16151a 0%, #0f0e12 100%)", borderRadius: "20px", padding: "20px", marginBottom: "16px", border: "1px solid rgba(255, 255, 255, 0.04)" }}>
-          <p style={{ fontSize: "10px", fontWeight: "700", color: "rgba(255,255,255,0.4)", letterSpacing: "0.12em", textTransform: "uppercase", marginBottom: "14px" }}>Telemetry Metrics</p>
-          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "10px" }}>
-            {card("Total Registrations", stats.registrations)}
+        {/* SIMPLE OVERVIEW */}
+        <div style={{ marginBottom: "16px" }}>
+          <p style={{ fontSize: "10px", fontWeight: "700", color: "rgba(255,255,255,0.3)", letterSpacing: "0.15em", textTransform: "uppercase", marginBottom: "10px", marginLeft: "4px" }}>Overview</p>
+          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "8px" }}>
+            {card("Registrations", stats.registrations)}
             {card("Checked In", stats.checkins, "#D4AF37")}
           </div>
+        </div>
+
+        {/* SIMPLE NETWORKING */}
+        <div style={{ marginBottom: "16px" }}>
+          <p style={{ fontSize: "10px", fontWeight: "700", color: "rgba(255,255,255,0.3)", letterSpacing: "0.15em", textTransform: "uppercase", marginBottom: "10px", marginLeft: "4px" }}>Networking</p>
+          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: "8px" }}>
+            {card("Active", stats.onAura, "#D4AF37")}
+            {card("Handshakes", stats.handshakes, "#D4AF37")}
+            {card("Unlocked", stats.unlocked, "#D4AF37")}
+          </div>
+        </div>
+
+        {/* TICKET & REVENUE HUB */}
+        <div style={{ background: "linear-gradient(160deg, #16151a 0%, #0f0e12 100%)", borderRadius: "20px", padding: "20px", marginBottom: "16px", border: "1px solid rgba(255, 255, 255, 0.04)" }}>
+          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+             <p style={{ fontSize: "10px", fontWeight: "700", color: "rgba(255,255,255,0.3)", letterSpacing: "0.15em", textTransform: "uppercase" }}>Revenue</p>
+             <p style={{ fontSize: "16px", fontWeight: "700", color: "#D4AF37" }}>KES {stats.revenue.toLocaleString()}</p>
+          </div>
+        </div>
         </div>
 
         {/* NETWORKING METRICS */}
