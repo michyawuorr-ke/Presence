@@ -160,9 +160,9 @@ export default function TicketsRevenueHub({ params }: { params: { id: string } }
                   style={{
                     padding: '6px 12px',
                     borderRadius: '8px',
-                    background: isConfirmed ? 'rgba(74, 222, 128, 0.04)' : 'rgba(212, 175, 55, 0.04)',
-                    border: isConfirmed ? '1px solid rgba(74, 222, 128, 0.2)' : '1px solid rgba(212, 175, 55, 0.2)',
-                    color: isConfirmed ? '#4ade80' : '#D4AF37',
+                    background: isConfirmed ? 'rgba(255, 255, 255, 0.02)' : 'rgba(212, 175, 55, 0.05)',
+                    border: isConfirmed ? '1px solid rgba(255,255,255,0.05)' : '1px solid rgba(212, 175, 55, 0.15)',
+                    color: isConfirmed ? 'rgba(255,255,255,0.4)' : '#D4AF37',
                     fontSize: '11px',
                     fontWeight: '600',
                     cursor: 'pointer',
