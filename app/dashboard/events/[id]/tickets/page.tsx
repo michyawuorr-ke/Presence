@@ -5,9 +5,9 @@ import { useRouter } from 'next/navigation';
 
 interface Registration {
   id: string;
-  guest_name: string;
-  guest_phone: string;
-  ticket_type_id: string;
+  full_name: string;
+  phone_number: string;
+  ticket_type: string;
   amount: number;
   status: string;
   checked_in: boolean;
@@ -65,9 +65,9 @@ export default function TicketsRevenueHub({ params }: { params: { id: string } }
   };
 
   const filteredRegs = regs.filter((r: Registration) => 
-    (r.guest_name?.toLowerCase().includes(search.toLowerCase()) || '') ||
-    (r.ticket_type_id?.toLowerCase().includes(search.toLowerCase()) || '') ||
-    (r.guest_phone?.includes(search) || '')
+    (r.full_name?.toLowerCase().includes(search.toLowerCase()) || '') ||
+    (r.ticket_type?.toLowerCase().includes(search.toLowerCase()) || '') ||
+    (r.phone_number?.includes(search) || '')
   );
 
   return (
@@ -85,7 +85,7 @@ export default function TicketsRevenueHub({ params }: { params: { id: string } }
         {/* ULTRA-COMPACT TELEMETRY ROW */}
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '6px', marginBottom: '20px' }}>
           {[
-            { label: 'Net Rev', value: `${(stats.revenue / 1000).toFixed(1)}k`, color: '#D4AF37' },
+            { label: 'Net Rev', value: `KES ${stats.revenue.toLocaleString()}`, color: '#D4AF37' },
             { label: 'Sold', value: stats.tickets },
             { label: 'Reg', value: stats.registrations },
             { label: 'In', value: stats.checkins },
@@ -139,12 +139,12 @@ export default function TicketsRevenueHub({ params }: { params: { id: string } }
                 {/* GUEST INFO BLOCK */}
                 <div style={{ flex: 1, minWidth: 0 }}>
                   <div style={{ fontWeight: '600', fontSize: '13px', color: '#f3f4f6', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
-                    {r.guest_name}
+                    {r.full_name}
                   </div>
                   <div style={{ display: 'flex', gap: '8px', marginTop: '2px', fontSize: '11px', color: 'rgba(255,255,255,0.4)' }}>
-                    <span>{r.guest_phone || 'No Phone'}</span>
+                    <span>{r.phone_number || 'No Phone'}</span>
                     <span style={{ color: 'rgba(255,255,255,0.2)' }}>•</span>
-                    <span style={{ color: '#D4AF37', fontWeight: '500' }}>{r.ticket_type_id}</span>
+                    <span style={{ color: '#D4AF37', fontWeight: '500' }}>{r.ticket_type || 'General'}</span>
                   </div>
                 </div>
 
