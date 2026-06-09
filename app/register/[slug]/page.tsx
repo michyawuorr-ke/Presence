@@ -191,22 +191,18 @@ export default function RegisterPage() {
 
     if (USE_MANUAL_FLOW) {
       const handleConfirmManualPayment = async () => {
-        console.log("FORCE SUCCESS TRIGGERED");
-        alert("FORCING SUCCESS LAYOUT!");
-        setSuccess(true);
-        setPaymentState("success");
-        setConfirmedToken("test_token_override");
-        return;
+        if (!manualMpesaCode || manualMpesaCode.length < 8) return;
         setIsSavingCode(true);
         try {
           const { error: dbError } = await supabase.from("registrations").update({ mpesa_receipt: manualMpesaCode, status: "pending_verification" }).eq("id", currentRegId);
           if (dbError) throw dbError;
+          
           setSuccess(true);
           setPaymentState("success");
           setConfirmedToken(currentAccessToken);
         } catch (err) {
-          console.error(err);
-        } finally {
+          console.error("Database update failed:", err);
+          alert("Payment Sync Error: " + (err.message || "Please check connection"));
           setIsSavingCode(false);
         }
       };
