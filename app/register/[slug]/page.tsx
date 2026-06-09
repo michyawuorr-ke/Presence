@@ -202,7 +202,7 @@ export default function RegisterPage() {
           setConfirmedToken(currentAccessToken);
         } catch (err) {
           console.error("Database update failed:", err);
-          alert("Payment Sync Error: " + (err.message || "Please check connection"));
+          alert("Payment Sync Error: " + (err instanceof Error ? err.message : "Please check connection"));
           setIsSavingCode(false);
         }
       };
