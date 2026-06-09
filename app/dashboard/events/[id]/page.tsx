@@ -242,36 +242,17 @@ export default function EventDetailPage() {
   return (
     <div style={{ background: "#060608", minHeight: "100vh", color: "#f3f4f6" }}>
       
-      {/* 1. CINEMATIC EVENT BANNER VIEWPORT (ABSOLUTE TOP EDGE-TO-EDGE) */}
-      <div style={{ width: "100%", height: "220px", background: "#111014", position: "relative", overflow: "hidden", borderBottom: "1px solid rgba(255,255,255,0.04)" }}>
+      {/* PERFECT COVERAGE BANNER VIEWPORT */}
+      <div style={{ width: "100%", height: "220px", background: "#0a0a0c", position: "relative", overflow: "hidden", borderBottom: "1px solid rgba(255,255,255,0.04)" }}>
         {(bannerUrl || event?.banner_url) ? (
-          
-          <div style={{ width: "100%", height: "100%", position: "relative", backgroundColor: "#000", display: "flex", alignItems: "center", justifyContent: "center" }}>
-            <img src={bannerUrl || event?.banner_url} alt="Event Workspace Horizon" style={{ width: "100%", height: "100%", objectFit: "contain" }} />
-            
-            <button 
-              onClick={async () => {
-                if(confirm("Remove this canvas layout?")) {
-                  try {
-                    await supabase.from('events').update({ banner_url: null }).eq('id', id);
-                    setBannerUrl("");
-                    setEvent((prev: any) => prev ? { ...prev, banner_url: null } : prev);
-                  } catch(e) {
-                    alert("Error clearing canvas");
-                  }
-                }
-              }}
-              style={{ position: "absolute", bottom: "12px", right: "12px", backgroundColor: "rgba(0,0,0,0.75)", color: "#fff", border: "1px solid rgba(255,255,255,0.2)", padding: "6px 12px", borderRadius: "6px", fontSize: "12px", cursor: "pointer" }}
-            >
-              Remove Canvas
-            </button>
+          <div style={{ width: "100%", height: "100%", position: "relative" }}>
+            <img src={bannerUrl || event?.banner_url} alt="Event Banner" style={{ width: "100%", height: "100%", objectFit: "cover", objectPosition: "center" }} />
+            <button onClick={async () => { if(confirm("Remove banner layout?")) { try { await supabase.from("events").update({ banner_url: null }).eq("id", id); setBannerUrl(""); setEvent((prev: any) => prev ? { ...prev, banner_url: null } : prev); } catch(e){} } }} style={{ position: "absolute", top: "16px", right: "16px", backgroundColor: "rgba(0, 0, 0, 0.5)", backdropFilter: "blur(12px)", WebkitBackdropFilter: "blur(12px)", color: "rgba(255,255,255,0.8)", border: "1px solid rgba(255,255,255,0.15)", padding: "6px 14px", borderRadius: "20px", fontSize: "11px", fontWeight: "600", cursor: "pointer" }}>Clear Canvas ×</button>
           </div>
-
         ) : (
-          <div style={{ width: "100%", height: "100%", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", padding: "20px" }}>
-            <p style={{ fontSize: "10px", color: "rgba(255,255,255,0.3)", letterSpacing: "0.15em", textTransform: "uppercase", margin: "0 0 12px" }}>Atmospheric Workspace Banner Missing</p>
-            <label style={{ padding: "8px 16px", border: "1px dashed rgba(255,255,255,0.15)", borderRadius: "6px", fontSize: "11px", textTransform: "uppercase", letterSpacing: "0.05em", cursor: "pointer", color: "rgba(255,255,255,0.5)" }}>
-              {uploadingBanner ? "Processing Upload..." : "Upload Canvas"}
+          <div style={{ width: "100%", height: "100%", display: "flex", alignItems: "center", justifyContent: "center" }}>
+            <label style={{ padding: "10px 22px", background: "rgba(255,255,255,0.02)", border: "1px dashed rgba(255,255,255,0.12)", borderRadius: "20px", fontSize: "11px", cursor: "pointer", color: "rgba(255,255,255,0.4)", letterSpacing: "0.02em" }}>
+              {uploadingBanner ? "Uploading..." : "+ Add Banner Image"}
               <input type="file" accept="image/*" onChange={handleBannerUpload} style={{ display: "none" }} />
             </label>
           </div>
