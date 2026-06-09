@@ -1,7 +1,7 @@
 'use client';
 import { useState, useEffect } from 'react';
 import { supabase } from "@/lib/supabase/client";
-import { useRouter } from 'next/navigation';
+import { useRouter, useParams } from 'next/navigation';
 
 interface Registration {
   id: string;
@@ -16,6 +16,8 @@ interface Registration {
 
 export default function TicketsRevenueHub({ params }: { params: { id: string } }) {
   const router = useRouter();
+  const paramsHook = useParams();
+  const eventId = (paramsHook?.id || params?.id) as string;
   const [stats, setStats] = useState({ revenue: 0, tickets: 0, registrations: 0, checkins: 0 });
   const [regs, setRegs] = useState<Registration[]>([]);
   const [search, setSearch] = useState('');
@@ -25,7 +27,7 @@ export default function TicketsRevenueHub({ params }: { params: { id: string } }
     const { data: allRegs } = await supabase
       .from('registrations')
       .select('*')
-      .eq('event_id', params.id);
+      .eq('event_id', eventId);
 
     if (allRegs) {
       const typedRegs = allRegs as Registration[];
@@ -46,7 +48,7 @@ export default function TicketsRevenueHub({ params }: { params: { id: string } }
 
   useEffect(() => {
     loadData();
-  }, [params.id]);
+  }, [eventId]);
 
   const togglePaymentStatus = async (registration: Registration) => {
     setUpdatingId(registration.id);
