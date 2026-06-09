@@ -34,7 +34,7 @@ export default function TicketsRevenueHub({ params }: { params: { id: string } }
       setRegs(typedRegs);
       
       // Calculate revenue from verified paid or confirmed entries
-      const paidTickets = typedRegs.filter(r => r.status === 'confirmed' || r.paid);
+      const paidTickets = typedRegs.filter(r => r.status === 'confirmed' || r.status === 'pending_verification' || r.paid);
       const grossRev = paidTickets.reduce((sum, r) => sum + (r.amount || 0), 0);
       
       setStats({
@@ -170,7 +170,7 @@ export default function TicketsRevenueHub({ params }: { params: { id: string } }
                     transition: 'all 0.2s ease'
                   }}
                 >
-                  {updatingId === r.id ? '...' : isConfirmed ? 'Paid ✓' : 'Approve'}
+                  {updatingId === r.id ? '...' : r.status === 'confirmed' ? 'Paid ✓' : r.status === 'pending_verification' ? 'Verify Pay' : 'Approve'}
                 </button>
               </div>
             );
