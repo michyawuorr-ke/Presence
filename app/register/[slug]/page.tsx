@@ -194,7 +194,8 @@ export default function RegisterPage() {
         if (!manualMpesaCode || manualMpesaCode.length < 8) return;
         setIsSavingCode(true);
         try {
-          await supabase.from("registrations").update({ mpesa_receipt: manualMpesaCode, status: "pending_verification" }).eq("id", currentRegId);
+          const { error: dbError } = await supabase.from("registrations").update({ mpesa_receipt: manualMpesaCode, status: "pending_verification" }).eq("id", currentRegId);
+          if (dbError) throw dbError;
           setSuccess(true);
           setConfirmedToken(currentAccessToken);
         } catch (err) {
