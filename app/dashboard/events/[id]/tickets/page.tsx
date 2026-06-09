@@ -26,7 +26,7 @@ export default function TicketsRevenueHub({ params }: { params: { id: string } }
   async function loadData() {
     const { data: allRegs } = await supabase
       .from('registrations')
-      .select('*')
+      .select('*, ticket_types(name, price)')
       .eq('event_id', eventId);
 
     if (allRegs) {
@@ -35,7 +35,7 @@ export default function TicketsRevenueHub({ params }: { params: { id: string } }
       
       // Calculate revenue from verified paid or confirmed entries
       const paidTickets = typedRegs.filter(r => r.status === 'confirmed' || r.status === 'pending_verification' || r.paid);
-      const grossRev = paidTickets.reduce((sum, r) => sum + (r.amount || 0), 0);
+      const grossRev = paidTickets.reduce((sum, r) => sum + (r.amount || (r as any).ticket_types?.price || 0), 0);
       
       setStats({
         revenue: Math.round(grossRev * 0.95), // 5% Infrastructure Fee subtracted
@@ -149,7 +149,7 @@ export default function TicketsRevenueHub({ params }: { params: { id: string } }
                   <div style={{ display: 'flex', gap: '8px', marginTop: '2px', fontSize: '11px', color: 'rgba(255,255,255,0.4)' }}>
                     <span>{((r as any).phone_number || (r as any).phone || (r as any).guest_phone || 'No Phone')}</span>
                     <span style={{ color: 'rgba(255,255,255,0.2)' }}>•</span>
-                    <span style={{ color: '#D4AF37', fontWeight: '500' }}>{((r as any).ticket_type_id === '17d2640d-2f2e-4ca6-b90b-093174995c04' ? 'VIP Ticket' : 'Regular Ticket')}</span>
+                    <span style={{ color: '#D4AF37', fontWeight: '500' }}>{(((r as any).ticket_types?.name || 'General Admission') + ' (KES ' + (r.amount || (r as any).ticket_types?.price || 0).toLocaleString() + ')')}</span>
                   </div>
                 </div>
 
