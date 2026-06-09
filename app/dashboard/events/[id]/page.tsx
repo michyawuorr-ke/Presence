@@ -344,6 +344,30 @@ export default function EventDetailPage() {
              <p style={{ fontSize: "16px", fontWeight: "700", color: "#D4AF37" }}>KES {stats.revenue.toLocaleString()}</p>
           </div>
         </div>
+        {/* DEDICATED TICKETS AND REVENUE NAVIGATION OUTLET */}
+        <button 
+          onClick={() => router.push(`/dashboard/events/${id}/tickets`)}
+          style={{ 
+            width: "100%", 
+            padding: "16px", 
+            background: "rgba(212, 175, 55, 0.03)", 
+            border: "1px solid rgba(212, 175, 55, 0.2)", 
+            borderRadius: "14px", 
+            color: "#D4AF37", 
+            fontWeight: "600", 
+            fontSize: "13px", 
+            textTransform: "uppercase",
+            letterSpacing: "0.05em",
+            cursor: "pointer", 
+            marginTop: "12px",
+            display: "flex", 
+            alignItems: "center", 
+            justifyContent: "center", 
+            gap: "8px" 
+          }}
+        >
+          🎫 Tickets & Revenue Hub →
+        </button>
         </div>
 
         {/* NETWORKING METRICS */}
@@ -420,29 +444,6 @@ export default function EventDetailPage() {
 
         {/* EXPORT WORKSPACE */}
         {/* TICKETS & REVENUE HUB NAVIGATION ACCESS */}
-        <button 
-          onClick={() => router.push(`/dashboard/events/${id}/tickets`)}
-          style={{ 
-            width: "100%", 
-            padding: "16px", 
-            background: "rgba(212, 175, 55, 0.03)", 
-            border: "1px solid rgba(212, 175, 55, 0.2)", 
-            borderRadius: "14px", 
-            color: "#D4AF37", 
-            fontWeight: "600", 
-            fontSize: "13px", 
-            textTransform: "uppercase",
-            letterSpacing: "0.05em",
-            cursor: "pointer", 
-            marginTop: "12px",
-            display: "flex", 
-            alignItems: "center", 
-            justifyContent: "center", 
-            gap: "8px" 
-          }}
-        >
-          🎫 Tickets & Revenue Hub →
-        </button>
 
       </div>
     </div>
