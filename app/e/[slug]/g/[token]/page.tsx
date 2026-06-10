@@ -74,13 +74,13 @@ export default function GuestOnboardingPage() {
     if (presence.portfolio.trim()) added.push("Portfolio");
     
     if (added.length === 0) return "Add Professional Links";
-    return `✓ ${added.join(" • ")} Added`;
+    return `${added.join(" • ")} Linked`;
   };
 
   // Dynamic Intent Label Generator
   const getIntentLabel = () => {
     if (intents.length === 0) return "Select Intent";
-    return `✓ ${intents.join(" + ")} Selected`;
+    return intents.join(" + ");
   };
 
   const toggleIntent = (id: string) => {
