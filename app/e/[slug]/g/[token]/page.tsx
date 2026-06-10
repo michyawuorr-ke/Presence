@@ -139,7 +139,7 @@ export default function GuestOnboardingPage() {
 
   // Pure Luxury Minimal Design Style Standards
   const inpStyle = {
-    width: "100%", padding: "12px 0", background: "transparent", border: "none",
+    width: "100%", padding: "10px 0", background: "transparent", border: "none",
     borderBottom: "1px solid rgba(255, 255, 255, 0.06)", color: "#FDFBF7",
     fontSize: "14px", outline: "none", borderRadius: 0, transition: "border-color 0.3s"
   };
@@ -174,7 +174,7 @@ export default function GuestOnboardingPage() {
       <main className="w-full max-w-md mx-auto flex-1 pt-8 pb-36 overflow-y-auto">
         
         {/* SECTION 1: ABOUT YOU */}
-        <section className="mb-10 bg-white/[0.01] border border-white/[0.03] p-5 rounded-md space-y-4">
+        <section className="mb-6 bg-white/[0.01] border border-white/[0.03] p-5 rounded-md space-y-3">
           <div>
             <h2 className="text-sm font-medium tracking-tight text-white/80 m-0">About You</h2>
             <p className="text-[11px] text-white/35 mt-1 mb-2">Introduce your professional presence to the workspace perimeter.</p>
@@ -193,7 +193,7 @@ export default function GuestOnboardingPage() {
             type="button"
             onClick={() => setIsPresenceOpen(true)} 
             className="w-full flex items-center justify-between p-4 bg-white/[0.01] border border-white/[0.04] rounded-sm text-left transition-all duration-300 hover:border-white/10"
-            style={{ color: isPresenceValid ? "#F97316" : "rgba(255,255,255,0.4)" }}
+            style={{ color: "#FDFBF7" }}
           >
             <span className="text-sm font-light tracking-wide">{getPresenceLabel()}</span>
             <span className="text-[10px] font-mono tracking-widest text-white/20">MANAGE</span>
@@ -207,7 +207,7 @@ export default function GuestOnboardingPage() {
             type="button"
             onClick={() => setIsIntentOpen(true)} 
             className="w-full flex items-center justify-between p-4 bg-white/[0.01] border border-white/[0.04] rounded-sm text-left transition-all duration-300 hover:border-white/10"
-            style={{ color: isIntentValid ? "#F97316" : "rgba(255,255,255,0.4)" }}
+            style={{ color: "#FDFBF7" }}
           >
             <span className="text-sm font-light tracking-wide">{getIntentLabel()}</span>
             <span className="text-[10px] font-mono tracking-widest text-white/20">SELECT</span>
@@ -245,9 +245,7 @@ export default function GuestOnboardingPage() {
                         background: isSelected ? "#F97316" : "transparent"
                       }}
                     >
-                      {isSelected && (
-                        <span className="text-[9px] text-black font-bold animate-scale-pop">✓</span>
-                      )}
+                      
                     </div>
 
                     <div className="space-y-0.5">
@@ -290,7 +288,7 @@ export default function GuestOnboardingPage() {
       {/* ================= BOTTOM SHEET: PROFESSIONAL PRESENCE LINKS ================= */}
       {isPresenceOpen && (
         <div className="fixed inset-0 bg-black/75 backdrop-blur-sm z-50 flex flex-col justify-end" onClick={() => setIsPresenceOpen(false)}>
-          <div className="w-full bg-[#0E0E0E] border-t border-white/[0.06] rounded-t-xl p-6 max-w-md mx-auto space-y-4 animate-sheet-up" onClick={e => e.stopPropagation()}>
+          <div className="w-full bg-[#0E0E0E] border-t border-white/[0.06] rounded-t-xl p-6 max-w-md mx-auto space-y-3 animate-sheet-up" onClick={e => e.stopPropagation()}>
             <div className="flex justify-between items-center pb-2 border-b border-white/5">
               <h3 className="text-sm font-medium tracking-wide text-white/80 m-0">Professional Presence</h3>
               <button type="button" onClick={() => setIsPresenceOpen(false)} className="text-[10px] font-mono text-white/40 hover:text-white tracking-widest bg-transparent border-none cursor-pointer">CLOSE</button>
@@ -312,7 +310,7 @@ export default function GuestOnboardingPage() {
       {/* ================= BOTTOM SHEET: WHAT BRINGS YOU HERE ================= */}
       {isIntentOpen && (
         <div className="fixed inset-0 bg-black/75 backdrop-blur-sm z-50 flex flex-col justify-end" onClick={() => setIsIntentOpen(false)}>
-          <div className="w-full bg-[#0E0E0E] border-t border-white/[0.06] rounded-t-xl p-6 max-w-md mx-auto space-y-4 animate-sheet-up" onClick={e => e.stopPropagation()}>
+          <div className="w-full bg-[#0E0E0E] border-t border-white/[0.06] rounded-t-xl p-6 max-w-md mx-auto space-y-3 animate-sheet-up" onClick={e => e.stopPropagation()}>
             <div className="flex justify-between items-center pb-2 border-b border-white/5">
               <h3 className="text-sm font-medium tracking-wide text-white/80 m-0">What Brings You Here?</h3>
               <button type="button" onClick={() => setIsIntentOpen(false)} className="text-[10px] font-mono text-white/40 hover:text-white tracking-widest bg-transparent border-none cursor-pointer">CLOSE</button>
