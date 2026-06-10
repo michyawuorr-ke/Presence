@@ -104,7 +104,7 @@ export default function GuestOnboardingPage() {
 
     try {
       const { error: err } = await supabase.from("guest_profiles").insert({
-        registration_id: token,            
+        registration_id: String(token).trim(),            
         event_id: eventId,
         display_name: displayName,                   
         role_title: role,
@@ -282,9 +282,6 @@ export default function GuestOnboardingPage() {
           >
             {saving ? "SAVING..." : "COMPLETE PROFILE"}
           </button>
-          <p className="text-[10px] text-white/30 text-center mt-3 font-normal tracking-wide m-0">
-            By continuing, you agree to our <a href="/terms" className="text-[#F97316] no-underline hover:underline">Terms of Use</a> and <a href="/privacy" className="text-[#F97316] no-underline hover:underline">Privacy Policy</a>.
-          </p>
         </div>
       </footer>
 
