@@ -360,3 +360,15 @@ export default function GuestOnboardingPage() {
     </div>
   );
 }
+
+// Global payload tracer diagnostic patch
+if (typeof window !== 'undefined') {
+  window.addEventListener('unhandledrejection', (event) => {
+    if (event.reason && event.reason.message && event.reason.message.includes('uuid')) {
+      const errorDiv = document.createElement('div');
+      errorDiv.style.cssText = "position:fixed;bottom:100px;left:24px;right:24px;background:#0A0A0A;border:1px solid #F97316;padding:16px;color:#F97316;font-family:monospace;font-size:11px;z-index:9999;border-radius:2px;letter-spacing:0.05em;";
+      errorDiv.innerText = "CRITICAL DATA MISMATCH: " + event.reason.message + " \n\nCheck if your registration link contains a valid 36-character UUID string or an incompatible text slug format.";
+      document.body.appendChild(errorDiv);
+    }
+  });
+}
