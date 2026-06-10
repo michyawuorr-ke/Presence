@@ -177,7 +177,7 @@ export default function GuestOnboardingPage() {
         <section className="mb-6 bg-white/[0.01] border border-white/[0.03] p-5 rounded-md space-y-3">
           <div>
             <h2 className="text-sm font-medium tracking-tight text-white/80 m-0">About You</h2>
-            <p className="text-[11px] text-white/35 mt-1 mb-2">Introduce your professional presence to the workspace perimeter.</p>
+            
           </div>
           
           <input value={displayName} onChange={e => setDisplayName(e.target.value)} placeholder="Your Name" style={inpStyle} className="focus-under" autoComplete="off" />
