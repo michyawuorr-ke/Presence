@@ -69,7 +69,7 @@ export default function RegisterPage() {
   }
 
   async function handleRegister() {
-    if (!acceptedTerms) { setError("You must accept the terms to continue"); return; }
+    // if (!acceptedTerms) { setError("You must accept the terms to continue"); return; }
     if (!name || !email) { setError("Please fill in your name and email"); return; }
 
     setSubmitting(true);
