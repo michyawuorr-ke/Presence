@@ -220,6 +220,9 @@ export default function RegisterPage() {
             </div>
             <input type="text" value={manualMpesaCode} onChange={(e) => setManualMpesaCode(e.target.value.toUpperCase())} placeholder="M-Pesa Code (e.g. SFF7X892JK)" maxLength={12} style={{ width: "100%", padding: "14px", borderRadius: "10px", border: "1px solid rgba(255,255,255,0.08)", background: "rgba(255,255,255,0.04)", color: "#fff", fontFamily: "monospace", boxSizing: "border-box", marginBottom: "16px", outline: "none" }} />
             <button onClick={handleConfirmManualPayment} disabled={manualMpesaCode.length < 8 || isSavingCode} style={{ width: "100%", padding: "14px", borderRadius: "10px", background: manualMpesaCode.length >= 8 ? "#fff" : "rgba(255,255,255,0.04)", color: manualMpesaCode.length >= 8 ? "#000" : "rgba(255,255,255,0.2)", fontWeight: "600", border: "none", cursor: "pointer" }}>{isSavingCode ? "Linking Pass..." : "Confirm Payment"}</button>
+        <p style={{ textLineHeight: "1.5", fontSize: "11px", color: "rgba(255,255,255,0.3)", textAlign: "center", marginTop: "16px", marginBottom: "0" }}>
+          By continuing, you agree to our <a href="/terms" target="_blank" style={{ color: "#F97316", textDecoration: "none" }}>Terms of Use</a> and <a href="/privacy" target="_blank" style={{ color: "#F97316", textDecoration: "none" }}>Privacy Policy</a>.
+        </p>
           </div>
           <button onClick={() => { setPaymentState("idle"); setSubmitting(false); }} style={{ background: "transparent", border: "none", color: "rgba(255,255,255,0.4)", fontSize: "11px", marginTop: "24px", cursor: "pointer" }}>Go Back</button>
         </div>
@@ -347,31 +350,23 @@ export default function RegisterPage() {
       <div style={{ width: "100%", marginBottom: "24px" }}>
         {error && <p style={{ color: "#ef4444", fontSize: "12px", marginBottom: "16px", textAlign: "center" }}>{error}</p>}
 
-        <label style={{ display: "flex", alignItems: "center", gap: "12px", color: "rgba(255,255,255,0.7)", fontSize: "12px", marginBottom: "20px", cursor: "pointer" }}>
-          <input
-            type="checkbox"
-            checked={acceptedTerms}
-            onChange={e => setAcceptedTerms(e.target.checked)}
-            style={{ width: "18px", height: "18px", accentColor: "#E26D34" }}
-          />
-          <span>I accept the <a href="/terms" target="_blank" style={{ color: "#E26D34", textDecoration: "none" }}>Terms and Conditions</a></span>
-        </label>
+        
 
         <button
           onClick={handleRegister}
-          disabled={submitting || !acceptedTerms}
+          disabled={submitting}
           style={{
             width: "100%",
             padding: "14px",
             borderRadius: "6px",
-            background: (!acceptedTerms || submitting) ? "rgba(255,255,255,0.15)" : "#fff",
-            color: (!acceptedTerms || submitting) ? "rgba(255,255,255,0.3)" : "#000",
+            background: submitting ? "rgba(255,255,255,0.02)" : "#F97316",
+            color: submitting ? "rgba(255,255,255,0.15)" : "#000000",
             border: "none",
             fontSize: "12px",
             fontWeight: "600",
             letterSpacing: "0.06em",
             textTransform: "uppercase",
-            cursor: (!acceptedTerms || submitting) ? "not-allowed" : "pointer"
+            cursor: submitting ? "not-allowed" : "pointer"
           }}
         >
           {submitting ? "Processing..." : "Register Now →"}
