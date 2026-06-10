@@ -107,7 +107,7 @@ export default function GuestOnboardingPage() {
     const { data: regData, error: regErr } = await supabase
       .from("registrations")
       .select("id")
-      .eq("token", token)
+      .eq("access_token", token)
       .single();
 
     if (regErr || !regData) {
