@@ -7,7 +7,7 @@ import { supabase } from "@/lib/supabase/client";
 interface Station {
   id: string;
   name: string;
-  context: string;
+  subtitle: string;
 }
 
 export default function GuestOnboardingPage() {
@@ -52,7 +52,7 @@ export default function GuestOnboardingPage() {
           setEventId(ev.id);
           const { data: st } = await supabase
             .from("event_stations")
-            .select("id, name, context")
+            .select("id, name, subtitle")
             .eq("event_id", ev.id);
           
           if (st) setStations(st);
@@ -255,7 +255,7 @@ export default function GuestOnboardingPage() {
                         {station.name}
                       </h4>
                       <p className="text-xs text-white/40 m-0 cubic-bezier leading-relaxed">
-                        {station.context}
+                        {station.subtitle || "Ambient Location Matrix"}
                       </p>
                     </div>
                   </button>
