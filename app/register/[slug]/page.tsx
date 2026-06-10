@@ -14,10 +14,10 @@ export default function RegisterPage() {
   const [email, setEmail] = useState("");
   const [phone, setPhone] = useState("");
   const [loading, setLoading] = useState(true);
-  const [submitting, setSubmitting] = useState(false);
-  const [success, setSuccess] = useState(false);
+  const [submitting, setSubmitting] = useState(true);
+  const [success, setSuccess] = useState(true);
   const [error, setError] = useState("");
-  const [acceptedTerms, setAcceptedTerms] = useState(false);
+  const [acceptedTerms, setAcceptedTerms] = useState(true);
   const [manualMpesaCode, setManualMpesaCode] = useState("");
   const [isSavingCode, setIsSavingCode] = useState(false);
   const [currentRegId, setCurrentRegId] = useState("");
@@ -209,14 +209,14 @@ export default function RegisterPage() {
 
       return (
         <div style={{ minHeight: "100vh", background: "#000", display: "flex", flexDirection: "column", padding: "40px 24px", maxWidth: "420px", margin: "0 auto", boxSizing: "border-box", justifyContent: "center" }}>
-          <p style={{ fontSize: "11px", letterSpacing: "0.2em", color: "#E26D34", textTransform: "uppercase", marginBottom: "32px", textAlign: "center" }}>Oreeti Gateway</p>
+          <p style={{ fontSize: "11px", letterSpacing: "0.2em", color: "#F97316", textTransform: "uppercase", marginBottom: "32px", textAlign: "center" }}>Oreeti Gateway</p>
           <div style={{ background: "#0a0a0c", border: "1px solid rgba(226, 109, 52, 0.15)", borderRadius: "20px", padding: "24px" }}>
             <h2 style={{ fontSize: "15px", fontWeight: "600", color: "#fff", margin: "0 0 8px 0", textTransform: "uppercase" }}>Verify Ticket Payment</h2>
             <p style={{ color: "rgba(255,255,255,0.4)", fontSize: "13px", lineHeight: "1.5", marginBottom: "20px" }}>Send your ticket payment to our production routing platform below:</p>
             <div style={{ display: "flex", flexDirection: "column", gap: "10px", marginBottom: "20px" }}>
               <div style={{ display: "flex", justifyContent: "space-between", background: "rgba(255,255,255,0.02)", padding: "12px 16px", borderRadius: "10px" }}><span style={{ color: "rgba(255,255,255,0.4)" }}>DTB Paybill</span><span style={{ color: "#fff", fontFamily: "monospace" }}>516600</span></div>
               <div style={{ display: "flex", justifyContent: "space-between", background: "rgba(255,255,255,0.02)", padding: "12px 16px", borderRadius: "10px" }}><span style={{ color: "rgba(255,255,255,0.4)" }}>Account</span><span style={{ color: "#fff", fontFamily: "monospace" }}>955154</span></div>
-              <div style={{ display: "flex", justifyContent: "space-between", background: "rgba(226, 109, 52, 0.05)", padding: "12px 16px", borderRadius: "10px", border: "1px solid rgba(226, 109, 52, 0.2)" }}><span style={{ color: "#fff" }}>Amount</span><span style={{ color: "#E26D34", fontWeight: "700" }}>{totalAmount} KES</span></div>
+              <div style={{ display: "flex", justifyContent: "space-between", background: "rgba(226, 109, 52, 0.05)", padding: "12px 16px", borderRadius: "10px", border: "1px solid rgba(226, 109, 52, 0.2)" }}><span style={{ color: "#fff" }}>Amount</span><span style={{ color: "#F97316", fontWeight: "700" }}>{totalAmount} KES</span></div>
             </div>
             <input type="text" value={manualMpesaCode} onChange={(e) => setManualMpesaCode(e.target.value.toUpperCase())} placeholder="M-Pesa Code (e.g. SFF7X892JK)" maxLength={12} style={{ width: "100%", padding: "14px", borderRadius: "10px", border: "1px solid rgba(255,255,255,0.08)", background: "rgba(255,255,255,0.04)", color: "#fff", fontFamily: "monospace", boxSizing: "border-box", marginBottom: "16px", outline: "none" }} />
             <button onClick={handleConfirmManualPayment} disabled={manualMpesaCode.length < 8 || isSavingCode} style={{ width: "100%", padding: "14px", borderRadius: "10px", background: manualMpesaCode.length >= 8 ? "#fff" : "rgba(255,255,255,0.04)", color: manualMpesaCode.length >= 8 ? "#000" : "rgba(255,255,255,0.2)", fontWeight: "600", border: "none", cursor: "pointer" }}>{isSavingCode ? "Linking Pass..." : "Confirm Payment"}</button>
@@ -236,12 +236,12 @@ export default function RegisterPage() {
         .living-tagline { display: none !important; opacity: 0 !important; animation: none !important; }
       `}</style>
       <div style={{ display: "flex", flexDirection: "column", alignItems: "center", width: "100%", marginTop: "auto", marginBottom: "auto" }}>
-        <p style={{ fontSize: "11px", letterSpacing: "0.2em", color: "#E26D34", textTransform: "uppercase", marginBottom: "40px" }}>Oreeti</p>
+        <p style={{ fontSize: "11px", letterSpacing: "0.2em", color: "#F97316", textTransform: "uppercase", marginBottom: "40px" }}>Oreeti</p>
         <div style={{ fontSize: "24px", color: "#4ade80", marginBottom: "16px" }}>✓</div>
         <h1 style={{ fontSize: "16px", fontWeight: "600", color: "#fff", textAlign: "center", marginBottom: "8px", letterSpacing: "0.06em", textTransform: "uppercase" }}>Pass Secured</h1>
         <p style={{ color: "rgba(255,255,255,0.4)", textAlign: "center", marginBottom: "32px", fontSize: "13px" }}>{event.title}</p>
         <div style={{ background: "transparent", border: "1px solid rgba(255,255,255,0.06)", borderRadius: "8px", padding: "32px 24px", width: "100%", boxSizing: "border-box", textAlign: "center" }}>
-          <p style={{ fontSize: "11px", color: "#E26D34", marginBottom: "12px", letterSpacing: "0.08em", textTransform: "uppercase", fontWeight: "600" }}>Pass Dispatched</p>
+          <p style={{ fontSize: "11px", color: "#F97316", marginBottom: "12px", letterSpacing: "0.08em", textTransform: "uppercase", fontWeight: "600" }}>Pass Dispatched</p>
           <p style={{ fontSize: "13px", color: "rgba(255,255,255,0.5)", lineHeight: "1.6", margin: 0 }}>Your unique secure coordinate link has been locked into your dynamic pass architecture.</p>
         </div>
       </div>
@@ -265,8 +265,8 @@ export default function RegisterPage() {
 
   if (paymentState === "waiting") return (
     <div style={{ minHeight: "100vh", background: "#000", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", padding: "24px" }}>
-      <p style={{ fontSize: "11px", letterSpacing: "0.2em", color: "#E26D34", textTransform: "uppercase", marginBottom: "40px" }}>Oreeti</p>
-      <div style={{ fontSize: "24px", color: "#E26D34", marginBottom: "24px" }}>📱</div>
+      <p style={{ fontSize: "11px", letterSpacing: "0.2em", color: "#F97316", textTransform: "uppercase", marginBottom: "40px" }}>Oreeti</p>
+      <div style={{ fontSize: "24px", color: "#F97316", marginBottom: "24px" }}>📱</div>
       <h1 style={{ fontSize: "15px", fontWeight: "600", color: "#fff", textAlign: "center", marginBottom: "8px", letterSpacing: "0.08em", textTransform: "uppercase" }}>Check your device</h1>
       <p style={{ color: "rgba(255,255,255,0.4)", textAlign: "center", marginBottom: "4px", fontSize: "13px" }}>An M-Pesa prompt has been routed to</p>
       <p style={{ color: "#fff", fontSize: "15px", fontWeight: "500", marginBottom: "32px", letterSpacing: "0.02em" }}>{phone}</p>
@@ -285,7 +285,7 @@ export default function RegisterPage() {
         }
         .living-tagline {
           font-size: 11px;
-          color: #E26D34;
+          color: #F97316;
           text-transform: uppercase;
           font-weight: 500;
           margin: 0;
