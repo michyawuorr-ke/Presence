@@ -103,8 +103,19 @@ export default function GuestOnboardingPage() {
     setError("");
 
     try {
-      const { error: err } = await supabase.from("guest_profiles").insert({
-        registration_id: String(token).trim(),            
+      // Lookup UUID using the SHA-1 hash token
+    const { data: regData, error: regErr } = await supabase
+      .from("registrations")
+      .select("id")
+      .eq("token", token)
+      .single();
+
+    if (regErr || !regData) {
+      throw new Error("Could not map guest token to a valid registration profile.");
+    }
+
+    const { error: err } = await supabase.from("guest_profiles").insert({
+      registration_id: regData.id,            
         event_id: eventId,
         display_name: displayName,                   
         role_title: role,
