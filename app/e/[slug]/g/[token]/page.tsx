@@ -234,22 +234,22 @@ export default function GuestOnboardingPage() {
                     className="w-full text-left p-4 rounded-sm border flex items-start gap-4 transition-all duration-300 outline-none"
                     style={{
                       background: isSelected ? "rgba(249, 115, 22, 0.02)" : "rgba(255,255,255,0.01)",
-                      borderColor: isSelected ? "#F97316" : "rgba(255,255,255,0.03)"
+                      borderColor: isSelected ? "#FFFFFF" : "rgba(255,255,255,0.03)"
                     }}
                   >
                     {/* Immersive Tactile Indicator Circle */}
                     <div 
                       className="w-4 h-4 rounded-full border mt-0.5 flex items-center justify-center transition-all duration-300 shrink-0"
                       style={{
-                        borderColor: isSelected ? "#F97316" : "rgba(255,255,255,0.2)",
-                        background: isSelected ? "#F97316" : "transparent"
+                        borderColor: isSelected ? "#FFFFFF" : "rgba(255,255,255,0.2)",
+                        background: isSelected ? "#FFFFFF" : "transparent"
                       }}
                     >
                       
                     </div>
 
                     <div className="space-y-0.5">
-                      <h4 className="text-sm font-medium m-0 transition-colors duration-300" style={{ color: isSelected ? "#F97316" : "#FDFBF7" }}>
+                      <h4 className="text-sm font-medium m-0 transition-colors duration-300" style={{ color: isSelected ? "#FFFFFF" : "#FDFBF7" }}>
                         {station.name}
                       </h4>
                       <p className="text-xs text-white/40 m-0 cubic-bezier leading-relaxed">
@@ -274,7 +274,7 @@ export default function GuestOnboardingPage() {
             onClick={handleFinalSubmission}
             className="w-full h-11 font-mono text-xs tracking-[0.22em] font-bold rounded-sm transition-all duration-300 text-center"
             style={{
-              background: canSubmit ? "#F97316" : "rgba(255,255,255,0.02)",
+              background: canSubmit ? "#FFFFFF" : "rgba(255,255,255,0.02)",
               border: canSubmit ? "1px solid #F97316" : "1px solid rgba(255,255,255,0.05)",
               color: canSubmit ? "#000000" : "rgba(255,255,255,0.15)",
               cursor: canSubmit ? "pointer" : "not-allowed"
@@ -341,7 +341,7 @@ export default function GuestOnboardingPage() {
                     )}
                     
                     <div>
-                      <h4 className="text-sm font-medium m-0 transition-colors duration-300" style={{ color: isActive ? "#F97316" : "#FDFBF7" }}>
+                      <h4 className="text-sm font-medium m-0 transition-colors duration-300" style={{ color: isActive ? "#FFFFFF" : "#FDFBF7" }}>
                         {item.label}
                       </h4>
                       <p className="text-[11px] text-white/40 m-0 mt-1 leading-relaxed">
