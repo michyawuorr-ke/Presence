@@ -13,8 +13,8 @@ export default function RegisterPage() {
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [phone, setPhone] = useState("");
-  const [loading, setLoading] = useState(true);
-  const [submitting, setSubmitting] = useState(true);
+  const [loading, setLoading] = useState(false);
+  const [submitting, setSubmitting] = useState(false);
   const [success, setSuccess] = useState(true);
   const [error, setError] = useState("");
   const [acceptedTerms, setAcceptedTerms] = useState(true);
@@ -183,52 +183,29 @@ export default function RegisterPage() {
     <div style={{ minHeight: "100vh", background: "#000", display: "flex", alignItems: "center", justifyContent: "center" }}>
       <p style={{ color: "rgba(255,255,255,0.4)", fontSize: "12px", letterSpacing: "0.05em" }}>DOMAIN NOT ESTABLISHED</p>
     </div>
-  );
-
-  if (paymentState === "waiting") {
-    const totalAmount = Number(selectedTicket?.price ?? 0) * quantity;
-    const USE_MANUAL_FLOW = true;
-
-    if (USE_MANUAL_FLOW) {
-      const handleConfirmManualPayment = async () => {
-        if (!manualMpesaCode || manualMpesaCode.length < 8) return;
-        setIsSavingCode(true);
-        try {
-          const { error: dbError } = await supabase.from("registrations").update({ mpesa_receipt: manualMpesaCode, status: "pending_verification" }).eq("id", currentRegId);
-          if (dbError) throw dbError;
-          
-          setSuccess(true);
-          setPaymentState("success");
-          setConfirmedToken(currentAccessToken);
-        } catch (err) {
-          console.error("Database update failed:", err);
-          alert("RAW ERROR: " + JSON.stringify(err));
-          setIsSavingCode(false);
-        }
-      };
-
-      return (
-        <div style={{ minHeight: "100vh", background: "#000", display: "flex", flexDirection: "column", padding: "40px 24px", maxWidth: "420px", margin: "0 auto", boxSizing: "border-box", justifyContent: "center" }}>
-          <p style={{ fontSize: "11px", letterSpacing: "0.2em", color: "#F97316", textTransform: "uppercase", marginBottom: "32px", textAlign: "center" }}>Oreeti Gateway</p>
-          <div style={{ background: "#0a0a0c", border: "1px solid rgba(226, 109, 52, 0.15)", borderRadius: "20px", padding: "24px" }}>
-            <h2 style={{ fontSize: "15px", fontWeight: "600", color: "#fff", margin: "0 0 8px 0", textTransform: "uppercase" }}>Verify Ticket Payment</h2>
-            <p style={{ color: "rgba(255,255,255,0.4)", fontSize: "13px", lineHeight: "1.5", marginBottom: "20px" }}>Send your ticket payment to our production routing platform below:</p>
-            <div style={{ display: "flex", flexDirection: "column", gap: "10px", marginBottom: "20px" }}>
-              <div style={{ display: "flex", justifyContent: "space-between", background: "rgba(255,255,255,0.02)", padding: "12px 16px", borderRadius: "10px" }}><span style={{ color: "rgba(255,255,255,0.4)" }}>DTB Paybill</span><span style={{ color: "#fff", fontFamily: "monospace" }}>516600</span></div>
-              <div style={{ display: "flex", justifyContent: "space-between", background: "rgba(255,255,255,0.02)", padding: "12px 16px", borderRadius: "10px" }}><span style={{ color: "rgba(255,255,255,0.4)" }}>Account</span><span style={{ color: "#fff", fontFamily: "monospace" }}>955154</span></div>
-              <div style={{ display: "flex", justifyContent: "space-between", background: "rgba(226, 109, 52, 0.05)", padding: "12px 16px", borderRadius: "10px", border: "1px solid rgba(226, 109, 52, 0.2)" }}><span style={{ color: "#fff" }}>Amount</span><span style={{ color: "#F97316", fontWeight: "700" }}>{totalAmount} KES</span></div>
-            </div>
-            <input type="text" value={manualMpesaCode} onChange={(e) => setManualMpesaCode(e.target.value.toUpperCase())} placeholder="M-Pesa Code (e.g. SFF7X892JK)" maxLength={12} style={{ width: "100%", padding: "14px", borderRadius: "10px", border: "1px solid rgba(255,255,255,0.08)", background: "rgba(255,255,255,0.04)", color: "#fff", fontFamily: "monospace", boxSizing: "border-box", marginBottom: "16px", outline: "none" }} />
-            <button onClick={handleConfirmManualPayment} disabled={manualMpesaCode.length < 8 || isSavingCode} style={{ width: "100%", padding: "14px", borderRadius: "10px", background: manualMpesaCode.length >= 8 ? "#fff" : "rgba(255,255,255,0.04)", color: manualMpesaCode.length >= 8 ? "#000" : "rgba(255,255,255,0.2)", fontWeight: "600", border: "none", cursor: "pointer" }}>{isSavingCode ? "Linking Pass..." : "Confirm Payment"}</button>
-        
-          </div>
-          <button onClick={() => { setPaymentState("idle"); setSubmitting(false); }} style={{ background: "transparent", border: "none", color: "rgba(255,255,255,0.4)", fontSize: "11px", marginTop: "24px", cursor: "pointer" }}>Go Back</button>
-        </div>
-      );
-    }
-  }
-
-  if (success) return (
+  );if (success) return (
+    <div style={{ minHeight: "100vh", background: "#000", display: "flex", flexDirection: "column", padding: "40px 24px", maxWidth: "420px", margin: "0 auto", justifyContent: "space-between", boxSizing: "border-box", alignItems: "center" }}>
+      <div style={{ display: "flex", flexDirection: "column", alignItems: "center", width: "100%", marginTop: "auto", marginBottom: "auto", gap: "24px", textAlign: "center" }}>
+        <p style={{ fontSize: "11px", letterSpacing: "0.2em", color: "#F97316", textTransform: "uppercase", margin: 0 }}>Oreeti</p>
+        <h1 style={{ fontSize: "16px", fontWeight: "500", color: "#fff", letterSpacing: "0.06em", textTransform: "uppercase", margin: 0 }}>Registration Successful</h1>
+        <h2 style={{ fontSize: "14px", fontWeight: "400", color: "rgba(255,255,255,0.6)", letterSpacing: "0.08em", textTransform: "uppercase", marginTop: "40px" }}>{event?.title || "THE LOVE OF CHRIST"}</h2>
+      </div>
+      <div style={{ width: "100%", display: "flex", flexDirection: "column", alignItems: "center", gap: "24px", marginBottom: "32px" }}>
+        <button
+          onClick={() => { if (confirmedToken) window.location.href = window.location.origin + "/e/" + event.slug + "/g/" + confirmedToken; }}
+          style={{ background: "transparent", border: "none", color: "#fff", fontSize: "12px", fontWeight: "600", letterSpacing: "0.06em", textTransform: "uppercase", cursor: "pointer" }}
+        >
+          Enter the Scene
+        </button>
+        <button
+          onClick={resetForm}
+          style={{ background: "transparent", border: "none", color: "rgba(255,255,255,0.3)", fontSize: "11px", letterSpacing: "0.06em", textTransform: "uppercase", cursor: "pointer" }}
+        >
+          ← Return to Registration
+        </button>
+      </div>
+    </div>
+  );if (success) return (
     <div style={{ minHeight: "100vh", background: "#000", display: "flex", flexDirection: "column", padding: "40px 24px", maxWidth: "420px", margin: "0 auto", justifyContent: "space-between", boxSizing: "border-box" }}>
       <style>{`
         .living-tagline { display: none !important; opacity: 0 !important; animation: none !important; }
