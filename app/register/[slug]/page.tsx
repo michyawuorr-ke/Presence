@@ -3,7 +3,6 @@
 import { useEffect, useState } from "react";
 import { useParams } from "next/navigation";
 import { supabase } from "@/lib/supabase/client";
-import OreetiLogo from "@/components/OreetiLogo";
 
 export default function RegisterPage() {
   const [event, setEvent] = useState<any>(null);
@@ -273,7 +272,7 @@ export default function RegisterPage() {
 
       <div>
         <div style={{ marginBottom: "40px", textAlign: "center", display: "flex", flexDirection: "column", alignItems: "center", gap: "16px" }}>
-          <OreetiLogo size="sm" />
+          
           <p className="living-tagline">The room activated</p>
           <h1 style={{ fontSize: "18px", fontWeight: "600", color: "#fff", letterSpacing: "0.08em", textTransform: "uppercase", marginTop: "24px", marginBottom: "6px" }}>
             Register
