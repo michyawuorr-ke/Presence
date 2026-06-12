@@ -107,7 +107,7 @@ export default function RegisterPage() {
 
       const totalAmount = Number(selectedTicket?.price ?? 0) * quantity;
       const { data: reg, error: regError } = await supabase.from("registrations").insert({
-        event_id: event.id,
+        event_id: event?.id,
         ticket_type_id: selectedTicket?.id,
         guest_name: name,
         guest_email: email,
@@ -192,7 +192,7 @@ export default function RegisterPage() {
       </div>
       <div style={{ width: "100%", display: "flex", flexDirection: "column", alignItems: "center", gap: "24px", marginBottom: "32px" }}>
         <button
-          onClick={() => { if (confirmedToken) window.location.href = window.location.origin + "/e/" + event.slug + "/g/" + confirmedToken; }}
+          onClick={() => { if (confirmedToken) window.location.href = window.location.origin + "/e/" + event?.slug + "/g/" + confirmedToken; }}
           style={{ background: "transparent", border: "none", color: "#fff", fontSize: "12px", fontWeight: "600", letterSpacing: "0.06em", textTransform: "uppercase", cursor: "pointer" }}
         >
           Enter the Scene
@@ -224,7 +224,7 @@ export default function RegisterPage() {
         <button
           onClick={() => {
             if (confirmedToken) {
-              window.location.href = window.location.origin + "/e/" + event.slug + "/g/" + confirmedToken;
+              window.location.href = window.location.origin + "/e/" + event?.slug + "/g/" + confirmedToken;
             }
           }}
           style={{ width: "100%", padding: "14px", borderRadius: "6px", background: "#fff", color: "#000", border: "none", fontSize: "12px", fontWeight: "600", letterSpacing: "0.06em", textTransform: "uppercase", cursor: "pointer" }}
