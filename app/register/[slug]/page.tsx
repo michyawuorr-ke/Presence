@@ -163,7 +163,7 @@ export default function RegisterPage() {
     width: "100%",
     padding: "14px 0",
     background: "transparent",
-    border: submitting ? "1px solid rgba(255,255,255,0.05)" : "1px solid #F97316",
+    border: submitting ? "1px solid rgba(255,255,255,0.05)" : "1px solid transparent",
     borderBottom: "1px solid rgba(255,255,255,0.08)",
     color: "#fff",
     fontSize: "14px",
@@ -186,7 +186,7 @@ export default function RegisterPage() {
   );if (success) return (
     <div style={{ minHeight: "100vh", background: "#000", display: "flex", flexDirection: "column", padding: "40px 24px", maxWidth: "420px", margin: "0 auto", justifyContent: "space-between", boxSizing: "border-box", alignItems: "center" }}>
       <div style={{ display: "flex", flexDirection: "column", alignItems: "center", width: "100%", marginTop: "auto", marginBottom: "auto", gap: "24px", textAlign: "center" }}>
-        <p style={{ fontSize: "11px", letterSpacing: "0.2em", color: "#F97316", textTransform: "uppercase", margin: 0 }}>Oreeti</p>
+        <p style={{ fontSize: "11px", letterSpacing: "0.2em", color: "transparent", textTransform: "uppercase", margin: 0 }}>Oreeti</p>
         <h1 style={{ fontSize: "16px", fontWeight: "500", color: "#fff", letterSpacing: "0.06em", textTransform: "uppercase", margin: 0 }}>Registration Successful</h1>
         <h2 style={{ fontSize: "14px", fontWeight: "400", color: "rgba(255,255,255,0.6)", letterSpacing: "0.08em", textTransform: "uppercase", marginTop: "40px" }}>{event?.title || "THE LOVE OF CHRIST"}</h2>
       </div>
@@ -211,12 +211,12 @@ export default function RegisterPage() {
         .living-tagline { display: none !important; opacity: 0 !important; animation: none !important; }
       `}</style>
       <div style={{ display: "flex", flexDirection: "column", alignItems: "center", width: "100%", marginTop: "auto", marginBottom: "auto" }}>
-        <p style={{ fontSize: "11px", letterSpacing: "0.2em", color: "#F97316", textTransform: "uppercase", marginBottom: "40px" }}>Oreeti</p>
+        <p style={{ fontSize: "11px", letterSpacing: "0.2em", color: "transparent", textTransform: "uppercase", marginBottom: "40px" }}>Oreeti</p>
         <div style={{ fontSize: "24px", color: "#4ade80", marginBottom: "16px" }}>✓</div>
         <h1 style={{ fontSize: "16px", fontWeight: "600", color: "#fff", textAlign: "center", marginBottom: "8px", letterSpacing: "0.06em", textTransform: "uppercase" }}>Pass Secured</h1>
         <p style={{ color: "rgba(255,255,255,0.4)", textAlign: "center", marginBottom: "32px", fontSize: "13px" }}>{event.title}</p>
         <div style={{ background: "transparent", border: "1px solid rgba(255,255,255,0.06)", borderRadius: "8px", padding: "32px 24px", width: "100%", boxSizing: "border-box", textAlign: "center" }}>
-          <p style={{ fontSize: "11px", color: "#F97316", marginBottom: "12px", letterSpacing: "0.08em", textTransform: "uppercase", fontWeight: "600" }}>Pass Dispatched</p>
+          <p style={{ fontSize: "11px", color: "transparent", marginBottom: "12px", letterSpacing: "0.08em", textTransform: "uppercase", fontWeight: "600" }}>Pass Dispatched</p>
           <p style={{ fontSize: "13px", color: "rgba(255,255,255,0.5)", lineHeight: "1.6", margin: 0 }}>Your unique secure coordinate link has been locked into your dynamic pass architecture.</p>
         </div>
       </div>
@@ -240,8 +240,8 @@ export default function RegisterPage() {
 
   if (paymentState === "waiting") return (
     <div style={{ minHeight: "100vh", background: "#000", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", padding: "24px" }}>
-      <p style={{ fontSize: "11px", letterSpacing: "0.2em", color: "#F97316", textTransform: "uppercase", marginBottom: "40px" }}>Oreeti</p>
-      <div style={{ fontSize: "24px", color: "#F97316", marginBottom: "24px" }}>📱</div>
+      <p style={{ fontSize: "11px", letterSpacing: "0.2em", color: "transparent", textTransform: "uppercase", marginBottom: "40px" }}>Oreeti</p>
+      <div style={{ fontSize: "24px", color: "transparent", marginBottom: "24px" }}>📱</div>
       <h1 style={{ fontSize: "15px", fontWeight: "600", color: "#fff", textAlign: "center", marginBottom: "8px", letterSpacing: "0.08em", textTransform: "uppercase" }}>Check your device</h1>
       <p style={{ color: "rgba(255,255,255,0.4)", textAlign: "center", marginBottom: "4px", fontSize: "13px" }}>An M-Pesa prompt has been routed to</p>
       <p style={{ color: "#fff", fontSize: "15px", fontWeight: "500", marginBottom: "32px", letterSpacing: "0.02em" }}>{phone}</p>
@@ -260,7 +260,7 @@ export default function RegisterPage() {
         }
         .living-tagline {
           font-size: 11px;
-          color: #F97316;
+          color: transparent;
           text-transform: uppercase;
           font-weight: 500;
           margin: 0;
@@ -335,7 +335,7 @@ export default function RegisterPage() {
             padding: "14px",
             borderRadius: "6px",
             background: submitting ? "rgba(255,255,255,0.02)" : "transparent",
-            color: submitting ? "rgba(255,255,255,0.15)" : "#F97316",
+            color: submitting ? "rgba(255,255,255,0.15)" : "transparent",
             border: "none",
             fontSize: "12px",
             fontWeight: "600",
@@ -347,7 +347,7 @@ export default function RegisterPage() {
           {submitting ? "Processing..." : "Register Now →"}
         </button>
         <p style={{ lineHeight: "1.5", fontSize: "11px", color: "rgba(255,255,255,0.3)", textAlign: "center", marginTop: "16px", marginBottom: "0" }}>
-          By continuing, you agree to our <a href="/terms" target="_blank" style={{ color: "#F97316", textDecoration: "none" }}>Terms of Use</a> and <a href="/privacy" target="_blank" style={{ color: "#F97316", textDecoration: "none" }}>Privacy Policy</a>.
+          By continuing, you agree to our <a href="/terms" target="_blank" style={{ color: "transparent", textDecoration: "none" }}>Terms of Use</a> and <a href="/privacy" target="_blank" style={{ color: "transparent", textDecoration: "none" }}>Privacy Policy</a>.
         </p>
       </div>
     </main>
