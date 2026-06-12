@@ -15,7 +15,7 @@ export default function RegisterPage() {
   const [phone, setPhone] = useState("");
   const [loading, setLoading] = useState(false);
   const [submitting, setSubmitting] = useState(false);
-  const [success, setSuccess] = useState(true);
+  const [success, setSuccess] = useState(false);
   const [error, setError] = useState("");
   const [acceptedTerms, setAcceptedTerms] = useState(true);
   const [manualMpesaCode, setManualMpesaCode] = useState("");
