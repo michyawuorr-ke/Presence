@@ -16,6 +16,8 @@ export default function GuestOnboardingPage() {
   
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+  const [screen, setScreen] = useState("identity");
+  const [activeTab, setActiveTab] = useState("scene");
   const [eventId, setEventId] = useState<string | null>(null);
   const [error, setError] = useState("");
 
@@ -133,7 +135,7 @@ export default function GuestOnboardingPage() {
 
       if (err) throw err;
 
-      router.push(`/e/${slug}/scene`);
+      setScreen("scene");
     } catch (err: any) {
       setError(err.message || "Failed to complete profile registration.");
       setSaving(false);
@@ -141,7 +143,69 @@ export default function GuestOnboardingPage() {
   };
 
   if (loading) {
+    if (screen === "scene") {
     return (
+      <div className="min-h-screen bg-[#0A0A0A] text-[#FDFBF7] p-6 max-w-xl mx-auto font-sans">
+        {/* Wireframe Ledger Tab Navigation */}
+        <div className="flex justify-between border-b border-white/5 pb-4 mb-8 text-[11px] font-mono tracking-widest text-white/30">
+          {["scene", "networking", "ticket", "profile"].map((t) => (
+            <button 
+              key={t} 
+              onClick={() => setActiveTab(t)} 
+              className={activeTab === t ? "text-[#F97316] font-medium border-b border-[#F97316] pb-4 -mb-[17px] uppercase transition-all" : "uppercase hover:text-white/70"}
+            >
+              {t}
+            </button>
+          ))}
+        </div>
+
+        {/* Tab Selection Panels */}
+        {activeTab === "scene" && (
+          <div className="space-y-4 animate-fade-in">
+            <h3 className="text-base font-medium tracking-wide text-white/90">Live Room Space</h3>
+            <p className="text-xs text-white/40 font-mono leading-relaxed">Vector grids anchored. Awaiting broadcast matrix signals...</p>
+          </div>
+        )}
+        {activeTab === "networking" && (
+          <div className="space-y-4 animate-fade-in">
+            <h3 className="text-base font-medium tracking-wide text-white/90">Intents & Directives</h3>
+            <div className="p-4 bg-white/[0.01] border border-white/5 rounded-sm">
+              <span className="text-[10px] font-mono tracking-wider text-white/30 uppercase block mb-1">Active Ledger Matches</span>
+              <p className="text-sm font-medium text-[#F97316]">{intents.join(" + ") || "None Configured"}</p>
+            </div>
+          </div>
+        )}
+        {activeTab === "ticket" && (
+          <div className="space-y-4 animate-fade-in">
+            <h3 className="text-base font-medium tracking-wide text-white/90">Access Credentials</h3>
+            <div className="p-6 border border-white/5 bg-white/[0.01] rounded-sm text-center font-mono space-y-2">
+              <div className="text-[10px] text-white/30 uppercase tracking-widest">Pass Key Token</div>
+              <div className="text-xs text-white/60 break-all select-all">{token}</div>
+            </div>
+          </div>
+        )}
+        {activeTab === "profile" && (
+          <div className="space-y-6 animate-fade-in">
+            <h3 className="text-base font-medium tracking-wide text-white/90">Verified Identity Ledger</h3>
+            <div className="border border-white/5 bg-white/[0.01] p-5 rounded-sm space-y-4">
+              <div>
+                <span className="text-[10px] font-mono tracking-widest text-white/30 uppercase block mb-1">Identity</span>
+                <p className="text-base font-medium text-white/90">{displayName || "Anonymous Guest"} <span className="text-xs text-white/40 font-normal">({role || "No Title"})</span></p>
+              </div>
+              {(presence.website || presence.linkedin || presence.portfolio) && (
+                <div>
+                  <span className="text-[10px] font-mono tracking-widest text-white/30 uppercase block mb-1">Configured Assets</span>
+                  <p className="text-xs font-mono text-white/50 break-all">{presence.website || presence.linkedin || presence.portfolio}</p>
+                </div>
+              )}
+            </div>
+          </div>
+        )}
+      </div>
+    );
+  }
+
+  return (
       <div className="min-h-screen bg-[#0A0A0A] flex items-center justify-center">
         <div className="w-4 h-4 border-t-2 border-[#F97316] rounded-full animate-spin" />
       </div>
