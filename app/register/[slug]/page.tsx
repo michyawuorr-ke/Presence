@@ -182,71 +182,48 @@ export default function RegisterPage() {
     <div style={{ minHeight: "100vh", background: "#000", display: "flex", alignItems: "center", justifyContent: "center" }}>
       <p style={{ color: "rgba(255,255,255,0.4)", fontSize: "12px", letterSpacing: "0.05em" }}></p>
     </div>
-  );if (success) return (
-    <div style={{ minHeight: "100vh", background: "#000", display: "flex", flexDirection: "column", padding: "40px 24px", maxWidth: "420px", margin: "0 auto", justifyContent: "space-between", boxSizing: "border-box", alignItems: "center" }}>
-      <div style={{ display: "flex", flexDirection: "column", alignItems: "center", width: "100%", marginTop: "auto", marginBottom: "auto", gap: "24px", textAlign: "center" }}>
-        <p style={{ fontSize: "11px", letterSpacing: "0.2em", color: "#888", textTransform: "uppercase", margin: 0 }}>Oreeti</p>
-        <h1 style={{ fontSize: "16px", fontWeight: "500", color: "#fff", letterSpacing: "0.06em", textTransform: "uppercase", margin: 0 }}>Registration Successful</h1>
-        <h2 style={{ fontSize: "14px", fontWeight: "400", color: "rgba(255,255,255,0.6)", letterSpacing: "0.08em", textTransform: "uppercase", marginTop: "40px" }}>{event?.title || "THE LOVE OF CHRIST"}</h2>
-      </div>
-      <div style={{ width: "100%", display: "flex", flexDirection: "column", alignItems: "center", gap: "24px", marginBottom: "32px" }}>
-        <button
-          onClick={() => { if (confirmedToken) window.location.href = window.location.origin + "/e/" + event?.slug + "/g/" + confirmedToken; }}
-          style={{ background: "transparent", border: "none", color: "#fff", fontSize: "12px", fontWeight: "600", letterSpacing: "0.06em", textTransform: "uppercase", cursor: "pointer" }}
-        >
-          Enter the Scene
-        </button>
-        <button
-          onClick={resetForm}
-          style={{ background: "transparent", border: "none", color: "rgba(255,255,255,0.3)", fontSize: "11px", letterSpacing: "0.06em", textTransform: "uppercase", cursor: "pointer" }}
-        >
-          ← Return to Registration
-        </button>
-      </div>
-    </div>
-  );if (success) return (
-    <div style={{ minHeight: "100vh", background: "#000", display: "flex", flexDirection: "column", padding: "40px 24px", maxWidth: "420px", margin: "0 auto", justifyContent: "space-between", boxSizing: "border-box" }}>
-      <style>{`
-        .living-tagline { display: none !important; opacity: 0 !important; animation: none !important; }
-      `}</style>
-      <div style={{ display: "flex", flexDirection: "column", alignItems: "center", width: "100%", marginTop: "auto", marginBottom: "auto" }}>
-        <p style={{ fontSize: "11px", letterSpacing: "0.2em", color: "#888", textTransform: "uppercase", marginBottom: "40px" }}>Oreeti</p>
-        <div style={{ fontSize: "24px", color: "#4ade80", marginBottom: "16px" }}>✓</div>
-        <h1 style={{ fontSize: "16px", fontWeight: "600", color: "#fff", textAlign: "center", marginBottom: "8px", letterSpacing: "0.06em", textTransform: "uppercase" }}>Pass Secured</h1>
-        <p style={{ color: "rgba(255,255,255,0.4)", textAlign: "center", marginBottom: "32px", fontSize: "13px" }}>{event.title}</p>
-        <div style={{ background: "transparent", border: "1px solid rgba(255,255,255,0.06)", borderRadius: "8px", padding: "32px 24px", width: "100%", boxSizing: "border-box", textAlign: "center" }}>
-          <p style={{ fontSize: "11px", color: "#888", marginBottom: "12px", letterSpacing: "0.08em", textTransform: "uppercase", fontWeight: "600" }}>Pass Dispatched</p>
-          <p style={{ fontSize: "13px", color: "rgba(255,255,255,0.5)", lineHeight: "1.6", margin: 0 }}>Your unique secure coordinate link has been locked into your dynamic pass architecture.</p>
-        </div>
-      </div>
-      <div style={{ width: "100%", display: "flex", flexDirection: "column", gap: "12px", marginBottom: "16px" }}>
-        <button
-          onClick={() => {
-            if (confirmedToken) {
-              window.location.href = window.location.origin + "/e/" + event?.slug + "/g/" + confirmedToken;
-            }
-          }}
-          style={{ width: "100%", padding: "14px", borderRadius: "6px", background: "#fff", color: "#000", border: "none", fontSize: "12px", fontWeight: "600", letterSpacing: "0.06em", textTransform: "uppercase", cursor: "pointer" }}
-        >
-          Enter the Scene →
-        </button>
-        <button onClick={resetForm} style={{ background: "transparent", border: "none", color: "rgba(255,255,255,0.3)", fontSize: "11px", letterSpacing: "0.06em", textTransform: "uppercase", cursor: "pointer", padding: "8px" }}>
-          ← Return to Registration
-        </button>
-      </div>
-    </div>
   );
 
-  if (paymentState === "waiting") return (
-    <div style={{ minHeight: "100vh", background: "#000", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", padding: "24px" }}>
-      <p style={{ fontSize: "11px", letterSpacing: "0.2em", color: "#888", textTransform: "uppercase", marginBottom: "40px" }}>Oreeti</p>
-      <div style={{ fontSize: "24px", color: "#888", marginBottom: "24px" }}>📱</div>
-      <h1 style={{ fontSize: "15px", fontWeight: "600", color: "#fff", textAlign: "center", marginBottom: "8px", letterSpacing: "0.08em", textTransform: "uppercase" }}>Check your device</h1>
-      <p style={{ color: "rgba(255,255,255,0.4)", textAlign: "center", marginBottom: "4px", fontSize: "13px" }}>An M-Pesa prompt has been routed to</p>
-      <p style={{ color: "#fff", fontSize: "15px", fontWeight: "500", marginBottom: "32px", letterSpacing: "0.02em" }}>{phone}</p>
-      <p style={{ color: "rgba(255,255,255,0.3)", fontSize: "11px", textAlign: "center", marginBottom: "32px", lineHeight: "1.6", maxWidth: "280px" }}>ENTER YOUR PIN TO AUTHORIZE ACCESS.</p>
-      <button onClick={() => { setPaymentState("idle"); setSubmitting(false); }} style={{ background: "transparent", border: "none", color: "rgba(255,255,255,0.4)", fontSize: "11px", letterSpacing: "0.06em", textTransform: "uppercase", cursor: "pointer" }}>Cancel</button>
-    </div>
+  if (success) return (
+    <main style={{ minHeight: "100vh", display: "flex", alignItems: "center", justifyContent: "center", padding: "24px", background: "#0a0a0a" }}>
+      <div style={{ maxWidth: "380px", width: "100%", padding: "40px 24px", background: "rgba(255, 255, 255, 0.02)", border: "1px solid rgba(255, 255, 255, 0.06)", borderRadius: "24px", textAlign: "center", boxShadow: "0 30px 60px rgba(0,0,0,0.4)" }}>
+        
+        <div style={{ fontSize: "36px", color: "#40e0d0", marginBottom: "16px", fontWeight: "300" }}>✓</div>
+        
+        <h2 style={{ fontSize: "24px", fontWeight: "400", color: "#f5f5f5", marginBottom: "6px", letterSpacing: "-0.02em" }}>You're In</h2>
+        
+        <p style={{ color: "rgba(255,255,255,0.4)", fontSize: "11px", letterSpacing: "0.15em", textTransform: "uppercase", marginBottom: "24px" }}>
+          {event?.title || "THE LOVE OF CHRIST"}
+        </p>
+        
+        <p style={{ color: "#a3a3a3", fontSize: "14px", lineHeight: "1.5", marginBottom: "32px", padding: "0 10px" }}>
+          Your place at this event has been successfully secured.
+        </p>
+        
+        <div style={{ background: "rgba(0, 0, 0, 0.15)", border: "1px solid rgba(255,255,255,0.05)", borderRadius: "14px", padding: "24px", marginBottom: "36px", textAlign: "left" }}>
+          <p style={{ fontSize: "11px", color: "rgba(255,255,255,0.3)", letterSpacing: "0.1em", textTransform: "uppercase", margin: "0 0 16px 0", fontWeight: "600" }}>
+            {event?.title || "THE LOVE OF CHRIST"}
+          </p>
+          
+          <div style={{ display: "flex", justifyContent: "space-between", marginBottom: "12px", fontSize: "13px" }}>
+            <span style={{ color: "rgba(255,255,255,0.4)" }}>Ticket:</span>
+            <span style={{ color: "#f5f5f5", fontWeight: "500" }}>Regular</span>
+          </div>
+          
+          <div style={{ display: "flex", justifyContent: "space-between", fontSize: "13px" }}>
+            <span style={{ color: "rgba(255,255,255,0.4)" }}>Status:</span>
+            <span style={{ color: "#40e0d0", fontWeight: "500" }}>Confirmed</span>
+          </div>
+        </div>
+        
+        <button 
+          onClick={() => { if (confirmedToken) window.location.href = window.location.origin + "/e/" + event?.slug + "/g/" + confirmedToken; }}
+          style={{ width: "100%", padding: "16px", background: "rgba(255,255,255,0.05)", color: "#f5f5f5", border: "1px solid rgba(255,255,255,0.12)", borderRadius: "12px", fontSize: "13px", fontWeight: "600", letterSpacing: "0.05em", textTransform: "uppercase", cursor: "pointer" }}
+        >
+          Enter Event
+        </button>
+      </div>
+    </main>
   );
 
   return (
