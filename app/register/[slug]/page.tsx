@@ -78,7 +78,7 @@ export default function RegisterPage() {
     try {
       const randomBytes = Array.from(crypto.getRandomValues(new Uint8Array(16))).map(b => b.toString(16).padStart(2, "0")).join("");
       const accessToken = Date.now().toString(16) + "-" + randomBytes;
-      const guestUrl = window.location.origin + "/e/" + event.slug + "/g/" + accessToken;
+      const guestUrl = window.location.origin + "/e/" + event?.slug + "/g/" + accessToken;
       
       setConfirmedToken(accessToken);
 
@@ -86,7 +86,7 @@ export default function RegisterPage() {
 
       if (isFreeEvent) {
         const { error: freeError } = await supabase.from("registrations").insert({
-          event_id: event.id,
+          event_id: event?.id,
           ticket_type_id: selectedTicket?.id || null,
           guest_name: name,
           guest_email: email,
@@ -163,7 +163,7 @@ export default function RegisterPage() {
     width: "100%",
     padding: "14px 0",
     background: "transparent",
-    border: "none",
+    border: submitting ? "1px solid rgba(255,255,255,0.05)" : "1px solid #F97316",
     borderBottom: "1px solid rgba(255,255,255,0.08)",
     color: "#fff",
     fontSize: "14px",
@@ -334,8 +334,8 @@ export default function RegisterPage() {
             width: "100%",
             padding: "14px",
             borderRadius: "6px",
-            background: submitting ? "rgba(255,255,255,0.02)" : "#F97316",
-            color: submitting ? "rgba(255,255,255,0.15)" : "#000000",
+            background: submitting ? "rgba(255,255,255,0.02)" : "transparent",
+            color: submitting ? "rgba(255,255,255,0.15)" : "#F97316",
             border: "none",
             fontSize: "12px",
             fontWeight: "600",
