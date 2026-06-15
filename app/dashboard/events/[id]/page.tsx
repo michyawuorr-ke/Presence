@@ -400,6 +400,24 @@ export default function EventDetailPage() {
           </div>
         </div>
 
+        {/* PAYMENT DETAILS */}
+        <div style={{ background: "linear-gradient(160deg, #16151a 0%, #0f0e12 100%)", borderRadius: "20px", padding: "20px", marginBottom: "16px", border: "1px solid rgba(255, 255, 255, 0.04)" }}>
+          <p style={{ fontSize: "10px", fontWeight: "700", color: "rgba(255,255,255,0.4)", letterSpacing: "0.12em", textTransform: "uppercase", marginBottom: "16px" }}>Payment Details</p>
+          <p style={{ fontSize: "12px", color: "rgba(255,255,255,0.3)", marginBottom: "12px" }}>Your M-Pesa Paybill or Till number. Attendees will see this when paying.</p>
+          <input
+            placeholder="Paybill or Till Number"
+            defaultValue={event?.paybill_number || ""}
+            onBlur={async (e) => { if (e.target.value !== (event?.paybill_number || "")) { await supabase.from("events").update({ paybill_number: e.target.value }).eq("id", id); setEvent((prev: any) => ({ ...prev, paybill_number: e.target.value })); } }}
+            style={{ width: "100%", padding: "12px", borderRadius: "10px", border: "1px solid rgba(255,255,255,0.06)", background: "rgba(255,255,255,0.03)", color: "#f3f4f6", fontSize: "13px", outline: "none", marginBottom: "8px", boxSizing: "border-box" as const }}
+          />
+          <input
+            placeholder="Account Number (leave blank for Till)"
+            defaultValue={event?.paybill_account || ""}
+            onBlur={async (e) => { if (e.target.value !== (event?.paybill_account || "")) { await supabase.from("events").update({ paybill_account: e.target.value }).eq("id", id); setEvent((prev: any) => ({ ...prev, paybill_account: e.target.value })); } }}
+            style={{ width: "100%", padding: "12px", borderRadius: "10px", border: "1px solid rgba(255,255,255,0.06)", background: "rgba(255,255,255,0.03)", color: "#f3f4f6", fontSize: "13px", outline: "none", boxSizing: "border-box" as const }}
+          />
+        </div>
+
         {/* TICKET TYPES MANAGEMENT */}
         <div style={{ background: "linear-gradient(160deg, #16151a 0%, #0f0e12 100%)", borderRadius: "20px", padding: "20px", marginBottom: "16px", border: "1px solid rgba(255, 255, 255, 0.04)" }}>
           <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "16px" }}>

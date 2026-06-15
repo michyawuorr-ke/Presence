@@ -3,89 +3,69 @@ import { useState, useEffect } from 'react';
 import { supabase } from "@/lib/supabase/client";
 import { useRouter, useParams } from 'next/navigation';
 
-interface Registration {
-  id: string;
-  full_name: string;
-  phone_number: string;
-  ticket_type: string;
-  amount: number;
-  status: string;
-  checked_in: boolean;
-  paid: boolean;
-}
-
 export default function TicketsRevenueHub({ params }: { params: { id: string } }) {
   const router = useRouter();
   const paramsHook = useParams();
   const eventId = (paramsHook?.id || params?.id) as string;
   const [stats, setStats] = useState({ revenue: 0, tickets: 0, registrations: 0, checkins: 0 });
-  const [regs, setRegs] = useState<Registration[]>([]);
+  const [regs, setRegs] = useState<any[]>([]);
   const [search, setSearch] = useState('');
   const [updatingId, setUpdatingId] = useState<string | null>(null);
+  const [expandedId, setExpandedId] = useState<string | null>(null);
 
   async function loadData() {
     const { data: allRegs } = await supabase
       .from('registrations')
       .select('*, ticket_types(name, price)')
-      .eq('event_id', eventId);
+      .eq('event_id', eventId)
+      .order('created_at', { ascending: false });
 
     if (allRegs) {
-      const typedRegs = allRegs as Registration[];
-      setRegs(typedRegs);
-      
-      // Calculate revenue from verified paid or confirmed entries
-      const paidTickets = typedRegs.filter(r => r.status === 'confirmed' || r.status === 'pending_verification' || r.paid);
-      const grossRev = paidTickets.reduce((sum, r) => sum + (r.amount || (r as any).ticket_types?.price || 0), 0);
-      
+      setRegs(allRegs);
+      const paidTickets = allRegs.filter(r => r.status === 'confirmed' || r.paid);
+      const grossRev = paidTickets.reduce((sum: number, r: any) => sum + (r.amount || r.ticket_types?.price || 0), 0);
       setStats({
-        revenue: Math.round(grossRev * 0.95), // 5% Infrastructure Fee subtracted
+        revenue: Math.round(grossRev * 0.95),
         tickets: paidTickets.length,
-        registrations: typedRegs.length,
-        checkins: typedRegs.filter(r => r.checked_in).length
+        registrations: allRegs.length,
+        checkins: allRegs.filter(r => r.checked_in).length
       });
     }
   }
 
-  useEffect(() => {
-    loadData();
-  }, [eventId]);
+  useEffect(() => { loadData(); }, [eventId]);
 
-  const togglePaymentStatus = async (registration: Registration) => {
-    setUpdatingId(registration.id);
-    const targetStatus = registration.status === 'confirmed' ? 'pending' : 'confirmed';
-    const targetPAIDStatus = !registration.paid;
-
+  async function togglePaymentStatus(r: any) {
+    setUpdatingId(r.id);
+    const targetStatus = r.status === 'confirmed' ? 'pending' : 'confirmed';
+    const targetPaid = r.status !== 'confirmed';
     const { error } = await supabase
       .from('registrations')
-      .update({ status: targetStatus, paid: targetPAIDStatus })
-      .eq('id', registration.id);
-
-    if (!error) {
-      await loadData();
-    }
+      .update({ status: targetStatus, paid: targetPaid })
+      .eq('id', r.id);
+    if (!error) await loadData();
     setUpdatingId(null);
-  };
+  }
 
-  const filteredRegs = regs.filter((r: Registration) => {
-    if (!search || search.trim() === "") return true;
+  const filteredRegs = regs.filter(r => {
+    if (!search.trim()) return true;
     const term = search.toLowerCase().trim();
-    const nameMatch = ((r as any).full_name || (r as any).name || (r as any).guest_name || "").toLowerCase().includes(term);
-    const typeMatch = ((r as any).ticket_types?.name || "").toLowerCase().includes(term);
-    const phoneMatch = (r.phone_number || "").includes(term);
-    return nameMatch || typeMatch || phoneMatch;
+    const name = (r.guest_name || r.full_name || r.name || "").toLowerCase();
+    const phone = (r.guest_phone || r.phone_number || "").toLowerCase();
+    const ticket = (r.ticket_types?.name || "").toLowerCase();
+    const code = (r.mpesa_receipt || "").toLowerCase();
+    return name.includes(term) || phone.includes(term) || ticket.includes(term) || code.includes(term);
   });
 
   return (
     <div style={{ minHeight: '100vh', background: '#060608', color: '#f3f4f6', padding: '24px 16px' }}>
       <div style={{ maxWidth: '480px', margin: '0 auto' }}>
-        
-        {/* TOP COMPACT NAV */}
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '20px' }}>
+
+        <div style={{ display: 'flex', alignItems: 'center', marginBottom: '20px' }}>
           <button onClick={() => router.back()} style={{ background: 'none', border: 'none', color: 'rgba(255,255,255,0.4)', cursor: 'pointer', fontSize: '13px' }}>← Back</button>
-          
         </div>
 
-        {/* ULTRA-COMPACT TELEMETRY ROW */}
+        {/* STATS ROW */}
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '6px', marginBottom: '20px' }}>
           {[
             { label: 'Net Rev', value: `KES ${stats.revenue.toLocaleString()}`, color: '#D4AF37' },
@@ -95,92 +75,76 @@ export default function TicketsRevenueHub({ params }: { params: { id: string } }
           ].map((card, i) => (
             <div key={i} style={{ background: '#121115', padding: '10px 6px', borderRadius: '10px', border: '1px solid rgba(255,255,255,0.03)', textAlign: 'center' }}>
               <p style={{ fontSize: '10px', color: 'rgba(255,255,255,0.4)', margin: '0 0 2px' }}>{card.label}</p>
-              <p style={{ fontSize: '15px', fontWeight: '700', margin: 0, color: card.color || '#fff' }}>{card.value}</p>
+              <p style={{ fontSize: '15px', fontWeight: '700', margin: 0, color: (card as any).color || '#fff' }}>{card.value}</p>
             </div>
           ))}
         </div>
 
-        {/* CONTROLS ZONE: RAZOR THIN SEARCH */}
+        {/* SEARCH */}
         <div style={{ marginBottom: '16px' }}>
-          <input 
-            type="text" 
-            placeholder="Search attendee..." 
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            style={{ 
-              width: '100%', 
-              background: '#121115', 
-              border: '1px solid rgba(255,255,255,0.06)', 
-              borderRadius: '8px', 
-              padding: '8px 12px', 
-              color: '#fff', 
-              fontSize: '12px',
-              outline: 'none',
-              boxSizing: 'border-box'
-            }}
-          />
+          <input type="text" placeholder="Search name, phone, M-Pesa code..." value={search}
+            onChange={e => setSearch(e.target.value)}
+            style={{ width: '100%', background: '#121115', border: '1px solid rgba(255,255,255,0.06)', borderRadius: '8px', padding: '8px 12px', color: '#fff', fontSize: '12px', outline: 'none', boxSizing: 'border-box' }} />
         </div>
 
-        {/* HIGH-DENSITY ATTENDEE ROWS */}
+        {/* PENDING VERIFICATION BANNER */}
+        {regs.filter(r => r.status === 'pending' && r.mpesa_receipt).length > 0 && (
+          <div style={{ background: 'rgba(212,175,55,0.06)', border: '1px solid rgba(212,175,55,0.2)', borderRadius: '10px', padding: '10px 14px', marginBottom: '16px', fontSize: '12px', color: '#D4AF37' }}>
+            ⚠ {regs.filter(r => r.status === 'pending' && r.mpesa_receipt).length} registration(s) awaiting payment verification
+          </div>
+        )}
+
+        {/* ATTENDEE ROWS */}
         <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-          {filteredRegs.map((r) => {
+          {filteredRegs.map(r => {
             const isConfirmed = r.status === 'confirmed' || r.paid;
+            const hasMpesaCode = !!r.mpesa_receipt;
+            const needsVerification = r.status === 'pending' && hasMpesaCode;
+            const isExpanded = expandedId === r.id;
+
             return (
-              <div 
-                key={r.id} 
-                style={{ 
-                  background: '#0c0b0f', 
-                  borderRadius: '12px', 
-                  padding: '12px', 
-                  border: '1px solid rgba(255,255,255,0.03)',
-                  display: 'flex',
-                  justifyContent: 'space-between',
-                  alignItems: 'center',
-                  gap: '12px'
-                }}
-              >
-                {/* GUEST INFO BLOCK */}
-                <div style={{ flex: 1, minWidth: 0 }}>
-                  <div style={{ fontWeight: '600', fontSize: '13px', color: '#f3f4f6', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
-                    {((r as any).full_name || (r as any).name || (r as any).guest_name || r.id.substring(0,8) + ' (Guest)')}
+              <div key={r.id} style={{ background: '#0c0b0f', borderRadius: '12px', border: needsVerification ? '1px solid rgba(212,175,55,0.2)' : '1px solid rgba(255,255,255,0.03)', overflow: 'hidden' }}>
+                <div style={{ padding: '12px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '12px' }}>
+                  {/* INFO */}
+                  <div style={{ flex: 1, minWidth: 0 }} onClick={() => setExpandedId(isExpanded ? null : r.id)} >
+                    <div style={{ fontWeight: '600', fontSize: '13px', color: '#f3f4f6', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', cursor: 'pointer' }}>
+                      {r.guest_name || r.full_name || r.name || r.id.substring(0,8) + ' (Guest)'}
+                      {needsVerification && <span style={{ marginLeft: '6px', fontSize: '9px', color: '#D4AF37', background: 'rgba(212,175,55,0.1)', padding: '1px 5px', borderRadius: '4px' }}>CODE SUBMITTED</span>}
+                    </div>
+                    <div style={{ display: 'flex', gap: '8px', marginTop: '2px', fontSize: '11px', color: 'rgba(255,255,255,0.4)', flexWrap: 'wrap' }}>
+                      <span>{r.guest_phone || r.phone_number || 'No Phone'}</span>
+                      <span style={{ color: 'rgba(255,255,255,0.2)' }}>•</span>
+                      <span style={{ color: '#D4AF37', fontWeight: '500' }}>{(r.ticket_types?.name || 'General') + ' — KES ' + (r.amount || r.ticket_types?.price || 0).toLocaleString()}</span>
+                    </div>
                   </div>
-                  <div style={{ display: 'flex', gap: '8px', marginTop: '2px', fontSize: '11px', color: 'rgba(255,255,255,0.4)' }}>
-                    <span>{((r as any).phone_number || (r as any).phone || (r as any).guest_phone || 'No Phone')}</span>
-                    <span style={{ color: 'rgba(255,255,255,0.2)' }}>•</span>
-                    <span style={{ color: '#D4AF37', fontWeight: '500' }}>{(((r as any).ticket_types?.name || 'General Admission') + ' (KES ' + (r.amount || (r as any).ticket_types?.price || 0).toLocaleString() + ')')}</span>
-                  </div>
+
+                  {/* APPROVE BUTTON */}
+                  <button disabled={updatingId === r.id} onClick={() => togglePaymentStatus(r)}
+                    style={{ padding: '6px 12px', borderRadius: '8px', background: isConfirmed ? 'rgba(255,255,255,0.02)' : needsVerification ? 'rgba(212,175,55,0.1)' : 'rgba(212,175,55,0.05)', border: isConfirmed ? '1px solid rgba(255,255,255,0.05)' : '1px solid rgba(212,175,55,0.2)', color: isConfirmed ? 'rgba(255,255,255,0.4)' : '#D4AF37', fontSize: '11px', fontWeight: '600', cursor: 'pointer', whiteSpace: 'nowrap' }}>
+                    {updatingId === r.id ? '...' : isConfirmed ? 'PAID ✓' : needsVerification ? 'VERIFY & APPROVE' : 'Approve'}
+                  </button>
                 </div>
 
-                {/* MANUAL STATE INTERACTION CORNER */}
-                <button
-                  disabled={updatingId === r.id}
-                  onClick={() => togglePaymentStatus(r)}
-                  style={{
-                    padding: '6px 12px',
-                    borderRadius: '8px',
-                    background: isConfirmed ? 'rgba(255, 255, 255, 0.02)' : 'rgba(212, 175, 55, 0.05)',
-                    border: isConfirmed ? '1px solid rgba(255,255,255,0.05)' : '1px solid rgba(212, 175, 55, 0.15)',
-                    color: isConfirmed ? 'rgba(255,255,255,0.4)' : '#D4AF37',
-                    fontSize: '11px',
-                    fontWeight: '600',
-                    cursor: 'pointer',
-                    whiteSpace: 'nowrap',
-                    transition: 'all 0.2s ease'
-                  }}
-                >
-                  {updatingId === r.id ? '...' : r.status === 'confirmed' ? 'PAID' : r.status === 'pending_verification' ? 'VERIFY' : 'Approve'}
-                </button>
+                {/* EXPANDED: SHOW M-PESA CODE */}
+                {isExpanded && (
+                  <div style={{ borderTop: '1px solid rgba(255,255,255,0.04)', padding: '12px', background: 'rgba(0,0,0,0.2)' }}>
+                    <p style={{ fontSize: '10px', color: 'rgba(255,255,255,0.3)', letterSpacing: '0.1em', textTransform: 'uppercase', marginBottom: '6px' }}>M-Pesa Receipt Code</p>
+                    <p style={{ fontSize: '15px', fontWeight: '700', color: hasMpesaCode ? '#D4AF37' : 'rgba(255,255,255,0.2)', letterSpacing: '0.08em', margin: '0 0 8px 0', fontFamily: 'monospace' }}>
+                      {r.mpesa_receipt || 'No code submitted yet'}
+                    </p>
+                    <p style={{ fontSize: '10px', color: 'rgba(255,255,255,0.3)', margin: 0 }}>
+                      Registered: {new Date(r.created_at).toLocaleString('en-KE')}
+                    </p>
+                  </div>
+                )}
               </div>
             );
           })}
 
           {filteredRegs.length === 0 && (
-            <p style={{ fontSize: '12px', color: 'rgba(255,255,255,0.3)', textAlign: 'center', marginTop: '20px' }}>
-              No matching records mapped into this viewport.
-            </p>
+            <p style={{ fontSize: '12px', color: 'rgba(255,255,255,0.3)', textAlign: 'center', marginTop: '20px' }}>No registrations yet.</p>
           )}
         </div>
-
       </div>
     </div>
   );
