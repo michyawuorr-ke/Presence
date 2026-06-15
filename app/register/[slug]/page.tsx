@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useParams } from "next/navigation";
 import { supabase } from "@/lib/supabase/client";
 
@@ -12,7 +12,7 @@ export default function RegisterPage() {
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [phone, setPhone] = useState("");
-  const [loading, setLoading] = useState(false);
+  const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
   const [success, setSuccess] = useState(false);
   const [error, setError] = useState("");
@@ -22,8 +22,10 @@ export default function RegisterPage() {
   const [currentRegId, setCurrentRegId] = useState("");
   const [currentAccessToken, setCurrentAccessToken] = useState("");
   const [paymentState, setPaymentState] = useState<"idle" | "waiting" | "success" | "failed">("idle");
-
   const [confirmedToken, setConfirmedToken] = useState("");
+
+  // Ref guard prevents duplicate submissions from rapid taps
+  const isSubmittingRef = useRef(false);
 
   const params = useParams();
   const slug = params.slug as string;
@@ -58,27 +60,37 @@ export default function RegisterPage() {
         clearInterval(interval);
         setPaymentState("success");
         setSuccess(true);
+        setSubmitting(false);
+        isSubmittingRef.current = false;
       } else if (payment?.status === "failed" || attempts > 20) {
         clearInterval(interval);
         setPaymentState("failed");
         setError("Payment failed or timed out. Please try again.");
         setSubmitting(false);
+        isSubmittingRef.current = false;
       }
     }, 3000);
   }
 
   async function handleRegister() {
-    // if (!acceptedTerms) { setError("You must accept the terms to continue"); return; }
-    if (!name || !email) { setError("Please fill in your name and email"); return; }
+    if (isSubmittingRef.current) return;
+    isSubmittingRef.current = true;
+
+    if (!name || !email) {
+      setError("Please fill in your name and email");
+      isSubmittingRef.current = false;
+      return;
+    }
 
     setSubmitting(true);
     setError("");
 
     try {
-      const randomBytes = Array.from(crypto.getRandomValues(new Uint8Array(16))).map(b => b.toString(16).padStart(2, "0")).join("");
+      const randomBytes = Array.from(crypto.getRandomValues(new Uint8Array(16)))
+        .map(b => b.toString(16).padStart(2, "0")).join("");
       const accessToken = Date.now().toString(16) + "-" + randomBytes;
       const guestUrl = window.location.origin + "/e/" + event?.slug + "/g/" + accessToken;
-      
+
       setConfirmedToken(accessToken);
 
       const isFreeEvent = !selectedTicket || Number(selectedTicket.price) <= 0;
@@ -98,9 +110,10 @@ export default function RegisterPage() {
         });
 
         if (freeError) throw new Error(freeError.message);
-        
+
         setSuccess(true);
         setSubmitting(false);
+        isSubmittingRef.current = false;
         return;
       }
 
@@ -120,20 +133,23 @@ export default function RegisterPage() {
 
       if (regError) throw new Error(regError.message);
 
-      // Local Testing Feature Toggle
-      const USE_MANUAL_FLOW = true; 
+      // Automated Payment Gateway Toggle Set to False
+      const USE_MANUAL_FLOW = false;
       if (USE_MANUAL_FLOW && totalAmount > 0) {
         setCurrentRegId(reg.id);
         setCurrentAccessToken(accessToken);
         setPaymentState("waiting");
-        setSubmitting(false);
         return;
       }
 
       const res = await fetch("/api/payments/initiate", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ phone: normalizePhone(phone), amount: totalAmount, registration_id: reg.id })
+        body: JSON.stringify({
+          phone: normalizePhone(phone),
+          amount: totalAmount,
+          registration_id: reg.id
+        })
       });
 
       const data = await res.json();
@@ -146,6 +162,36 @@ export default function RegisterPage() {
       console.error("Registration failed:", err);
       setError((err as any).message || "Registration failed. Please try again.");
       setSubmitting(false);
+      isSubmittingRef.current = false;
+    }
+  }
+
+  async function handleManualCodeSubmit() {
+    if (!manualMpesaCode.trim()) {
+      setError("Please enter your M-Pesa confirmation code");
+      return;
+    }
+    setIsSavingCode(true);
+    setError("");
+
+    try {
+      const { error: updateError } = await supabase
+        .from("registrations")
+        .update({
+          mpesa_code: manualMpesaCode.trim(),
+          status: "pending_verification",
+        })
+        .eq("id", currentRegId);
+
+      if (updateError) throw new Error(updateError.message);
+
+      setPaymentState("success");
+      setSuccess(true);
+      isSubmittingRef.current = false;
+    } catch (err) {
+      setError((err as any).message || "Failed to save code. Please try again.");
+    } finally {
+      setIsSavingCode(false);
     }
   }
 
@@ -153,9 +199,13 @@ export default function RegisterPage() {
     setSuccess(false);
     setPaymentState("idle");
     setSubmitting(false);
+    isSubmittingRef.current = false;
     setError("");
     setAcceptedTerms(false);
     setConfirmedToken("");
+    setManualMpesaCode("");
+    setCurrentRegId("");
+    setCurrentAccessToken("");
   }
 
   const inp = {
@@ -187,40 +237,55 @@ export default function RegisterPage() {
   if (success) return (
     <main style={{ minHeight: "100vh", display: "flex", alignItems: "center", justifyContent: "center", padding: "24px", background: "#0a0a0a" }}>
       <div style={{ maxWidth: "380px", width: "100%", padding: "40px 24px", background: "rgba(255, 255, 255, 0.02)", border: "1px solid rgba(255, 255, 255, 0.06)", borderRadius: "24px", textAlign: "center", boxShadow: "0 30px 60px rgba(0,0,0,0.4)" }}>
-        
         <div style={{ fontSize: "36px", color: "#40e0d0", marginBottom: "16px", fontWeight: "300" }}>✓</div>
-        
         <h2 style={{ fontSize: "24px", fontWeight: "400", color: "#f5f5f5", marginBottom: "6px", letterSpacing: "-0.02em" }}>You're In</h2>
-        
         <p style={{ color: "rgba(255,255,255,0.4)", fontSize: "11px", letterSpacing: "0.15em", textTransform: "uppercase", marginBottom: "24px" }}>
-          {event?.title || "THE LOVE OF CHRIST"}
+          {event?.title || "EVENT GATEWAY"}
         </p>
-        
         <p style={{ color: "#a3a3a3", fontSize: "14px", lineHeight: "1.5", marginBottom: "32px", padding: "0 10px" }}>
           Your place at this event has been successfully secured.
         </p>
-        
         <div style={{ background: "rgba(0, 0, 0, 0.15)", border: "1px solid rgba(255,255,255,0.05)", borderRadius: "14px", padding: "24px", marginBottom: "36px", textAlign: "left" }}>
           <p style={{ fontSize: "11px", color: "rgba(255,255,255,0.3)", letterSpacing: "0.1em", textTransform: "uppercase", margin: "0 0 16px 0", fontWeight: "600" }}>
-            {event?.title || "THE LOVE OF CHRIST"}
+            {event?.title || "EVENT TRACKING"}
           </p>
-          
           <div style={{ display: "flex", justifyContent: "space-between", marginBottom: "12px", fontSize: "13px" }}>
             <span style={{ color: "rgba(255,255,255,0.4)" }}>Ticket:</span>
             <span style={{ color: "#f5f5f5", fontWeight: "500" }}>Regular</span>
           </div>
-          
           <div style={{ display: "flex", justifyContent: "space-between", fontSize: "13px" }}>
             <span style={{ color: "rgba(255,255,255,0.4)" }}>Status:</span>
             <span style={{ color: "#40e0d0", fontWeight: "500" }}>Confirmed</span>
           </div>
         </div>
-        
-        <button 
+        <button
           onClick={() => { if (confirmedToken) window.location.href = window.location.origin + "/e/" + event?.slug + "/g/" + confirmedToken; }}
           style={{ width: "100%", padding: "16px", background: "rgba(255,255,255,0.05)", color: "#f5f5f5", border: "1px solid rgba(255,255,255,0.12)", borderRadius: "12px", fontSize: "13px", fontWeight: "600", letterSpacing: "0.05em", textTransform: "uppercase", cursor: "pointer" }}
         >
           Enter Event
+        </button>
+      </div>
+    </main>
+  );
+
+  if (paymentState === "waiting") return (
+    <main style={{ minHeight: "100vh", background: "#000", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", padding: "40px 24px" }}>
+      <div style={{ maxWidth: "420px", width: "100%", textAlign: "center" }}>
+        <div style={{ fontSize: "28px", marginBottom: "16px" }}>📲</div>
+        <h2 style={{ fontSize: "20px", fontWeight: "400", color: "#f5f5f5", marginBottom: "8px", letterSpacing: "-0.02em" }}>
+          Complete Payment
+        </h2>
+        <p style={{ color: "rgba(255,255,255,0.4)", fontSize: "13px", lineHeight: "1.6", marginBottom: "32px" }}>
+          Please check your handset for an automatic <strong style={{ color: "#fff" }}>M-Pesa PIN prompt</strong> to complete your entry ticket purchase.
+        </p>
+
+        {error && <p style={{ color: "#ef4444", fontSize: "12px", marginBottom: "16px" }}>{error}</p>}
+
+        <button
+          onClick={resetForm}
+          style={{ background: "none", border: "none", color: "rgba(255,255,255,0.25)", fontSize: "11px", cursor: "pointer", letterSpacing: "0.05em", textTransform: "uppercase" as const }}
+        >
+          Cancel & Start Over
         </button>
       </div>
     </main>
@@ -249,7 +314,6 @@ export default function RegisterPage() {
 
       <div>
         <div style={{ marginBottom: "40px", textAlign: "center", display: "flex", flexDirection: "column", alignItems: "center", gap: "16px" }}>
-          
           <p className="living-tagline">The room activated</p>
           <h1 style={{ fontSize: "18px", fontWeight: "600", color: "#fff", letterSpacing: "0.08em", textTransform: "uppercase", marginTop: "24px", marginBottom: "6px" }}>
             Register
@@ -257,7 +321,6 @@ export default function RegisterPage() {
           <p style={{ color: "rgba(255,255,255,0.6)", fontSize: "14px", margin: 0 }}>Event: {event.title}</p>
         </div>
 
-        {/* HIGH-END MINIMALISTIC TICKET TIER SELECTOR */}
         {ticketTypes.length > 0 && (
           <div style={{ marginBottom: "8px", position: "relative", width: "100%" }}>
             <select
@@ -266,6 +329,7 @@ export default function RegisterPage() {
                 const selected = ticketTypes.find(t => t.id === e.target.value);
                 setSelectedTicket(selected);
               }}
+              disabled={submitting}
               style={{
                 width: "100%",
                 padding: "14px 0",
@@ -276,7 +340,7 @@ export default function RegisterPage() {
                 fontSize: "14px",
                 outline: "none",
                 borderRadius: 0,
-                cursor: "pointer",
+                cursor: submitting ? "not-allowed" : "pointer",
                 appearance: "none",
                 WebkitAppearance: "none"
               }}
@@ -293,15 +357,13 @@ export default function RegisterPage() {
           </div>
         )}
 
-        <input value={name} onChange={e => setName(e.target.value)} placeholder="Your Name" type="text" style={inp} />
-        <input value={email} onChange={e => setEmail(e.target.value)} placeholder="Email Address" type="email" style={inp} />
-        <input value={phone} onChange={e => setPhone(e.target.value)} placeholder="M-Pesa Number" type="tel" style={inp} />
+        <input value={name} onChange={e => setName(e.target.value)} placeholder="Your Name" type="text" disabled={submitting} style={inp} />
+        <input value={email} onChange={e => setEmail(e.target.value)} placeholder="Email Address" type="email" disabled={submitting} style={inp} />
+        <input value={phone} onChange={e => setPhone(e.target.value)} placeholder="M-Pesa Number" type="tel" disabled={submitting} style={inp} />
       </div>
 
       <div style={{ width: "100%", marginBottom: "24px" }}>
         {error && <p style={{ color: "#ef4444", fontSize: "12px", marginBottom: "16px", textAlign: "center" }}>{error}</p>}
-
-        
 
         <button
           onClick={handleRegister}
