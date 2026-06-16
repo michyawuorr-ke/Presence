@@ -240,6 +240,19 @@ const[tab,setTab]=useState<Tab>("scene");
   );
 }
 
+function parseIntents(raw:any):string[]{
+  if(Array.isArray(raw))return raw;
+  if(typeof raw==="string"&&raw.trim()){
+    try{
+      const parsed=JSON.parse(raw);
+      return Array.isArray(parsed)?parsed:[];
+    }catch{
+      return[];
+    }
+  }
+  return[];
+}
+
 function PreEventDiscovery({event,profile,sentRequests,setSentRequests}:any){
   const[attendees,setAttendees]=useState<any[]>([]);
   const[stations,setStations]=useState<any[]>([]);
@@ -256,7 +269,7 @@ function PreEventDiscovery({event,profile,sentRequests,setSentRequests}:any){
         supabase.from("event_stations").select("id,name").eq("event_id",event.id),
       ]);
       if(cancelled)return;
-      setAttendees(guests||[]);
+      setAttendees((guests||[]).map((g:any)=>({...g,networking_intents:parseIntents(g.networking_intents)})));
       setStations(st||[]);
       setLoading(false);
     }
@@ -668,7 +681,10 @@ function ProfileTab({profile,event,onProfileUpdate,isEnded,registration}:any){
       if(cancelled||!reqs||reqs.length===0){if(!cancelled)setPendingRequests([]);return;}
       const{data:requesters}=await supabase.from("guest_profiles").select("id,display_name,role_title,networking_intents").in("id",reqs.map((r:any)=>r.requester_id));
       if(cancelled)return;
-      setPendingRequests(reqs.map((r:any)=>({requestId:r.id,...(requesters||[]).find((p:any)=>p.id===r.requester_id)})).filter((r:any)=>r.id));
+      setPendingRequests(reqs.map((r:any)=>{
+        const requester=(requesters||[]).find((p:any)=>p.id===r.requester_id);
+        return requester?{requestId:r.id,...requester,networking_intents:parseIntents(requester.networking_intents)}:{requestId:r.id};
+      }).filter((r:any)=>r.id&&r.display_name));
     }
     loadPending();
     const ch=supabase.channel("pending-requests:"+profile.id)
