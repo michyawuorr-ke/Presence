@@ -1,6 +1,25 @@
 import crypto from 'crypto';
 
-const SECRET = process.env.QR_SECRET || 'oreeti_qr_secret_2025_ke';
+const isProd = process.env.NODE_ENV === 'production';
+
+if (!process.env.QR_SECRET && isProd) {
+  throw new Error(
+    'QR_SECRET environment variable is not set. QR signing must use a secret ' +
+    'that is never committed to source control. Set QR_SECRET in your production ' +
+    'environment before deploying.'
+  );
+}
+
+if (!process.env.QR_SECRET && !isProd) {
+  // eslint-disable-next-line no-console
+  console.warn(
+    '[qrSecurity] QR_SECRET is not set. Using an insecure development-only ' +
+    'fallback. This is fine for local testing but MUST be set via env var ' +
+    'before deploying to production.'
+  );
+}
+
+const SECRET = process.env.QR_SECRET || 'dev-only-insecure-qr-secret-do-not-deploy';
 
 export function signQRPayload(payload: string): string {
   const hmac = crypto.createHmac('sha256', SECRET);

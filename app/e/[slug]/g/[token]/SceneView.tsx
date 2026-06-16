@@ -5,40 +5,21 @@ import { supabase } from "@/lib/supabase/client";
 import QRCode from "qrcode";
 
 interface SceneViewProps {
-  slug: string;
-  token: string;
-  displayName: string;
-  role: string;
-  organisation: string;
-  bio: string;
-  intents: string[];
-  stationId: string;
+  event: any;
+  registration: any;
+  profile: any;
+  onProfileUpdate: (profile: any) => void;
 }
 
-// Bridge wrapper to forward your updated onboarding state directly into your working component variables
-export default function SceneView(props: SceneViewProps) {
-  // Map parameters into the exact variable naming schema your old component expects
-  const currentEvent = props.slug;
-  const registration = { 
-    id: props.token, 
-    display_name: props.displayName, 
-    role_title: props.role, 
-    organisation: props.organisation,
-    bio: props.bio,
-    networking_intents: props.intents,
-    target_station_id: props.stationId
-  };
-  const profile = registration;
-  const onProfileUpdate = () => {};
-  const isEnded = false;
-
+// Renders the post-onboarding attendee experience (Scene / Networking / Ticket / Profile tabs).
+// Expects real database rows passed in by the parent page — not reconstructed onboarding form state.
+export default function SceneView({ event, registration, profile, onProfileUpdate }: SceneViewProps) {
   return (
-    <Scene 
-      event={currentEvent} 
-      registration={registration} 
-      profile={profile} 
-      onProfileUpdate={onProfileUpdate} 
-      isEnded={isEnded} 
+    <Scene
+      event={event}
+      registration={registration}
+      profile={profile}
+      onProfileUpdate={onProfileUpdate}
     />
   );
 }
