@@ -94,24 +94,29 @@ export async function POST(req:NextRequest){
     // Find handshake between the two
     const{data:handshake}=await supabase
       .from('handshakes')
-      .select('id,networking_status')
-      .or(`and(guest_a_id.eq.${sp.id},guest_b_id.eq.${tp.id}),and(guest_a_id.eq.${tp.id},guest_b_id.eq.${sp.id})`)
+      .select('id')
+      .or(`and(sender_id.eq.${sp.id},receiver_id.eq.${tp.id}),and(sender_id.eq.${tp.id},receiver_id.eq.${sp.id})`)
       .single();
 
     if(!handshake){
       return NextResponse.json({error:'No connection found. Connect first before scanning.'},{status:404});
     }
 
-    // Prevent duplicate unlock
-    if(handshake.networking_status==='unlocked'){
+    // handshakes has no per-side unlock-status column in the real schema —
+    // an established handshake is already treated as fully connected, so
+    // there's nothing to flip here. We still record the unlock event itself
+    // (who scanned whom, when) since profile_unlocks is a real audit table.
+    const{data:existingUnlock}=await supabase
+      .from('profile_unlocks')
+      .select('id')
+      .eq('handshake_id',handshake.id)
+      .eq('unlocker_id',sp.id)
+      .eq('unlocked_id',tp.id)
+      .maybeSingle();
+
+    if(existingUnlock){
       return NextResponse.json({success:true,already:true});
     }
-
-    // Perform unlock
-    await supabase
-      .from('handshakes')
-      .update({networking_status:'unlocked'})
-      .eq('id',handshake.id);
 
     await supabase
       .from('profile_unlocks')

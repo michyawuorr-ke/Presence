@@ -117,16 +117,21 @@ const[tab,setTab]=useState<Tab>("scene");
   useEffect(()=>{
     if(!event)return;
     async function fetchCounts(){
-      const{count:nc}=await supabase.from("guest_profiles").select("*",{count:"exact",head:true}).eq("event_id",event.id).eq("aura_active",true);
+      const{data:eventGuests,count:nc}=await supabase.from("guest_profiles").select("id",{count:"exact"}).eq("event_id",event.id).eq("aura_active",true);
       setNetworkingCount(nc||0);
-      const{count:cc}=await supabase.from("handshakes").select("*",{count:"exact",head:true}).eq("event_id",event.id);
+      const{data:allEventGuestIds}=await supabase.from("guest_profiles").select("id").eq("event_id",event.id);
+      const ids=(allEventGuestIds||[]).map((g:any)=>g.id);
+      if(ids.length===0){setConnectionsCount(0);return;}
+      const{count:cc}=await supabase.from("handshakes").select("*",{count:"exact",head:true}).or(`sender_id.in.(${ids.join(",")}),receiver_id.in.(${ids.join(",")})`);
       setConnectionsCount(cc||0);
     }
     fetchCounts();
     const interval=setInterval(fetchCounts,15000);
-    // Realtime subscription for instant count updates
+    // Realtime subscription for instant count updates.
+    // handshakes has no event_id column to filter on server-side, so we
+    // subscribe unfiltered and just trigger a fresh scoped refetch.
     const hsCh=supabase.channel("handshakes-count:"+event.id)
-      .on("postgres_changes",{event:"INSERT",schema:"public",table:"handshakes",filter:"event_id=eq."+event.id},()=>fetchCounts())
+      .on("postgres_changes",{event:"INSERT",schema:"public",table:"handshakes"},()=>fetchCounts())
       .on("postgres_changes",{event:"INSERT",schema:"public",table:"guest_profiles",filter:"event_id=eq."+event.id},()=>fetchCounts())
       .subscribe();
     return()=>{clearInterval(interval);supabase.removeChannel(hsCh);};
@@ -416,11 +421,11 @@ function NetworkingTab({event,profile,isLive,isEnded,registration}:any){
 
   const fetchNodes=useCallback(async()=>{
     if(!profile||!event)return;
-    const{data:approved}=await supabase.from("handshakes").select("guest_a_id,guest_b_id").eq("event_id",event.id).or("guest_a_id.eq."+profile.id+",guest_b_id.eq."+profile.id);
+    const{data:approved}=await supabase.from("handshakes").select("sender_id,receiver_id").or("sender_id.eq."+profile.id+",receiver_id.eq."+profile.id);
     const approvedSet=new Set<string>();
     (approved||[]).forEach((h:any)=>{
-      if(h.guest_a_id!==profile.id)approvedSet.add(h.guest_a_id);
-      if(h.guest_b_id!==profile.id)approvedSet.add(h.guest_b_id);
+      if(h.sender_id!==profile.id)approvedSet.add(h.sender_id);
+      if(h.receiver_id!==profile.id)approvedSet.add(h.receiver_id);
     });
     const{data:sentReqs}=await supabase.from("handshake_requests").select("recipient_id").eq("requester_id",profile.id).eq("event_id",event.id).in("status",["pending","approved"]);
     const sentSet=new Set((sentReqs||[]).map((r:any)=>r.recipient_id));
@@ -521,7 +526,7 @@ function NetworkingTab({event,profile,isLive,isEnded,registration}:any){
     const status=approved?"approved":"declined";
     await supabase.from("handshake_requests").update({status}).eq("id",incoming.request_id);
     if(approved){
-      const{error:hsErr}=await supabase.from("handshakes").insert({event_id:event.id,request_id:incoming.request_id,guest_a_id:incoming.requester_id,guest_b_id:profile.id,networking_status:"connected"});
+      const{error:hsErr}=await supabase.from("handshakes").insert({sender_id:incoming.requester_id,receiver_id:profile.id,status:"accepted"});
       if(hsErr){setNotification("❌ Connect error: "+hsErr.message);setTimeout(()=>setNotification(""),8000);}else{setNotification("✓ Handshake created!");}
       await channelRef.current?.send({type:"broadcast",event:"handshake_approved",payload:{requester_id:incoming.requester_id,recipient_id:profile.id,requester_name:incoming.requester_name,recipient_name:profile.display_name}});
     }
@@ -678,31 +683,36 @@ function ProfileTab({profile,event,onProfileUpdate,isEnded,registration}:any){
     setPendingRequests(prev=>prev.filter(r=>r.requestId!==requestId));
     await supabase.from("handshake_requests").update({status:approve?"approved":"declined"}).eq("id",requestId);
     if(approve){
-      await supabase.from("handshakes").insert({event_id:event.id,request_id:requestId,guest_a_id:requesterId,guest_b_id:profile.id,networking_status:"connected"});
+      await supabase.from("handshakes").insert({sender_id:requesterId,receiver_id:profile.id,status:"accepted"});
     }
   }
 
   useEffect(()=>{
     if(!profile||!event)return;
     async function loadConnections(){
-      const{data:handshakes}=await supabase.from("handshakes").select("id,guest_a_id,guest_b_id,networking_status").eq("event_id",event.id).or("guest_a_id.eq."+profile.id+",guest_b_id.eq."+profile.id);
-      const connectedIds=(handshakes||[]).map((h:any)=>h.guest_a_id===profile.id?h.guest_b_id:h.guest_a_id);
-      const unlockedSet=new Set((handshakes||[]).filter((h:any)=>h.networking_status==="unlocked").map((h:any)=>h.guest_a_id===profile.id?h.guest_b_id:h.guest_a_id) as string[]);
-      setUnlocked(unlockedSet);
+      const{data:handshakes}=await supabase.from("handshakes").select("id,sender_id,receiver_id,status").or("sender_id.eq."+profile.id+",receiver_id.eq."+profile.id);
+      const connectedIds=(handshakes||[]).map((h:any)=>h.sender_id===profile.id?h.receiver_id:h.sender_id);
+      // handshakes has no per-side "unlocked" state in the real schema, so
+      // every established handshake is treated as already connected/visible.
+      // A separate, explicit unlock-status feature can be layered on later
+      // if partial visibility is wanted again.
+      setUnlocked(new Set(connectedIds));
       if(connectedIds.length===0){setConnections([]);return;}
       const{data:profiles}=await supabase.from("guest_profiles").select("*").in("id",connectedIds);
       setConnections(profiles||[]);
     }
     loadConnections();
-    // Realtime - reload when new handshake created
+    // Realtime - reload when a handshake involving this profile changes.
+    // handshakes has no event_id to filter on server-side, so we subscribe
+    // unfiltered and check membership in the callback instead.
     const ch=supabase.channel("profile-handshakes:"+profile.id)
       .on("postgres_changes",{event:"INSERT",schema:"public",table:"handshakes"},(payload:any)=>{
-        if(payload.new.guest_a_id===profile.id||payload.new.guest_b_id===profile.id){
+        if(payload.new.sender_id===profile.id||payload.new.receiver_id===profile.id){
           loadConnections();
         }
       })
       .on("postgres_changes",{event:"UPDATE",schema:"public",table:"handshakes"},(payload:any)=>{
-        if(payload.new.guest_a_id===profile.id||payload.new.guest_b_id===profile.id){
+        if(payload.new.sender_id===profile.id||payload.new.receiver_id===profile.id){
           loadConnections();
         }
       })
