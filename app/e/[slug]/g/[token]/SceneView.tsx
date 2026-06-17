@@ -274,11 +274,14 @@ function parseIntents(raw:any):string[]{
   return[];
 }
 
+const REASON_OPTIONS=["Capital","Synergy","Mentorship","Opportunities"];
+
 function PreEventDiscovery({event,profile,sentRequests,setSentRequests}:any){
   const[attendees,setAttendees]=useState<any[]>([]);
   const[stations,setStations]=useState<any[]>([]);
   const[loading,setLoading]=useState(true);
   const[confirmTarget,setConfirmTarget]=useState<any>(null);
+  const[selectedReason,setSelectedReason]=useState("");
   const[notification,setNotification]=useState("");
 
   useEffect(()=>{
@@ -299,7 +302,10 @@ function PreEventDiscovery({event,profile,sentRequests,setSentRequests}:any){
   },[event,profile]);
 
   async function sendConnect(target:any){
+    if(!selectedReason)return;
+    const reason=selectedReason;
     setConfirmTarget(null);
+    setSelectedReason("");
     setSentRequests((prev:Set<string>)=>new Set(prev).add(target.id));
     const{error}=await supabase.from("handshake_requests").insert({
       requester_id:profile.id,
@@ -307,6 +313,7 @@ function PreEventDiscovery({event,profile,sentRequests,setSentRequests}:any){
       event_id:event.id,
       status:"pending",
       expires_at:event.end_time,
+      reason,
     });
     if(error){
       // Roll back optimistic state if the insert genuinely failed
@@ -376,21 +383,42 @@ function PreEventDiscovery({event,profile,sentRequests,setSentRequests}:any){
       )}
 
       {confirmTarget&&(
-        <div style={{position:"fixed",inset:0,background:"rgba(0,0,0,0.7)",display:"flex",alignItems:"flex-end",zIndex:30}} onClick={()=>setConfirmTarget(null)}>
+        <div style={{position:"fixed",inset:0,background:"rgba(0,0,0,0.7)",display:"flex",alignItems:"flex-end",zIndex:30}} onClick={()=>{setConfirmTarget(null);setSelectedReason("");}}>
           <div style={{background:"#0c0c0f",borderRadius:"24px 24px 0 0",padding:"24px",width:"100%",borderTop:"1px solid rgba(255,255,255,0.05)"}} onClick={e=>e.stopPropagation()}>
             <p style={{fontSize:"10px",color:"#E26D34",letterSpacing:"0.15em",fontWeight:"600",textTransform:"uppercase",marginBottom:"8px"}}>Intentional Handshake</p>
             <p style={{color:"#fff",fontSize:"17px",fontWeight:"500",marginBottom:"4px"}}>Meet {getFirstName(confirmTarget.display_name)}?</p>
             <p style={{color:"#666",fontSize:"13px",marginBottom:"12px"}}>{confirmTarget.role_title||""}</p>
             {confirmTarget.networking_intents?.length>0&&(
-              <div style={{display:"flex",flexWrap:"wrap",gap:"6px",marginBottom:"20px"}}>
-                {confirmTarget.networking_intents.map((intent:string)=>(
-                  <span key={intent} style={{fontSize:"11px",color:"#E26D34",background:"rgba(226,109,52,0.08)",border:"1px solid rgba(226,109,52,0.2)",borderRadius:"5px",padding:"3px 10px",fontWeight:"600"}}>{intent}</span>
-                ))}
+              <div style={{marginBottom:"16px"}}>
+                <p style={{fontSize:"10px",color:"rgba(240,237,232,0.3)",letterSpacing:"0.1em",textTransform:"uppercase",marginBottom:"6px"}}>Their interests</p>
+                <div style={{display:"flex",flexWrap:"wrap",gap:"6px"}}>
+                  {confirmTarget.networking_intents.map((intent:string)=>(
+                    <span key={intent} style={{fontSize:"11px",color:"#E26D34",background:"rgba(226,109,52,0.08)",border:"1px solid rgba(226,109,52,0.2)",borderRadius:"5px",padding:"3px 10px",fontWeight:"600"}}>{intent}</span>
+                  ))}
+                </div>
               </div>
             )}
+            <p style={{fontSize:"10px",color:"rgba(240,237,232,0.3)",letterSpacing:"0.1em",textTransform:"uppercase",marginBottom:"8px"}}>Why do you want to connect?</p>
+            <div style={{display:"flex",flexWrap:"wrap",gap:"6px",marginBottom:"20px"}}>
+              {REASON_OPTIONS.map(reason=>(
+                <button
+                  key={reason}
+                  onClick={()=>setSelectedReason(reason)}
+                  style={{fontSize:"12px",fontWeight:"600",padding:"6px 12px",borderRadius:"8px",cursor:"pointer",background:selectedReason===reason?"#E26D34":"transparent",color:selectedReason===reason?"#000":"#E26D34",border:"1px solid rgba(226,109,52,0.4)"}}
+                >
+                  {reason}
+                </button>
+              ))}
+            </div>
             <div style={{display:"flex",gap:"12px"}}>
-              <button onClick={()=>setConfirmTarget(null)} style={{flex:1,padding:"11px",borderRadius:"10px",background:"transparent",color:"rgba(240,237,232,0.5)",border:"1px solid rgba(240,237,232,0.15)",fontSize:"13px",cursor:"pointer"}}>Cancel</button>
-              <button onClick={()=>sendConnect(confirmTarget)} style={{flex:1,padding:"11px",borderRadius:"10px",background:"transparent",color:"#E26D34",border:"1px solid rgba(226,109,52,0.4)",fontSize:"13px",cursor:"pointer",fontWeight:"500"}}>Send Handshake Request →</button>
+              <button onClick={()=>{setConfirmTarget(null);setSelectedReason("");}} style={{flex:1,padding:"11px",borderRadius:"10px",background:"transparent",color:"rgba(240,237,232,0.5)",border:"1px solid rgba(240,237,232,0.15)",fontSize:"13px",cursor:"pointer"}}>Cancel</button>
+              <button
+                onClick={()=>sendConnect(confirmTarget)}
+                disabled={!selectedReason}
+                style={{flex:1,padding:"11px",borderRadius:"10px",background:"transparent",color:selectedReason?"#E26D34":"rgba(240,237,232,0.2)",border:"1px solid rgba(226,109,52,0.4)",fontSize:"13px",cursor:selectedReason?"pointer":"default",fontWeight:"500"}}
+              >
+                Send Handshake Request →
+              </button>
             </div>
           </div>
         </div>
@@ -437,6 +465,7 @@ function NetworkingTab({event,profile,isLive,isEnded,registration}:any){
   const[hostNode,setHostNode]=useState<any>(null);
   const[incoming,setIncoming]=useState<any>(null);
   const[confirmNode,setConfirmNode]=useState<any>(null);
+  const[selectedLiveReason,setSelectedLiveReason]=useState("");
   const[sentRequests,setSentRequests]=useState<Set<string>>(new Set());
   const[notification,setNotification]=useState<string>("");
   const channelRef=useRef<any>(null);
@@ -560,10 +589,13 @@ function NetworkingTab({event,profile,isLive,isEnded,registration}:any){
 
   async function sendRequest(node:any){
     if(sentRequests.has(node.id)||declinedIds.has(node.id))return;
+    if(!selectedLiveReason)return;
+    const reason=selectedLiveReason;
     setConfirmNode(null);
+    setSelectedLiveReason("");
     setSentRequests(prev=>new Set(prev).add(node.id));
-    const{data:req}=await supabase.from("handshake_requests").insert({requester_id:profile.id,recipient_id:node.id,event_id:event.id,status:"pending",expires_at:event.end_time}).select().single();
-    await channelRef.current?.send({type:"broadcast",event:"handshake_requested",payload:{request_id:req?.id,requester_id:profile.id,recipient_id:node.id,requester_name:profile.display_name}});
+    const{data:req}=await supabase.from("handshake_requests").insert({requester_id:profile.id,recipient_id:node.id,event_id:event.id,status:"pending",expires_at:event.end_time,reason}).select().single();
+    await channelRef.current?.send({type:"broadcast",event:"handshake_requested",payload:{request_id:req?.id,requester_id:profile.id,recipient_id:node.id,requester_name:profile.display_name,reason}});
   }
 
   async function respondRequest(approved:boolean){
@@ -662,7 +694,7 @@ function NetworkingTab({event,profile,isLive,isEnded,registration}:any){
       )}
 
       {confirmNode&&(
-        <div style={{position:"fixed",inset:0,background:"rgba(0,0,0,0.7)",display:"flex",alignItems:"flex-end",zIndex:20}} onClick={()=>setConfirmNode(null)}>
+        <div style={{position:"fixed",inset:0,background:"rgba(0,0,0,0.7)",display:"flex",alignItems:"flex-end",zIndex:20}} onClick={()=>{setConfirmNode(null);setSelectedLiveReason("");}}>
           <div style={{background:"#0c0c0f",borderRadius:"24px 24px 0 0",padding:"24px",width:"100%",borderTop:"1px solid rgba(255,255,255,0.05)",animation:"slideUp 0.3s ease"}} onClick={e=>e.stopPropagation()}>
             <p style={{fontSize:"10px",color:"#E26D34",letterSpacing:"0.15em",fontWeight:"600",textTransform:"uppercase",marginBottom:"8px"}}>Intentional Handshake</p>
             <div style={{display:"flex",alignItems:"center",gap:"8px",marginBottom:"8px"}}>
@@ -672,15 +704,35 @@ function NetworkingTab({event,profile,isLive,isEnded,registration}:any){
             <p style={{color:"#666",fontSize:"14px",marginBottom:"4px"}}>{confirmNode.role_title||""}</p>
             {confirmNode.is_host&&<p style={{color:"#E26D34",fontSize:"12px",marginBottom:"8px"}}>★ Event organizer</p>}
             {confirmNode.networking_intents?.length>0&&(
-              <div style={{display:"flex",flexWrap:"wrap",gap:"6px",margin:"12px 0"}}>
-                {confirmNode.networking_intents.map((intent:string)=>(
-                  <span key={intent} style={{fontSize:"11px",color:"#E26D34",background:"rgba(226,109,52,0.08)",border:"1px solid rgba(226,109,52,0.2)",borderRadius:"5px",padding:"3px 10px",fontWeight:"600"}}>{intent}</span>
-                ))}
+              <div style={{margin:"12px 0"}}>
+                <p style={{fontSize:"10px",color:"rgba(240,237,232,0.3)",letterSpacing:"0.1em",textTransform:"uppercase",marginBottom:"6px"}}>Their interests</p>
+                <div style={{display:"flex",flexWrap:"wrap",gap:"6px"}}>
+                  {confirmNode.networking_intents.map((intent:string)=>(
+                    <span key={intent} style={{fontSize:"11px",color:"#E26D34",background:"rgba(226,109,52,0.08)",border:"1px solid rgba(226,109,52,0.2)",borderRadius:"5px",padding:"3px 10px",fontWeight:"600"}}>{intent}</span>
+                  ))}
+                </div>
               </div>
             )}
+            <p style={{fontSize:"10px",color:"rgba(240,237,232,0.3)",letterSpacing:"0.1em",textTransform:"uppercase",marginBottom:"8px",marginTop:"8px"}}>Why do you want to connect?</p>
+            <div style={{display:"flex",flexWrap:"wrap",gap:"6px",marginBottom:"4px"}}>
+              {REASON_OPTIONS.map(reason=>(
+                <button
+                  key={reason}
+                  onClick={()=>setSelectedLiveReason(reason)}
+                  style={{fontSize:"12px",fontWeight:"600",padding:"6px 12px",borderRadius:"8px",cursor:"pointer",background:selectedLiveReason===reason?"#E26D34":"transparent",color:selectedLiveReason===reason?"#000":"#E26D34",border:"1px solid rgba(226,109,52,0.4)"}}
+                >
+                  {reason}
+                </button>
+              ))}
+            </div>
             <div style={{display:"flex",gap:"12px",marginTop:"16px"}}>
-              <button onClick={()=>setConfirmNode(null)} style={{flex:1,padding:"11px",borderRadius:"10px",background:"transparent",color:"rgba(240,237,232,0.5)",border:"1px solid rgba(240,237,232,0.15)",fontSize:"13px",fontWeight:"500",letterSpacing:"0.08em",textTransform:"uppercase",cursor:"pointer"}}>Cancel</button>
-              <button onClick={()=>sendRequest(confirmNode)} style={{flex:1,padding:"11px",borderRadius:"10px",background:"transparent",color:"#E26D34",border:"1px solid rgba(226,109,52,0.4)",fontSize:"13px",fontWeight:"500",letterSpacing:"0.08em",textTransform:"uppercase",cursor:"pointer"}}>Send Handshake Request →</button>
+              <button onClick={()=>{setConfirmNode(null);setSelectedLiveReason("");}} style={{flex:1,padding:"11px",borderRadius:"10px",background:"transparent",color:"rgba(240,237,232,0.5)",border:"1px solid rgba(240,237,232,0.15)",fontSize:"13px",fontWeight:"500",letterSpacing:"0.08em",textTransform:"uppercase",cursor:"pointer"}}>Cancel</button>
+              <button
+                onClick={()=>sendRequest(confirmNode)}
+                disabled={!selectedLiveReason}
+                style={{flex:1,padding:"11px",borderRadius:"10px",background:"transparent",color:selectedLiveReason?"#E26D34":"rgba(240,237,232,0.2)",border:"1px solid rgba(226,109,52,0.4)",fontSize:"13px",fontWeight:"500",letterSpacing:"0.08em",textTransform:"uppercase",cursor:selectedLiveReason?"pointer":"default"}}
+              >
+                Send Handshake Request →</button>
             </div>
           </div>
         </div>
@@ -690,7 +742,11 @@ function NetworkingTab({event,profile,isLive,isEnded,registration}:any){
         <div style={{position:"fixed",inset:0,background:"rgba(0,0,0,0.7)",display:"flex",alignItems:"flex-end",zIndex:20}}>
           <div style={{background:"#1a1a1a",borderRadius:"24px 24px 0 0",padding:"28px",width:"100%",animation:"slideUp 0.3s ease"}}>
             <p style={{color:"#fff",fontSize:"18px",fontWeight:"500",marginBottom:"8px"}}>{getFirstName(incoming.requester_name)} wants to connect</p>
-            <p style={{color:"#666",fontSize:"14px",marginBottom:"28px"}}>Connection request</p>
+            {incoming.reason?(
+              <p style={{color:"#666",fontSize:"14px",marginBottom:"28px"}}>Reason: <span style={{color:"#E26D34",fontWeight:"600"}}>{incoming.reason}</span></p>
+            ):(
+              <p style={{color:"#666",fontSize:"14px",marginBottom:"28px"}}>Connection request</p>
+            )}
             <div style={{display:"flex",gap:"12px"}}>
               <button onClick={()=>respondRequest(false)} style={{flex:1,padding:"14px",borderRadius:"14px",background:"#333",color:"#fff",border:"none",fontSize:"15px",cursor:"pointer"}}>Decline</button>
               <button onClick={()=>respondRequest(true)} style={{flex:1,padding:"14px",borderRadius:"14px",background:"#4ade80",color:"#000",border:"none",fontSize:"15px",fontWeight:"500",cursor:"pointer"}}>Approve ✓</button>
@@ -792,13 +848,13 @@ function ProfileTab({profile,event,onProfileUpdate,isEnded,registration}:any){
     if(!profile||!event)return;
     let cancelled=false;
     async function loadPending(){
-      const{data:reqs}=await supabase.from("handshake_requests").select("id,requester_id").eq("recipient_id",profile.id).eq("event_id",event.id).eq("status","pending").or(`expires_at.is.null,expires_at.gt.${new Date().toISOString()}`);
+      const{data:reqs}=await supabase.from("handshake_requests").select("id,requester_id,reason").eq("recipient_id",profile.id).eq("event_id",event.id).eq("status","pending").or(`expires_at.is.null,expires_at.gt.${new Date().toISOString()}`);
       if(cancelled||!reqs||reqs.length===0){if(!cancelled)setPendingRequests([]);return;}
       const{data:requesters}=await supabase.from("guest_profiles").select("id,display_name,role_title,networking_intents").in("id",reqs.map((r:any)=>r.requester_id));
       if(cancelled)return;
       setPendingRequests(reqs.map((r:any)=>{
         const requester=(requesters||[]).find((p:any)=>p.id===r.requester_id);
-        return requester?{requestId:r.id,...requester,networking_intents:parseIntents(requester.networking_intents)}:{requestId:r.id};
+        return requester?{requestId:r.id,reason:r.reason,...requester,networking_intents:parseIntents(requester.networking_intents)}:{requestId:r.id};
       }).filter((r:any)=>r.id&&r.display_name));
     }
     loadPending();
@@ -1044,6 +1100,7 @@ function ProfileTab({profile,event,onProfileUpdate,isEnded,registration}:any){
                 <div style={{minWidth:0}}>
                   <p style={{fontSize:"14px",fontWeight:"600",color:"#f1f0f5",margin:0}}>{r.display_name}</p>
                   {r.role_title&&<p style={{fontSize:"12px",color:"#888",margin:"2px 0 0"}}>{r.role_title}</p>}
+                  {r.reason&&<span style={{display:"inline-block",fontSize:"10px",color:"#E26D34",background:"rgba(226,109,52,0.1)",border:"1px solid rgba(226,109,52,0.2)",borderRadius:"5px",padding:"2px 7px",fontWeight:"600",marginTop:"6px"}}>{r.reason}</span>}
                 </div>
                 <div style={{display:"flex",gap:"6px",flexShrink:0}}>
                   <button onClick={()=>respondToPending(r.requestId,r.id,false)} style={{fontSize:"11px",color:"rgba(240,237,232,0.5)",background:"transparent",border:"1px solid rgba(255,255,255,0.1)",borderRadius:"8px",padding:"6px 10px",cursor:"pointer"}}>Decline</button>
