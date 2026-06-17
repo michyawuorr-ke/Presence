@@ -81,14 +81,30 @@ const[tab,setTab]=useState<Tab>("scene");
   const[connectionsCount,setConnectionsCount]=useState(0);
   const[fiveMin,setFiveMin]=useState(false);
   const[eventStatus,setEventStatus]=useState(event?.status||"");
+  const[pendingCount,setPendingCount]=useState(0);
   const isLive=eventStatus==="live";
   const isEnded=eventStatus==="ended";
   const nav=[
     {id:"scene",l:"Scene",e:"✦"},
     {id:"networking",l:"Networking",e:"◎"},
     {id:"ticket",l:"Ticket",e:"🎟"},
-    {id:"profile",l:"Profile",e:"◐"}
+    {id:"profile",l:"Profile",e:"◐",badge:pendingCount}
   ];
+
+  useEffect(()=>{
+    if(!profile||!event)return;
+    async function loadPendingCount(){
+      const{count}=await supabase.from("handshake_requests").select("*",{count:"exact",head:true}).eq("recipient_id",profile.id).eq("event_id",event.id).eq("status","pending").or(`expires_at.is.null,expires_at.gt.${new Date().toISOString()}`);
+      setPendingCount(count||0);
+    }
+    loadPendingCount();
+    const ch=supabase.channel("nav-pending:"+profile.id)
+      .on("postgres_changes",{event:"*",schema:"public",table:"handshake_requests"},(payload:any)=>{
+        if(payload.new?.recipient_id===profile.id||payload.old?.recipient_id===profile.id)loadPendingCount();
+      })
+      .subscribe();
+    return()=>{supabase.removeChannel(ch);};
+  },[profile,event]);
 
   useEffect(()=>{
     if(!event)return;
@@ -230,8 +246,13 @@ const[tab,setTab]=useState<Tab>("scene");
 
       <div style={{position:"fixed",bottom:"8px",left:"8px",right:"8px",background:"rgba(15,15,19,0.92)",backdropFilter:"blur(32px)",borderRadius:"20px",border:"1px solid rgba(255,255,255,0.08)",display:"flex",padding:"8px 4px",boxShadow:"0 8px 32px rgba(0,0,0,0.4)"}}>
         {nav.map(item=>(
-          <button key={item.id} onClick={()=>{setTab(item.id as Tab);setEditing(false);}} style={{flex:1,display:"flex",flexDirection:"column",alignItems:"center",gap:"4px",background:tab===item.id?"rgba(226,109,52,0.1)":"none",border:"none",cursor:"pointer",padding:"8px 4px",borderRadius:"12px",transition:"all 0.15s ease",boxShadow:tab===item.id?"inset 0 0 0 1px rgba(226,109,52,0.15)":"none"}}>
-            <span style={{fontSize:"16px",opacity:tab===item.id?1:0.35,transform:tab===item.id?"scale(1.1)":"scale(1)",transition:"all 0.2s"}}>{item.e}</span>
+          <button key={item.id} onClick={()=>{setTab(item.id as Tab);setEditing(false);}} style={{flex:1,display:"flex",flexDirection:"column",alignItems:"center",gap:"4px",background:tab===item.id?"rgba(226,109,52,0.1)":"none",border:"none",cursor:"pointer",padding:"8px 4px",borderRadius:"12px",transition:"all 0.15s ease",boxShadow:tab===item.id?"inset 0 0 0 1px rgba(226,109,52,0.15)":"none",position:"relative"}}>
+            <span style={{fontSize:"16px",opacity:tab===item.id?1:0.35,transform:tab===item.id?"scale(1.1)":"scale(1)",transition:"all 0.2s",position:"relative"}}>
+              {item.e}
+              {!!item.badge&&item.badge>0&&(
+                <span style={{position:"absolute",top:"-6px",right:"-10px",background:"#E26D34",color:"#000",fontSize:"9px",fontWeight:"700",borderRadius:"9px",minWidth:"16px",height:"16px",display:"flex",alignItems:"center",justifyContent:"center",padding:"0 4px",lineHeight:1}}>{item.badge>9?"9+":item.badge}</span>
+              )}
+            </span>
             <span style={{fontSize:"11px",color:tab===item.id?"#E26D34":"#999",fontWeight:tab===item.id?"600":"400",letterSpacing:"0.02em"}}>{item.l}</span>
           </button>
         ))}
@@ -265,7 +286,7 @@ function PreEventDiscovery({event,profile,sentRequests,setSentRequests}:any){
     let cancelled=false;
     async function load(){
       const[{data:guests},{data:st}]=await Promise.all([
-        supabase.from("guest_profiles").select("id,display_name,role_title,organisation,networking_intents,target_station_id").eq("event_id",event.id).neq("id",profile.id),
+        supabase.from("guest_profiles").select("id,display_name,role_title,organisation,networking_intents,target_station_id").eq("event_id",event.id).eq("networking_visible",true).neq("id",profile.id),
         supabase.from("event_stations").select("id,name").eq("event_id",event.id),
       ]);
       if(cancelled)return;
@@ -285,6 +306,7 @@ function PreEventDiscovery({event,profile,sentRequests,setSentRequests}:any){
       recipient_id:target.id,
       event_id:event.id,
       status:"pending",
+      expires_at:event.end_time,
     });
     if(error){
       // Roll back optimistic state if the insert genuinely failed
@@ -356,11 +378,19 @@ function PreEventDiscovery({event,profile,sentRequests,setSentRequests}:any){
       {confirmTarget&&(
         <div style={{position:"fixed",inset:0,background:"rgba(0,0,0,0.7)",display:"flex",alignItems:"flex-end",zIndex:30}} onClick={()=>setConfirmTarget(null)}>
           <div style={{background:"#0c0c0f",borderRadius:"24px 24px 0 0",padding:"24px",width:"100%",borderTop:"1px solid rgba(255,255,255,0.05)"}} onClick={e=>e.stopPropagation()}>
-            <p style={{color:"#fff",fontSize:"17px",fontWeight:"500",marginBottom:"4px"}}>Connect with {getFirstName(confirmTarget.display_name)}?</p>
-            <p style={{color:"#666",fontSize:"13px",marginBottom:"20px"}}>{confirmTarget.role_title||""}</p>
+            <p style={{fontSize:"10px",color:"#E26D34",letterSpacing:"0.15em",fontWeight:"600",textTransform:"uppercase",marginBottom:"8px"}}>Intentional Handshake</p>
+            <p style={{color:"#fff",fontSize:"17px",fontWeight:"500",marginBottom:"4px"}}>Meet {getFirstName(confirmTarget.display_name)}?</p>
+            <p style={{color:"#666",fontSize:"13px",marginBottom:"12px"}}>{confirmTarget.role_title||""}</p>
+            {confirmTarget.networking_intents?.length>0&&(
+              <div style={{display:"flex",flexWrap:"wrap",gap:"6px",marginBottom:"20px"}}>
+                {confirmTarget.networking_intents.map((intent:string)=>(
+                  <span key={intent} style={{fontSize:"11px",color:"#E26D34",background:"rgba(226,109,52,0.08)",border:"1px solid rgba(226,109,52,0.2)",borderRadius:"5px",padding:"3px 10px",fontWeight:"600"}}>{intent}</span>
+                ))}
+              </div>
+            )}
             <div style={{display:"flex",gap:"12px"}}>
               <button onClick={()=>setConfirmTarget(null)} style={{flex:1,padding:"11px",borderRadius:"10px",background:"transparent",color:"rgba(240,237,232,0.5)",border:"1px solid rgba(240,237,232,0.15)",fontSize:"13px",cursor:"pointer"}}>Cancel</button>
-              <button onClick={()=>sendConnect(confirmTarget)} style={{flex:1,padding:"11px",borderRadius:"10px",background:"transparent",color:"#E26D34",border:"1px solid rgba(226,109,52,0.4)",fontSize:"13px",cursor:"pointer",fontWeight:"500"}}>Send Request →</button>
+              <button onClick={()=>sendConnect(confirmTarget)} style={{flex:1,padding:"11px",borderRadius:"10px",background:"transparent",color:"#E26D34",border:"1px solid rgba(226,109,52,0.4)",fontSize:"13px",cursor:"pointer",fontWeight:"500"}}>Send Handshake Request →</button>
             </div>
           </div>
         </div>
@@ -369,12 +399,15 @@ function PreEventDiscovery({event,profile,sentRequests,setSentRequests}:any){
   );
 }
 
-function AttendeeCard({attendee,sent,onConnect}:any){
+function AttendeeCard({attendee,sent,onConnect,live}:any){
   return(
     <div style={{background:"rgba(255,255,255,0.015)",border:"1px solid rgba(255,255,255,0.05)",borderRadius:"14px",padding:"14px"}}>
       <div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-start",gap:"12px"}}>
         <div style={{flex:1,minWidth:0}}>
-          <p style={{fontSize:"14px",fontWeight:"600",color:"#f1f0f5",margin:0}}>{attendee.display_name}</p>
+          <div style={{display:"flex",alignItems:"center",gap:"6px"}}>
+            {live&&<span style={{width:"7px",height:"7px",borderRadius:"50%",background:"#4ade80",display:"inline-block",animation:"pulse 2s infinite",flexShrink:0}}/>}
+            <p style={{fontSize:"14px",fontWeight:"600",color:"#f1f0f5",margin:0}}>{attendee.display_name}</p>
+          </div>
           {attendee.role_title&&<p style={{fontSize:"12px",color:"#888",margin:"2px 0 0"}}>{attendee.role_title}{attendee.organisation?` · ${attendee.organisation}`:""}</p>}
           {attendee.networking_intents?.length>0&&(
             <div style={{display:"flex",flexWrap:"wrap",gap:"4px",marginTop:"8px"}}>
@@ -446,13 +479,12 @@ function NetworkingTab({event,profile,isLive,isEnded,registration}:any){
     const declinedSet=new Set((declinedReqs||[]).map((r:any)=>r.recipient_id));
     setDeclinedIds(declinedSet);
     setSentRequests(sentSet);
-    const{data}=await supabase.from("guest_profiles").select("*").eq("event_id",event.id).eq("aura_active",true).neq("id",profile.id).limit(8);
+    const{data}=await supabase.from("guest_profiles").select("*").eq("event_id",event.id).eq("aura_active",true).eq("networking_visible",true).neq("id",profile.id).limit(8);
     // Also fetch blocked users to hide them from aura
     const{data:blockedData}=await supabase.from("guest_blocks").select("blocked_id").eq("blocker_id",profile.id).eq("event_id",event.id);
     const blockedSet=new Set((blockedData||[]).map((b:any)=>b.blocked_id));
     const filtered=(data||[]).filter((n:any)=>!approvedSet.has(n.id)&&!declinedSet.has(n.id)&&!blockedSet.has(n.id));
-    const positions=generatePositions(filtered.length);
-    setNodes(filtered.map((n:any,i:number)=>({...n,...positions[i]})));
+    setNodes(filtered.map((n:any)=>({...n,networking_intents:parseIntents(n.networking_intents)})));
 
     // Fetch host VIP node
     // Only show host star to non-host users
@@ -460,7 +492,7 @@ function NetworkingTab({event,profile,isLive,isEnded,registration}:any){
       const hostRes=await fetch('/api/events/host-profile?event_id='+event.id);
       const hostData=await hostRes.json();
       if(hostData.host){
-        setHostNode({...hostData.host,x:50+Math.random()*10-5,y:50+Math.random()*10-5});
+        setHostNode(hostData.host);
       }
     }
   },[profile,event]);
@@ -530,7 +562,7 @@ function NetworkingTab({event,profile,isLive,isEnded,registration}:any){
     if(sentRequests.has(node.id)||declinedIds.has(node.id))return;
     setConfirmNode(null);
     setSentRequests(prev=>new Set(prev).add(node.id));
-    const{data:req}=await supabase.from("handshake_requests").insert({requester_id:profile.id,recipient_id:node.id,event_id:event.id,status:"pending"}).select().single();
+    const{data:req}=await supabase.from("handshake_requests").insert({requester_id:profile.id,recipient_id:node.id,event_id:event.id,status:"pending",expires_at:event.end_time}).select().single();
     await channelRef.current?.send({type:"broadcast",event:"handshake_requested",payload:{request_id:req?.id,requester_id:profile.id,recipient_id:node.id,requester_name:profile.display_name}});
   }
 
@@ -569,61 +601,62 @@ function NetworkingTab({event,profile,isLive,isEnded,registration}:any){
   }
 
   return(
-    <div style={{background:"linear-gradient(160deg,#0f0f13 0%,#12101a 100%)",minHeight:"calc(100vh - 100px)",position:"relative",overflow:"hidden"}}>
+    <div style={{background:"linear-gradient(160deg,#0f0f13 0%,#12101a 100%)",minHeight:"calc(100vh - 100px)",position:"relative",padding:"16px"}}>
       <style>{`
-        @keyframes float{0%,100%{transform:translateY(0px)}50%{transform:translateY(-8px)}}
         @keyframes pulse{0%,100%{box-shadow:0 0 0 0 rgba(226,109,52,0.2)}50%{box-shadow:0 0 0 12px rgba(37,99,235,0)}}
         @keyframes slideUp{from{transform:translateY(100%);opacity:0}to{transform:translateY(0);opacity:1}}
         @keyframes fadeIn{from{opacity:0}to{opacity:1}}
       `}</style>
 
-      <div style={{position:"absolute",top:"50%",left:"50%",transform:"translate(-50%,-50%)",width:"300px",height:"300px",background:"radial-gradient(circle,rgba(255,255,255,0.03) 0%,transparent 70%)",borderRadius:"50%",pointerEvents:"none"}}/>
-
-      <div style={{position:"absolute",top:"16px",right:"16px",background:"rgba(255,255,255,0.08)",borderRadius:"20px",padding:"6px 12px"}}>
-        <p style={{color:"#fff",fontSize:"12px"}}>{nodes.length} nearby</p>
+      <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:"16px"}}>
+        <p style={{fontSize:"10px",color:"#E26D34",letterSpacing:"0.15em",fontWeight:"600",textTransform:"uppercase",margin:0}}>Live Now</p>
+        <div style={{background:"rgba(255,255,255,0.08)",borderRadius:"20px",padding:"6px 12px"}}>
+          <p style={{color:"#fff",fontSize:"12px",margin:0}}>{nodes.length} nearby</p>
+        </div>
       </div>
 
       {notification&&(
-        <div style={{position:"absolute",top:"16px",left:"50%",transform:"translateX(-50%)",background:"rgba(0,0,0,0.8)",border:"1px solid rgba(255,255,255,0.1)",borderRadius:"20px",padding:"8px 16px",animation:"fadeIn 0.4s ease",zIndex:10,maxWidth:"280px"}}>
-          <p style={{color:"#fff",fontSize:"12px",fontWeight:"500",textAlign:"center",lineHeight:"1.4"}}>{notification}</p>
+        <div style={{background:"rgba(0,0,0,0.8)",border:"1px solid rgba(255,255,255,0.1)",borderRadius:"14px",padding:"10px 16px",marginBottom:"16px",animation:"fadeIn 0.4s ease"}}>
+          <p style={{color:"#fff",fontSize:"12px",fontWeight:"500",textAlign:"center",lineHeight:"1.4",margin:0}}>{notification}</p>
         </div>
       )}
 
       {!auraLoaded&&registration?.status!=="host"&&(
-        <div style={{position:"absolute",inset:0,zIndex:5,background:"rgba(10,10,11,0.85)"}}/>
+        <div style={{textAlign:"center",padding:"60px 0"}}>
+          <div style={{width:"16px",height:"16px",border:"2px solid rgba(255,255,255,0.1)",borderTopColor:"#E26D34",borderRadius:"50%",animation:"spin 0.8s linear infinite",margin:"0 auto"}}/>
+        </div>
       )}
       {auraLoaded&&!networkingActive&&registration?.status!=="host"&&(
-        <div style={{position:"absolute",inset:0,display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",backdropFilter:"blur(20px)",zIndex:5}}>
+        <div style={{display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",padding:"80px 20px",textAlign:"center"}}>
           <p style={{fontSize:"48px",marginBottom:"16px",opacity:0.2}}>◎</p>
           <p style={{color:"#fff",fontSize:"18px",fontWeight:"300",marginBottom:"8px"}}>Networking Off</p>
           <p style={{color:"#555",fontSize:"14px",marginBottom:"40px"}}>Nobody can see you</p>
-          {registration?.status!=="host"&&<button onClick={startNetworking} style={{padding:"16px 40px",borderRadius:"50px",background:"#fff",color:"#000",border:"none",fontSize:"16px",fontWeight:"600",cursor:"pointer"}}>Start Networking</button>}
+          <button onClick={startNetworking} style={{padding:"16px 40px",borderRadius:"50px",background:"#fff",color:"#000",border:"none",fontSize:"16px",fontWeight:"600",cursor:"pointer"}}>Start Networking</button>
         </div>
       )}
 
-      {(networkingActive||registration?.status==="host")&&hostNode&&(
-        <div style={{position:"absolute",left:hostNode.x+"%",top:hostNode.y+"%",transform:"translate(-50%,-50%)",animation:"float 5s ease-in-out infinite",zIndex:3}}>
-          <button onClick={()=>setConfirmNode({...hostNode,is_host:true})} style={{width:"56px",height:"56px",background:"none",border:"none",cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center",position:"relative"}}>
-            <span style={{fontSize:"44px",color:"#0a0800",textShadow:"0 0 6px #D4AF37,0 0 18px #D4AF37,0 0 35px rgba(212,175,55,0.7),0 0 60px rgba(212,175,55,0.3)",lineHeight:"1",display:"block"}}>★</span>
-          </button>
-          <p style={{color:"#D4AF37",fontSize:"10px",textAlign:"center",marginTop:"2px",fontWeight:"600",letterSpacing:"0.05em",textShadow:"0 0 8px rgba(212,175,55,0.6)"}}>ORGANIZER</p>
+      {(networkingActive||registration?.status==="host")&&(
+        <div style={{display:"flex",flexDirection:"column",gap:"8px"}}>
+          {hostNode&&(
+            <div style={{background:"linear-gradient(135deg,rgba(212,175,55,0.1),rgba(212,175,55,0.03))",border:"1px solid rgba(212,175,55,0.25)",borderRadius:"14px",padding:"14px",display:"flex",justifyContent:"space-between",alignItems:"center"}}>
+              <div>
+                <p style={{fontSize:"9px",fontWeight:"700",color:"#D4AF37",letterSpacing:"0.1em",margin:"0 0 4px"}}>★ ORGANIZER</p>
+                <p style={{fontSize:"14px",fontWeight:"600",color:"#f1f0f5",margin:0}}>{hostNode.display_name}</p>
+              </div>
+              <button onClick={()=>setConfirmNode({...hostNode,is_host:true})} style={{fontSize:"11px",fontWeight:"600",color:"#D4AF37",background:"transparent",border:"1px solid rgba(212,175,55,0.4)",borderRadius:"8px",padding:"6px 12px",cursor:"pointer"}}>Connect</button>
+            </div>
+          )}
+          {networkingActive&&nodes.length===0&&(
+            <p style={{color:"#555",fontSize:"14px",textAlign:"center",padding:"60px 0"}}>No one else is networking right now.</p>
+          )}
+          {networkingActive&&nodes.map((node:any)=>(
+            <AttendeeCard key={node.id} attendee={node} sent={sentRequests.has(node.id)} onConnect={()=>setConfirmNode(node)} live/>
+          ))}
         </div>
       )}
-      {networkingActive&&nodes.map((node:any)=>{
-        const isSent=sentRequests.has(node.id);
-        const firstName=getFirstName(node.display_name);
-        return(
-          <div key={node.id} style={{position:"absolute",left:node.x+"%",top:node.y+"%",transform:"translate(-50%,-50%)",animation:"float 4s ease-in-out infinite",zIndex:2}}>
-            <button onClick={()=>!isSent&&setConfirmNode(node)} style={{width:"44px",height:"44px",borderRadius:"50%",background:"transparent",border:isSent?"1px solid rgba(255,255,255,0.1)":"1px solid rgba(226,109,52,0.45)",cursor:isSent?"default":"pointer",display:"flex",alignItems:"center",justifyContent:"center",animation:isSent?"none":"pulse 2s infinite",opacity:isSent?0.4:1}}>
-              <span style={{color:isSent?"rgba(255,255,255,0.4)":"#E26D34",fontSize:"13px",fontWeight:"600"}}>{firstName.charAt(0)}</span>
-            </button>
-            <p style={{color:"rgba(255,255,255,0.6)",fontSize:"10px",textAlign:"center",marginTop:"4px"}}>{isSent?"sent":firstName}</p>
-          </div>
-        );
-      })}
 
       {networkingActive&&(
-        <div style={{position:"absolute",bottom:"24px",left:"50%",transform:"translateX(-50%)"}}>
+        <div style={{display:"flex",justifyContent:"center",marginTop:"20px"}}>
           <button onClick={stopNetworking} style={{padding:"10px 24px",borderRadius:"50px",background:"rgba(255,255,255,0.06)",color:"#666",border:"1px solid rgba(255,255,255,0.08)",fontSize:"13px",cursor:"pointer",letterSpacing:"0.02em"}}>Turn off</button>
         </div>
       )}
@@ -631,15 +664,23 @@ function NetworkingTab({event,profile,isLive,isEnded,registration}:any){
       {confirmNode&&(
         <div style={{position:"fixed",inset:0,background:"rgba(0,0,0,0.7)",display:"flex",alignItems:"flex-end",zIndex:20}} onClick={()=>setConfirmNode(null)}>
           <div style={{background:"#0c0c0f",borderRadius:"24px 24px 0 0",padding:"24px",width:"100%",borderTop:"1px solid rgba(255,255,255,0.05)",animation:"slideUp 0.3s ease"}} onClick={e=>e.stopPropagation()}>
+            <p style={{fontSize:"10px",color:"#E26D34",letterSpacing:"0.15em",fontWeight:"600",textTransform:"uppercase",marginBottom:"8px"}}>Intentional Handshake</p>
             <div style={{display:"flex",alignItems:"center",gap:"8px",marginBottom:"8px"}}>
-              <p style={{color:"#fff",fontSize:"18px",fontWeight:"500"}}>Connect with {getFirstName(confirmNode.display_name)}?</p>
+              <p style={{color:"#fff",fontSize:"18px",fontWeight:"500"}}>Meet {getFirstName(confirmNode.display_name)}?</p>
               {confirmNode.is_host&&<span style={{background:"linear-gradient(135deg,#D4AF37,#b8962e)",color:"#000",fontSize:"10px",fontWeight:"700",padding:"3px 10px",borderRadius:"6px",letterSpacing:"0.05em"}}>ORGANIZER</span>}
             </div>
             <p style={{color:"#666",fontSize:"14px",marginBottom:"4px"}}>{confirmNode.role_title||""}</p>
             {confirmNode.is_host&&<p style={{color:"#E26D34",fontSize:"12px",marginBottom:"8px"}}>★ Event organizer</p>}
-            <div style={{display:"flex",gap:"12px"}}>
+            {confirmNode.networking_intents?.length>0&&(
+              <div style={{display:"flex",flexWrap:"wrap",gap:"6px",margin:"12px 0"}}>
+                {confirmNode.networking_intents.map((intent:string)=>(
+                  <span key={intent} style={{fontSize:"11px",color:"#E26D34",background:"rgba(226,109,52,0.08)",border:"1px solid rgba(226,109,52,0.2)",borderRadius:"5px",padding:"3px 10px",fontWeight:"600"}}>{intent}</span>
+                ))}
+              </div>
+            )}
+            <div style={{display:"flex",gap:"12px",marginTop:"16px"}}>
               <button onClick={()=>setConfirmNode(null)} style={{flex:1,padding:"11px",borderRadius:"10px",background:"transparent",color:"rgba(240,237,232,0.5)",border:"1px solid rgba(240,237,232,0.15)",fontSize:"13px",fontWeight:"500",letterSpacing:"0.08em",textTransform:"uppercase",cursor:"pointer"}}>Cancel</button>
-              <button onClick={()=>sendRequest(confirmNode)} style={{flex:1,padding:"11px",borderRadius:"10px",background:"transparent",color:"#E26D34",border:"1px solid rgba(226,109,52,0.4)",fontSize:"13px",fontWeight:"500",letterSpacing:"0.08em",textTransform:"uppercase",cursor:"pointer"}}>Send Request →</button>
+              <button onClick={()=>sendRequest(confirmNode)} style={{flex:1,padding:"11px",borderRadius:"10px",background:"transparent",color:"#E26D34",border:"1px solid rgba(226,109,52,0.4)",fontSize:"13px",fontWeight:"500",letterSpacing:"0.08em",textTransform:"uppercase",cursor:"pointer"}}>Send Handshake Request →</button>
             </div>
           </div>
         </div>
@@ -672,12 +713,86 @@ function ProfileTab({profile,event,onProfileUpdate,isEnded,registration}:any){
   const[blocked,setBlocked]=useState<Set<string>>(new Set());
   const[reportMsg,setReportMsg]=useState("");
   const[pendingRequests,setPendingRequests]=useState<any[]>([]);
+  const[networkingVisible,setNetworkingVisible]=useState(profile?.networking_visible??true);
+  const[signalTarget,setSignalTarget]=useState<any>(null);
+  const[signalStationId,setSignalStationId]=useState("");
+  const[signalCustomLocation,setSignalCustomLocation]=useState("");
+  const[signalSentIds,setSignalSentIds]=useState<Set<string>>(new Set());
+  const[eventStations,setEventStations]=useState<any[]>([]);
+  const[signalNotification,setSignalNotification]=useState("");
+  const[incomingSignals,setIncomingSignals]=useState<any[]>([]);
+
+  useEffect(()=>{
+    if(!profile||!event)return;
+    let cancelled=false;
+    async function loadIncomingSignals(){
+      const{data:signals}=await supabase.from("meetup_signals").select("id,sender_id,station_id,custom_location,status").eq("recipient_id",profile.id).eq("event_id",event.id).eq("status","pending");
+      if(cancelled||!signals||signals.length===0){if(!cancelled)setIncomingSignals([]);return;}
+      const senderIds=signals.map((s:any)=>s.sender_id);
+      const stationIds=signals.map((s:any)=>s.station_id).filter(Boolean);
+      const[{data:senders},{data:stations}]=await Promise.all([
+        supabase.from("guest_profiles").select("id,display_name").in("id",senderIds),
+        stationIds.length>0?supabase.from("event_stations").select("id,name").in("id",stationIds):Promise.resolve({data:[]}),
+      ]);
+      if(cancelled)return;
+      setIncomingSignals(signals.map((s:any)=>({
+        ...s,
+        senderName:(senders||[]).find((p:any)=>p.id===s.sender_id)?.display_name||"Someone",
+        locationLabel:s.custom_location||(stations||[]).find((st:any)=>st.id===s.station_id)?.name||"a meetup spot",
+      })));
+    }
+    loadIncomingSignals();
+    const ch=supabase.channel("incoming-signals:"+profile.id)
+      .on("postgres_changes",{event:"INSERT",schema:"public",table:"meetup_signals"},(payload:any)=>{
+        if(payload.new.recipient_id===profile.id)loadIncomingSignals();
+      })
+      .subscribe();
+    return()=>{cancelled=true;supabase.removeChannel(ch);};
+  },[profile,event]);
+
+  async function dismissSignal(signalId:string){
+    setIncomingSignals(prev=>prev.filter(s=>s.id!==signalId));
+    await supabase.from("meetup_signals").update({status:"acknowledged"}).eq("id",signalId);
+  }
+
+  useEffect(()=>{
+    if(!event)return;
+    supabase.from("event_stations").select("id,name").eq("event_id",event.id).then(({data})=>{if(data)setEventStations(data);});
+  },[event]);
+
+  async function sendSignalMeetup(){
+    if(!signalTarget||!profile||!event)return;
+    if(!signalStationId&&!signalCustomLocation.trim())return;
+    const station=eventStations.find((s:any)=>s.id===signalStationId);
+    const{error}=await supabase.from("meetup_signals").insert({
+      event_id:event.id,
+      sender_id:profile.id,
+      recipient_id:signalTarget.id,
+      station_id:signalStationId||null,
+      custom_location:signalStationId?null:signalCustomLocation.trim(),
+      status:"pending",
+    });
+    if(!error){
+      setSignalSentIds(prev=>new Set(prev).add(signalTarget.id));
+      setSignalNotification(`Meetup signal sent to ${getFirstName(signalTarget.display_name)}`);
+      setTimeout(()=>setSignalNotification(""),4000);
+    }
+    setSignalTarget(null);
+    setSignalStationId("");
+    setSignalCustomLocation("");
+  }
+
+  async function toggleVisibility(){
+    const next=!networkingVisible;
+    setNetworkingVisible(next);
+    await supabase.from("guest_profiles").update({networking_visible:next}).eq("id",profile.id);
+  }
 
   useEffect(()=>{
     if(!profile||!event)return;
     let cancelled=false;
     async function loadPending(){
-      const{data:reqs}=await supabase.from("handshake_requests").select("id,requester_id").eq("recipient_id",profile.id).eq("event_id",event.id).eq("status","pending");
+      const{data:reqs}=await supabase.from("handshake_requests").select("id,requester_id").eq("recipient_id",profile.id).eq("event_id",event.id).eq("status","pending").or(`expires_at.is.null,expires_at.gt.${new Date().toISOString()}`);
       if(cancelled||!reqs||reqs.length===0){if(!cancelled)setPendingRequests([]);return;}
       const{data:requesters}=await supabase.from("guest_profiles").select("id,display_name,role_title,networking_intents").in("id",reqs.map((r:any)=>r.requester_id));
       if(cancelled)return;
@@ -883,6 +998,19 @@ function ProfileTab({profile,event,onProfileUpdate,isEnded,registration}:any){
         </div>
       </div>
 
+      <div style={{background:"rgba(255,255,255,0.015)",border:"1px solid rgba(255,255,255,0.05)",borderRadius:"14px",padding:"14px 16px",marginTop:"12px",display:"flex",justifyContent:"space-between",alignItems:"center",gap:"12px"}}>
+        <div style={{minWidth:0}}>
+          <p style={{fontSize:"13px",fontWeight:"600",color:"#f1f0f5",margin:0}}>Visible to other attendees</p>
+          <p style={{fontSize:"11px",color:"rgba(240,237,232,0.4)",margin:"2px 0 0"}}>{networkingVisible?"You can be found and connected with":"You're hidden from networking — no one can see or connect with you"}</p>
+        </div>
+        <button
+          onClick={toggleVisibility}
+          style={{flexShrink:0,width:"44px",height:"26px",borderRadius:"14px",border:"none",cursor:"pointer",background:networkingVisible?"#E26D34":"rgba(255,255,255,0.1)",position:"relative",transition:"background 0.2s"}}
+        >
+          <span style={{position:"absolute",top:"3px",left:networkingVisible?"22px":"3px",width:"20px",height:"20px",borderRadius:"50%",background:"#fff",transition:"left 0.2s"}}/>
+        </button>
+      </div>
+
       {editing && (
         <EditProfile 
           profile={profile} 
@@ -891,6 +1019,20 @@ function ProfileTab({profile,event,onProfileUpdate,isEnded,registration}:any){
             setEditing(false);
           }} 
         />
+      )}
+
+      {incomingSignals.length>0&&(
+        <div style={{marginTop:"16px"}}>
+          <p style={{fontSize:"10px",fontWeight:"600",color:"#E26D34",letterSpacing:"0.12em",textTransform:"uppercase",marginBottom:"12px"}}>Meetup Signals</p>
+          <div style={{display:"flex",flexDirection:"column",gap:"8px"}}>
+            {incomingSignals.map((s:any)=>(
+              <div key={s.id} style={{background:"rgba(226,109,52,0.06)",border:"1px solid rgba(226,109,52,0.2)",borderRadius:"14px",padding:"14px"}}>
+                <p style={{fontSize:"13px",color:"#f1f0f5",margin:0}}><span style={{fontWeight:"600"}}>{s.senderName}</span> wants to meet you at <span style={{color:"#E26D34",fontWeight:"600"}}>{s.locationLabel}</span></p>
+                <button onClick={()=>dismissSignal(s.id)} style={{marginTop:"8px",fontSize:"11px",fontWeight:"600",color:"#E26D34",background:"transparent",border:"1px solid rgba(226,109,52,0.3)",borderRadius:"8px",padding:"5px 10px",cursor:"pointer"}}>Got it</button>
+              </div>
+            ))}
+          </div>
+        </div>
       )}
 
       {pendingRequests.length>0&&(
@@ -920,7 +1062,7 @@ function ProfileTab({profile,event,onProfileUpdate,isEnded,registration}:any){
             {isEnded?"No connections from this event":"Connect with people to see them here"}
           </p>
         ):(
-          connections.map((c:any)=>{const isUnlocked=unlocked.has(c.id);return(
+          connections.map((c:any)=>{const isUnlocked=unlocked.has(c.id);const signalSent=signalSentIds.has(c.id);return(
             <div key={c.id} style={{background:isUnlocked?"rgba(226,109,52,0.08)":"rgba(26,26,36,0.9)",borderRadius:"14px",padding:"14px",marginBottom:"8px",border:isUnlocked?"1px solid rgba(226,109,52,0.25)":"1px solid rgba(255,255,255,0.06)"}}>
               <div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-start"}}>
                 <div style={{flex:1}}>
@@ -932,11 +1074,64 @@ function ProfileTab({profile,event,onProfileUpdate,isEnded,registration}:any){
                 {!isUnlocked&&<button onClick={()=>startScan(c)} style={{background:"rgba(226,109,52,0.15)",color:"#E26D34",border:"1px solid rgba(226,109,52,0.15)",borderRadius:"8px",padding:"5px 10px",fontSize:"11px",fontWeight:"600",cursor:"pointer",whiteSpace:"nowrap",marginLeft:"8px"}}>Scan to unlock</button>}
                 {isUnlocked&&<span style={{fontSize:"10px",color:"#E26D34",fontWeight:"600",marginLeft:"8px",background:"rgba(226,109,52,0.12)",padding:"2px 8px",borderRadius:"6px"}}>✓ Unlocked</span>}
               </div>
+              {isUnlocked&&(
+                <button
+                  onClick={()=>setSignalTarget(c)}
+                  disabled={signalSent}
+                  style={{marginTop:"10px",width:"100%",padding:"8px",borderRadius:"8px",background:signalSent?"rgba(255,255,255,0.03)":"transparent",border:signalSent?"1px solid rgba(255,255,255,0.06)":"1px solid rgba(226,109,52,0.3)",color:signalSent?"rgba(240,237,232,0.3)":"#E26D34",fontSize:"12px",fontWeight:"600",cursor:signalSent?"default":"pointer"}}
+                >
+                  {signalSent?"Meetup signal sent":"Signal Meetup →"}
+                </button>
+              )}
             </div>
           );}
           )
         )}
       </div>
+
+      {signalNotification&&(
+        <div style={{background:"rgba(226,109,52,0.08)",border:"1px solid rgba(226,109,52,0.2)",borderRadius:"12px",padding:"10px 14px",marginTop:"12px"}}>
+          <p style={{color:"#E26D34",fontSize:"12px",margin:0,textAlign:"center"}}>{signalNotification}</p>
+        </div>
+      )}
+
+      {signalTarget&&(
+        <div style={{position:"fixed",inset:0,background:"rgba(0,0,0,0.7)",display:"flex",alignItems:"flex-end",zIndex:50}} onClick={()=>setSignalTarget(null)}>
+          <div style={{background:"#0c0c0f",borderRadius:"24px 24px 0 0",padding:"24px",width:"100%",borderTop:"1px solid rgba(255,255,255,0.05)"}} onClick={e=>e.stopPropagation()}>
+            <p style={{color:"#fff",fontSize:"17px",fontWeight:"500",marginBottom:"4px"}}>Where should you meet {getFirstName(signalTarget.display_name)}?</p>
+            <p style={{color:"#666",fontSize:"13px",marginBottom:"16px"}}>Pick a station or write your own spot</p>
+            {eventStations.length>0&&(
+              <div style={{display:"flex",flexDirection:"column",gap:"6px",marginBottom:"12px"}}>
+                {eventStations.map((s:any)=>(
+                  <button
+                    key={s.id}
+                    onClick={()=>{setSignalStationId(s.id);setSignalCustomLocation("");}}
+                    style={{textAlign:"left",padding:"10px 12px",borderRadius:"8px",background:signalStationId===s.id?"rgba(226,109,52,0.1)":"rgba(255,255,255,0.02)",border:signalStationId===s.id?"1px solid rgba(226,109,52,0.4)":"1px solid rgba(255,255,255,0.06)",color:signalStationId===s.id?"#E26D34":"#ccc",fontSize:"13px",cursor:"pointer"}}
+                  >
+                    {s.name}
+                  </button>
+                ))}
+              </div>
+            )}
+            <input
+              value={signalCustomLocation}
+              onChange={e=>{setSignalCustomLocation(e.target.value);if(e.target.value)setSignalStationId("");}}
+              placeholder="Or type your own meetup spot"
+              style={{width:"100%",padding:"10px 12px",borderRadius:"8px",border:"1px solid rgba(255,255,255,0.08)",background:"rgba(255,255,255,0.02)",color:"#fff",fontSize:"13px",outline:"none",marginBottom:"20px",boxSizing:"border-box"}}
+            />
+            <div style={{display:"flex",gap:"12px"}}>
+              <button onClick={()=>setSignalTarget(null)} style={{flex:1,padding:"11px",borderRadius:"10px",background:"transparent",color:"rgba(240,237,232,0.5)",border:"1px solid rgba(240,237,232,0.15)",fontSize:"13px",cursor:"pointer"}}>Cancel</button>
+              <button
+                onClick={sendSignalMeetup}
+                disabled={!signalStationId&&!signalCustomLocation.trim()}
+                style={{flex:1,padding:"11px",borderRadius:"10px",background:"transparent",color:(!signalStationId&&!signalCustomLocation.trim())?"rgba(240,237,232,0.2)":"#E26D34",border:"1px solid rgba(226,109,52,0.4)",fontSize:"13px",cursor:(!signalStationId&&!signalCustomLocation.trim())?"default":"pointer",fontWeight:"500"}}
+              >
+                Send Signal →
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
