@@ -17,7 +17,7 @@ export async function GET(req:NextRequest){
     .eq('id',eventId)
     .single();
 
-  if(!event||event.status!=='live'){
+  if(!event||event.status==='ended'){
     return NextResponse.json({host:null});
   }
 

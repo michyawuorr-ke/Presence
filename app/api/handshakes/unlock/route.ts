@@ -29,7 +29,21 @@ export async function POST(req:NextRequest){
       if(!verified){
         return NextResponse.json({error:'Invalid or tampered QR code'},{status:403});
       }
-      target_registration_id=verified;
+      // Networking QR payloads are "<registrationId>:<windowId>" where
+      // windowId rotates every 60s. Reject anything older than one window
+      // back so a screenshot of someone's QR stops working within ~1-2
+      // minutes instead of being reusable forever.
+      const lastColon=verified.lastIndexOf(':');
+      if(lastColon===-1){
+        return NextResponse.json({error:'Invalid QR code format'},{status:403});
+      }
+      const regIdPart=verified.slice(0,lastColon);
+      const windowPart=parseInt(verified.slice(lastColon+1),10);
+      const currentWindow=Math.floor(Date.now()/60000);
+      if(!Number.isFinite(windowPart)||currentWindow-windowPart>1||windowPart>currentWindow){
+        return NextResponse.json({error:'This QR code has expired — ask them to reopen their Ticket tab'},{status:403});
+      }
+      target_registration_id=regIdPart;
     }
 
     if(!scanner_registration_id||!target_registration_id){

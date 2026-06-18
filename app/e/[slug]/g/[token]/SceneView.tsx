@@ -57,22 +57,30 @@ function generatePositions(count: number) {
 function Scene({event,registration,profile,onProfileUpdate}:any){
 const[entryQR,setEntryQR]=useState("");
 const[networkingQR,setNetworkingQR]=useState("");
+const[qrError,setQrError]=useState(false);
   useEffect(()=>{
   if(!registration)return;
+  let cancelled=false;
   async function genQRs(){
-    // Generate signed QR payloads via API
     const res=await fetch('/api/qr/generate?reg_id='+registration.id).catch(()=>null);
+    if(cancelled)return;
     if(res?.ok){
       const{entryPayload,unlockPayload}=await res.json();
-      QRCode.toDataURL(entryPayload,{errorCorrectionLevel:"H",margin:2,width:256}).then(setEntryQR).catch(console.error);
-      QRCode.toDataURL(unlockPayload,{errorCorrectionLevel:"H",margin:2,width:256}).then(setNetworkingQR).catch(console.error);
+      if(cancelled)return;
+      setQrError(false);
+      // Entry QR is stable for the registration's lifetime, only needs to
+      // render once. Networking QR rotates, so it's regenerated on every tick.
+      if(!entryQR)QRCode.toDataURL(entryPayload,{errorCorrectionLevel:"H",margin:2,width:256}).then(d=>!cancelled&&setEntryQR(d)).catch(console.error);
+      QRCode.toDataURL(unlockPayload,{errorCorrectionLevel:"H",margin:2,width:256}).then(d=>!cancelled&&setNetworkingQR(d)).catch(console.error);
     }else{
-      // Fallback to unsigned (backward compat)
-      QRCode.toDataURL("presence:entry:"+registration.id,{errorCorrectionLevel:"H",margin:2,width:256}).then(setEntryQR).catch(console.error);
-      QRCode.toDataURL("presence:unlock:"+registration.id,{errorCorrectionLevel:"H",margin:2,width:256}).then(setNetworkingQR).catch(console.error);
+      setQrError(true);
     }
   }
   genQRs();
+  // Networking QR rotates every 60s server-side — refresh in lockstep so
+  // the displayed code stays valid and a screenshot goes stale quickly.
+  const interval=setInterval(genQRs,60000);
+  return()=>{cancelled=true;clearInterval(interval);};
 },[registration]);
 const[tab,setTab]=useState<Tab>("scene");
   const[editing,setEditing]=useState(false);
@@ -158,7 +166,13 @@ const[tab,setTab]=useState<Tab>("scene");
       {fiveMin&&<div style={{background:"#E26D34",padding:"12px 20px",textAlign:"center"}}><p style={{color:"#000",fontSize:"13px",fontWeight:"500"}}>⏱ Event ends in 5 minutes</p></div>}
 
       {tab==="scene"&&(
-        <div style={{padding:"24px 20px"}}>
+        <div>
+          {event?.banner_url&&(
+            <div style={{width:"100%",height:"160px",overflow:"hidden",marginBottom:"4px"}}>
+              <img src={event.banner_url} alt="" style={{width:"100%",height:"100%",objectFit:"cover",objectPosition:"top center"}}/>
+            </div>
+          )}
+          <div style={{padding:"24px 20px"}}>
           <p style={{fontSize:"18px",fontWeight:"700",letterSpacing:"-0.02em",marginBottom:"20px",fontFamily:"'Helvetica Neue',Arial,sans-serif"}}><span style={{color:"#ffffff"}}>Or</span><span style={{color:"#E26D34"}}>ee</span><span style={{color:"#ffffff"}}>ti</span></p>
           <h1 style={{fontSize:"28px",fontWeight:"500",color:"#f0ede8",marginBottom:"8px",letterSpacing:"-0.03em",lineHeight:"1.15"}}>{event?.title}</h1>
           <p style={{fontSize:"13px",color:"rgba(240,237,232,0.5)",marginBottom:"4px",letterSpacing:"0.01em"}}>📍 {event?.venue}</p>
@@ -205,6 +219,7 @@ const[tab,setTab]=useState<Tab>("scene");
               <button onClick={()=>setTab("networking")} style={{width:"100%",padding:"11px",borderRadius:"10px",background:"transparent",color:"#E26D34",border:"1px solid rgba(226,109,52,0.35)",fontSize:"13px",cursor:"pointer",fontWeight:"500",letterSpacing:"0.08em",textTransform:"uppercase",transition:"all 0.2s ease"}}>Start Networking →</button>
             </div>
           )}
+          </div>
         </div>
       )}
 
@@ -222,18 +237,18 @@ const[tab,setTab]=useState<Tab>("scene");
             <div style={{background:"#000",borderRadius:"10px",padding:"12px",marginBottom:"8px"}}>
               <p style={{color:"#fff",fontSize:"12px",fontWeight:"500",marginBottom:"4px"}}>Entry QR</p>
               <p style={{color:"#555",fontSize:"11px",marginBottom:"12px"}}>Show at entrance</p>
-              {entryQR?<img src={entryQR} style={{width:"130px",height:"130px",margin:"0 auto",display:"block"}}/>:<p style={{color:"#666",fontSize:"12px"}}>Generating...</p>}
+              {entryQR?<img src={entryQR} style={{width:"130px",height:"130px",margin:"0 auto",display:"block"}}/>:qrError?<p style={{color:"#F97316",fontSize:"12px"}}>Couldn't load QR — check your connection</p>:<p style={{color:"#666",fontSize:"12px"}}>Generating...</p>}
             </div>
             <details style={{background:"#111",borderRadius:"10px",padding:"12px",border:"1px solid rgba(240,237,232,0.03)"}}>
               <summary style={{listStyle:"none",display:"flex",justifyContent:"space-between",alignItems:"center",cursor:"pointer",userSelect:"none"}}>
                 <div>
                   <p style={{color:"#fff",fontSize:"12px",fontWeight:"500",margin:0}}>Networking QR</p>
-                  <p style={{color:"#555",fontSize:"11px",margin:"4px 0 0"}}>For profile unlocks</p>
+                  <p style={{color:"#555",fontSize:"11px",margin:"4px 0 0"}}>For profile unlocks · refreshes every minute</p>
                 </div>
                 <span style={{fontSize:"11px",color:"#FFBF00",fontWeight:"600",textTransform:"uppercase",letterSpacing:"0.05em",background:"rgba(255,255,255,0.05)",padding:"4px 8px",borderRadius:"6px"}}>Toggle ⊙</span>
               </summary>
               <div style={{marginTop:"12px",paddingTop:"12px",borderTop:"1px solid rgba(255,255,255,0.05)"}}>
-                {networkingQR?<img src={networkingQR} style={{width:"130px",height:"130px",margin:"0 auto",display:"block"}}/>:<p style={{color:"#666",fontSize:"12px"}}>Generating...</p>}
+                {networkingQR?<img src={networkingQR} style={{width:"130px",height:"130px",margin:"0 auto",display:"block"}}/>:qrError?<p style={{color:"#F97316",fontSize:"12px"}}>Couldn't load QR — check your connection</p>:<p style={{color:"#666",fontSize:"12px"}}>Generating...</p>}
               </div>
             </details>
           </div>
@@ -276,13 +291,15 @@ function parseIntents(raw:any):string[]{
 
 const REASON_OPTIONS=["Capital","Synergy","Mentorship","Opportunities"];
 
-function PreEventDiscovery({event,profile,sentRequests,setSentRequests}:any){
+function PreEventDiscovery({event,profile,sentRequests,setSentRequests,registration}:any){
   const[attendees,setAttendees]=useState<any[]>([]);
   const[stations,setStations]=useState<any[]>([]);
   const[loading,setLoading]=useState(true);
   const[confirmTarget,setConfirmTarget]=useState<any>(null);
   const[selectedReason,setSelectedReason]=useState("");
   const[notification,setNotification]=useState("");
+  const[hostNode,setHostNode]=useState<any>(null);
+  const[search,setSearch]=useState("");
 
   useEffect(()=>{
     if(!event||!profile)return;
@@ -296,10 +313,15 @@ function PreEventDiscovery({event,profile,sentRequests,setSentRequests}:any){
       setAttendees((guests||[]).map((g:any)=>({...g,networking_intents:parseIntents(g.networking_intents)})));
       setStations(st||[]);
       setLoading(false);
+      if(registration?.status!=="host"){
+        const hostRes=await fetch('/api/events/host-profile?event_id='+event.id);
+        const hostData=await hostRes.json();
+        if(!cancelled&&hostData.host)setHostNode(hostData.host);
+      }
     }
     load();
     return()=>{cancelled=true;};
-  },[event,profile]);
+  },[event,profile,registration]);
 
   async function sendConnect(target:any){
     if(!selectedReason)return;
@@ -339,15 +361,32 @@ function PreEventDiscovery({event,profile,sentRequests,setSentRequests}:any){
     );
   }
 
-  const stationless=attendees.filter((a:any)=>!a.target_station_id);
+  const q=search.trim().toLowerCase();
+  const matchesSearch=(a:any)=>{
+    if(!q)return true;
+    const stationName=stations.find((s:any)=>s.id===a.target_station_id)?.name||"";
+    return a.display_name?.toLowerCase().includes(q)
+      ||a.role_title?.toLowerCase().includes(q)
+      ||stationName.toLowerCase().includes(q)
+      ||(a.networking_intents||[]).some((i:string)=>i.toLowerCase().includes(q));
+  };
+
+  const stationless=attendees.filter((a:any)=>!a.target_station_id&&matchesSearch(a));
   const grouped=stations
-    .map((s:any)=>({...s,attendees:attendees.filter((a:any)=>a.target_station_id===s.id)}))
+    .map((s:any)=>({...s,attendees:attendees.filter((a:any)=>a.target_station_id===s.id&&matchesSearch(a))}))
     .filter((s:any)=>s.attendees.length>0);
 
   return(
     <div style={{padding:"20px 16px",background:"#0a0a0b",minHeight:"calc(100vh - 100px)"}}>
       <p style={{fontSize:"10px",color:"#E26D34",letterSpacing:"0.15em",fontWeight:"600",textTransform:"uppercase",marginBottom:"4px"}}>Before The Event</p>
-      <p style={{fontSize:"13px",color:"rgba(240,237,232,0.4)",marginBottom:"20px"}}>See who's coming and where they'll be.</p>
+      <p style={{fontSize:"13px",color:"rgba(240,237,232,0.4)",marginBottom:"16px"}}>See who's coming and where they'll be.</p>
+
+      <input
+        value={search}
+        onChange={e=>setSearch(e.target.value)}
+        placeholder="Search by name, role, station, or intent"
+        style={{width:"100%",padding:"10px 14px",borderRadius:"10px",border:"1px solid rgba(255,255,255,0.08)",background:"rgba(255,255,255,0.02)",color:"#fff",fontSize:"13px",outline:"none",marginBottom:"16px",boxSizing:"border-box"}}
+      />
 
       {notification&&(
         <div style={{background:"rgba(226,109,52,0.08)",border:"1px solid rgba(226,109,52,0.2)",borderRadius:"10px",padding:"10px 14px",marginBottom:"16px"}}>
@@ -355,8 +394,23 @@ function PreEventDiscovery({event,profile,sentRequests,setSentRequests}:any){
         </div>
       )}
 
+      {hostNode&&!q&&(
+        <div style={{marginBottom:"20px"}}>
+          <p style={{fontSize:"11px",fontWeight:"700",color:"#D4AF37",letterSpacing:"0.08em",textTransform:"uppercase",marginBottom:"10px"}}>Organizer</p>
+          <div style={{background:"linear-gradient(135deg,rgba(212,175,55,0.1),rgba(212,175,55,0.03))",border:"1px solid rgba(212,175,55,0.25)",borderRadius:"14px",padding:"14px",display:"flex",justifyContent:"space-between",alignItems:"center"}}>
+            <div>
+              <p style={{fontSize:"9px",fontWeight:"700",color:"#D4AF37",letterSpacing:"0.1em",margin:"0 0 4px"}}>★ ORGANIZER</p>
+              <p style={{fontSize:"14px",fontWeight:"600",color:"#f1f0f5",margin:0}}>{hostNode.display_name}</p>
+            </div>
+            <button onClick={()=>setConfirmTarget({...hostNode,is_host:true})} style={{fontSize:"11px",fontWeight:"600",color:"#D4AF37",background:"transparent",border:"1px solid rgba(212,175,55,0.4)",borderRadius:"8px",padding:"6px 12px",cursor:"pointer"}}>Connect</button>
+          </div>
+        </div>
+      )}
+
       {attendees.length===0?(
         <p style={{color:"#555",fontSize:"14px",textAlign:"center",padding:"60px 0"}}>No other attendees registered yet.</p>
+      ):grouped.length===0&&stationless.length===0?(
+        <p style={{color:"#555",fontSize:"14px",textAlign:"center",padding:"60px 0"}}>No attendees match your search.</p>
       ):(
         <div style={{display:"flex",flexDirection:"column",gap:"20px"}}>
           {grouped.map((station:any)=>(
@@ -466,6 +520,7 @@ function NetworkingTab({event,profile,isLive,isEnded,registration}:any){
   const[incoming,setIncoming]=useState<any>(null);
   const[confirmNode,setConfirmNode]=useState<any>(null);
   const[selectedLiveReason,setSelectedLiveReason]=useState("");
+  const[liveSearch,setLiveSearch]=useState("");
   const[sentRequests,setSentRequests]=useState<Set<string>>(new Set());
   const[notification,setNotification]=useState<string>("");
   const channelRef=useRef<any>(null);
@@ -618,6 +673,7 @@ function NetworkingTab({event,profile,isLive,isEnded,registration}:any){
         profile={profile}
         sentRequests={sentRequests}
         setSentRequests={setSentRequests}
+        registration={registration}
       />
     );
   }
@@ -646,6 +702,13 @@ function NetworkingTab({event,profile,isLive,isEnded,registration}:any){
           <p style={{color:"#fff",fontSize:"12px",margin:0}}>{nodes.length} nearby</p>
         </div>
       </div>
+
+      <input
+        value={liveSearch}
+        onChange={e=>setLiveSearch(e.target.value)}
+        placeholder="Search by name, role, or intent"
+        style={{width:"100%",padding:"10px 14px",borderRadius:"10px",border:"1px solid rgba(255,255,255,0.08)",background:"rgba(255,255,255,0.03)",color:"#fff",fontSize:"13px",outline:"none",marginBottom:"16px",boxSizing:"border-box"}}
+      />
 
       {notification&&(
         <div style={{background:"rgba(0,0,0,0.8)",border:"1px solid rgba(255,255,255,0.1)",borderRadius:"14px",padding:"10px 16px",marginBottom:"16px",animation:"fadeIn 0.4s ease"}}>
@@ -681,7 +744,13 @@ function NetworkingTab({event,profile,isLive,isEnded,registration}:any){
           {networkingActive&&nodes.length===0&&(
             <p style={{color:"#555",fontSize:"14px",textAlign:"center",padding:"60px 0"}}>No one else is networking right now.</p>
           )}
-          {networkingActive&&nodes.map((node:any)=>(
+          {networkingActive&&nodes.filter((node:any)=>{
+            const q=liveSearch.trim().toLowerCase();
+            if(!q)return true;
+            return node.display_name?.toLowerCase().includes(q)
+              ||node.role_title?.toLowerCase().includes(q)
+              ||(node.networking_intents||[]).some((i:string)=>i.toLowerCase().includes(q));
+          }).map((node:any)=>(
             <AttendeeCard key={node.id} attendee={node} sent={sentRequests.has(node.id)} onConnect={()=>setConfirmNode(node)} live/>
           ))}
         </div>
@@ -777,6 +846,36 @@ function ProfileTab({profile,event,onProfileUpdate,isEnded,registration}:any){
   const[eventStations,setEventStations]=useState<any[]>([]);
   const[signalNotification,setSignalNotification]=useState("");
   const[incomingSignals,setIncomingSignals]=useState<any[]>([]);
+  const[memoryTarget,setMemoryTarget]=useState<any>(null);
+  const[memoryDraft,setMemoryDraft]=useState("");
+  const[savedNotes,setSavedNotes]=useState<Record<string,string>>({});
+  const[memorySaving,setMemorySaving]=useState(false);
+
+  useEffect(()=>{
+    if(!profile)return;
+    supabase.from("connection_notes").select("about_id,note").eq("author_id",profile.id).then(({data})=>{
+      if(data){
+        const map:Record<string,string>={};
+        data.forEach((n:any)=>{if(n.note)map[n.about_id]=n.note;});
+        setSavedNotes(map);
+      }
+    });
+  },[profile]);
+
+  async function saveMemoryNote(){
+    if(!memoryTarget||!profile)return;
+    setMemorySaving(true);
+    await supabase.from("connection_notes").upsert({
+      handshake_id:memoryTarget.handshakeId,
+      author_id:profile.id,
+      about_id:memoryTarget.id,
+      note:memoryDraft,
+      updated_at:new Date().toISOString(),
+    },{onConflict:"handshake_id,author_id,about_id"});
+    setSavedNotes(prev=>({...prev,[memoryTarget.id]:memoryDraft}));
+    setMemorySaving(false);
+    setMemoryTarget(null);
+  }
 
   useEffect(()=>{
     if(!profile||!event)return;
@@ -886,7 +985,10 @@ function ProfileTab({profile,event,onProfileUpdate,isEnded,registration}:any){
       setUnlocked(new Set(connectedIds));
       if(connectedIds.length===0){setConnections([]);return;}
       const{data:profiles}=await supabase.from("guest_profiles").select("*").in("id",connectedIds);
-      setConnections(profiles||[]);
+      setConnections((profiles||[]).map((p:any)=>{
+        const hs=(handshakes||[]).find((h:any)=>h.sender_id===p.id||h.receiver_id===p.id);
+        return{...p,handshakeId:hs?.id};
+      }));
     }
     loadConnections();
     // Realtime - reload when a handshake involving this profile changes.
@@ -947,19 +1049,21 @@ function ProfileTab({profile,event,onProfileUpdate,isEnded,registration}:any){
         {fps:10,qrbox:{width:200,height:200}},
         async(decoded:string)=>{
           if(decoded.startsWith("presence:unlock:")){
-            const targetRegId=decoded.replace("presence:unlock:","");
             await scanner.stop();
             setScanning(false);
             setScanMsg("Unlocking...");
-            const res=await fetch("/api/handshakes/unlock",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({scanner_registration_id:registration.id,target_registration_id:targetRegId})});
+            const res=await fetch("/api/handshakes/unlock",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({scanner_registration_id:registration.id,target_registration_id:decoded})});
             if(res.ok){
               setUnlocked(prev=>new Set([...prev,conn.id]));
               setScanMsg("✅ Profile unlocked!");
               setScanTarget(null);
+              setMemoryTarget(conn);
+              setMemoryDraft("");
             }else{
-              setScanMsg("❌ Could not unlock. Make sure you are connected first.");
+              const body=await res.json().catch(()=>({}));
+              setScanMsg("❌ "+(body.error||"Could not unlock. Make sure you are connected first."));
             }
-            setTimeout(()=>setScanMsg(""),3000);
+            setTimeout(()=>setScanMsg(""),4000);
           }
         },
         ()=>{}
@@ -1119,7 +1223,7 @@ function ProfileTab({profile,event,onProfileUpdate,isEnded,registration}:any){
             {isEnded?"No connections from this event":"Connect with people to see them here"}
           </p>
         ):(
-          connections.map((c:any)=>{const isUnlocked=unlocked.has(c.id);const signalSent=signalSentIds.has(c.id);return(
+          connections.map((c:any)=>{const isUnlocked=unlocked.has(c.id);const signalSent=signalSentIds.has(c.id);const hasNote=!!savedNotes[c.id];return(
             <div key={c.id} style={{background:isUnlocked?"rgba(226,109,52,0.08)":"rgba(26,26,36,0.9)",borderRadius:"14px",padding:"14px",marginBottom:"8px",border:isUnlocked?"1px solid rgba(226,109,52,0.25)":"1px solid rgba(255,255,255,0.06)"}}>
               <div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-start"}}>
                 <div style={{flex:1}}>
@@ -1132,13 +1236,21 @@ function ProfileTab({profile,event,onProfileUpdate,isEnded,registration}:any){
                 {isUnlocked&&<span style={{fontSize:"10px",color:"#E26D34",fontWeight:"600",marginLeft:"8px",background:"rgba(226,109,52,0.12)",padding:"2px 8px",borderRadius:"6px"}}>✓ Unlocked</span>}
               </div>
               {isUnlocked&&(
-                <button
-                  onClick={()=>setSignalTarget(c)}
-                  disabled={signalSent}
-                  style={{marginTop:"10px",width:"100%",padding:"8px",borderRadius:"8px",background:signalSent?"rgba(255,255,255,0.03)":"transparent",border:signalSent?"1px solid rgba(255,255,255,0.06)":"1px solid rgba(226,109,52,0.3)",color:signalSent?"rgba(240,237,232,0.3)":"#E26D34",fontSize:"12px",fontWeight:"600",cursor:signalSent?"default":"pointer"}}
-                >
-                  {signalSent?"Meetup signal sent":"Signal Meetup →"}
-                </button>
+                <div style={{display:"flex",gap:"8px",marginTop:"10px"}}>
+                  <button
+                    onClick={()=>setSignalTarget(c)}
+                    disabled={signalSent}
+                    style={{flex:1,padding:"8px",borderRadius:"8px",background:signalSent?"rgba(255,255,255,0.03)":"transparent",border:signalSent?"1px solid rgba(255,255,255,0.06)":"1px solid rgba(226,109,52,0.3)",color:signalSent?"rgba(240,237,232,0.3)":"#E26D34",fontSize:"12px",fontWeight:"600",cursor:signalSent?"default":"pointer"}}
+                  >
+                    {signalSent?"Meetup signal sent":"Signal Meetup →"}
+                  </button>
+                  <button
+                    onClick={()=>{setMemoryTarget(c);setMemoryDraft(savedNotes[c.id]||"");}}
+                    style={{flexShrink:0,padding:"8px 12px",borderRadius:"8px",background:"transparent",border:"1px solid rgba(255,255,255,0.1)",color:hasNote?"#E26D34":"rgba(240,237,232,0.4)",fontSize:"12px",cursor:"pointer"}}
+                  >
+                    {hasNote?"📝 Note":"+ Note"}
+                  </button>
+                </div>
               )}
             </div>
           );}
@@ -1186,6 +1298,52 @@ function ProfileTab({profile,event,onProfileUpdate,isEnded,registration}:any){
                 Send Signal →
               </button>
             </div>
+          </div>
+        </div>
+      )}
+
+      {scanning&&(
+        <div style={{position:"fixed",inset:0,background:"#000",zIndex:60,display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",padding:"24px"}}>
+          <p style={{color:"#fff",fontSize:"14px",marginBottom:"4px",fontWeight:"500"}}>Scanning for {scanTarget?.display_name}'s Networking QR</p>
+          <p style={{color:"#888",fontSize:"12px",marginBottom:"20px"}}>Point your camera at their QR code</p>
+          <div id="qr-reader" style={{width:"260px",height:"260px",borderRadius:"16px",overflow:"hidden",border:"1px solid rgba(255,255,255,0.15)"}}/>
+          <button onClick={stopScan} style={{marginTop:"28px",padding:"11px 28px",borderRadius:"50px",background:"rgba(255,255,255,0.08)",color:"#fff",border:"1px solid rgba(255,255,255,0.1)",fontSize:"13px",cursor:"pointer"}}>Cancel</button>
+        </div>
+      )}
+
+      {memoryTarget&&(
+        <div style={{position:"fixed",inset:0,background:"rgba(0,0,0,0.75)",display:"flex",alignItems:"flex-end",zIndex:50}} onClick={()=>setMemoryTarget(null)}>
+          <div style={{background:"linear-gradient(165deg,#F5EFE3,#EDE4D3)",borderRadius:"24px 24px 0 0",padding:"28px 24px",width:"100%",boxShadow:"0 -20px 60px rgba(0,0,0,0.4)"}} onClick={e=>e.stopPropagation()}>
+            <div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-start",marginBottom:"4px"}}>
+              <p style={{fontSize:"10px",color:"#8a7355",letterSpacing:"0.15em",textTransform:"uppercase",fontWeight:"700",margin:0}}>Private Note</p>
+              <button onClick={()=>setMemoryTarget(null)} style={{background:"none",border:"none",color:"#8a7355",fontSize:"13px",cursor:"pointer",padding:0}}>✕</button>
+            </div>
+            <p style={{fontSize:"19px",fontWeight:"600",color:"#2a2118",margin:"6px 0 2px",fontFamily:"Georgia, serif"}}>{memoryTarget.display_name}</p>
+            <p style={{fontSize:"12px",color:"#8a7355",margin:"0 0 20px"}}>{event?.title}{event?.venue?` · ${event.venue}`:""}</p>
+
+            <div style={{background:"rgba(255,255,255,0.5)",borderRadius:"14px",padding:"16px",border:"1px solid rgba(138,115,85,0.15)"}}>
+              <textarea
+                value={memoryDraft}
+                onChange={e=>setMemoryDraft(e.target.value)}
+                placeholder={"Where you met...\nWhat you talked about...\nFollow up..."}
+                style={{width:"100%",minHeight:"110px",background:"transparent",border:"none",outline:"none",resize:"none",color:"#2a2118",fontSize:"14px",lineHeight:"1.7",fontFamily:"Georgia, serif",boxSizing:"border-box"}}
+                autoFocus
+              />
+            </div>
+
+            <button
+              onClick={saveMemoryNote}
+              disabled={memorySaving}
+              style={{width:"100%",marginTop:"16px",padding:"13px",borderRadius:"12px",background:"#2a2118",color:"#F5EFE3",border:"none",fontSize:"13px",fontWeight:"600",letterSpacing:"0.04em",cursor:memorySaving?"default":"pointer",opacity:memorySaving?0.6:1}}
+            >
+              {memorySaving?"Saving...":"Save to memory"}
+            </button>
+            <button
+              onClick={()=>setMemoryTarget(null)}
+              style={{width:"100%",marginTop:"8px",padding:"10px",background:"transparent",border:"none",color:"#8a7355",fontSize:"12px",cursor:"pointer"}}
+            >
+              Skip for now
+            </button>
           </div>
         </div>
       )}
