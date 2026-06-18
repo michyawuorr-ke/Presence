@@ -967,9 +967,18 @@ function ProfileTab({profile,event,onProfileUpdate,isEnded,registration}:any){
 
   async function respondToPending(requestId:string,requesterId:string,approve:boolean){
     setPendingRequests(prev=>prev.filter(r=>r.requestId!==requestId));
-    await supabase.from("handshake_requests").update({status:approve?"approved":"declined"}).eq("id",requestId);
+    const{error:updateErr}=await supabase.from("handshake_requests").update({status:approve?"approved":"declined"}).eq("id",requestId);
+    if(updateErr){
+      setSignalNotification("❌ Couldn't update request: "+updateErr.message);
+      setTimeout(()=>setSignalNotification(""),8000);
+      return;
+    }
     if(approve){
-      await supabase.from("handshakes").insert({sender_id:requesterId,receiver_id:profile.id,status:"accepted"});
+      const{error:hsErr}=await supabase.from("handshakes").insert({sender_id:requesterId,receiver_id:profile.id,status:"accepted"});
+      if(hsErr){
+        setSignalNotification("❌ Couldn't create connection: "+hsErr.message);
+        setTimeout(()=>setSignalNotification(""),8000);
+      }
     }
   }
 
