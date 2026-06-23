@@ -76,12 +76,12 @@ export default function LoginPage() {
       <main style={{ minHeight: "100vh", background: "#000", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", padding: "32px 24px" }}>
         <div style={{ marginBottom: "56px", textAlign: "center", display: "flex", flexDirection: "column", alignItems: "center", gap: "16px" }}>
           <OreetiLogo size="sm" />
-          <p style={{ fontSize: "11px", letterSpacing: "0.2em", color: "#F59E0B", textTransform: "uppercase", fontWeight: "500", opacity: 0.9 }}>
+          <p style={{ fontSize: "11px", letterSpacing: "0.2em", color: "#D4AF37", textTransform: "uppercase", fontWeight: "500", opacity: 0.9 }}>
             The room activated
           </p>
         </div>
         <div style={{ width: "100%", maxWidth: "300px", display: "flex", flexDirection: "column", gap: "16px" }}>
-          <button onClick={() => { setMode("signup"); setError(""); }} style={{ width: "100%", padding: "14px", borderRadius: "6px", background: "transparent", color: "#F59E0B", border: "1px solid rgba(245,158,11,0.45)", fontSize: "12px", fontWeight: "500", letterSpacing: "0.06em", textTransform: "uppercase", cursor: "pointer" }}>
+          <button onClick={() => { setMode("signup"); setError(""); }} style={{ width: "100%", padding: "14px", borderRadius: "6px", background: "transparent", color: "#D4AF37", border: "1px solid rgba(212,175,55,0.45)", fontSize: "12px", fontWeight: "500", letterSpacing: "0.06em", textTransform: "uppercase", cursor: "pointer" }}>
             Create an Account
           </button>
           <button onClick={() => { setMode("login"); setError(""); }} style={{ width: "100%", padding: "12px", background: "transparent", color: "rgba(255,255,255,0.4)", border: "none", fontSize: "12px", fontWeight: "500", letterSpacing: "0.06em", textTransform: "uppercase", cursor: "pointer" }}>
@@ -95,10 +95,10 @@ export default function LoginPage() {
   if (mode === "sent") {
     return (
       <main style={{ minHeight: "100vh", background: "#000", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", padding: "32px 24px" }}>
-        <div style={{ fontSize: "24px", color: "#F59E0B", marginBottom: "24px", opacity: 0.85 }}>✉</div>
+        <div style={{ fontSize: "24px", color: "#D4AF37", marginBottom: "24px", opacity: 0.85 }}>✉</div>
         <h2 style={{ fontSize: "14px", fontWeight: "600", color: "#fff", textAlign: "center", marginBottom: "8px", letterSpacing: "0.1em", textTransform: "uppercase" }}>Check your email</h2>
         <p style={{ color: "rgba(255,255,255,0.4)", textAlign: "center", marginBottom: "4px", fontSize: "13px" }}>We sent an access verification link to</p>
-        <p style={{ color: "#F59E0B", textAlign: "center", marginBottom: "32px", fontSize: "14px", fontWeight: "500" }}>{email}</p>
+        <p style={{ color: "#D4AF37", textAlign: "center", marginBottom: "32px", fontSize: "14px", fontWeight: "500" }}>{email}</p>
         <button onClick={() => { setMode("landing"); setEmail(""); setName(""); setPhone(""); }} style={{ background: "transparent", border: "none", color: "rgba(255,255,255,0.3)", fontSize: "11px", letterSpacing: "0.06em", textTransform: "uppercase", cursor: "pointer" }}>
           ← Return
         </button>
@@ -115,7 +115,7 @@ export default function LoginPage() {
         
         <div style={{ marginBottom: "40px", textAlign: "center", display: "flex", flexDirection: "column", alignItems: "center", gap: "16px" }}>
           <OreetiLogo size="sm" />
-          <p style={{ fontSize: "11px", letterSpacing: "0.2em", color: "#F59E0B", textTransform: "uppercase", fontWeight: "500", opacity: 0.9 }}>
+          <p style={{ fontSize: "11px", letterSpacing: "0.2em", color: "#D4AF37", textTransform: "uppercase", fontWeight: "500", opacity: 0.9 }}>
             The room activated
           </p>
           <h1 style={{ fontSize: "18px", fontWeight: "600", color: "#fff", letterSpacing: "0.08em", textTransform: "uppercase", marginTop: "16px", marginBottom: "6px" }}>
@@ -160,9 +160,9 @@ export default function LoginPage() {
         <div style={{ marginTop: "24px", textAlign: "center", padding: "0 16px" }}>
           <p style={{ color: "rgba(255,255,255,0.3)", fontSize: "11px", lineHeight: "1.6", letterSpacing: "0.03em", margin: 0 }}>
             By continuing above, you explicitly agree to be bound by Oreeti’s premium{" "}
-            <a href="/terms" target="_blank" style={{ color: "#F59E0B", textDecoration: "none", borderBottom: "1px solid rgba(245, 158, 11, 0.4)", fontWeight: "600" }}>Terms of Service</a>
+            <a href="/terms" target="_blank" style={{ color: "#D4AF37", textDecoration: "none", borderBottom: "1px solid rgba(212, 175, 55, 0.4)", fontWeight: "600" }}>Terms of Service</a>
             {" "}and dynamic{" "}
-            <a href="/privacy" target="_blank" style={{ color: "#F59E0B", textDecoration: "none", borderBottom: "1px solid rgba(245, 158, 11, 0.4)", fontWeight: "600" }}>Privacy Policy</a>.
+            <a href="/privacy" target="_blank" style={{ color: "#D4AF37", textDecoration: "none", borderBottom: "1px solid rgba(212, 175, 55, 0.4)", fontWeight: "600" }}>Privacy Policy</a>.
           </p>
         </div>
       </div>

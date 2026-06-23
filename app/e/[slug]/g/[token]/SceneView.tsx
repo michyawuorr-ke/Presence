@@ -378,7 +378,7 @@ function PreEventDiscovery({event,profile,sentRequests,setSentRequests,registrat
 
   return(
     <div style={{padding:"20px 16px",background:"#0a0a0b",minHeight:"calc(100vh - 100px)"}}>
-      <p style={{fontSize:"10px",color:"#E26D34",letterSpacing:"0.15em",fontWeight:"600",textTransform:"uppercase",marginBottom:"4px"}}>Before The Event</p>
+      <p style={{fontSize:"10px",color:"#8A7355",letterSpacing:"0.15em",fontWeight:"600",textTransform:"uppercase",marginBottom:"4px"}}>Before The Event</p>
       <p style={{fontSize:"13px",color:"rgba(240,237,232,0.4)",marginBottom:"16px"}}>See who's coming and where they'll be.</p>
 
       <input
@@ -439,7 +439,7 @@ function PreEventDiscovery({event,profile,sentRequests,setSentRequests,registrat
       {confirmTarget&&(
         <div style={{position:"fixed",inset:0,background:"rgba(0,0,0,0.7)",display:"flex",alignItems:"flex-end",zIndex:30}} onClick={()=>{setConfirmTarget(null);setSelectedReason("");}}>
           <div style={{background:"#0c0c0f",borderRadius:"24px 24px 0 0",padding:"24px",width:"100%",borderTop:"1px solid rgba(255,255,255,0.05)"}} onClick={e=>e.stopPropagation()}>
-            <p style={{fontSize:"10px",color:"#E26D34",letterSpacing:"0.15em",fontWeight:"600",textTransform:"uppercase",marginBottom:"8px"}}>Intentional Handshake</p>
+            <p style={{fontSize:"10px",color:"#8A7355",letterSpacing:"0.15em",fontWeight:"600",textTransform:"uppercase",marginBottom:"8px"}}>Intentional Handshake</p>
             <p style={{color:"#fff",fontSize:"17px",fontWeight:"500",marginBottom:"4px"}}>Meet {getFirstName(confirmTarget.display_name)}?</p>
             <p style={{color:"#666",fontSize:"13px",marginBottom:"12px"}}>{confirmTarget.role_title||""}</p>
             {confirmTarget.networking_intents?.length>0&&(
@@ -483,7 +483,7 @@ function PreEventDiscovery({event,profile,sentRequests,setSentRequests,registrat
 
 function AttendeeCard({attendee,sent,onConnect,live}:any){
   return(
-    <div style={{background:"rgba(255,255,255,0.015)",border:"1px solid rgba(255,255,255,0.05)",borderRadius:"14px",padding:"14px"}}>
+    <div style={{background:"#1C1C1E",border:"1px solid rgba(255,255,255,0.07)",borderRadius:"14px",padding:"14px"}}>
       <div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-start",gap:"12px"}}>
         <div style={{flex:1,minWidth:0}}>
           <div style={{display:"flex",alignItems:"center",gap:"6px"}}>
@@ -494,7 +494,7 @@ function AttendeeCard({attendee,sent,onConnect,live}:any){
           {attendee.networking_intents?.length>0&&(
             <div style={{display:"flex",flexWrap:"wrap",gap:"4px",marginTop:"8px"}}>
               {attendee.networking_intents.map((intent:string)=>(
-                <span key={intent} style={{fontSize:"10px",color:"#E26D34",background:"rgba(226,109,52,0.08)",border:"1px solid rgba(226,109,52,0.18)",borderRadius:"5px",padding:"2px 7px",fontWeight:"600"}}>{intent}</span>
+                <span key={intent} style={{fontSize:"10px",color:"#8A7355",background:"rgba(138,115,85,0.08)",border:"1px solid rgba(138,115,85,0.18)",borderRadius:"5px",padding:"2px 7px",fontWeight:"600"}}>{intent}</span>
               ))}
             </div>
           )}
@@ -691,17 +691,12 @@ function NetworkingTab({event,profile,isLive,isEnded,registration}:any){
   return(
     <div style={{background:"linear-gradient(160deg,#0f0f13 0%,#12101a 100%)",minHeight:"calc(100vh - 100px)",position:"relative",padding:"16px"}}>
       <style>{`
-        @keyframes pulse{0%,100%{box-shadow:0 0 0 0 rgba(226,109,52,0.2)}50%{box-shadow:0 0 0 12px rgba(37,99,235,0)}}
+        @keyframes pulse{0%,100%{box-shadow:0 0 0 0 rgba(212,175,55,0.2)}50%{box-shadow:0 0 0 12px rgba(37,99,235,0)}}
         @keyframes slideUp{from{transform:translateY(100%);opacity:0}to{transform:translateY(0);opacity:1}}
         @keyframes fadeIn{from{opacity:0}to{opacity:1}}
       `}</style>
 
-      <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:"16px"}}>
-        <p style={{fontSize:"10px",color:"#E26D34",letterSpacing:"0.15em",fontWeight:"600",textTransform:"uppercase",margin:0}}>Live Now</p>
-        <div style={{background:"rgba(255,255,255,0.08)",borderRadius:"20px",padding:"6px 12px"}}>
-          <p style={{color:"#fff",fontSize:"12px",margin:0}}>{nodes.length} nearby</p>
-        </div>
-      </div>
+      <p style={{fontSize:"10px",color:"#E26D34",letterSpacing:"0.15em",fontWeight:"600",textTransform:"uppercase",margin:"0 0 16px"}}>Live Now</p>
 
       <input
         value={liveSearch}
@@ -716,21 +711,13 @@ function NetworkingTab({event,profile,isLive,isEnded,registration}:any){
         </div>
       )}
 
-      {!auraLoaded&&registration?.status!=="host"&&(
+      {!auraLoaded&&(
         <div style={{textAlign:"center",padding:"60px 0"}}>
           <div style={{width:"16px",height:"16px",border:"2px solid rgba(255,255,255,0.1)",borderTopColor:"#E26D34",borderRadius:"50%",animation:"spin 0.8s linear infinite",margin:"0 auto"}}/>
         </div>
       )}
-      {auraLoaded&&!networkingActive&&registration?.status!=="host"&&(
-        <div style={{display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",padding:"80px 20px",textAlign:"center"}}>
-          <p style={{fontSize:"48px",marginBottom:"16px",opacity:0.2}}>◎</p>
-          <p style={{color:"#fff",fontSize:"18px",fontWeight:"300",marginBottom:"8px"}}>Networking Off</p>
-          <p style={{color:"#555",fontSize:"14px",marginBottom:"40px"}}>Nobody can see you</p>
-          <button onClick={startNetworking} style={{padding:"16px 40px",borderRadius:"50px",background:"#fff",color:"#000",border:"none",fontSize:"16px",fontWeight:"600",cursor:"pointer"}}>Start Networking</button>
-        </div>
-      )}
 
-      {(networkingActive||registration?.status==="host")&&(
+      {auraLoaded&&(
         <div style={{display:"flex",flexDirection:"column",gap:"8px"}}>
           {hostNode&&(
             <div style={{background:"linear-gradient(135deg,rgba(212,175,55,0.1),rgba(212,175,55,0.03))",border:"1px solid rgba(212,175,55,0.25)",borderRadius:"14px",padding:"14px",display:"flex",justifyContent:"space-between",alignItems:"center"}}>
@@ -765,7 +752,7 @@ function NetworkingTab({event,profile,isLive,isEnded,registration}:any){
       {confirmNode&&(
         <div style={{position:"fixed",inset:0,background:"rgba(0,0,0,0.7)",display:"flex",alignItems:"flex-end",zIndex:20}} onClick={()=>{setConfirmNode(null);setSelectedLiveReason("");}}>
           <div style={{background:"#0c0c0f",borderRadius:"24px 24px 0 0",padding:"24px",width:"100%",borderTop:"1px solid rgba(255,255,255,0.05)",animation:"slideUp 0.3s ease"}} onClick={e=>e.stopPropagation()}>
-            <p style={{fontSize:"10px",color:"#E26D34",letterSpacing:"0.15em",fontWeight:"600",textTransform:"uppercase",marginBottom:"8px"}}>Intentional Handshake</p>
+            <p style={{fontSize:"10px",color:"#8A7355",letterSpacing:"0.15em",fontWeight:"600",textTransform:"uppercase",marginBottom:"8px"}}>Intentional Handshake</p>
             <div style={{display:"flex",alignItems:"center",gap:"8px",marginBottom:"8px"}}>
               <p style={{color:"#fff",fontSize:"18px",fontWeight:"500"}}>Meet {getFirstName(confirmNode.display_name)}?</p>
               {confirmNode.is_host&&<span style={{background:"linear-gradient(135deg,#D4AF37,#b8962e)",color:"#000",fontSize:"10px",fontWeight:"700",padding:"3px 10px",borderRadius:"6px",letterSpacing:"0.05em"}}>ORGANIZER</span>}
@@ -1048,17 +1035,20 @@ function ProfileTab({profile,event,onProfileUpdate,isEnded,registration}:any){
     setScanTarget(conn);
     setScanning(true);
     setScanMsg("");
-    await new Promise(r=>setTimeout(r,500));
-    const{Html5Qrcode}=await import("html5-qrcode");
-    const scanner=new Html5Qrcode("qr-reader");
-    scannerRef.current=scanner;
+    // Wait for the scanning overlay (and its #qr-reader div) to be rendered
+    // before trying to attach the camera. 800ms is generous but reliable on
+    // mobile where React batch updates + browser paint can take longer.
+    await new Promise(r=>setTimeout(r,800));
     try{
-    scanner.start(
+      const{Html5Qrcode}=await import("html5-qrcode");
+      const scanner=new Html5Qrcode("qr-reader");
+      scannerRef.current=scanner;
+      await scanner.start(
         {facingMode:"environment"},
         {fps:10,qrbox:{width:200,height:200}},
         async(decoded:string)=>{
           if(decoded.startsWith("presence:unlock:")){
-            await scanner.stop();
+            try{await scanner.stop();}catch(_){}
             setScanning(false);
             setScanMsg("Unlocking...");
             const res=await fetch("/api/handshakes/unlock",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({scanner_registration_id:registration.id,target_registration_id:decoded})});
@@ -1076,8 +1066,13 @@ function ProfileTab({profile,event,onProfileUpdate,isEnded,registration}:any){
           }
         },
         ()=>{}
-      ).catch((err:any)=>{console.error(err);setScanning(false);setScanMsg("Camera not available — check permissions");});
-    }catch(err){setScanning(false);setScanMsg("Could not start camera");}
+      );
+    }catch(err:any){
+      console.error("Scanner error:",err);
+      setScanning(false);
+      setScanMsg("Camera not available — check that you've granted camera permission in your browser settings.");
+      setTimeout(()=>setScanMsg(""),6000);
+    }
   }
 
   function stopScan(){
@@ -1157,7 +1152,7 @@ function ProfileTab({profile,event,onProfileUpdate,isEnded,registration}:any){
             >
               <div style={{
                 width:"24px",height:"24px",borderRadius:"6px",flexShrink:0,
-                background:"rgba(255,255,255,0.03)",border:"1px solid rgba(255,255,255,0.05)",
+                background:"rgba(255,255,255,0.03)",border:"1px solid rgba(255,255,255,0.07)",
                 display:"flex",alignItems:"center",justifyContent:"center",
                 fontSize:"11px",color:"#FFBF00"
               }}>↗</div>
@@ -1167,7 +1162,7 @@ function ProfileTab({profile,event,onProfileUpdate,isEnded,registration}:any){
         </div>
       </div>
 
-      <div style={{background:"rgba(255,255,255,0.015)",border:"1px solid rgba(255,255,255,0.05)",borderRadius:"14px",padding:"14px 16px",marginTop:"12px",display:"flex",justifyContent:"space-between",alignItems:"center",gap:"12px"}}>
+      <div style={{background:"#1C1C1E",border:"1px solid rgba(255,255,255,0.07)",borderRadius:"14px",padding:"14px 16px",marginTop:"12px",display:"flex",justifyContent:"space-between",alignItems:"center",gap:"12px"}}>
         <div style={{minWidth:0}}>
           <p style={{fontSize:"13px",fontWeight:"600",color:"#f1f0f5",margin:0}}>Visible to other attendees</p>
           <p style={{fontSize:"11px",color:"rgba(240,237,232,0.4)",margin:"2px 0 0"}}>{networkingVisible?"You can be found and connected with":"You're hidden from networking — no one can see or connect with you"}</p>

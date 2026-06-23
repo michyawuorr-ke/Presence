@@ -264,7 +264,7 @@ export default function GuestEntryPage() {
       `}</style>
 
       <header className="w-full pt-12 max-w-md mx-auto text-center">
-        <p className="text-[10px] font-bold tracking-[0.3em] text-[#F97316] m-0 uppercase">OREETI</p>
+        <p className="text-[10px] font-bold tracking-[0.3em] text-[#8A7355] m-0 uppercase">OREETI</p>
       </header>
 
       <main className="w-full max-w-md mx-auto flex-1 pt-8 pb-36 overflow-y-auto">

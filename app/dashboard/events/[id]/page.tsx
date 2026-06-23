@@ -56,7 +56,7 @@ export default function EventDetailPage() {
       }
 
       const { data: { user } } = await supabase.auth.getUser();
-      if (user && ev?.status === "live") {
+      if (user) {
         const { data: hostReg } = await supabase.from("registrations").select("guest_access_link").eq("event_id", id).eq("guest_email", user.email).eq("status", "host").single();
         if (hostReg) setHostLink(hostReg.guest_access_link);
       }
@@ -300,9 +300,18 @@ export default function EventDetailPage() {
 
         {event.status !== "draft" && event.status !== "ended" && (
           <div style={{ background: "rgba(255,255,255,0.02)", borderRadius: "18px", padding: "18px", marginBottom: "16px", border: "1px solid rgba(255,255,255,0.04)" }}>
-            <p style={{ fontSize: "11px", color: "rgba(255,255,255,0.45)", fontWeight: "700", letterSpacing: "0.08em", textTransform: "uppercase", marginBottom: "4px" }}>Registration Gateway Link</p>
+            <p style={{ fontSize: "11px", color: "rgba(255,255,255,0.45)", fontWeight: "700", letterSpacing: "0.08em", textTransform: "uppercase", marginBottom: "4px" }}>Registration Link</p>
             <p style={{ fontSize: "12px", color: "#93c5fd", wordBreak: "break-all", marginBottom: "12px", fontFamily: "monospace" }}>{registrationLink.replace("https://", "")}</p>
-            <button onClick={() => copyLink(registrationLink)} style={{ width: "100%", padding: "12px", borderRadius: "10px", background: "rgba(255,255,255,0.04)", color: "#f3f4f6", border: "1px solid rgba(255,255,255,0.06)", fontSize: "12px", cursor: "pointer", fontWeight: "600" }}>Copy Registration Link</button>
+            <div style={{ display: "flex", gap: "8px" }}>
+              <button onClick={() => copyLink(registrationLink)} style={{ flex: 1, padding: "12px", borderRadius: "10px", background: "rgba(255,255,255,0.04)", color: "#f3f4f6", border: "1px solid rgba(255,255,255,0.06)", fontSize: "12px", cursor: "pointer", fontWeight: "600" }}>Copy Link</button>
+              <button onClick={() => {
+                if (navigator.share) {
+                  navigator.share({ title: event?.title || "Oreeti Event", text: "Register for " + (event?.title || "this event"), url: registrationLink });
+                } else {
+                  copyLink(registrationLink);
+                }
+              }} style={{ padding: "12px 16px", borderRadius: "10px", background: "rgba(255,255,255,0.04)", color: "#f3f4f6", border: "1px solid rgba(255,255,255,0.06)", fontSize: "16px", cursor: "pointer" }}>↗</button>
+            </div>
           </div>
         )}
 
