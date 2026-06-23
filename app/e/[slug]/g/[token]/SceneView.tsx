@@ -531,17 +531,20 @@ function NetworkingTab({event,profile,isLive,isEnded,registration}:any){
   useEffect(()=>{
     if(!profile||auraLoaded)return;
     async function loadAura(){
-      const{data:prof}=await supabase.from("guest_profiles").select("aura_active").eq("id",profile.id).single();
-      if(prof?.aura_active)setNetworkingActive(true);
+      const{data:prof}=await supabase.from("guest_profiles").select("aura_active,networking_visible").eq("id",profile.id).single();
+      // networking_visible is the source of truth for whether this attendee
+      // wants to be discoverable. aura_active should always mirror it.
+      const isActive=prof?.networking_visible??true;
+      setNetworkingActive(isActive);
       // Load already-sent requests
       const{data:sent}=await supabase.from("handshake_requests").select("recipient_id").eq("requester_id",profile.id).eq("event_id",event.id).in("status",["pending","approved"]);
       setSentRequests(new Set((sent||[]).map((r:any)=>r.recipient_id)));
       // Load declined requests (where I was requester and got declined)
       const{data:declined}=await supabase.from("handshake_requests").select("recipient_id").eq("requester_id",profile.id).eq("event_id",event.id).eq("status","declined");
       setDeclinedIds(new Set((declined||[]).map((r:any)=>r.recipient_id)));
-      // Host auto-starts networking
-      if(registration?.status==="host"&&!prof?.aura_active){
-        await supabase.from("guest_profiles").update({aura_active:true}).eq("id",profile.id);
+      // Host auto-starts networking — always visible
+      if(registration?.status==="host"){
+        await supabase.from("guest_profiles").update({aura_active:true,networking_visible:true}).eq("id",profile.id);
         setNetworkingActive(true);
       }
       setAuraLoaded(true);
@@ -743,12 +746,6 @@ function NetworkingTab({event,profile,isLive,isEnded,registration}:any){
         </div>
       )}
 
-      {networkingActive&&(
-        <div style={{display:"flex",justifyContent:"center",marginTop:"20px"}}>
-          <button onClick={stopNetworking} style={{padding:"10px 24px",borderRadius:"50px",background:"rgba(255,255,255,0.06)",color:"#666",border:"1px solid rgba(255,255,255,0.08)",fontSize:"13px",cursor:"pointer",letterSpacing:"0.02em"}}>Turn off</button>
-        </div>
-      )}
-
       {confirmNode&&(
         <div style={{position:"fixed",inset:0,background:"rgba(0,0,0,0.7)",display:"flex",alignItems:"flex-end",zIndex:20}} onClick={()=>{setConfirmNode(null);setSelectedLiveReason("");}}>
           <div style={{background:"#0c0c0f",borderRadius:"24px 24px 0 0",padding:"24px",width:"100%",borderTop:"1px solid rgba(255,255,255,0.05)",animation:"slideUp 0.3s ease"}} onClick={e=>e.stopPropagation()}>
@@ -927,7 +924,10 @@ function ProfileTab({profile,event,onProfileUpdate,isEnded,registration}:any){
   async function toggleVisibility(){
     const next=!networkingVisible;
     setNetworkingVisible(next);
-    await supabase.from("guest_profiles").update({networking_visible:next}).eq("id",profile.id);
+    await supabase.from("guest_profiles").update({
+      networking_visible:next,
+      aura_active:next,
+    }).eq("id",profile.id);
   }
 
   useEffect(()=>{
