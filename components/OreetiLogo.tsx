@@ -2,11 +2,11 @@
 import React from "react";
 
 interface OreetiLogoProps {
-  size?: "sm" | "md" | "lg";
+  size?: "xs" | "sm" | "md" | "lg";
 }
 
 export default function OreetiLogo({ size = "md" }: OreetiLogoProps) {
-  const scales: Record<string, number> = { sm: 0.42, md: 0.55, lg: 0.7 };
+  const scales: Record<string, number> = { xs: 0.28, sm: 0.42, md: 0.55, lg: 0.7 };
   const s = scales[size] || 0.55;
   const w = Math.round(620 * s);
   const h = Math.round(220 * s);
