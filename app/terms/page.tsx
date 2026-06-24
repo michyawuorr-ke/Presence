@@ -36,7 +36,7 @@ export default function TermsPage() {
         }}>
           Terms of Use
         </h1>
-        <p style={{ color: "var(--dusk)", fontSize: 13 }}>Last updated: 2025</p>
+        <p style={{ color: "var(--dusk)", fontSize: 13 }}>Last updated: 2026</p>
       </section>
 
       <section style={{ maxWidth: 760, margin: "0 auto", padding: "0 32px 120px" }}>

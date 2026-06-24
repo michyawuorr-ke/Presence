@@ -1,6 +1,5 @@
 import React from "react";
 import Link from "next/link";
-import OreetiLogo from "@/components/OreetiLogo";
 
 const cols = [
   {
@@ -20,106 +19,71 @@ const cols = [
       { label: "Terms",   href: "/terms" },
     ],
   },
-  {
-    heading: "Get started",
-    links: [
-      { label: "Create account", href: "/login" },
-      { label: "Sign in",        href: "/login" },
-    ],
-  },
 ];
 
 export default function Footer() {
   return (
-    <footer style={{
-      borderTop: "1px solid rgba(138,115,85,0.14)",
-      padding: "64px 32px 40px",
-      maxWidth: 1200, margin: "0 auto",
-    }}>
-      <div style={{
-        display: "grid",
-        gridTemplateColumns: "1fr repeat(3,auto)",
-        gap: 48,
-        marginBottom: 56,
-      }} className="footer-grid">
-
-        {/* Brand column */}
-        <div>
-          <OreetiLogo size="sm" />
-          <p style={{
-            marginTop: 20,
-            color: "var(--dusk)",
-            fontSize: 13,
-            lineHeight: 1.7,
-            maxWidth: 260,
-          }}>
-            The infrastructure for meaningful connection at real-world events.
-          </p>
-          <p style={{
-            marginTop: 12,
-            color: "rgba(138,115,85,0.5)",
-            fontSize: 11,
-            letterSpacing: "0.06em",
-            textTransform: "uppercase",
-          }}>
-            Nairobi, Kenya
-          </p>
-        </div>
-
-        {cols.map(col => (
-          <div key={col.heading}>
-            <p style={{
-              fontSize: 10,
-              fontWeight: 700,
-              letterSpacing: "0.12em",
-              textTransform: "uppercase",
-              color: "rgba(138,115,85,0.6)",
-              marginBottom: 16,
-              margin: "0 0 16px",
-            }}>
-              {col.heading}
+    <footer style={{ borderTop: "1px solid rgba(138,115,85,0.12)", padding: "48px 20px 32px" }}>
+      <div style={{ maxWidth: "1100px", margin: "0 auto" }}>
+        <div style={{
+          display: "flex", justifyContent: "space-between",
+          alignItems: "flex-start", flexWrap: "wrap", gap: "40px", marginBottom: "40px",
+        }}>
+          <div style={{ maxWidth: "220px" }}>
+            <div style={{ display: "flex", alignItems: "center", gap: "6px", marginBottom: "12px" }}>
+              <svg width="14" height="14" viewBox="0 0 44 44" fill="none">
+                <path d="M10 22C10 15.373 15.373 10 22 10" stroke="#EAE6DF" strokeWidth="4" strokeLinecap="round"/>
+                <path d="M34 22C34 28.627 28.627 34 22 34" stroke="#E26D34" strokeWidth="4" strokeLinecap="round"/>
+                <circle cx="22" cy="10" r="2.5" fill="#E26D34"/>
+              </svg>
+              <span style={{ fontSize: "14px", fontWeight: "700", color: "#EAE6DF", letterSpacing: "-0.03em" }}>Oreeti</span>
+            </div>
+            <p style={{ fontSize: "13px", color: "rgba(138,115,85,0.8)", lineHeight: "1.65", margin: "0 0 8px" }}>
+              The networking layer for live events.
             </p>
-            <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
-              {col.links.map(l => (
-                <Link key={l.href} href={l.href} style={{
-                  color: "rgba(234,230,223,0.45)",
-                  fontSize: 13,
-                  fontWeight: 400,
-                  textDecoration: "none",
-                  transition: "color 0.2s",
-                }}
-                  onMouseEnter={e => (e.currentTarget.style.color = "#EAE6DF")}
-                  onMouseLeave={e => (e.currentTarget.style.color = "rgba(234,230,223,0.45)")}
-                >
-                  {l.label}
-                </Link>
-              ))}
+            <p style={{ fontSize: "11px", color: "rgba(138,115,85,0.4)", letterSpacing: "0.06em", textTransform: "uppercase", margin: 0 }}>
+              Nairobi, Kenya
+            </p>
+          </div>
+
+          <div style={{ display: "flex", gap: "48px", flexWrap: "wrap" }}>
+            {cols.map(col => (
+              <div key={col.heading}>
+                <p style={{
+                  fontSize: "10px", fontWeight: "700", letterSpacing: "0.12em",
+                  textTransform: "uppercase", color: "rgba(138,115,85,0.4)", margin: "0 0 14px",
+                }}>{col.heading}</p>
+                <div style={{ display: "flex", flexDirection: "column", gap: "9px" }}>
+                  {col.links.map(l => (
+                    <Link key={l.href} href={l.href} style={{
+                      color: "rgba(234,230,223,0.4)", fontSize: "13px", textDecoration: "none",
+                    }}>{l.label}</Link>
+                  ))}
+                </div>
+              </div>
+            ))}
+            <div>
+              <p style={{
+                fontSize: "10px", fontWeight: "700", letterSpacing: "0.12em",
+                textTransform: "uppercase", color: "rgba(138,115,85,0.4)", margin: "0 0 14px",
+              }}>Get started</p>
+              <div style={{ display: "flex", flexDirection: "column", gap: "9px" }}>
+                <Link href="/login" style={{ color: "rgba(234,230,223,0.4)", fontSize: "13px", textDecoration: "none" }}>Create account</Link>
+                <Link href="/login" style={{ color: "rgba(234,230,223,0.4)", fontSize: "13px", textDecoration: "none" }}>Sign in</Link>
+              </div>
             </div>
           </div>
-        ))}
-      </div>
+        </div>
 
-      <div style={{
-        borderTop: "1px solid rgba(138,115,85,0.1)",
-        paddingTop: 24,
-        display: "flex", justifyContent: "space-between", alignItems: "center",
-        flexWrap: "wrap", gap: 12,
-      }}>
-        <p style={{ color: "rgba(138,115,85,0.5)", fontSize: 12, margin: 0 }}>
-          © 2025 Oreeti. All rights reserved.
-        </p>
-        <p style={{ color: "rgba(138,115,85,0.4)", fontSize: 11, margin: 0, letterSpacing: "0.04em" }}>
-          The room, activated.
-        </p>
+        <div style={{
+          borderTop: "1px solid rgba(138,115,85,0.08)", paddingTop: "20px",
+          display: "flex", justifyContent: "space-between", alignItems: "center",
+          flexWrap: "wrap", gap: "8px",
+        }}>
+          <p style={{ fontSize: "11px", color: "rgba(138,115,85,0.35)", margin: 0 }}>© 2026 Oreeti. All rights reserved.</p>
+          <p style={{ fontSize: "11px", color: "rgba(138,115,85,0.25)", margin: 0, fontStyle: "italic" }}>The room, activated.</p>
+        </div>
       </div>
-
-      <style>{`
-        @media (max-width: 640px) {
-          .footer-grid {
-            grid-template-columns: 1fr 1fr !important;
-          }
-        }
-      `}</style>
     </footer>
   );
 }

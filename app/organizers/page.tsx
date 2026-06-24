@@ -115,7 +115,7 @@ export default function OrganizersPage() {
               body: "During the event, watch registrations, check-ins, and networking activity happen in real time. See which parts of your event are generating energy — and which aren't.",
             },
             {
-              title: "Post-event activation report.",
+              title: "Ongoing connection summary.",
               body: "After the event ends, you receive a complete picture: total registrations, check-in rate, connections made, handshake volume, and more. Data that tells you what actually happened.",
             },
           ].map((item, i) => (

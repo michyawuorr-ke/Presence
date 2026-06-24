@@ -89,7 +89,7 @@ export default function AttendeesPage() {
             {
               moment: "In the room",
               headline: "Browse the Scene.",
-              body: "The Scene tab shows other attendees who are visible right now. You see their first name, role, organisation, and intent badges. You can set your own visibility — or stay invisible entirely.",
+              body: "The Networking tab shows other attendees who are visible right now. You see their first name, role, and intent badges. You can set your own visibility — or stay invisible entirely.",
             },
             {
               moment: "When it feels right",
@@ -175,7 +175,7 @@ export default function AttendeesPage() {
             {
               state: "Visible",
               headline: "First name and initial. Nothing more.",
-              body: "You appear in the Scene. Other attendees see your first name, first initial, and intent badges. Enough context for someone to reach out — nothing you wouldn't write on a name tag.",
+              body: "You appear in the Scene. Other attendees see your first name, role, and intent badges. Enough context for someone to reach out — nothing you wouldn't write on a name tag.",
             },
             {
               state: "Unlocked",

@@ -1,7 +1,6 @@
 "use client";
 import React, { useEffect, useState } from "react";
 import Link from "next/link";
-import OreetiLogo from "@/components/OreetiLogo";
 
 const links = [
   { href: "/about",      label: "About" },
@@ -24,123 +23,90 @@ export default function Nav() {
   return (
     <>
       <nav style={{
-        position: "fixed", top: 0, left: 0, right: 0, zIndex: 100,
-        transition: "background 0.4s, border-color 0.4s",
-        background: scrolled ? "rgba(10,10,12,0.88)" : "transparent",
+        position: "fixed", top: 0, left: 0, right: 0, zIndex: 200,
+        height: "52px",
+        display: "flex", alignItems: "center", justifyContent: "space-between",
+        padding: "0 20px",
+        transition: "background 0.3s, border-color 0.3s",
+        background: scrolled ? "rgba(10,10,12,0.92)" : "transparent",
         borderBottom: scrolled ? "1px solid rgba(138,115,85,0.12)" : "1px solid transparent",
-        backdropFilter: scrolled ? "blur(20px)" : "none",
-        WebkitBackdropFilter: scrolled ? "blur(20px)" : "none",
+        backdropFilter: scrolled ? "blur(18px)" : "none",
+        WebkitBackdropFilter: scrolled ? "blur(18px)" : "none",
       }}>
-        <div style={{
-          maxWidth: 1200, margin: "0 auto",
-          padding: "0 32px",
-          height: 64,
-          display: "flex", alignItems: "center", justifyContent: "space-between",
-        }}>
-          <Link href="/" style={{ textDecoration: "none", display: "flex", alignItems: "center" }}>
-            <OreetiLogo size="sm" />
-          </Link>
+        <Link href="/" style={{ textDecoration: "none", display: "flex", alignItems: "center", gap: "6px" }}>
+          <svg width="14" height="14" viewBox="0 0 44 44" fill="none">
+            <path d="M10 22C10 15.373 15.373 10 22 10" stroke="#EAE6DF" strokeWidth="4" strokeLinecap="round"/>
+            <path d="M34 22C34 28.627 28.627 34 22 34" stroke="#E26D34" strokeWidth="4" strokeLinecap="round"/>
+            <circle cx="22" cy="10" r="2.5" fill="#E26D34"/>
+          </svg>
+          <span style={{ fontSize: "14px", fontWeight: "700", color: "#EAE6DF", letterSpacing: "-0.03em" }}>Oreeti</span>
+        </Link>
 
-          {/* Desktop links */}
-          <div style={{ display: "flex", alignItems: "center", gap: 36 }} className="desktop-nav">
-            {links.map(l => (
-              <Link key={l.href} href={l.href} style={{
-                color: "rgba(234,230,223,0.55)",
-                fontSize: 13,
-                fontWeight: 500,
-                textDecoration: "none",
-                letterSpacing: "0.01em",
-                transition: "color 0.2s",
-              }}
-                onMouseEnter={e => (e.currentTarget.style.color = "#EAE6DF")}
-                onMouseLeave={e => (e.currentTarget.style.color = "rgba(234,230,223,0.55)")}
-              >
-                {l.label}
-              </Link>
-            ))}
-          </div>
+        <div style={{ display: "flex", alignItems: "center", gap: "24px" }} className="mkt-desktop-links">
+          {links.map(l => (
+            <Link key={l.href} href={l.href} style={{
+              color: "rgba(234,230,223,0.45)", fontSize: "12px", fontWeight: "500",
+              textDecoration: "none", letterSpacing: "0.01em",
+            }}>{l.label}</Link>
+          ))}
+        </div>
 
-          <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
-            <Link href="/login" style={{
-              color: "rgba(234,230,223,0.55)",
-              fontSize: 13, fontWeight: 500,
-              textDecoration: "none",
-              letterSpacing: "0.01em",
-              transition: "color 0.2s",
-            }}
-              onMouseEnter={e => (e.currentTarget.style.color = "#EAE6DF")}
-              onMouseLeave={e => (e.currentTarget.style.color = "rgba(234,230,223,0.55)")}
-            >
-              Sign in
-            </Link>
-            <Link href="/login" style={{
-              background: "#E26D34",
-              color: "#EAE6DF",
-              fontSize: 12, fontWeight: 600,
-              textDecoration: "none",
-              padding: "8px 18px",
-              borderRadius: 6,
-              letterSpacing: "0.04em",
-              transition: "opacity 0.2s",
-            }}
-              onMouseEnter={e => (e.currentTarget.style.opacity = "0.85")}
-              onMouseLeave={e => (e.currentTarget.style.opacity = "1")}
-            >
-              Get started
-            </Link>
-
-            {/* Mobile hamburger */}
-            <button
-              onClick={() => setOpen(!open)}
-              style={{
-                display: "none", background: "none", border: "none",
-                color: "#EAE6DF", cursor: "pointer", padding: 4,
-              }}
-              className="mobile-menu-btn"
-              aria-label="Menu"
-            >
-              <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
-                {open
-                  ? <><line x1="4" y1="4" x2="16" y2="16" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/><line x1="16" y1="4" x2="4" y2="16" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/></>
-                  : <><line x1="3" y1="6" x2="17" y2="6" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/><line x1="3" y1="10" x2="17" y2="10" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/><line x1="3" y1="14" x2="17" y2="14" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/></>
-                }
-              </svg>
-            </button>
-          </div>
+        <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
+          <Link href="/login" className="mkt-signin-link" style={{
+            color: "rgba(234,230,223,0.45)", fontSize: "12px", fontWeight: "500",
+            textDecoration: "none", padding: "6px 10px",
+          }}>Sign in</Link>
+          <Link href="/login" style={{
+            background: "transparent", color: "rgba(234,230,223,0.7)",
+            fontSize: "12px", fontWeight: "500", textDecoration: "none",
+            padding: "6px 13px", borderRadius: "6px",
+            border: "1px solid rgba(234,230,223,0.15)",
+            letterSpacing: "0.01em", whiteSpace: "nowrap",
+          }}>Get started</Link>
+          <button onClick={() => setOpen(!open)} className="mkt-hamburger"
+            style={{ display: "none", background: "none", border: "none", color: "#EAE6DF", cursor: "pointer", padding: "4px" }}
+            aria-label="Menu">
+            <svg width="18" height="18" viewBox="0 0 18 18" fill="none">
+              {open ? (
+                <><line x1="3" y1="3" x2="15" y2="15" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
+                <line x1="15" y1="3" x2="3" y2="15" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/></>
+              ) : (
+                <><line x1="2" y1="5" x2="16" y2="5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
+                <line x1="2" y1="9" x2="16" y2="9" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
+                <line x1="2" y1="13" x2="16" y2="13" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/></>
+              )}
+            </svg>
+          </button>
         </div>
       </nav>
 
-      {/* Mobile drawer */}
       {open && (
         <div style={{
-          position: "fixed", top: 64, left: 0, right: 0, zIndex: 99,
-          background: "rgba(10,10,12,0.97)",
-          borderBottom: "1px solid rgba(138,115,85,0.15)",
-          padding: "24px 32px 32px",
-          backdropFilter: "blur(20px)",
+          position: "fixed", top: "52px", left: 0, right: 0, zIndex: 199,
+          background: "rgba(10,10,12,0.97)", borderBottom: "1px solid rgba(138,115,85,0.15)",
+          padding: "16px 20px 24px", backdropFilter: "blur(20px)",
         }}>
           {links.map(l => (
-            <Link key={l.href} href={l.href}
-              onClick={() => setOpen(false)}
-              style={{
-                display: "block",
-                color: "rgba(234,230,223,0.7)",
-                fontSize: 15, fontWeight: 500,
-                textDecoration: "none",
-                padding: "12px 0",
-                borderBottom: "1px solid rgba(138,115,85,0.1)",
-              }}
-            >
-              {l.label}
-            </Link>
+            <Link key={l.href} href={l.href} onClick={() => setOpen(false)} style={{
+              display: "block", color: "rgba(234,230,223,0.65)", fontSize: "15px",
+              fontWeight: "500", textDecoration: "none", padding: "12px 0",
+              borderBottom: "1px solid rgba(138,115,85,0.08)",
+            }}>{l.label}</Link>
           ))}
+          <Link href="/login" onClick={() => setOpen(false)} style={{
+            display: "block", marginTop: "16px",
+            background: "rgba(226,109,52,0.12)", border: "1px solid rgba(226,109,52,0.25)",
+            color: "#E26D34", textAlign: "center", padding: "12px",
+            borderRadius: "8px", fontSize: "14px", fontWeight: "600", textDecoration: "none",
+          }}>Get started</Link>
         </div>
       )}
 
       <style>{`
-        @media (max-width: 768px) {
-          .desktop-nav { display: none !important; }
-          .mobile-menu-btn { display: flex !important; }
+        @media (max-width: 640px) {
+          .mkt-desktop-links { display: none !important; }
+          .mkt-signin-link   { display: none !important; }
+          .mkt-hamburger     { display: flex !important; }
         }
       `}</style>
     </>

@@ -10,7 +10,7 @@ export const metadata: Metadata = {
     default: "Oreeti — The room, activated.",
     template: "%s | Oreeti",
   },
-  description: "Oreeti is the live event activation platform for professional connection. HMAC-signed QR check-in, M-Pesa ticketing, and consent-first networking — built for East Africa.",
+  description: "Oreeti is the live event activation platform for professional connection. rotating QR networking handshake, M-Pesa ticketing, and consent-first networking — built for East Africa.",
   keywords: ["event networking", "event technology", "M-Pesa ticketing", "Nairobi events", "professional networking", "live events Africa"],
   openGraph: {
     title: "Oreeti — The room, activated.",

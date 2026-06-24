@@ -27,14 +27,14 @@ function useReveal() {
 const features = [
   {
     category: "Entry",
-    headline: "HMAC-signed rotating QR check-in.",
+    headline: "rotating QR networking handshake.",
     body: "Every attendee's QR code rotates every 60 seconds, cryptographically signed. Forgery is impossible. Entry is instant. The experience begins the moment they walk through the door.",
     detail: "No paper lists. No manual entry. Organizers scan from any device.",
   },
   {
     category: "Discovery",
     headline: "Live attendee presence in the Scene.",
-    body: "The Scene tab shows who's in the room right now — first name, role, organisation, and the intent badges they've set. Discover context before the conversation.",
+    body: "The Networking tab shows who's in the room right now — first name, role, organisation, and the intent badges they've set. Discover context before the conversation.",
     detail: "Visibility is always in the attendee's control.",
   },
   {
@@ -69,8 +69,8 @@ const features = [
   },
   {
     category: "Insight",
-    headline: "Post-event activation report.",
-    body: "When the event ends, organizers receive a full report: registrations, check-ins, connection activity, networking intensity. Not vanity metrics — signal.",
+    headline: "Ongoing connection summary.",
+    body: "When the event ends, organizers receive a connection summary: registrations, check-ins, connection activity, networking intensity. Not vanity metrics — signal.",
     detail: "Know what actually happened in the room.",
   },
 ];

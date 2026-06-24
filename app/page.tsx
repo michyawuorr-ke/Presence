@@ -446,7 +446,7 @@ export default function Home() {
             {
               step: "Discover",
               headline: "See who's in the room.",
-              detail: "The Scene tab shows live attendee discovery. Browse professional context, set intent badges, and signal openness to connection — on your own terms.",
+              detail: "The Networking tab shows live attendee discovery. Browse professional context, set intent badges, and signal openness to connection — on your own terms.",
               accent: "var(--dusk)",
             },
             {
