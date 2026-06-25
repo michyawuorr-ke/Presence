@@ -186,7 +186,7 @@ export default function Home() {
         overflow: "hidden",
         textAlign: "center",
       }}>
-        <ConnectionCanvas />
+
 
         {/* radial gradient base */}
         <div style={{
@@ -196,13 +196,11 @@ export default function Home() {
         }} />
 
         <div style={{ position: "relative", zIndex: 1, maxWidth: 760 }}>
-          <div style={{ display: "flex", justifyContent: "center", marginBottom: "24px", opacity: 0, animation: "heroFade 0.6s ease forwards 0s" }}><OreetiLogo size="xs" /></div>
           <p className="eyebrow" style={{
             marginBottom: 32,
             opacity: 0,
             animation: "heroFade 0.6s ease forwards 0.1s",
           }}>
-            Event intelligence · Built for Africa
           </p>
 
           <h1 style={{
