@@ -42,6 +42,27 @@ export default function CreateEvent() {
 
       if (error) throw error;
 
+      // Create the host's registration immediately so their guest link is
+      // available from the moment the event exists, not just when it goes live.
+      const accessToken = Array.from(
+        crypto.getRandomValues(new Uint8Array(32))
+      ).map((b: number) => b.toString(16).padStart(2, '0')).join('');
+
+      const appUrl = process.env.NEXT_PUBLIC_APP_URL || window.location.origin;
+      const guestUrl = `${appUrl}/e/${slug}/g/${accessToken}`;
+
+      await supabase.from("registrations").insert({
+        event_id: data.id,
+        guest_name: user.email?.split("@")[0] || "Host",
+        guest_email: user.email,
+        guest_phone: "",
+        status: "host",
+        amount: 0,
+        paid: true,
+        access_token: accessToken,
+        guest_access_link: guestUrl,
+      });
+
       // Direct structural redirect into the newly initiated workspace
       router.push(`/dashboard/events/${data.id}`);
     } catch (err: any) {
