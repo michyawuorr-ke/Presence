@@ -315,7 +315,7 @@ export default function Home() {
             maxWidth: 640,
             margin: "0 auto",
           }}>
-            You leave with a pocket full of cards you&apos;ll never open.
+            The right person was in that room. You just never found each other.
           </h2>
         </div>
 
