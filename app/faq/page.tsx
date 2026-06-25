@@ -57,7 +57,7 @@ const faqs = [
       },
       {
         q: "Can I see what's happening during my event?",
-        a: "Yes. Your organizer dashboard shows registrations, check-ins, and networking activity in real time. You can see check-in rates, connections forming, and the overall energy of the room as it happens.",
+        a: "Yes. Your organizer dashboard shows registrations, check-ins, and networking activity in real time. You can see connections forming and networking activity as it happens.",
       },
     ],
   },

@@ -34,7 +34,7 @@ const features = [
   {
     category: "Discovery",
     headline: "Live attendee presence in the Scene.",
-    body: "The Networking tab shows who's in the room right now — first name, role, organisation, and the intent badges they've set. Discover context before the conversation.",
+    body: "The Networking tab shows who's in the room right now — first name, role, and intent badges. Discover context before the conversation.",
     detail: "Visibility is always in the attendee's control.",
   },
   {
@@ -52,13 +52,13 @@ const features = [
   {
     category: "Intelligence",
     headline: "Signal meetups.",
-    body: "Organizers can schedule curated meetup moments mid-event. Attendees signal interest and get matched. The room activates on demand.",
+    body: "Organizers define networking stations before the event. Attendees browse by station and connect with people whose interests match theirs.",
     detail: "Energy management for event hosts.",
   },
   {
     category: "Privacy",
     headline: "Three visibility states.",
-    body: "Every attendee controls their presence: Invisible (no one sees you), Visible (first name + initial only), Unlocked (full profile — only for mutual connections).",
+    body: "Every attendee controls their presence: Invisible (no one sees you), Visible (first name, role, and intent badges), Unlocked (full profile — only for mutual connections).",
     detail: "Your data surfaces only where you choose.",
   },
   {
@@ -69,8 +69,8 @@ const features = [
   },
   {
     category: "Insight",
-    headline: "Ongoing connection summary.",
-    body: "When the event ends, organizers receive a connection summary: registrations, check-ins, connection activity, networking intensity. Not vanity metrics — signal.",
+    headline: "Connection data lives in your dashboard.",
+    body: "After the event, connection data remains in your dashboard. No separate report — just the live data of who connected and when.",
     detail: "Know what actually happened in the room.",
   },
 ];
