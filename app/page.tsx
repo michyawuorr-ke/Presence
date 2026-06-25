@@ -282,25 +282,6 @@ export default function Home() {
         </div>
       </section>
 
-      {/* ── STATS BAR ────────────────────────────────────────────── */}
-      <section style={{
-        borderTop: "1px solid rgba(138,115,85,0.12)",
-        borderBottom: "1px solid rgba(138,115,85,0.12)",
-        padding: "48px 32px",
-      }}>
-        <div style={{
-          maxWidth: 900, margin: "0 auto",
-          display: "grid",
-          gridTemplateColumns: "repeat(4,1fr)",
-          gap: 32,
-        }} className="stats-grid" data-reveal data-delay="0">
-          <Stat value="60s" label="QR window" />
-          <Stat value="0" label="Passwords" />
-          <Stat value="100%" label="Consent-first" />
-          <Stat value="M-Pesa" label="Native payments" />
-        </div>
-      </section>
-
       {/* ── PROBLEM ──────────────────────────────────────────────── */}
       <section style={{ padding: "120px 32px", maxWidth: 1100, margin: "0 auto" }}>
         <div data-reveal data-delay="0" style={{ marginBottom: 72, textAlign: "center" }}>
