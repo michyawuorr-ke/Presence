@@ -1,4 +1,5 @@
 "use client";
+import OreetiLogo from "@/components/OreetiLogo";
 import React, { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import Nav from "@/components/marketing/Nav";
@@ -195,6 +196,7 @@ export default function Home() {
         }} />
 
         <div style={{ position: "relative", zIndex: 1, maxWidth: 760 }}>
+          <div style={{ display: "flex", justifyContent: "center", marginBottom: "24px", opacity: 0, animation: "heroFade 0.6s ease forwards 0s" }}><OreetiLogo size="xs" /></div>
           <p className="eyebrow" style={{
             marginBottom: 32,
             opacity: 0,
