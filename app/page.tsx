@@ -283,7 +283,7 @@ export default function Home() {
       {/* ── STATS BAR ──────────────────────────────────────────── */}
       <section style={{ borderTop: "1px solid rgba(138,115,85,0.12)", borderBottom: "1px solid rgba(138,115,85,0.12)", padding: "36px 32px" }}>
         <div style={{ maxWidth: 1000, margin: "0 auto", display: "grid", gridTemplateColumns: "repeat(4,1fr)", gap: 32, background: "transparent" }} className="stats-grid">
-          {[{ value: "\u003c 5 min", sub: "from link to fully registered" }, { value: "0", sub: "cold approaches needed" }, { value: "1 scan", sub: "unlocks a full profile" }, { value: "1 link", sub: "ticket, profile, and networking" }].map((s, i) => (
+          {[{ value: "5 min", sub: "to set up your event" }, { value: "M-Pesa", sub: "ticket payments built in" }, { value: "1 link", sub: "your ticket, profile, and networking" }, { value: "1 scan", sub: "unlocks a full profile" }].map((s, i) => (
             <div key={i} style={{ padding: "20px 16px", background: "transparent", textAlign: "center", display: "flex", flexDirection: "column", alignItems: "center", gap: 10 }}>
               <p style={{ fontFamily: "var(--font-display)", fontSize: "clamp(16px,2vw,24px)", fontWeight: 500, color: "#E26D34", letterSpacing: "-0.02em", margin: 0, lineHeight: 1.1 }}>{s.value}</p>
               <p style={{ fontSize: 12, color: "rgba(138,115,85,0.7)", letterSpacing: "0.04em", margin: 0, lineHeight: 1.5, maxWidth: 120 }}>{s.sub}</p>
