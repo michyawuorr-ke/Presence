@@ -239,7 +239,7 @@ export default function Home() {
             animation: "heroFade 0.8s ease forwards 1.3s",
           }}>
             <Link href="/login" className="cta-primary" style={{
-              background: "transparent",
+              background: "rgba(226,109,52,0.08)",
               color: "#E26D34",
               padding: "14px 28px",
               borderRadius: 7,
@@ -682,10 +682,10 @@ export default function Home() {
           </p>
           <Link href="/login" style={{
             display: "inline-block",
-            background: "transparent",
+            background: "rgba(226,109,52,0.08)",
             color: "#E26D34",
             padding: "16px 36px",
-            borderRadius: 8,
+            borderRadius: 8, border: "1px solid rgba(226,109,52,0.45)", boxShadow: "0 0 20px rgba(226,109,52,0.1), inset 0 0 20px rgba(226,109,52,0.03)",
             fontSize: 14,
             fontWeight: 600,
             textDecoration: "none",
