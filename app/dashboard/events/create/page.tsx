@@ -53,6 +53,7 @@ export default function CreateEvent() {
 
       await supabase.from("registrations").insert({
         event_id: data.id,
+        event_name: title,
         guest_name: user.email?.split("@")[0] || "Host",
         guest_email: user.email,
         guest_phone: "",
