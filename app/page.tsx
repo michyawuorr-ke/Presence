@@ -330,18 +330,18 @@ export default function Home() {
           {[
             {
               n: "01",
-              title: "The forgettable handshake",
-              body: "You meet someone interesting. You exchange details in the noise. By Monday, you've forgotten their name and they've forgotten yours.",
+              title: "No way to know who's there.",
+              body: "You arrive with no idea who else is in the room. You can't find the right person if you don't know they exist.",
             },
             {
               n: "02",
-              title: "The awkward approach",
-              body: "Breaking into a conversation at a conference feels like interrupting. Most people leave without speaking to half the people they intended to.",
+              title: "No way to start without awkwardness.",
+              body: "Walking up to a stranger mid-conversation feels like an interruption. Most people default to who they already know and leave having met no one new.",
             },
             {
               n: "03",
-              title: "The wasted room",
-              body: "Every event puts the right people in the same space. But without infrastructure, the connections never happen. The room goes quiet.",
+              title: "No structure to make it happen.",
+              body: "The right people were in the same room. But without infrastructure to connect them, they leave strangers. The opportunity closes when the venue empties.",
             },
           ].map((item, i) => (
             <div
