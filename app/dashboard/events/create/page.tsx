@@ -51,7 +51,7 @@ export default function CreateEvent() {
       const appUrl = process.env.NEXT_PUBLIC_APP_URL || window.location.origin;
       const guestUrl = `${appUrl}/e/${slug}/g/${accessToken}`;
 
-      await supabase.from("registrations").insert({
+      const { error: regError } = await supabase.from("registrations").insert({
         event_id: data.id,
         event_name: title,
         guest_name: user.email?.split("@")[0] || "Host",
@@ -63,6 +63,10 @@ export default function CreateEvent() {
         access_token: accessToken,
         guest_access_link: guestUrl,
       });
+
+      if (regError) {
+        alert("Host registration failed: " + regError.message + "\n\nEvent was created. Event ID: " + data.id);
+      }
 
       // Direct structural redirect into the newly initiated workspace
       router.push(`/dashboard/events/${data.id}`);
