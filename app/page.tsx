@@ -1,7 +1,6 @@
 "use client";
 import React, { useEffect, useRef, useState } from "react";
 import Link from "next/link";
-import OreetiLogo from "@/components/OreetiLogo";
 import Nav from "@/components/marketing/Nav";
 import Footer from "@/components/marketing/Footer";
 
@@ -240,8 +239,8 @@ export default function Home() {
             animation: "heroFade 0.8s ease forwards 1.3s",
           }}>
             <Link href="/login" className="cta-primary" style={{
-              background: "var(--ember)",
-              color: "var(--ivory)",
+              background: "transparent",
+              color: "#E26D34",
               padding: "14px 28px",
               borderRadius: 7,
               fontSize: 13,
@@ -690,8 +689,8 @@ export default function Home() {
           </p>
           <Link href="/login" style={{
             display: "inline-block",
-            background: "var(--ember)",
-            color: "var(--ivory)",
+            background: "transparent",
+            color: "#E26D34",
             padding: "16px 36px",
             borderRadius: 8,
             fontSize: 14,
