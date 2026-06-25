@@ -107,7 +107,7 @@ export default function OrganizersPage() {
               body: "Guests pay via STK Push. You see payments reconcile in real time. At 5% platform fee, you keep 95% of every ticket sold — paid directly to your account.",
             },
             {
-              title: "Magic link check-in.",
+              title: "Magic link entry.",
               body: "No app required for your door team. Open the scanner on any browser, scan a guest's rotating QR, and they're checked in. It takes under 3 seconds.",
             },
             {
@@ -116,7 +116,7 @@ export default function OrganizersPage() {
             },
             {
               title: "Ongoing connection summary.",
-              body: "After the event ends, you receive a complete picture: total registrations, check-in rate, connections made, handshake volume, and more. Data that tells you what actually happened.",
+              body: "After the event ends, you receive a complete picture: total connections made and networking activity. Data that tells you what actually happened.",
             },
           ].map((item, i) => (
             <div key={item.title} data-reveal data-delay={String(i * 80)} style={{

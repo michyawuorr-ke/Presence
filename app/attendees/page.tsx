@@ -88,7 +88,7 @@ export default function AttendeesPage() {
             },
             {
               moment: "In the room",
-              headline: "Browse the Scene.",
+              headline: "Open the Networking tab.",
               body: "The Networking tab shows other attendees who are visible right now. You see their first name, role, and intent badges. You can set your own visibility — or stay invisible entirely.",
             },
             {

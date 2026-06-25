@@ -29,7 +29,7 @@ const features = [
     category: "Entry",
     headline: "rotating QR networking handshake.",
     body: "Every attendee's QR code rotates every 60 seconds, cryptographically signed. Forgery is impossible. Entry is instant. The experience begins the moment they walk through the door.",
-    detail: "No paper lists. No manual entry. Organizers scan from any device.",
+    detail: "Guests show their static entry QR at the door. The rotating QR is for networking only.",
   },
   {
     category: "Discovery",

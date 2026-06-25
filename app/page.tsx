@@ -569,7 +569,7 @@ export default function Home() {
               Your event, elevated.
             </h3>
             <p style={{ color: "var(--dusk)", fontSize: 14, lineHeight: 1.75, marginBottom: 28 }}>
-              Magic link check-in. M-Pesa ticketing. Real-time activation dashboards. See who's in the room, what connections are forming, and what the energy looks like — while it's happening.
+              Magic link entry. M-Pesa ticketing. Real-time activation dashboards. See who's in the room, what connections are forming, and what the energy looks like — while it's happening.
             </p>
             <Link href="/organizers" style={{
               color: "var(--gold)",
