@@ -212,12 +212,11 @@ export default function Home() {
             color: "var(--ivory)",
             margin: "0 0 28px",
           }}>
-            <span className="hero-word" style={{ animationDelay: "0.2s" }}>The room</span>{" "}
-            <span className="hero-word" style={{ animationDelay: "0.38s", fontStyle: "italic" }}>knows</span>{" "}
-            <span className="hero-word" style={{ animationDelay: "0.54s" }}>who</span>{" "}
-            <span className="hero-word" style={{ animationDelay: "0.7s" }}>you</span>{" "}
-            <span className="hero-word" style={{ animationDelay: "0.86s" }}>should</span>{" "}
-            <span className="hero-word" style={{ animationDelay: "1.0s" }}>meet.</span>
+            <span className="hero-word" style={{ animationDelay: "0.2s" }}>Every event</span>{" "}
+            <span className="hero-word" style={{ animationDelay: "0.38s", fontStyle: "italic" }}>you organise</span>{" "}
+            <span className="hero-word" style={{ animationDelay: "0.54s" }}>should</span>{" "}
+            <span className="hero-word" style={{ animationDelay: "0.7s" }}>create</span>{" "}
+            <span className="hero-word" style={{ animationDelay: "0.86s" }}>value.</span>
           </h1>
 
           <p style={{
