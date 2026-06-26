@@ -329,7 +329,7 @@ export default function Home() {
             {
               n: "02",
               title: "You filled the room. The rest was left to chance.",
-              body: "The right people were there. But without structure, most of them never found each other.",
+              body: "Whether the right conversations happened remained the one thing you couldn't see.",
             },
             {
               n: "03",
