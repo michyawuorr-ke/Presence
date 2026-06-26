@@ -229,7 +229,7 @@ export default function Home() {
             opacity: 0,
             animation: "heroFade 0.8s ease forwards 1.1s",
           }}>
-            Oreeti turns events into living networks — where every handshake is intentional, every connection is earned, and the room activates around you.
+            Oreeti is the networking layer that makes it happen — intentional connections, inside your event, every time.
           </p>
 
           <div style={{
@@ -328,8 +328,8 @@ export default function Home() {
             },
             {
               n: "02",
-              title: "No way to start without awkwardness.",
-              body: "Walking up to a stranger mid-conversation feels like an interruption. Most people default to who they already know and leave having met no one new.",
+              title: "You filled the room. The rest was left to chance.",
+              body: "The right people were there. But without structure, most of them never found each other.",
             },
             {
               n: "03",
