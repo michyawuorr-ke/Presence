@@ -26,49 +26,49 @@ function useReveal() {
 
 const features = [
   {
-    category: "Entry",
+    category: "Walk in already known",
     headline: "rotating QR networking handshake.",
     body: "Every attendee's QR code rotates every 60 seconds, cryptographically signed. Forgery is impossible. Entry is instant. The experience begins the moment they walk through the door.",
     detail: "Guests show their static entry QR at the door. The rotating QR is for networking only.",
   },
   {
-    category: "Discovery",
+    category: "Find who is in the room",
     headline: "Live attendee presence in the Scene.",
     body: "The Networking tab shows who's in the room right now — first name, role, and intent badges. Discover context before the conversation.",
     detail: "Visibility is always in the attendee's control.",
   },
   {
-    category: "Connection",
+    category: "Connect without the awkward",
     headline: "Mutual handshake requests.",
     body: "Connection requires both parties to want it. An attendee sends a request with a reason. The recipient chooses to accept. Only then does the QR scan happen.",
     detail: "Consent is the feature. Not an afterthought.",
   },
   {
-    category: "Payments",
+    category: "Get paid, instantly",
     headline: "M-Pesa STK Push ticketing.",
     body: "Sell tickets with a single phone prompt. Guests pay via M-Pesa directly. Funds reconcile automatically. Organizers receive event revenue with a 5% platform fee.",
     detail: "Production paybill. Real money. No workarounds.",
   },
   {
-    category: "Intelligence",
+    category: "Bring people together on purpose",
     headline: "Signal meetups.",
     body: "Organizers define networking stations before the event. Attendees browse by station and connect with people whose interests match theirs.",
     detail: "Energy management for event hosts.",
   },
   {
-    category: "Privacy",
+    category: "You control what the room sees",
     headline: "Three visibility states.",
     body: "Every attendee controls their presence: Invisible (no one sees you), Visible (first name, role, and intent badges), Unlocked (full profile — only for mutual connections).",
     detail: "Your data surfaces only where you choose.",
   },
   {
-    category: "Memory",
+    category: "Remember what mattered",
     headline: "Private connection notes.",
     body: "After a handshake, each person gets a private notepad for that connection. Context that lives with the relationship — not in a screenshot you'll never find.",
     detail: "Memory built into the infrastructure.",
   },
   {
-    category: "Insight",
+    category: "Know your event worked",
     headline: "Connection data lives in your dashboard.",
     body: "After the event, connection data remains in your dashboard. No separate report — just the live data of who connected and when.",
     detail: "Know what actually happened in the room.",
