@@ -252,6 +252,7 @@ const[tab,setTab]=useState<Tab>("scene");
               </div>
             </details>
           </div>
+          {isEnded&&<p style={{fontSize:"11px",color:"rgba(240,237,232,0.3)",textAlign:"center",marginTop:"12px",letterSpacing:"0.02em"}}>This event has ended. Both QR codes are no longer active.</p>}
         </div>
       )}
 
