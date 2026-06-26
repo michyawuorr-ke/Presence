@@ -125,11 +125,11 @@ export default function LoginPage() {
 
         <div style={{ display: "flex", flexDirection: "column", gap: "20px", marginBottom: "32px" }}>
           {mode === "signup" && (
-            <input value={name} onChange={e => setName(e.target.value)} placeholder="Full name" type="text" style={inp} />
+            <input value={name} onChange={e => setName(e.target.value)} placeholder="Jane Doe" type="text" style={inp} />
           )}
-          <input value={email} onChange={e => setEmail(e.target.value)} placeholder="Email address" type="email" style={inp} />
+          <input value={email} onChange={e => setEmail(e.target.value)} placeholder="you@gmail.com" type="email" style={inp} />
           {mode === "signup" && (
-            <input value={phone} onChange={e => setPhone(e.target.value)} placeholder="M-Pesa phone number" type="tel" style={inp} />
+            <input value={phone} onChange={e => setPhone(e.target.value)} placeholder="+254 700 000 000" type="tel" style={inp} />
           )}
         </div>
       </div>

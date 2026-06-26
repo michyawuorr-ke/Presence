@@ -100,7 +100,7 @@ export default function CreateEvent() {
           </div>
 
           <button onClick={handleCreate} disabled={loading} style={{ marginTop: "20px", background: "#D4AF37", border: "none", padding: "16px", borderRadius: "12px", color: "#000", fontWeight: "700", cursor: "pointer", fontSize: "15px" }}>
-            {loading ? "Initializing..." : "Create Event"}
+            {loading ? "Creating your event..." : "Create Event"}
           </button>
         </div>
       </div>

@@ -235,7 +235,7 @@ export default function EventDetailPage() {
     document.body.appendChild(a); a.click(); document.body.removeChild(a); URL.revokeObjectURL(url);
   }
 
-  if (loading) return <div style={{ textAlign: "center", padding: "60px", color: "rgba(255,255,255,0.4)" }}>Loading Workspace...</div>;
+  if (loading) return (<div style={{ padding: "24px", maxWidth: "480px", margin: "0 auto" }}><div style={{ width: "38px", height: "38px", borderRadius: "50%", background: "rgba(255,255,255,0.04)", marginBottom: "24px" }}/><div style={{ height: "24px", width: "60%", borderRadius: "8px", background: "rgba(255,255,255,0.04)", marginBottom: "12px" }}/><div style={{ height: "14px", width: "40%", borderRadius: "6px", background: "rgba(255,255,255,0.03)", marginBottom: "32px" }}/><div style={{ height: "80px", borderRadius: "14px", background: "rgba(255,255,255,0.03)", marginBottom: "12px" }}/><div style={{ height: "80px", borderRadius: "14px", background: "rgba(255,255,255,0.03)", marginBottom: "12px" }}/><div style={{ height: "80px", borderRadius: "14px", background: "rgba(255,255,255,0.03)", marginBottom: "12px" }}/><div style={{ height: "48px", borderRadius: "12px", background: "rgba(255,255,255,0.03)" }}/></div>);
   if (!event) return <div style={{ textAlign: "center", padding: "60px", color: "rgba(255,255,255,0.4)" }}>Event Missing</div>;
 
   const statusColor: any = { draft: "rgba(255,255,255,0.4)", scheduled: "#D4AF37", live: "#D4AF37", ended: "rgba(255,255,255,0.3)" };
