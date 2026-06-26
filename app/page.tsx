@@ -213,7 +213,7 @@ export default function Home() {
             margin: "0 0 28px",
           }}>
             <span className="hero-word" style={{ animationDelay: "0.2s" }}>Every event</span>{" "}
-            <span className="hero-word" style={{ animationDelay: "0.38s", fontStyle: "italic" }}>you organise</span>{" "}
+            <span className="hero-word" style={{ animationDelay: "0.38s" }}>you organise</span>{" "}
             <span className="hero-word" style={{ animationDelay: "0.54s" }}>should</span>{" "}
             <span className="hero-word" style={{ animationDelay: "0.7s" }}>create</span>{" "}
             <span className="hero-word" style={{ animationDelay: "0.86s" }}>value.</span>
