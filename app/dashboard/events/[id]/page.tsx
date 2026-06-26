@@ -43,6 +43,20 @@ export default function EventDetailPage() {
     setStations(data || []);
   }
 
+  async function triggerGoLive(eventId: string, userEmail: string) {
+    try {
+      const res = await fetch("/api/events/go-live", {
+        return true;
+      } else {
+        setTimeout(() => triggerGoLive(eventId, userEmail), 5000);
+        return false;
+      }
+    } catch {
+      setTimeout(() => triggerGoLive(eventId, userEmail), 5000);
+      return false;
+    }
+  }
+
   useEffect(() => {
     async function load() {
       const { data: ev } = await supabase.from("events").select("*").eq("id", id).single();
@@ -75,15 +89,7 @@ export default function EventDetailPage() {
         clearInterval(tick);
         const { data: { user } } = await supabase.auth.getUser();
         if (user) {
-          const res = await fetch('/api/events/go-live', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ event_id: id, host_email: user.email }),
-          });
-          const data = await res.json();
-          if (res.ok) {
-            setEvent((prev: any) => ({ ...prev, status: 'live' }));
-            setHostLink(data.host_link);
+          triggerGoLive(id, user.email ?? "");
           }
         }
       } else {
@@ -178,14 +184,6 @@ export default function EventDetailPage() {
     const { data: { user } } = await supabase.auth.getUser();
     if (user) {
       const res = await fetch("/api/events/go-live", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ event_id: id, host_email: user.email }),
-      });
-      const data = await res.json();
-      if (res.ok && data.host_link) setHostLink(data.host_link);
-    }
-  }
 
   async function handleAddTicket() {
     if (!ticketName) return;
