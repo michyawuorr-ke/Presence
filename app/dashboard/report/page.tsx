@@ -59,7 +59,7 @@ export default function TicketsAndRevenuePage() {
   const gross = confirmed.reduce((sum, r) => sum + (r.amount || 0), 0);
   const awaitingClearance = pendingRegs.filter(r => r.status === "pending_verification" || r.status === "pending");
 
-  if (loading) return <div style={{ background: "#000", minHeight: "100vh", display: "flex", alignItems: "center", justifyContent: "center", color: "rgba(255,255,255,0.3)" }}>LOADING LEDGER...</div>;
+  if (loading) return (<div style={{ background: "#000", minHeight: "100vh", padding: "40px 24px" }}><div style={{ maxWidth: "680px", margin: "0 auto" }}><div style={{ height: "20px", width: "35%", borderRadius: "6px", background: "rgba(255,255,255,0.04)", marginBottom: "8px" }}/><div style={{ height: "14px", width: "20%", borderRadius: "4px", background: "rgba(255,255,255,0.03)", marginBottom: "32px" }}/><div style={{ background: "rgba(255,255,255,0.02)", border: "1px solid rgba(255,255,255,0.04)", borderRadius: "16px", marginBottom: "32px", height: "100px" }}/><div style={{ height: "80px", borderRadius: "12px", background: "rgba(255,255,255,0.02)", marginBottom: "10px" }}/><div style={{ height: "80px", borderRadius: "12px", background: "rgba(255,255,255,0.02)", marginBottom: "10px" }}/><div style={{ height: "80px", borderRadius: "12px", background: "rgba(255,255,255,0.02)" }}/></div></div>);
 
   return (
     <div style={{ background: "#000", minHeight: "100vh", padding: "40px 24px", color: "#fff" }}>

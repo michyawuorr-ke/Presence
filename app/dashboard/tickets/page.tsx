@@ -39,7 +39,7 @@ export default function TicketsPage() {
     </div>
   );
 
-  if (loading) return <div style={{textAlign:"center",padding:"60px",color:"#999"}}>Loading...</div>;
+  if (loading) return (<div style={{ maxWidth: "600px", margin: "0 auto", padding: "24px" }}><div style={{ height: "22px", width: "40%", borderRadius: "6px", background: "rgba(255,255,255,0.04)", marginBottom: "24px" }}/><div style={{ background: "rgba(255,255,255,0.02)", borderRadius: "20px", marginBottom: "12px", height: "88px" }}/><div style={{ background: "rgba(255,255,255,0.02)", borderRadius: "20px", marginBottom: "12px", height: "88px" }}/><div style={{ background: "rgba(255,255,255,0.02)", borderRadius: "20px", marginBottom: "12px", height: "88px" }}/><div style={{ background: "rgba(255,255,255,0.02)", borderRadius: "20px", marginBottom: "12px", height: "88px" }}/><div style={{ background: "rgba(255,255,255,0.02)", borderRadius: "20px", height: "88px" }}/></div>);
 
   return (
     <div style={{maxWidth:"600px",margin:"0 auto"}}>

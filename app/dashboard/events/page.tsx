@@ -70,7 +70,7 @@ export default function EventsPage() {
     }
   }
 
-  if (loading) return <div style={{ padding: "40px", color: "#aaa", textAlign: "center", fontSize: "12px", letterSpacing: "0.1em" }}>LOADING USER ECOSYSTEM...</div>;
+  if (loading) return (<div style={{ padding: "24px" }}><div style={{ height: "16px", width: "30%", borderRadius: "6px", background: "rgba(255,255,255,0.04)", marginBottom: "32px" }}/><div style={{ padding: "20px 0", borderBottom: "1px solid rgba(255,255,255,0.04)" }}><div style={{ height: "15px", width: "50%", borderRadius: "4px", background: "rgba(255,255,255,0.05)", marginBottom: "10px" }}/><div style={{ height: "12px", width: "35%", borderRadius: "4px", background: "rgba(255,255,255,0.03)" }}/></div><div style={{ padding: "20px 0", borderBottom: "1px solid rgba(255,255,255,0.04)" }}><div style={{ height: "15px", width: "60%", borderRadius: "4px", background: "rgba(255,255,255,0.05)", marginBottom: "10px" }}/><div style={{ height: "12px", width: "40%", borderRadius: "4px", background: "rgba(255,255,255,0.03)" }}/></div><div style={{ padding: "20px 0" }}><div style={{ height: "15px", width: "45%", borderRadius: "4px", background: "rgba(255,255,255,0.05)", marginBottom: "10px" }}/><div style={{ height: "12px", width: "30%", borderRadius: "4px", background: "rgba(255,255,255,0.03)" }}/></div></div>);
 
   const visibleEvents = events.filter(e => !e.is_hidden);
   const hiddenEvents = events.filter(e => e.is_hidden);
