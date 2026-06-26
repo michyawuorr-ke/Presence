@@ -175,6 +175,16 @@ export default function EventDetailPage() {
   async function handlePublish() {
     await supabase.from("events").update({ status: "scheduled" }).eq("id", id);
     setEvent((prev: any) => ({ ...prev, status: "scheduled" }));
+    const { data: { user } } = await supabase.auth.getUser();
+    if (user) {
+      const res = await fetch("/api/events/go-live", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ event_id: id, host_email: user.email }),
+      });
+      const data = await res.json();
+      if (res.ok && data.host_link) setHostLink(data.host_link);
+    }
   }
 
   async function handleAddTicket() {
