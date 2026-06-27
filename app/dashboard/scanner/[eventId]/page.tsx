@@ -20,6 +20,7 @@ export default function ScannerPage(){
       const{data:{user}}=await supabase.auth.getUser();
       if(!user){router.push("/login");return;}
       const{data:ev}=await supabase.from("events").select("*").eq("id",eventId).single();
+      if(!ev||ev.host_id!==user.id){router.replace("/dashboard/events");return;}
       setEvent(ev);
       const{count}=await supabase.from("registrations").select("*",{count:"exact",head:true}).eq("event_id",eventId).eq("checked_in",true);
       setCheckinCount(count||0);

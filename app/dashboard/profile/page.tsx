@@ -70,7 +70,7 @@ export default function OrganizerProfile() {
     }
   }
 
-  if (!profile) return <div style={{ padding: "40px", color: "#D4AF37", textAlign: "center", fontSize: "12px", letterSpacing: "0.1em" }}>LOADING IDENTITY...</div>;
+  if (!profile) return (<div style={{ padding: "24px", maxWidth: "480px", margin: "0 auto" }}><div style={{ width: "60px", height: "60px", borderRadius: "50%", background: "rgba(212,175,55,0.06)", border: "1px solid rgba(212,175,55,0.1)", marginBottom: "20px" }}/><div style={{ height: "16px", width: "45%", borderRadius: "6px", background: "rgba(255,255,255,0.04)", marginBottom: "10px" }}/><div style={{ height: "12px", width: "30%", borderRadius: "4px", background: "rgba(255,255,255,0.03)", marginBottom: "32px" }}/><div style={{ height: "60px", borderRadius: "12px", background: "rgba(255,255,255,0.02)", marginBottom: "10px" }}/><div style={{ height: "60px", borderRadius: "12px", background: "rgba(255,255,255,0.02)", marginBottom: "10px" }}/><div style={{ height: "60px", borderRadius: "12px", background: "rgba(255,255,255,0.02)" }}/></div>);
 
   return (
     <div style={{ padding: "32px 16px", background: "#000", minHeight: "100vh" }}>
