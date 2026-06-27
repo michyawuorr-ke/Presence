@@ -42,7 +42,7 @@ export default function LoginPage() {
     const { error: err } = await supabase.auth.signInWithOtp({
       email,
       options: {
-        emailRedirectTo: "https://presence-bb5i.vercel.app/auth/callback",
+        emailRedirectTo: "https://oreeti.com/auth/callback",
         data: { name, phone },
       },
     });
@@ -62,7 +62,7 @@ export default function LoginPage() {
     const { error: err } = await supabase.auth.signInWithOtp({
       email,
       options: {
-        emailRedirectTo: "https://presence-bb5i.vercel.app/auth/callback",
+        emailRedirectTo: "https://oreeti.com/auth/callback",
       },
     });
 
