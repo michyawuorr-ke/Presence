@@ -6,97 +6,6 @@ import Nav from "@/components/marketing/Nav";
 import Footer from "@/components/marketing/Footer";
 import Stats from "@/components/home/Stats";
 
-/* ── ambient node-connection canvas ──────────────────────────────── */
-function ConnectionCanvas() {
-  const canvasRef = useRef<HTMLCanvasElement>(null);
-
-  useEffect(() => {
-    const canvas = canvasRef.current;
-    if (!canvas) return;
-    const ctx = canvas.getContext("2d");
-    if (!ctx) return;
-
-    const resize = () => {
-      canvas.width = canvas.offsetWidth;
-      canvas.height = canvas.offsetHeight;
-    };
-    resize();
-    window.addEventListener("resize", resize);
-
-    const NODE_COUNT = 28;
-    const nodes = Array.from({ length: NODE_COUNT }, () => ({
-      x: Math.random() * canvas.width,
-      y: Math.random() * canvas.height,
-      vx: (Math.random() - 0.5) * 0.35,
-      vy: (Math.random() - 0.5) * 0.35,
-      r: Math.random() * 2 + 1.5,
-      pulse: Math.random() * Math.PI * 2,
-    }));
-
-    let frame: number;
-    const draw = () => {
-      ctx.clearRect(0, 0, canvas.width, canvas.height);
-
-      // update
-      nodes.forEach(n => {
-        n.x += n.vx;
-        n.y += n.vy;
-        n.pulse += 0.018;
-        if (n.x < 0 || n.x > canvas.width) n.vx *= -1;
-        if (n.y < 0 || n.y > canvas.height) n.vy *= -1;
-      });
-
-      // edges
-      for (let i = 0; i < nodes.length; i++) {
-        for (let j = i + 1; j < nodes.length; j++) {
-          const dx = nodes[i].x - nodes[j].x;
-          const dy = nodes[i].y - nodes[j].y;
-          const dist = Math.sqrt(dx * dx + dy * dy);
-          const MAX = 140;
-          if (dist < MAX) {
-            const alpha = (1 - dist / MAX) * 0.18;
-            ctx.beginPath();
-            ctx.moveTo(nodes[i].x, nodes[i].y);
-            ctx.lineTo(nodes[j].x, nodes[j].y);
-            ctx.strokeStyle = `rgba(138,115,85,${alpha})`;
-            ctx.lineWidth = 0.8;
-            ctx.stroke();
-          }
-        }
-      }
-
-      // nodes
-      nodes.forEach(n => {
-        const glow = Math.sin(n.pulse) * 0.3 + 0.7;
-        ctx.beginPath();
-        ctx.arc(n.x, n.y, n.r * glow, 0, Math.PI * 2);
-        ctx.fillStyle = `rgba(234,230,223,${0.25 * glow})`;
-        ctx.fill();
-      });
-
-      frame = requestAnimationFrame(draw);
-    };
-    draw();
-    return () => {
-      cancelAnimationFrame(frame);
-      window.removeEventListener("resize", resize);
-    };
-  }, []);
-
-  return (
-    <canvas
-      ref={canvasRef}
-      style={{
-        position: "absolute", inset: 0,
-        width: "100%", height: "100%",
-        opacity: 0.7,
-        pointerEvents: "none",
-      }}
-    />
-  );
-}
-
-/* ── scroll reveal hook ─────────────────────────────────────────── */
 function useReveal() {
   useEffect(() => {
     const els = document.querySelectorAll("[data-reveal]");
@@ -116,38 +25,8 @@ function useReveal() {
     );
     els.forEach(el => io.observe(el));
     return () => io.disconnect();
-  }, []);
+      }, []);
 }
-
-/* ── stat counter ───────────────────────────────────────────────── */
-function Stat({ value, label }: { value: string; label: string }) {
-  return (
-    <div style={{ textAlign: "center" }}>
-      <p style={{
-        fontFamily: "var(--font-display)",
-        fontSize: "clamp(28px,4vw,44px)",
-        fontWeight: 500,
-        color: "var(--ivory)",
-        letterSpacing: "-0.02em",
-        margin: "0 0 6px",
-        lineHeight: 1,
-      }}>
-        {value}
-      </p>
-      <p style={{
-        fontSize: 11,
-        letterSpacing: "0.1em",
-        textTransform: "uppercase",
-        color: "var(--dusk)",
-        margin: 0,
-        fontWeight: 500,
-      }}>
-        {label}
-      </p>
-    </div>
-  );
-}
-
 export default function Home() {
   useReveal();
 
