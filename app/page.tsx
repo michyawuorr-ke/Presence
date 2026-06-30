@@ -4,6 +4,7 @@ import React, { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import Nav from "@/components/marketing/Nav";
 import Footer from "@/components/marketing/Footer";
+import Stats from "@/components/home/Stats";
 
 /* ── ambient node-connection canvas ──────────────────────────────── */
 function ConnectionCanvas() {
@@ -577,7 +578,7 @@ export default function Home() {
             </Link>
           </div>
 
-          {/* Attendees */}
+	  <Stats />
           <div data-reveal data-delay="100" style={{
             background: "var(--obsidian)",
             borderRadius: 16,
