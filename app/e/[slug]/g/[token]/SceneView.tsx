@@ -1,11 +1,12 @@
 "use client";
-import { useEffect, useState, useRef } from "react";
+import { useEffect, useState } from "react";
 import { supabase } from "@/lib/supabase/client";
 import QRCode from "qrcode";
 import SceneTab from "./tabs/SceneTab";
 import NetworkingTab from "./tabs/NetworkingTab";
 import TicketTab from "./tabs/TicketTab";
 import ProfileTab from "./tabs/ProfileTab";
+import { usePendingCount } from "./tabs/queries";
 
 type Tab = "scene" | "networking" | "ticket" | "profile";
 
@@ -24,10 +25,12 @@ export default function SceneView({ event, registration, profile, onProfileUpdat
   const [connectionsCount, setConnectionsCount] = useState(0);
   const [fiveMin, setFiveMin] = useState(false);
   const [eventStatus, setEventStatus] = useState(event?.status || "");
-  const [pendingCount, setPendingCount] = useState(0);
   const [entryQR, setEntryQR] = useState("");
   const [networkingQR, setNetworkingQR] = useState("");
   const [qrError, setQrError] = useState(false);
+
+  // Cached pending count for nav badge — no manual effect needed
+  const { data: pendingCount = 0 } = usePendingCount(profile?.id, event?.id);
 
   const isLive = eventStatus === "live";
   const isEnded = eventStatus === "ended";
@@ -38,22 +41,6 @@ export default function SceneView({ event, registration, profile, onProfileUpdat
     { id: "ticket", l: "Ticket", e: "🎟" },
     { id: "profile", l: "Profile", e: "◐", badge: pendingCount },
   ];
-
-  // Pending count for nav badge
-  useEffect(() => {
-    if (!profile || !event) return;
-    async function loadPendingCount() {
-      const { count } = await supabase.from("handshake_requests").select("*", { count: "exact", head: true }).eq("recipient_id", profile.id).eq("event_id", event.id).eq("status", "pending").or(`expires_at.is.null,expires_at.gt.${new Date().toISOString()}`);
-      setPendingCount(count || 0);
-    }
-    loadPendingCount();
-    const ch = supabase.channel("nav-pending:" + profile.id)
-      .on("postgres_changes", { event: "*", schema: "public", table: "handshake_requests" }, (payload: any) => {
-        if (payload.new?.recipient_id === profile.id || payload.old?.recipient_id === profile.id) loadPendingCount();
-      })
-      .subscribe();
-    return () => { supabase.removeChannel(ch); };
-  }, [profile, event]);
 
   // QR generation with 60s rotation
   useEffect(() => {

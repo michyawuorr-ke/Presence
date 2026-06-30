@@ -283,6 +283,7 @@ export default function EventDetailPage() {
         )}
 
         {(event.status === "live" || event.status === "ended") && (
+          <div>
           <div style={{ background: "#111015", borderRadius: "16px", padding: "18px", marginBottom: "16px", border: "1px solid rgba(255,255,255,0.04)", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
             <div>
               <p style={{ fontSize: "14px", fontWeight: "600", color: "#f1f0f5", margin: 0 }}>Entry scanner</p>
@@ -291,6 +292,7 @@ export default function EventDetailPage() {
             <button onClick={() => router.push("/dashboard/scanner/" + id)} style={{ padding: "12px 20px", borderRadius: "12px", background: "linear-gradient(135deg, #221b0f, #13100b)", color: "#D4AF37", border: "1px solid rgba(212,175,55,0.25)", fontSize: "12px", cursor: "pointer", fontWeight: "700" }}>Open →</button>
           </div>
             <p style={{ fontSize: "11px", color: "rgba(255,255,255,0.3)", margin: "10px 0 0", cursor: "pointer", textDecoration: "underline" }} onClick={() => { const link = window.location.origin + "/scan/" + id + "/" + (event?.scanner_token || ""); navigator.clipboard?.writeText(link).catch(() => {}); copyLink(link); }}>Copy staff scanner link (no login required)</p>
+          </div>
         )}
 
         <div style={{ background: "linear-gradient(160deg, #16151a 0%, #0f0e12 100%)", borderRadius: "20px", padding: "20px", marginBottom: "16px", border: "1px solid rgba(255,255,255,0.04)" }}>

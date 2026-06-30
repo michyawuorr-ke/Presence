@@ -1,8 +1,9 @@
 "use client";
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { supabase } from "@/lib/supabase/client";
 import { getFirstName, parseIntents, REASON_OPTIONS } from "./shared";
 import AttendeeCard from "./AttendeeCard";
+import { useEventAttendees, useEventStations, useHostNode, useInvalidators } from "./queries";
 
 interface PreEventDiscoveryProps {
   event: any;
@@ -13,36 +14,18 @@ interface PreEventDiscoveryProps {
 }
 
 export default function PreEventDiscovery({ event, profile, sentRequests, setSentRequests, registration }: PreEventDiscoveryProps) {
-  const[attendees,setAttendees]=useState<any[]>([]);
-  const[stations,setStations]=useState<any[]>([]);
-  const[loading,setLoading]=useState(true);
   const[confirmTarget,setConfirmTarget]=useState<any>(null);
   const[selectedReason,setSelectedReason]=useState("");
   const[notification,setNotification]=useState("");
-  const[hostNode,setHostNode]=useState<any>(null);
   const[search,setSearch]=useState("");
 
-  useEffect(()=>{
-    if(!event||!profile)return;
-    let cancelled=false;
-    async function load(){
-      const[{data:guests},{data:st}]=await Promise.all([
-        supabase.from("guest_profiles").select("id,display_name,role_title,organisation,networking_intents,target_station_id").eq("event_id",event.id).eq("networking_visible",true).neq("id",profile.id),
-        supabase.from("event_stations").select("id,name").eq("event_id",event.id),
-      ]);
-      if(cancelled)return;
-      setAttendees((guests||[]).map((g:any)=>({...g,networking_intents:parseIntents(g.networking_intents)})));
-      setStations(st||[]);
-      setLoading(false);
-      if(registration?.status!=="host"){
-        const hostRes=await fetch('/api/events/host-profile?event_id='+event.id);
-        const hostData=await hostRes.json();
-        if(!cancelled&&hostData.host)setHostNode(hostData.host);
-      }
-    }
-    load();
-    return()=>{cancelled=true;};
-  },[event,profile,registration]);
+  const isHost = registration?.status === "host";
+  const { data: rawAttendees = [], isLoading: loading } = useEventAttendees(event?.id, profile?.id);
+  const { data: stations = [] } = useEventStations(event?.id);
+  const { data: hostNode } = useHostNode(event?.id, isHost);
+  const invalidate = useInvalidators(profile?.id ?? "", event?.id ?? "");
+
+  const attendees = rawAttendees.map((g: any) => ({ ...g, networking_intents: parseIntents(g.networking_intents) }));
 
   async function sendConnect(target:any){
     if(!selectedReason)return;
@@ -69,6 +52,7 @@ export default function PreEventDiscovery({ event, profile, sentRequests, setSen
     }else{
       setNotification(`Request sent to ${getFirstName(target.display_name)}`);
       setTimeout(()=>setNotification(""),4000);
+      invalidate.invalidatePending();
     }
   }
 
