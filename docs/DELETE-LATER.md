@@ -2,8 +2,8 @@ TER
 
 ## app/page.tsx
 
-- [ ] Remove local useReveal()
-- [ ] Remove local Stat()
+- [×] Remove local useReveal()
+- [×] Remove local Stat()
 - [ ] Remove Hero
 - [ ] Remove Stats
 - [ ] Remove Problem
