@@ -8,6 +8,7 @@ import Stats from "@/components/home/Stats";
 import Hero from "@/components/home/Hero";
 
 import useReveal from "@/components/home/useReveal";
+import Problem from "@/components/home/Problem";
 export default function Home() {
   useReveal();
 
@@ -39,90 +40,7 @@ export default function Home() {
       <Hero />
 <Stats />
       {/* ── PROBLEM ──────────────────────────────────────────────── */}
-      <section style={{ padding: "120px 32px", maxWidth: 1100, margin: "0 auto" }}>
-        <div data-reveal data-delay="0" style={{ marginBottom: 72, textAlign: "center" }}>
-          <p className="eyebrow" style={{ marginBottom: 16 }}>The problem with events</p>
-          <h2 style={{
-            fontFamily: "var(--font-display)",
-            fontSize: "clamp(28px,4vw,52px)",
-            fontWeight: 500,
-            color: "var(--ivory)",
-            lineHeight: 1.15,
-            letterSpacing: "-0.02em",
-            maxWidth: 640,
-            margin: "0 auto",
-          }}>
-            The right person was in that room. You just never found each other.
-          </h2>
-        </div>
-
-        <div style={{
-          display: "grid",
-          gridTemplateColumns: "repeat(3,1fr)",
-          gap: 1,
-          background: "rgba(138,115,85,0.08)",
-          borderRadius: 16,
-          overflow: "hidden",
-        }} className="problem-grid">
-          {[
-            {
-              n: "01",
-              title: "No way to know who's there.",
-              body: "You arrive with no idea who else is in the room. You can't find the right person if you don't know they exist.",
-            },
-            {
-              n: "02",
-              title: "You filled the room. The rest was left to chance.",
-              body: "Whether the right conversations happened remained the one thing you couldn't see.",
-            },
-            {
-              n: "03",
-              title: "No structure to make it happen.",
-              body: "The right people were in the same room. But without infrastructure to connect them, they leave strangers. The opportunity closes when the venue empties.",
-            },
-          ].map((item, i) => (
-            <div
-              key={item.n}
-              className="problem-card"
-              data-reveal
-              data-delay={String(i * 100)}
-              style={{
-                background: "var(--obsidian)",
-                padding: "40px 32px",
-                transition: "background 0.25s, border-color 0.25s",
-                border: "1px solid transparent",
-                cursor: "default",
-              }}
-            >
-              <p style={{
-                fontSize: 10,
-                fontWeight: 700,
-                letterSpacing: "0.14em",
-                color: "rgba(138,115,85,0.45)",
-                marginBottom: 20,
-                textTransform: "uppercase",
-              }}>
-                {item.n}
-              </p>
-              <h3 style={{
-                fontFamily: "var(--font-display)",
-                fontSize: 20,
-                fontWeight: 500,
-                color: "var(--ivory)",
-                marginBottom: 14,
-                lineHeight: 1.25,
-                letterSpacing: "-0.01em",
-              }}>
-                {item.title}
-              </h3>
-              <p style={{ color: "var(--dusk)", fontSize: 14, lineHeight: 1.7, margin: 0 }}>
-                {item.body}
-              </p>
-            </div>
-          ))}
-        </div>
-      </section>
-
+<Problem />
       {/* ── INSIGHT ──────────────────────────────────────────────── */}
       <section style={{
         padding: "100px 32px",
