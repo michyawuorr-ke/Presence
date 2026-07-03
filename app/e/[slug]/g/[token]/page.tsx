@@ -37,75 +37,32 @@ export default function GuestEntryPage() {
   const [stationId, setStationId] = useState("");
 
   // Resolve token -> registration -> event -> existing profile (gates onboarding vs scene)
-  useEffect(() => {
-    if (!token) return;
-    let cancelled = false;
+useEffect(() => {
+	  if (!token) return;
 
-    async function load() {
-      const { data: reg, error: regErr } = await supabase
-        .from("registrations")
-        .select("*")
-        .eq("access_token", token)
-        .single();
+	    async function run() {
+		        const result = await loadEntry(token);
 
-      if (regErr || !reg) {
-        if (!cancelled) setStage("not_found");
-        return;
-      }
-      if (cancelled) return;
-      setRegistration(reg);
+			    setRegistration(result.registration);
+			        setEvent(result.event);
+				    setStations(result.stations);
 
-      const { data: ev } = await supabase
-        .from("events")
-        .select("*")
-        .eq("id", reg.event_id)
-        .single();
-      if (cancelled) return;
-      setEvent(ev || null);
+				        if (result.status === "not_found") {
+						      setStage("not_found");
+						            return;
+							        }
 
-      if (ev) {
-        const { data: st } = await supabase
-          .from("event_stations")
-          .select("id, name, subtitle")
-          .eq("event_id", ev.id);
-        if (!cancelled && st) setStations(st);
-      }
+								    if (result.status === "scene") {
+									          setProfile(result.profile);
+										        setStage("scene");
+											      return;
+											          }
 
-      const { data: existingProfile } = await supabase
-        .from("guest_profiles")
-        .select("*")
-        .eq("registration_id", reg.id)
-        .single();
+												      setStage("onboarding");
+												        }
 
-      if (cancelled) return;
-
-      if (existingProfile) {
-        setProfile(existingProfile);
-        setStage("scene");
-        return;
-      }
-
-      // Hosts get an auto-generated profile from their host_profiles record
-      // instead of filling out the attendee onboarding form.
-      if (reg.status === "host") {
-        const hostProfile = await bootstrapHostProfile(reg);
-        if (cancelled) return;
-        if (hostProfile) {
-          setProfile(hostProfile);
-          setStage("scene");
-          return;
-        }
-        // If host bootstrap genuinely fails, fall back to the normal onboarding
-        // form rather than leaving the host stuck on a blank screen.
-      }
-
-      setStage("onboarding");
-    }
-
-    load();
-    return () => { cancelled = true; };
-  }, [token]);
-
+													  run();
+}, [token]);
   async function bootstrapHostProfile(reg: any) {
     const { data: evFull } = await supabase
       .from("events")
