@@ -37,6 +37,12 @@ export default function GuestEntryPage() {
   const [intents, setIntents] = useState<string[]>([]);
   const [isIntentOpen, setIsIntentOpen] = useState(false);
   const [stationId, setStationId] = useState("");
+  const canSubmit =
+	    displayName.trim().length > 0 &&
+	      role.trim().length > 0 &&
+	        organisation.trim().length > 0 &&
+		  bio.trim().length > 0 &&
+		    stationId.trim().length > 0;
 
   // Resolve token -> registration -> event -> existing profile (gates onboarding vs scene)
 useEffect(() => {
