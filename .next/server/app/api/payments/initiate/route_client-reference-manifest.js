@@ -1,1 +1,0 @@
-globalThis.__RSC_MANIFEST=(globalThis.__RSC_MANIFEST||{});globalThis.__RSC_MANIFEST["/api/payments/initiate/route"]={"moduleLoading":{"prefix":"/_next/"},"ssrModuleMapping":{},"edgeSSRModuleMapping":{},"clientModules":{},"entryCSSFiles":{"/data/data/com.termux/files/home/presence/app/api/payments/initiate/route":[]},"rscModuleMapping":{},"edgeRscModuleMapping":{}};

@@ -1,4 +1,4 @@
-mport { supabase } from "@/lib/supabase/client";
+import { supabase } from "@/lib/supabase/client";
 
 type LoadEntryResult = {
 	  status: "not_found" | "onboarding" | "scene";
