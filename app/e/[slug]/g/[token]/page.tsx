@@ -37,12 +37,36 @@ export default function GuestEntryPage() {
   const [intents, setIntents] = useState<string[]>([]);
   const [isIntentOpen, setIsIntentOpen] = useState(false);
   const [stationId, setStationId] = useState("");
-  const canSubmit =
-	    displayName.trim().length > 0 &&
-	      role.trim().length > 0 &&
-	        organisation.trim().length > 0 &&
-		  bio.trim().length > 0 &&
-		    stationId.trim().length > 0;
+  const getPresenceLabel = () => {
+	    const added = [];
+	      if (presence.linkedin.trim()) added.push("LinkedIn");
+	        if (presence.website.trim()) added.push("Website");
+		  if (presence.portfolio.trim()) added.push("Portfolio");
+		    return added.length === 0 ? "Add Professional Links" : `${added.join(" • ")} Linked`;
+  };
+
+  const getIntentLabel = () =>
+    intents.length === 0 ? "Select Intent" : intents.join(" + ");
+
+    const toggleIntent = (id: string) => {
+	      setIntents(prev =>
+			     prev.includes(id) ? prev.filter(i => i !== id) : [...prev, id]
+			       );
+    };
+
+    const isIdentityValid = displayName.trim() !== "" && role.trim() !== "";
+    const isPresenceValid =
+	      presence.linkedin.trim() !== "" ||
+	        presence.website.trim() !== "" ||
+		  presence.portfolio.trim() !== "";
+    const isIntentValid = intents.length > 0;
+    const isStationValid = stationId !== "";
+    const canSubmit =
+	      isIdentityValid &&
+	        isPresenceValid &&
+		  isIntentValid &&
+		    isStationValid &&
+		      !saving;
 
   // Resolve token -> registration -> event -> existing profile (gates onboarding vs scene)
 useEffect(() => {
