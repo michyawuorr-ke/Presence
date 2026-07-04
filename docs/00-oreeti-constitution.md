@@ -1,58 +1,134 @@
-reeti Constitution
-
-> Designing the Human Opportunity Engine
+Oreeti Constitution
+Designing the Human Opportunity Engine
 
 Version 1.0
 
----
+────────────────────────────────────────
 
 # Preface
 
----
+Every enduring institution is guided by principles that outlive the people who build it.
 
-# Part I — The Human Opportunity Problem
+This Constitution exists to define and protect those principles for Oreeti.
 
-## Chapter 1 — Why Oreeti Exists
+Products will evolve.
 
-## Chapter 2 — Our Beliefs
+Features will evolve.
 
-## Chapter 3 — Mission
+Technology will evolve.
 
-## Chapter 4 — Vision
+The people building Oreeti will evolve.
 
----
+What must not evolve is why Oreeti exists.
 
-# Part II — The Human Opportunity Model
+This document is the permanent record of that purpose.
 
-## Chapter 5 — From Stranger to Opportunity
+It is not an engineering manual, a product specification, or a business strategy. Those documents describe Oreeti at a particular moment in time. This Constitution describes what Oreeti must always remain.
 
-## Chapter 6 — Compounding Opportunity
+It explains the problem Oreeti was created to solve, the beliefs upon which it is built, the principles that guide every decision, and the standards by which the platform should continue to grow.
 
----
+Oreeti is built on a simple conviction:
 
-# Part III — The Human Opportunity Engine
+Human opportunity is one of the most valuable resources in life, and nearly every meaningful opportunity begins with another person.
 
-## Chapter 7 — Platform Philosophy
+A career begins with someone who believes in you.
 
-## Chapter 8 — The Five Platform Layers
+A business begins with someone who shares your vision.
 
-## Chapter 9 — Discovery Contexts
+An investment begins with someone who trusts you.
 
----
+A friendship begins with someone you meet.
 
-# Part IV — The Laws of Oreeti
+A community begins with people choosing to gather.
 
-## Chapter 10 — Product Invariants
+Behind every meaningful opportunity is a human connection.
 
-## Chapter 11 — Design Principles
+Yet despite the importance of these moments, discovering the right people at the right time remains largely governed by chance. Technology has transformed how we find information, travel, communicate, learn, and transact, but one of the most important parts of human life—the discovery of meaningful relationships—has remained largely accidental.
 
-## Chapter 12 — Intelligence Principles
+Oreeti exists to change that.
 
-## Chapter 13 — What Oreeti Is Not
+Events are where Oreeti begins, not where it ends. They are the first environment in which the platform proves its ideas because they naturally bring people together. But Oreeti is not defined by events, nor by networking. It is defined by its purpose.
 
----
+To increase the likelihood that meaningful human connections become meaningful human opportunities.
 
-# Epilogue
+Every place where people gather is a place where opportunity can emerge. A conference. A university. A café. An airport. A workplace. A neighbourhood. A city.
 
-## Building Human Opportunity
+Oreeti is built for people first and environments second.
+
+Every person who builds Oreeti is therefore a steward of something larger than software.
+
+Engineers write code.
+
+Designers shape experiences.
+
+Researchers deepen understanding.
+
+Artificial intelligence expands capability.
+
+Together, they build the conditions for people to discover one another, form meaningful relationships, and create opportunities that might otherwise never have existed.
+
+For that reason, no decision should begin with a feature.
+
+It should begin with a question.
+Does this create more human opportunity?
+
+If the answer is yes, it moves Oreeti closer to its purpose.
+
+If the answer is no, it does not belong, no matter how impressive, profitable, or technically interesting it may be.
+
+This Constitution exists so that every generation of builders can answer that question in the same way.
+
+Read it before designing.
+
+Read it before writing code.
+
+Read it before introducing a new idea.
+
+When uncertainty arises, return here.
+
+The purpose comes first.
+
+Everything else follows.
+
+
+────────────────────────────────────────
+
+PART I — THE HUMAN OPPORTUNITY PROBLEM
+
+Chapter 1 — Why Oreeti Exists
+Chapter 2 — Our Beliefs
+Chapter 3 — Mission
+Chapter 4 — Vision
+
+────────────────────────────────────────
+
+PART II — THE HUMAN OPPORTUNITY MODEL
+
+Chapter 5 — From Stranger to Opportunity
+Chapter 6 — Compounding Opportunity
+
+────────────────────────────────────────
+
+PART III — THE HUMAN OPPORTUNITY ENGINE
+
+Chapter 7 — Platform Philosophy
+Chapter 8 — The Five Platform Layers
+Chapter 9 — Discovery Contexts
+Chapter 10 — Identity & Presence
+
+────────────────────────────────────────
+
+PART IV — THE LAWS OF OREETI
+
+Chapter 11 — Product Invariants
+Chapter 12 — Design Principles
+Chapter 13 — Intelligence Principles
+Chapter 14 — Engineering Principles
+Chapter 15 — What Oreeti Is Not
+
+────────────────────────────────────────
+
+Epilogue
+
+Building Human Opportunity
 
