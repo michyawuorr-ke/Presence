@@ -5,6 +5,7 @@ import { useParams } from "next/navigation";
 import { supabase } from "@/lib/supabase/client";
 import { loadEntry } from "@/features/entry/loadEntry";
 import { bootstrapHostProfile } from "@/features/entry/bootstrapHostProfile";
+import { submitGuestOnboarding } from "@/features/entry/submitGuestOnboarding";
 import SceneView from "./SceneView";
 
 interface Station {
@@ -100,28 +101,17 @@ useEffect(() => {
     setSaving(true);
     setError("");
     try {
-      const { data, error: err } = await supabase
-        .from("guest_profiles")
-        .insert({
-          registration_id: registration.id,
-          event_id: event.id,
-          display_name: displayName,
-          role_title: role,
-          organisation,
-          bio,
-          platform_type: "link",
-          platform_value: presence.linkedin.trim() || presence.website.trim() || presence.portfolio.trim() || "",
-          aura_active: false,
-          networking_intents: intents,
-          target_station_id: stationId,
-          linkedin_url: presence.linkedin,
-          website_url: presence.website,
-          portfolio_url: presence.portfolio,
-        })
-        .select()
-        .single();
-
-      if (err) throw err;
+	    const data = await submitGuestOnboarding({
+		      registrationId: registration.id,
+		        eventId: event.id,
+			  displayName,
+			    roleTitle: role,
+			      organisation,
+			        bio,
+				  presence,
+				    intents,
+				      stationId,
+	    });
       setProfile(data);
       setStage("scene");
     } catch (err: any) {
