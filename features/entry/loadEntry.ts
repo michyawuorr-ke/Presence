@@ -16,7 +16,6 @@ const { data: registration, error } = await supabase
       .eq("access_token", token)
         .single();
 
-	alert(JSON.stringify(registration, null, 2));
 
 	if (error || !registration) {
 		  return {
