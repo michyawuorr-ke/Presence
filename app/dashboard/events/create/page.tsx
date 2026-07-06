@@ -28,6 +28,15 @@ export default function CreateEvent() {
         router.push("/login");
         return;
       }
+      const { data: host, error: hostError } = await supabase
+        .from("hosts")
+	  .select("id")
+	    .eq("email", user.email)
+	      .single();
+
+	      if (hostError || !host) {
+		        throw new Error("Host record not found.");
+	      }
 
       const { data, error } = await supabase.from("events").insert({
         title,
@@ -37,7 +46,7 @@ export default function CreateEvent() {
         end_time: endTime ? endTime + ":00+03:00" : null,
         slug,
         status: "draft",
-        host_id: user.id
+        host_id: host.id
       }).select("id").single();
 
       if (error) throw error;

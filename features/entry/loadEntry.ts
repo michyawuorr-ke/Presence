@@ -1,4 +1,5 @@
 import { supabase } from "@/lib/supabase/client";
+import { bootstrapHostProfile } from "./bootstrapHostProfile";
 
 type LoadEntryResult = {
 	  status: "not_found" | "onboarding" | "scene";
@@ -14,6 +15,8 @@ const { data: registration, error } = await supabase
     .select("*")
       .eq("access_token", token)
         .single();
+
+	alert(JSON.stringify(registration, null, 2));
 
 	if (error || !registration) {
 		  return {
@@ -36,12 +39,14 @@ const { data: registration, error } = await supabase
 		    .select("id, name, subtitle")
 		      .eq("event_id", registration.event_id);
 
-		      const { data: profile } = await supabase
-		        .from("guest_profiles")
-			  .select("*")
-			    .eq("registration_id", registration.id)
-			      .single();
-
+let { data: profile } = await supabase
+  .from("guest_profiles")
+    .select("*")
+      .eq("registration_id", registration.id)
+        .single();
+	if (!profile && registration.status === "host") {
+		  profile = await bootstrapHostProfile(registration);
+	}
 			      return {
 				        status: profile ? "scene" : "onboarding",
 					  registration,

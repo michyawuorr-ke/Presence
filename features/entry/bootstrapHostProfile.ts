@@ -6,22 +6,28 @@ export async function bootstrapHostProfile(reg: any) {
 	          .select("host_id")
 		      .eq("id", reg.event_id)
 		          .single();
+			  console.log("Event lookup:", evFull);
 
-			    if (!evFull?.host_id) return null;
+			  if (!evFull?.host_id) {
+				    throw new Error("No host_id found on event");
+			  }
 
 			      const { data: host } = await supabase
 			          .from("hosts")
 				      .select("*")
 				          .eq("id", evFull.host_id)
 					      .single();
+					      console.log("Host lookup:", host);
 
-					        if (!host) return null;
-
+if (!host) {
+	  throw new Error("Host record not found");
+}
 						  const { data: hostProfile } = await supabase
 						      .from("host_profiles")
 						          .select("*")
 							      .eq("host_id", host.id)
 							          .single();
+								  console.log("Host profile lookup:", hostProfile);
 
 								    const payload = {
 									        registration_id: reg.id,
@@ -40,6 +46,8 @@ export async function bootstrapHostProfile(reg: any) {
 															    .insert(payload)
 															        .select()
 																    .single();
+																    console.log("Created profile:", created);
+																    console.log("Insert error:", insertErr);
 
 																      if (created) return created;
 
