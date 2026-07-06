@@ -81,8 +81,20 @@ export default function EventDetailPage() {
       setBannerUrl(ev.banner_url || "");
       await loadStats(ev.id);
       await loadStations();
-      const { data: hostReg } = await supabase.from("registrations").select("guest_access_link").eq("event_id", id).eq("guest_email", user.email).eq("status", "host").single();
-      if (hostReg) setHostLink(hostReg.guest_access_link);
+      const { data: hostReg } = await supabase
+        .from("registrations")
+	  .select("access_token")
+	    .eq("event_id", id)
+	      .eq("guest_email", user.email)
+	        .eq("status", "host")
+		  .single();
+
+		  if (hostReg) {
+			    const appUrl =
+				        process.env.NEXT_PUBLIC_APP_URL || window.location.origin;
+
+			      setHostLink(`${appUrl}/e/${ev.slug}/g/${hostReg.access_token}`);
+		  }
       if (ev.status === "scheduled" && new Date(ev.start_time) <= new Date()) {
         triggerGoLive(id, user.email ?? "");
       }

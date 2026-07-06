@@ -69,7 +69,6 @@ export default function CreateEvent() {
         amount: 0,
         paid: true,
         access_token: accessToken,
-        guest_access_link: guestUrl,
       });
 
       if (regError) {

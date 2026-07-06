@@ -72,7 +72,6 @@ export async function POST(req:NextRequest){
           amount:0,
           paid:true,
           access_token:accessToken,
-          guest_access_link:guestUrl,
         })
         .select()
         .single();
