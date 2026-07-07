@@ -34,7 +34,7 @@ export default function PresenceModal({
 												            <input value={presence.linkedin} onChange={e => setPresence({ ...presence, linkedin: e.target.value })} placeholder="LinkedIn URL" style={inpStyle} className="focus-under" autoComplete="off" />
 													                <input value={presence.website} onChange={e => setPresence({ ...presence, website: e.target.value })} placeholder="Website URL" style={inpStyle} className="focus-under" autoComplete="off" />
 															            <input value={presence.portfolio} onChange={e => setPresence({ ...presence, portfolio: e.target.value })} placeholder="Portfolio URL" style={inpStyle} className="focus-under" autoComplete="off" />
-																                <button type="button" onClick={() => setIsPresenceOpen(false)} className="w-full h-11 bg-white/5 border border-white/10 rounded-sm font-mono text-[11px] tracking-widest text-[#FDFBF7] mt-4 cursor-pointer hover:bg-white/10 transition-colors">SAVE LINKS</button>
+																                <button type="button" onClick={onClose} className="w-full h-11 bg-white/5 border border-white/10 rounded-sm font-mono text-[11px] tracking-widest text-[#FDFBF7] mt-4 cursor-pointer hover:bg-white/10 transition-colors">SAVE LINKS</button>
 																		          </div>
 																			          </div>
 																				        )}

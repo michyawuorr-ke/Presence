@@ -19,7 +19,6 @@ type EntryOnboardingScreenProps = {
 				        error: string;
 };
 
-/ /stage === "onboarding"
 export default function EntryOnboardingScreen({
 	  displayName,
 	    setDisplayName,
