@@ -1,7 +1,6 @@
 
 
-type EntryOnboardingScreenProps = {};
-ardingScreenProps = {
+type EntryOnboardingScreenProps = {
 	  displayName: string;
 	    setDisplayName: React.Dispatch<React.SetStateAction<string>>;
 	      role: string;
