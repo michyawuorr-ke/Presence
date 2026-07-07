@@ -1,5 +1,5 @@
 import { supabase } from "@/lib/supabase/client";
-import { bootstrapHostProfile } from "./bootstrapHostProfile";
+import { bootstrapIdentity } from "./bootstrapIdentity";
 
 type LoadEntryResult = {
 	  status: "not_found" | "onboarding" | "scene";
@@ -44,7 +44,7 @@ let { data: profile } = await supabase
       .eq("registration_id", registration.id)
         .single();
 	if (!profile && registration.status === "host") {
-		  profile = await bootstrapHostProfile(registration);
+		  profile = await bootstrapIdentity(registration);
 	}
 			      return {
 				        status: profile ? "scene" : "onboarding",

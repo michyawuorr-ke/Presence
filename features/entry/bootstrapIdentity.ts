@@ -1,6 +1,6 @@
 import { supabase } from "@/lib/supabase/client";
 
-export async function bootstrapHostProfile(reg: any) {
+export async function bootstrapIdentity(reg: any) {
 	  const { data: evFull } = await supabase
 	      .from("events")
 	          .select("host_id")

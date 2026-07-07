@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import { useParams } from "next/navigation";
 import { supabase } from "@/lib/supabase/client";
 import { loadEntry } from "@/features/entry/loadEntry";
-import { bootstrapHostProfile } from "@/features/entry/bootstrapHostProfile";
+import { bootstrapIdentity } from "@/features/entry/bootstrapIdentity";
 import { submitGuestOnboarding } from "@/features/entry/submitGuestOnboarding";
 import EntryOnboardingScreen from "@/features/entry/components/EntryOnboardingScreen";
 import PresenceModal from "@/features/entry/components/PresenceModal";
