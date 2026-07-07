@@ -113,3 +113,7 @@ export default function EntryOnboardingScreen({
 
         {error && <p className="text-xs text-[#F97316] text-center mt-4 font-mono">{error}</p>}
       </main>
+          </div>
+	    );
+}
+

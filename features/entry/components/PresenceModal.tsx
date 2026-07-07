@@ -13,23 +13,32 @@ type PresenceModalProps = {
 							            portfolio: string;
 								        }>
 									  >;
-									    inpStyle: React.CSSProperties;
-};
+};									   const inpStyle: React.CSSProperties = {
+										     width: "100%",
+										       padding: "10px 0",
+										         background: "transparent",
+											   border: "none",
+											     borderBottom: "1px solid rgba(255,255,255,0.06)",
+											       color: "#FDFBF7",
+											         fontSize: "14px",
+												   outline: "none",
+												     borderRadius: 0,
+												       transition: "border-color 0.3s",
+									   };
 export default function PresenceModal({
 	  isOpen,
 	    onClose,
 	      presence,
 	        setPresence,
-		  inpStyle,
 }: PresenceModalProps) {
 	  return (
 		  <>
 		  {isOpen && (
-			          <div className="fixed inset-0 bg-black/75 backdrop-blur-sm z-50 flex flex-col justify-end" onClick={onClose}
+			          <div className="fixed inset-0 bg-black/75 backdrop-blur-sm z-50 flex flex-col justify-end" onClick={onClose}>
 				            <div className="w-full bg-[#0E0E0E] border-t border-white/[0.06] rounded-t-xl p-6 max-w-md mx-auto space-y-3 animate-sheet-up" onClick={e => e.stopPropagation()}>
 					                <div className="flex justify-between items-center pb-2 border-b border-white/5">
 							              <h3 className="text-sm font-medium tracking-wide text-white/80 m-0">Professional Presence</h3>
-								                    <button type="button" onClick={() => setIsPresenceOpen(false)} className="text-[10px] font-mono text-white/40 hover:text-white tracking-widest bg-transparent border-none cursor-pointer">CLOSE</button>
+								                    <button type="button" onClick={onClose} className="text-[10px] font-mono text-white/40 hover:text-white tracking-widest bg-transparent border-none cursor-pointer">CLOSE</button>
 										                </div>
 												            <input value={presence.linkedin} onChange={e => setPresence({ ...presence, linkedin: e.target.value })} placeholder="LinkedIn URL" style={inpStyle} className="focus-under" autoComplete="off" />
 													                <input value={presence.website} onChange={e => setPresence({ ...presence, website: e.target.value })} placeholder="Website URL" style={inpStyle} className="focus-under" autoComplete="off" />

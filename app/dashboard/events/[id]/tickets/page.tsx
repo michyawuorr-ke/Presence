@@ -3,10 +3,10 @@ import { useState, useEffect } from 'react';
 import { supabase } from "@/lib/supabase/client";
 import { useRouter, useParams } from 'next/navigation';
 
-export default function TicketsRevenueHub({ params }: { params: { id: string } }) {
+export default function TicketsRevenueHub() {
   const router = useRouter();
   const paramsHook = useParams();
-  const eventId = (paramsHook?.id || params?.id) as string;
+  const eventId = paramsHook.id as string;
   const [stats, setStats] = useState({ revenue: 0, tickets: 0, registrations: 0, checkins: 0 });
   const [regs, setRegs] = useState<any[]>([]);
   const [search, setSearch] = useState('');

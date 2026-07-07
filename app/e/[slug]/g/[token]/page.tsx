@@ -178,7 +178,6 @@ return (
     onClose={() => setIsPresenceOpen(false)}
       presence={presence}
         setPresence={setPresence}
-	  inpStyle={inpStyle}
 	  />
 
       {isIntentOpen && (
