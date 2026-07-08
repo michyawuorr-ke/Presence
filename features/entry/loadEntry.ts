@@ -43,10 +43,22 @@ let { data: profile } = await supabase
     .select("*")
       .eq("registration_id", registration.id)
         .single();
-	if (!profile && registration.status === "host") {
-		  profile = await bootstrapIdentity(registration);
-	}
+			      if (!profile && registration.status === "host") {
+				        const identity = await bootstrapIdentity(registration);
+
+					  if (identity.route === "host") {
+						      return {
+							            status: "scene",
+								          registration,
+									        event,
+										      stations: stations ?? [],
+										            profile: identity,
+											        } satisfies LoadEntryResult;
+												  }
+			      }
+			      
 			      return {
+
 				        status: profile ? "scene" : "onboarding",
 					  registration,
 					    event,
