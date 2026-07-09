@@ -43,20 +43,57 @@ let { data: profile } = await supabase
     .select("*")
       .eq("registration_id", registration.id)
         .single();
-			      if (!profile && registration.status === "host") {
-				        const identity = await bootstrapIdentity(registration);
+			     if (!profile) {
+				         const identity = await bootstrapIdentity(registration);
 
-					  if (identity.route === "host") {
-						      return {
-							            status: "scene",
-								          registration,
-									        event,
-										      stations: stations ?? [],
-										            profile: identity,
-											        } satisfies LoadEntryResult;
-												  }
-			      }
-			      
+					     if (!identity) {
+						             return {
+								                 status: "onboarding",
+										             registration,
+											                 event,
+													             stations: stations ?? [],
+														                 profile: null,
+																         } satisfies LoadEntryResult;
+																	     }
+
+																	         if (identity.route === "host") {
+																			         return {
+																					             status: "scene",
+																						                 registration,
+																								             event,
+																									                 stations: stations ?? [],
+																											             profile: identity.hostProfile,
+																												             } satisfies LoadEntryResult;
+																													         }
+
+																														     if (identity.route === "scene") {
+																															             return {
+																																	                 status: "scene",
+																																			             registration,
+																																				                 event,
+																																						             stations: stations ?? [],
+																																							                 profile: identity.guestProfile,
+																																									         } satisfies LoadEntryResult;
+																																										     }
+
+																																										         if (identity.route === "event_onboarding") {
+																																												         return {
+																																														             status: "onboarding",
+																																															                 registration,
+																																																	             event,
+																																																		                 stations: stations ?? [],
+																																																				             profile: identity.masterProfile,
+																																																					             } satisfies LoadEntryResult;
+																																																						         }
+
+																																																							     return {
+																																																								             status: "onboarding",
+																																																									             registration,
+																																																										             event,
+																																																											             stations: stations ?? [],
+																																																												             profile: null,
+																																																													         } satisfies LoadEntryResult;
+			     }
 			      return {
 
 				        status: profile ? "scene" : "onboarding",
