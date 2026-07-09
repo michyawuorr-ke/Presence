@@ -94,9 +94,23 @@ useEffect(() => {
 											      return;
 											          }
 
-												      setStage("onboarding");
-												        }
+					if (result.profile) {
+						    setProfile(result.profile);
 
+						        setDisplayName(result.profile.display_name ?? "");
+							    setRole(result.profile.role_title ?? "");
+							        setOrganisation(result.profile.organisation ?? "");
+								    setBio(result.profile.bio ?? "");
+
+								        setPresence({
+										        linkedin: result.profile.platform_value ?? "",
+											        website: "",
+												        portfolio: "",
+													    });
+	
+
+					}setStage("onboarding");
+}						
 													  run();
 }, [token]);
   async function handleFinalSubmission() {
@@ -172,6 +186,7 @@ return (
 							          stationId={stationId}
 								      setStationId={setStationId}
 								          error={error}
+									  restoredIdentity={!!profile}
 									    />
 
 <PresenceModal

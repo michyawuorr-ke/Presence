@@ -9,6 +9,8 @@ type EntryOnboardingScreenProps = {
 		    setOrganisation: React.Dispatch<React.SetStateAction<string>>;
 		      bio: string;
 		        setBio: React.Dispatch<React.SetStateAction<string>>;
+			masterProfile?: any;
+
 			  getPresenceLabel: () => string;
 			    setIsPresenceOpen: React.Dispatch<React.SetStateAction<boolean>>;
 			      getIntentLabel: () => string;
@@ -17,6 +19,7 @@ type EntryOnboardingScreenProps = {
 				    stationId: string;
 				      setStationId: React.Dispatch<React.SetStateAction<string>>;
 				        error: string;
+					restoredIdentity?: boolean;
 };
 
 export default function EntryOnboardingScreen({
@@ -26,9 +29,10 @@ export default function EntryOnboardingScreen({
 	        setRole,
 		  organisation,
 		    setOrganisation,
-		      bio,
-		        setBio,
-			  getPresenceLabel,
+		    bio,
+		    setBio,
+		    masterProfile,
+		  getPresenceLabel,
 			    setIsPresenceOpen,
 			      getIntentLabel,
 			        setIsIntentOpen,
@@ -36,6 +40,7 @@ export default function EntryOnboardingScreen({
 				    stationId,
 				      setStationId,
 				        error,
+					restoredIdentity,
 }: EntryOnboardingScreenProps) {
   const inpStyle = {
     width: "100%", padding: "10px 0", background: "transparent", border: "none",
@@ -58,6 +63,25 @@ export default function EntryOnboardingScreen({
       </header>
 
       <main className="w-full max-w-md mx-auto flex-1 pt-8 pb-36 overflow-y-auto">
+      {masterProfile && (
+	        <section className="mb-6 rounded-md border border-[#E26D34]/20 bg-[#E26D34]/5 p-5">
+		    <p className="text-[10px] uppercase tracking-[0.25em] text-[#E26D34] font-semibold">
+		          Welcome Back
+			      </p>
+
+			          <h2 className="mt-2 text-xl font-semibold text-white">
+				        Welcome back, {masterProfile.display_name}
+					    </h2>
+
+					        <p className="mt-2 text-sm font-medium text-white/80">
+						      Your Oreeti profile is ready.
+							          </p>
+
+						          <p className="mt-1 text-sm leading-6 text-white/60">
+							        Complete your event details below and step into the room.
+									    </p>
+								  </section>
+      )}
         <section className="mb-6 bg-white/[0.01] border border-white/[0.03] p-5 rounded-md space-y-3">
           <h2 className="text-sm font-medium tracking-tight text-white/80 m-0">About You</h2>
           <input value={displayName} onChange={e => setDisplayName(e.target.value)} placeholder="Your Name" style={inpStyle} className="focus-under" autoComplete="off" />
