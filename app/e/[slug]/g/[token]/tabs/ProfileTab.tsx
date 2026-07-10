@@ -13,29 +13,55 @@ import {
 
 interface ProfileTabProps {
   profile: any;
+  masterProfile: any;
   event: any;
   onProfileUpdate: (p: any) => void;
   isEnded: boolean;
   registration: any;
 }
 
-function EditProfile({ profile, onSave }: any) {
+function EditProfile({ profile,masterProfile, onSave }: any) {
   const [displayName, setDisplayName] = useState(profile?.display_name ?? "");
   const [role, setRole] = useState(profile?.role_title ?? "");
   const [organisation, setOrganisation] = useState(profile?.organisation ?? "");
   const [bio, setBio] = useState(profile?.bio ?? "");
-  const [link, setLink] = useState(profile?.platform_value ?? "");
+  const [linkedin, setLinkedin] = useState(masterProfile?.linkedin_url ?? "");
+  const [website, setWebsite] = useState(masterProfile?.website_url ?? "");
+  const [portfolio, setPortfolio] = useState(masterProfile?.portfolio_url ?? "");
   const [saving, setSaving] = useState(false);
 
-  async function save() {
-    setSaving(true);
-    const { data } = await supabase.from("guest_profiles").update({
-      display_name: displayName, role_title: role, organisation, bio, platform_type: "link", platform_value: link,
-    }).eq("id", profile.id).select().single();
-    if (data) onSave(data);
-    setSaving(false);
-  }
+async function save() {
+	  setSaving(true);
 
+	    await supabase
+	        .from("master_profiles")
+		    .update({
+			          display_name: displayName,
+				        role_title: role,
+					      organisation,
+					            bio,
+						    linkedin_url: linkedin,
+						    website_url: website,
+						    portfolio_url: portfolio,
+								          })
+									      .eq("id", masterProfile.id);
+
+									        const { data } = await supabase
+										    .from("guest_profiles")
+										        .update({
+												      display_name: displayName,
+												            role_title: role,
+													          organisation,
+														        bio,
+															    })
+															        .eq("id", profile.id)
+																    .select()
+																        .single();
+
+																	  if (data) onSave(data);
+
+																	    setSaving(false);
+}
   const inp = { width: "100%", padding: "12px", borderRadius: "12px", border: "1px solid rgba(255,255,255,0.06)", background: "rgba(255,255,255,0.02)", color: "#fafafa", fontSize: "14px", outline: "none", marginBottom: "12px", boxSizing: "border-box" as const };
 
   return (
@@ -44,7 +70,26 @@ function EditProfile({ profile, onSave }: any) {
       <input value={role} onChange={e => setRole(e.target.value)} placeholder="Your role or title" style={inp} />
       <input value={organisation} onChange={e => setOrganisation(e.target.value)} placeholder="Organisation" style={inp} />
       <textarea value={bio} onChange={e => setBio(e.target.value)} placeholder="Short bio" style={{ ...inp, minHeight: "60px", resize: "vertical" }} />
-      <input value={link} onChange={e => setLink(e.target.value)} placeholder="LinkedIn, Instagram, or your website" style={inp} />
+      <input
+        value={linkedin}
+	  onChange={e => setLinkedin(e.target.value)}
+	    placeholder="LinkedIn URL"
+	      style={inp}
+	      />
+
+	      <input
+	        value={website}
+		  onChange={e => setWebsite(e.target.value)}
+		    placeholder="Website URL"
+		      style={inp}
+		      />
+
+		      <input
+		        value={portfolio}
+			  onChange={e => setPortfolio(e.target.value)}
+			    placeholder="Portfolio URL"
+			      style={inp}
+			      />
       <button onClick={save} disabled={saving} style={{ width: "100%", padding: "11px", borderRadius: "10px", background: "transparent", color: saving ? "rgba(240,237,232,0.3)" : "#E26D34", border: saving ? "1px solid rgba(240,237,232,0.1)" : "1px solid rgba(226,109,52,0.35)", fontSize: "13px", cursor: saving ? "not-allowed" : "pointer", fontWeight: "500", letterSpacing: "0.08em", textTransform: "uppercase" }}>
         {saving ? "Saving..." : "Save changes"}
       </button>
@@ -52,7 +97,7 @@ function EditProfile({ profile, onSave }: any) {
   );
 }
 
-export default function ProfileTab({ profile, event, onProfileUpdate, isEnded, registration }: ProfileTabProps) {
+export default function ProfileTab({ profile,masterProfile, event, onProfileUpdate, isEnded, registration }: ProfileTabProps) {
   const [editing, setEditing] = useState(false);
   const [scanning, setScanning] = useState(false);
   const [scanTarget, setScanTarget] = useState<any>(null);
@@ -121,6 +166,27 @@ export default function ProfileTab({ profile, event, onProfileUpdate, isEnded, r
     setMemoryTarget(null);
   }
 
+  async function togglePresenceLink(
+	    key: "linkedin" | "website" | "portfolio",
+	      current: boolean
+  ) {
+	    const column = {
+		        linkedin: "show_linkedin",
+			    website: "show_website",
+			        portfolio: "show_portfolio",
+				  }[key];
+
+				    const { data } = await supabase
+				        .from("guest_profiles")
+					    .update({ [column]: !current })
+					        .eq("id", profile.id)
+						    .select()
+						        .single();
+
+							  if (data) {
+								      onProfileUpdate(data);
+								        }
+  }
   async function startScan(conn: any) {
     setScanTarget(conn); setScanning(true); setScanMsg("");
     await new Promise(r => setTimeout(r, 800));
@@ -158,6 +224,53 @@ export default function ProfileTab({ profile, event, onProfileUpdate, isEnded, r
   const accent = isHost ? "#D4AF37" : "#E26D34";
   const accentBg = isHost ? "rgba(212,175,55,0.08)" : "rgba(226,109,52,0.08)";
   const accentBorder = isHost ? "rgba(212,175,55,0.15)" : "rgba(226,109,52,0.15)";
+const presenceLinks = [
+	  {
+		      key: "linkedin",
+		          label: "LinkedIn",
+			      value: masterProfile?.linkedin,
+			          visible: profile?.show_linkedin ?? true,
+				    },
+				      {
+					          key: "website",
+						      label: "Website",
+						          value: masterProfile?.website,
+							      visible: profile?.show_website ?? true,
+							        },
+								  {
+									      key: "portfolio",
+									          label: "Portfolio",
+										      value: masterProfile?.portfolio,
+										          visible: profile?.show_portfolio ?? true,
+											    },
+];
+
+async function toggleLinkVisibility(key: string) {
+	  const visibilityColumns: Record<string, keyof typeof profile> = {
+		      linkedin: "show_linkedin",
+		          website: "show_website",
+			      portfolio: "show_portfolio",
+			        };
+
+				  const column = visibilityColumns[key];
+
+				    if (!column) return;
+
+				      const current = Boolean(profile[column]);
+
+				        const { data } = await supabase
+					    .from("guest_profiles")
+					        .update({
+							      [column]: !current,
+							          })
+								      .eq("id", profile.id)
+								          .select()
+									      .single();
+
+									        if (data) {
+											    onProfileUpdate(data);
+											      }
+}
 
   return (
     <div style={{ padding: "16px", background: "#08080a", minHeight: "100vh" }}>
@@ -172,14 +285,76 @@ export default function ProfileTab({ profile, event, onProfileUpdate, isEnded, r
           {profile?.organisation && <p style={{ fontSize: "13px", color: "rgba(240,237,232,0.45)", margin: 0 }}>{profile.role_title && <span style={{ marginRight: "8px", color: "rgba(240,237,232,0.2)" }}>|</span>}{profile.organisation}</p>}
         </div>
         {profile?.bio && <p style={{ fontSize: "13px", color: "rgba(244,244,245,0.65)", lineHeight: "1.6", fontWeight: "300", margin: "0 0 20px" }}>{profile.bio}</p>}
-        {profile?.platform_value && (
-          <a href={profile.platform_value.startsWith("http") ? profile.platform_value : "https://" + profile.platform_value} target="_blank" rel="noopener noreferrer" style={{ display: "inline-flex", alignItems: "center", gap: "8px", paddingTop: "14px", borderTop: "1px solid rgba(255,255,255,0.03)", textDecoration: "none", width: "100%" }}>
-            <div style={{ width: "24px", height: "24px", borderRadius: "6px", background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.07)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "11px", color: "#FFBF00" }}>↗</div>
-            <span style={{ fontSize: "12px", color: accent, opacity: 0.75 }}>{cleanUrl(profile.platform_value)}</span>
-          </a>
-        )}
-      </div>
+      <div
+        style={{
+		    borderTop: "1px solid rgba(255,255,255,0.04)",
+		        paddingTop: "16px",
+			    marginTop: "8px",
+			      }}
+			      >
+			        <p
+				    style={{
+					          fontSize: "10px",
+						        letterSpacing: "0.12em",
+							      textTransform: "uppercase",
+							            color: "rgba(240,237,232,0.35)",
+								          marginBottom: "14px",
+									      }}
+									        >
+										    Professional Presence
+										      </p>
 
+<div style={{ display: "flex", flexDirection: "column", gap: "10px" }}>
+  {presenceLinks.map((link) => (
+	      <div
+	            key={link.key}
+		          style={{
+				          display: "flex",
+					          justifyContent: "space-between",
+						          alignItems: "center",
+							          gap: "12px",
+								        }}
+									    >
+									          <div>
+										          <div
+											            style={{
+													                color: "rgba(240,237,232,0.55)",
+															            fontSize: "13px",
+																              }}
+																	              >
+																		                {link.label}
+																				        </div>
+
+																					        <div
+																						          style={{
+																								              color: accent,
+																									                  fontSize: "13px",
+																											            }}
+																												            >
+																													              {link.value ? cleanUrl(link.value) : "Not added"}
+																														              </div>
+																															            </div>
+<button
+  type="button"
+    onClick={() => toggleLinkVisibility(link.key)}
+      style={{
+	          padding: "6px 10px",
+		      borderRadius: "8px",
+		          border: "1px solid " + accentBorder,
+			      background: link.visible ? accentBg : "transparent",
+			          color: link.visible ? accent : "rgba(240,237,232,0.45)",
+				      fontSize: "11px",
+				          fontWeight: "600",
+					      cursor: "pointer",
+					          flexShrink: 0,
+						    }}
+						    >
+						      {link.visible ? "Visible" : "Hidden"}
+						      </button>
+																																									      </div>
+																																			      ))}
+																						</div>													      </div>
+																						</div>
       {/* Visibility toggle */}
       <div style={{ background: "#1C1C1E", border: "1px solid rgba(255,255,255,0.07)", borderRadius: "14px", padding: "14px 16px", marginTop: "12px", display: "flex", justifyContent: "space-between", alignItems: "center", gap: "12px" }}>
         <div>
@@ -191,7 +366,7 @@ export default function ProfileTab({ profile, event, onProfileUpdate, isEnded, r
         </button>
       </div>
 
-      {editing && <EditProfile profile={profile} onSave={(p: any) => { onProfileUpdate(p); setEditing(false); }} />}
+      {editing && <EditProfile profile={profile}masterProfile={masterProfile}  onSave={(p: any) => { onProfileUpdate(p); setEditing(false); }} />}
 
       {notification && <div style={{ background: "rgba(226,109,52,0.08)", border: "1px solid rgba(226,109,52,0.2)", borderRadius: "12px", padding: "10px 14px", marginTop: "12px" }}><p style={{ color: "#E26D34", fontSize: "12px", margin: 0, textAlign: "center" }}>{notification}</p></div>}
 
@@ -245,9 +420,29 @@ export default function ProfileTab({ profile, event, onProfileUpdate, isEnded, r
                     <p style={{ fontSize: "14px", fontWeight: "600", marginBottom: "1px", color: "#f1f0f5" }}>{c.display_name}</p>
                     {c.role_title && <p style={{ fontSize: "13px", color: "#666", marginBottom: "2px" }}>{c.role_title}</p>}
                     {isUnlocked && c.organisation && <p style={{ fontSize: "13px", color: "#999", marginBottom: "8px" }}>{c.organisation}</p>}
-                    {isUnlocked && c.platform_value && <p style={{ fontSize: "13px", color: "#E26D34", marginTop: "4px" }}>{cleanUrl(c.platform_value)}</p>}
-                  </div>
-                  {!isUnlocked && <button onClick={() => startScan(c)} style={{ background: "rgba(226,109,52,0.15)", color: "#E26D34", border: "1px solid rgba(226,109,52,0.15)", borderRadius: "8px", padding: "5px 10px", fontSize: "11px", fontWeight: "600", cursor: "pointer", whiteSpace: "nowrap", marginLeft: "8px" }}>Scan to unlock</button>}
+		    {isUnlocked && (
+			      <div style={{ marginTop: "6px", display: "flex", flexDirection: "column", gap: "4px" }}>
+			          {c.show_linkedin && c.linkedin_url && (
+					        <p style={{ fontSize: "13px", color: "#E26D34", margin: 0 }}>
+						        LinkedIn · {cleanUrl(c.linkedin_url)}
+							      </p>
+							          )}
+
+								      {c.show_website && c.website_url && (
+									            <p style={{ fontSize: "13px", color: "#E26D34", margin: 0 }}>
+										            Website · {cleanUrl(c.website_url)}
+											          </p>
+												      )}
+
+												          {c.show_portfolio && c.portfolio_url && (
+														        <p style={{ fontSize: "13px", color: "#E26D34", margin: 0 }}>
+															        Portfolio · {cleanUrl(c.portfolio_url)}
+																      </p>
+																          )}
+																	    </div>
+		    )}
+		    </div>
+		    {!isUnlocked && <button onClick={() => startScan(c)} style={{ background: "rgba(226,109,52,0.15)", color: "#E26D34", border: "1px solid rgba(226,109,52,0.15)", borderRadius: "8px", padding: "5px 10px", fontSize: "11px", fontWeight: "600", cursor: "pointer", whiteSpace: "nowrap", marginLeft: "8px" }}>Scan to unlock</button>}
                   {isUnlocked && <span style={{ fontSize: "10px", color: "#E26D34", fontWeight: "600", marginLeft: "8px", background: "rgba(226,109,52,0.12)", padding: "2px 8px", borderRadius: "6px" }}>✓ Unlocked</span>}
                 </div>
                 {isUnlocked && (

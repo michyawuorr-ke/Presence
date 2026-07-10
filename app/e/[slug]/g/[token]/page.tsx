@@ -102,12 +102,11 @@ useEffect(() => {
 							        setOrganisation(result.profile.organisation ?? "");
 								    setBio(result.profile.bio ?? "");
 
-								        setPresence({
-										        linkedin: result.profile.platform_value ?? "",
-											        website: "",
-												        portfolio: "",
-													    });
-	
+setPresence({
+	  linkedin: result.profile.linkedin_url ?? "",
+	    website: result.profile.website_url ?? "",
+	      portfolio: result.profile.portfolio_url ?? "",
+});
 
 					}setStage("onboarding");
 }						
@@ -161,6 +160,7 @@ useEffect(() => {
         event={event}
         registration={registration}
         profile={profile}
+	masterProfile={profile}
         onProfileUpdate={setProfile}
       />
     );

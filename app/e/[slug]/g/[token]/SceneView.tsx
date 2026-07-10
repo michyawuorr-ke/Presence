@@ -14,10 +14,11 @@ interface SceneViewProps {
   event: any;
   registration: any;
   profile: any;
+  masterProfile: any;
   onProfileUpdate: (profile: any) => void;
 }
 
-export default function SceneView({ event, registration, profile, onProfileUpdate }: SceneViewProps) {
+export default function SceneView({ event, registration, profile, masterProfile, onProfileUpdate }: SceneViewProps) {
   const [tab, setTab] = useState<Tab>("scene");
   const [editing, setEditing] = useState(false);
   const [countdown, setCountdown] = useState({ days: 0, hours: 0, minutes: 0, seconds: 0 });
@@ -159,6 +160,7 @@ export default function SceneView({ event, registration, profile, onProfileUpdat
       {tab === "profile" && (
         <ProfileTab
           profile={profile}
+	  masterProfile={masterProfile}
           event={event}
           onProfileUpdate={onProfileUpdate}
           isEnded={isEnded}
