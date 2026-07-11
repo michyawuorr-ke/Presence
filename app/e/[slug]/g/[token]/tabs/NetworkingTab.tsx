@@ -234,8 +234,8 @@ export default function NetworkingTab({ event, profile, isLive, isEnded, registr
       )}
 
       {confirmNode&&(
-        <div style={{position:"fixed",inset:0,background:"rgba(0,0,0,0.7)",display:"flex",alignItems:"flex-end",zIndex:20}} onClick={()=>{setConfirmNode(null);setSelectedLiveReason("");}}>
-          <div style={{background:"#0c0c0f",borderRadius:"24px 24px 0 0",padding:"24px",width:"100%",borderTop:"1px solid rgba(255,255,255,0.05)",animation:"slideUp 0.3s ease"}} onClick={e=>e.stopPropagation()}>
+        <div style={{position:"fixed",inset:0,background:"rgba(0,0,0,0.7)",display:"flex",alignItems:"flex-end",zIndex:50}} onClick={()=>{setConfirmNode(null);setSelectedLiveReason("");}}>
+          <div style={{background:"#0c0c0f",borderRadius:"24px 24px 0 0",padding:"24px",paddingBottom:"calc(24px + env(safe-area-inset-bottom))",width:"100%",borderTop:"1px solid rgba(255,255,255,0.05)",animation:"slideUp 0.3s ease"}} onClick={e=>e.stopPropagation()}>
             <p style={{fontSize:"10px",color:PALETTE.umber,letterSpacing:"0.15em",fontWeight:"600",textTransform:"uppercase",marginBottom:"8px"}}>Intentional Handshake</p>
             <div style={{display:"flex",alignItems:"center",gap:"8px",marginBottom:"8px"}}>
               <p style={{color:"#fff",fontSize:"18px",fontWeight:"500"}}>Meet {getFirstName(confirmNode.display_name)}?</p>
@@ -271,8 +271,8 @@ export default function NetworkingTab({ event, profile, isLive, isEnded, registr
       )}
 
       {incoming&&(
-        <div style={{position:"fixed",inset:0,background:"rgba(0,0,0,0.7)",display:"flex",alignItems:"flex-end",zIndex:20}}>
-          <div style={{background:"#1a1a1a",borderRadius:"24px 24px 0 0",padding:"28px",width:"100%",animation:"slideUp 0.3s ease"}}>
+        <div style={{position:"fixed",inset:0,background:"rgba(0,0,0,0.7)",display:"flex",alignItems:"flex-end",zIndex:50}}>
+          <div style={{background:"#1a1a1a",borderRadius:"24px 24px 0 0",padding:"28px",paddingBottom:"calc(28px + env(safe-area-inset-bottom))",width:"100%",animation:"slideUp 0.3s ease"}}>
             <p style={{color:"#fff",fontSize:"18px",fontWeight:"500",marginBottom:"8px"}}>{getFirstName(incoming.requester_name)} wants to connect</p>
             {incoming.reason?(
               <p style={{color:"#666",fontSize:"14px",marginBottom:"28px"}}>Reason: <span style={{color:PALETTE.orange,fontWeight:"600"}}>{incoming.reason}</span></p>

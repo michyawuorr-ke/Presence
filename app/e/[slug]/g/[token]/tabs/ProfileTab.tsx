@@ -16,52 +16,82 @@ interface ProfileTabProps {
   masterProfile: any;
   event: any;
   onProfileUpdate: (p: any) => void;
+  onMasterProfileUpdate: (p: any) => void;
   isEnded: boolean;
   registration: any;
 }
 
-function EditProfile({ profile,masterProfile, onSave }: any) {
-  const [displayName, setDisplayName] = useState(profile?.display_name ?? "");
-  const [role, setRole] = useState(profile?.role_title ?? "");
-  const [organisation, setOrganisation] = useState(profile?.organisation ?? "");
-  const [bio, setBio] = useState(profile?.bio ?? "");
+function EditProfile({ profile, masterProfile, onSave, onSaveError }: any) {
+  // Master profile is the canonical, cross-event identity record.
+  // guest_profiles is a secondary, per-event overlay — fall back to
+  // it only when the master profile doesn't have a value yet.
+  const [displayName, setDisplayName] = useState(masterProfile?.display_name ?? profile?.display_name ?? "");
+  const [role, setRole] = useState(masterProfile?.role_title ?? profile?.role_title ?? "");
+  const [organisation, setOrganisation] = useState(masterProfile?.organisation ?? profile?.organisation ?? "");
+  const [bio, setBio] = useState(masterProfile?.bio ?? profile?.bio ?? "");
   const [linkedin, setLinkedin] = useState(masterProfile?.linkedin_url ?? "");
   const [website, setWebsite] = useState(masterProfile?.website_url ?? "");
   const [portfolio, setPortfolio] = useState(masterProfile?.portfolio_url ?? "");
   const [saving, setSaving] = useState(false);
 
-async function save() {
-	  setSaving(true);
+  async function save() {
+    if (!masterProfile?.id) {
+      onSaveError("Your profile isn't fully loaded yet — please try again in a moment.");
+      return;
+    }
 
-	    await supabase
-	        .from("master_profiles")
-		    .update({
-			          display_name: displayName,
-				        role_title: role,
-					      organisation,
-					            bio,
-						    linkedin_url: linkedin,
-						    website_url: website,
-						    portfolio_url: portfolio,
-								          })
-									      .eq("id", masterProfile.id);
+    setSaving(true);
 
-									        const { data } = await supabase
-										    .from("guest_profiles")
-										        .update({
-												      display_name: displayName,
-												            role_title: role,
-													          organisation,
-														        bio,
-															    })
-															        .eq("id", profile.id)
-																    .select()
-																        .single();
+    const { data: updatedMaster, error: masterError } = await supabase
+      .from("master_profiles")
+      .update({
+        display_name: displayName,
+        role_title: role,
+        organisation,
+        bio,
+        linkedin_url: linkedin,
+        website_url: website,
+        portfolio_url: portfolio,
+      })
+      .eq("id", masterProfile.id)
+      .select()
+      .single();
 
-																	  if (data) onSave(data);
+    if (masterError || !updatedMaster) {
+      setSaving(false);
+      onSaveError(masterError?.message || "Couldn't save your profile. Please try again.");
+      return;
+    }
 
-																	    setSaving(false);
-}
+    // guest_profiles is a per-event overlay kept in sync so this
+    // event's attendee list / connections show the latest info too.
+    let updatedGuest = profile;
+    if (profile?.id) {
+      const { data, error: guestError } = await supabase
+        .from("guest_profiles")
+        .update({
+          display_name: displayName,
+          role_title: role,
+          organisation,
+          bio,
+        })
+        .eq("id", profile.id)
+        .select()
+        .single();
+
+      if (guestError) {
+        // Master profile already saved successfully — surface a
+        // narrower warning rather than treating this as a full failure.
+        onSaveError("Saved your profile, but this event's attendee card couldn't be refreshed.");
+      } else if (data) {
+        updatedGuest = data;
+      }
+    }
+
+    setSaving(false);
+    onSave(updatedMaster, updatedGuest);
+  }
+
   const inp = { width: "100%", padding: "12px", borderRadius: "12px", border: "1px solid rgba(255,255,255,0.06)", background: "rgba(255,255,255,0.02)", color: "#fafafa", fontSize: "14px", outline: "none", marginBottom: "12px", boxSizing: "border-box" as const };
 
   return (
@@ -97,7 +127,7 @@ async function save() {
   );
 }
 
-export default function ProfileTab({ profile,masterProfile, event, onProfileUpdate, isEnded, registration }: ProfileTabProps) {
+export default function ProfileTab({ profile, masterProfile, event, onProfileUpdate, onMasterProfileUpdate, isEnded, registration }: ProfileTabProps) {
   const [editing, setEditing] = useState(false);
   const [scanning, setScanning] = useState(false);
   const [scanTarget, setScanTarget] = useState<any>(null);
@@ -224,23 +254,32 @@ export default function ProfileTab({ profile,masterProfile, event, onProfileUpda
   const accent = isHost ? "#D4AF37" : "#E26D34";
   const accentBg = isHost ? "rgba(212,175,55,0.08)" : "rgba(226,109,52,0.08)";
   const accentBorder = isHost ? "rgba(212,175,55,0.15)" : "rgba(226,109,52,0.15)";
+
+  // Master profile is the canonical identity record — prefer it for
+  // display, falling back to the per-event guest profile.
+  const displayFields = {
+    display_name: masterProfile?.display_name ?? profile?.display_name,
+    role_title: masterProfile?.role_title ?? profile?.role_title,
+    organisation: masterProfile?.organisation ?? profile?.organisation,
+    bio: masterProfile?.bio ?? profile?.bio,
+  };
 const presenceLinks = [
 	  {
 		      key: "linkedin",
 		          label: "LinkedIn",
-			      value: masterProfile?.linkedin,
+			      value: masterProfile?.linkedin_url,
 			          visible: profile?.show_linkedin ?? true,
 				    },
 				      {
 					          key: "website",
 						      label: "Website",
-						          value: masterProfile?.website,
+						          value: masterProfile?.website_url,
 							      visible: profile?.show_website ?? true,
 							        },
 								  {
 									      key: "portfolio",
 									          label: "Portfolio",
-										      value: masterProfile?.portfolio,
+										      value: masterProfile?.portfolio_url,
 										          visible: profile?.show_portfolio ?? true,
 											    },
 ];
@@ -279,12 +318,12 @@ async function toggleLinkVisibility(key: string) {
         <div style={{ position: "absolute", top: "20px", right: "20px", zIndex: 50 }}>
           <button onClick={() => setEditing(!editing)} style={{ width: "32px", height: "32px", borderRadius: "9px", background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.06)", display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer", color: accent, fontSize: "13px" }}>{editing ? "✕" : "✎"}</button>
         </div>
-        <p style={{ fontSize: "22px", fontWeight: "700", color: "#f0ede8", letterSpacing: "-0.02em", margin: "0 0 8px", paddingRight: "44px" }}>{profile?.display_name}</p>
+        <p style={{ fontSize: "22px", fontWeight: "700", color: "#f0ede8", letterSpacing: "-0.02em", margin: "0 0 8px", paddingRight: "44px" }}>{displayFields.display_name}</p>
         <div style={{ display: "flex", alignItems: "center", gap: "10px", flexWrap: "wrap", marginBottom: "18px" }}>
-          {profile?.role_title && <span style={{ fontSize: "9px", fontWeight: "600", letterSpacing: "0.08em", textTransform: "uppercase", color: accent, background: accentBg, border: "1px solid " + accentBorder, padding: "3px 8px", borderRadius: "5px" }}>{isHost ? "ORGANIZER" : profile.role_title}</span>}
-          {profile?.organisation && <p style={{ fontSize: "13px", color: "rgba(240,237,232,0.45)", margin: 0 }}>{profile.role_title && <span style={{ marginRight: "8px", color: "rgba(240,237,232,0.2)" }}>|</span>}{profile.organisation}</p>}
+          {displayFields.role_title && <span style={{ fontSize: "9px", fontWeight: "600", letterSpacing: "0.08em", textTransform: "uppercase", color: accent, background: accentBg, border: "1px solid " + accentBorder, padding: "3px 8px", borderRadius: "5px" }}>{isHost ? "ORGANIZER" : displayFields.role_title}</span>}
+          {displayFields.organisation && <p style={{ fontSize: "13px", color: "rgba(240,237,232,0.45)", margin: 0 }}>{displayFields.role_title && <span style={{ marginRight: "8px", color: "rgba(240,237,232,0.2)" }}>|</span>}{displayFields.organisation}</p>}
         </div>
-        {profile?.bio && <p style={{ fontSize: "13px", color: "rgba(244,244,245,0.65)", lineHeight: "1.6", fontWeight: "300", margin: "0 0 20px" }}>{profile.bio}</p>}
+        {displayFields.bio && <p style={{ fontSize: "13px", color: "rgba(244,244,245,0.65)", lineHeight: "1.6", fontWeight: "300", margin: "0 0 20px" }}>{displayFields.bio}</p>}
       <div
         style={{
 		    borderTop: "1px solid rgba(255,255,255,0.04)",
@@ -366,7 +405,23 @@ async function toggleLinkVisibility(key: string) {
         </button>
       </div>
 
-      {editing && <EditProfile profile={profile}masterProfile={masterProfile}  onSave={(p: any) => { onProfileUpdate(p); setEditing(false); }} />}
+      {editing && (
+        <EditProfile
+          profile={profile}
+          masterProfile={masterProfile}
+          onSave={(updatedMaster: any, updatedGuest: any) => {
+            onMasterProfileUpdate(updatedMaster);
+            if (updatedGuest) onProfileUpdate(updatedGuest);
+            setEditing(false);
+            setNotification("Profile updated");
+            setTimeout(() => setNotification(""), 2500);
+          }}
+          onSaveError={(msg: string) => {
+            setNotification(msg);
+            setTimeout(() => setNotification(""), 4000);
+          }}
+        />
+      )}
 
       {notification && <div style={{ background: "rgba(226,109,52,0.08)", border: "1px solid rgba(226,109,52,0.2)", borderRadius: "12px", padding: "10px 14px", marginTop: "12px" }}><p style={{ color: "#E26D34", fontSize: "12px", margin: 0, textAlign: "center" }}>{notification}</p></div>}
 

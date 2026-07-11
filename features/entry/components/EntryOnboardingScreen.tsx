@@ -1,46 +1,50 @@
-
-
 type EntryOnboardingScreenProps = {
-	  displayName: string;
-	    setDisplayName: React.Dispatch<React.SetStateAction<string>>;
-	      role: string;
-	        setRole: React.Dispatch<React.SetStateAction<string>>;
-		  organisation: string;
-		    setOrganisation: React.Dispatch<React.SetStateAction<string>>;
-		      bio: string;
-		        setBio: React.Dispatch<React.SetStateAction<string>>;
-			masterProfile?: any;
+  displayName: string;
+  setDisplayName: React.Dispatch<React.SetStateAction<string>>;
+  role: string;
+  setRole: React.Dispatch<React.SetStateAction<string>>;
+  organisation: string;
+  setOrganisation: React.Dispatch<React.SetStateAction<string>>;
+  bio: string;
+  setBio: React.Dispatch<React.SetStateAction<string>>;
+  masterProfile?: any;
 
-			  getPresenceLabel: () => string;
-			    setIsPresenceOpen: React.Dispatch<React.SetStateAction<boolean>>;
-			      getIntentLabel: () => string;
-			        setIsIntentOpen: React.Dispatch<React.SetStateAction<boolean>>;
-				  stations: any[];
-				    stationId: string;
-				      setStationId: React.Dispatch<React.SetStateAction<string>>;
-				        error: string;
-					restoredIdentity?: boolean;
+  getPresenceLabel: () => string;
+  setIsPresenceOpen: React.Dispatch<React.SetStateAction<boolean>>;
+  getIntentLabel: () => string;
+  setIsIntentOpen: React.Dispatch<React.SetStateAction<boolean>>;
+  stations: any[];
+  stationId: string;
+  setStationId: React.Dispatch<React.SetStateAction<string>>;
+  error: string;
+  restoredIdentity?: boolean;
+  canSubmit: boolean;
+  saving: boolean;
+  onSubmit: () => void;
 };
 
 export default function EntryOnboardingScreen({
-	  displayName,
-	    setDisplayName,
-	      role,
-	        setRole,
-		  organisation,
-		    setOrganisation,
-		    bio,
-		    setBio,
-		    masterProfile,
-		  getPresenceLabel,
-			    setIsPresenceOpen,
-			      getIntentLabel,
-			        setIsIntentOpen,
-				  stations,
-				    stationId,
-				      setStationId,
-				        error,
-					restoredIdentity,
+  displayName,
+  setDisplayName,
+  role,
+  setRole,
+  organisation,
+  setOrganisation,
+  bio,
+  setBio,
+  masterProfile,
+  getPresenceLabel,
+  setIsPresenceOpen,
+  getIntentLabel,
+  setIsIntentOpen,
+  stations,
+  stationId,
+  setStationId,
+  error,
+  restoredIdentity,
+  canSubmit,
+  saving,
+  onSubmit,
 }: EntryOnboardingScreenProps) {
   const inpStyle = {
     width: "100%", padding: "10px 0", background: "transparent", border: "none",
@@ -63,25 +67,22 @@ export default function EntryOnboardingScreen({
       </header>
 
       <main className="w-full max-w-md mx-auto flex-1 pt-8 pb-36 overflow-y-auto">
-      {masterProfile && (
-	        <section className="mb-6 rounded-md border border-[#E26D34]/20 bg-[#E26D34]/5 p-5">
-		    <p className="text-[10px] uppercase tracking-[0.25em] text-[#E26D34] font-semibold">
-		          Welcome Back
-			      </p>
-
-			          <h2 className="mt-2 text-xl font-semibold text-white">
-				        Welcome back, {masterProfile.display_name}
-					    </h2>
-
-					        <p className="mt-2 text-sm font-medium text-white/80">
-						      Your Oreeti profile is ready.
-							          </p>
-
-						          <p className="mt-1 text-sm leading-6 text-white/60">
-							        Complete your event details below and step into the room.
-									    </p>
-								  </section>
-      )}
+        {(restoredIdentity && masterProfile) && (
+          <section className="mb-6 rounded-md border border-[#E26D34]/20 bg-[#E26D34]/5 p-5">
+            <p className="text-[10px] uppercase tracking-[0.25em] text-[#E26D34] font-semibold">
+              Welcome Back
+            </p>
+            <h2 className="mt-2 text-xl font-semibold text-white">
+              Welcome back, {masterProfile.display_name}
+            </h2>
+            <p className="mt-2 text-sm font-medium text-white/80">
+              Your Oreeti profile is ready.
+            </p>
+            <p className="mt-1 text-sm leading-6 text-white/60">
+              Complete your event details below and step into the room.
+            </p>
+          </section>
+        )}
         <section className="mb-6 bg-white/[0.01] border border-white/[0.03] p-5 rounded-md space-y-3">
           <h2 className="text-sm font-medium tracking-tight text-white/80 m-0">About You</h2>
           <input value={displayName} onChange={e => setDisplayName(e.target.value)} placeholder="Your Name" style={inpStyle} className="focus-under" autoComplete="off" />
@@ -137,7 +138,27 @@ export default function EntryOnboardingScreen({
 
         {error && <p className="text-xs text-[#F97316] text-center mt-4 font-mono">{error}</p>}
       </main>
-          </div>
-	    );
-}
 
+      <footer
+        className="fixed bottom-0 left-0 right-0 bg-[#0A0A0A]/95 backdrop-blur-md border-t border-white/[0.02] px-6 flex items-center z-40"
+        style={{ paddingTop: "16px", paddingBottom: "calc(16px + env(safe-area-inset-bottom))" }}
+      >
+        <div className="w-full max-w-md mx-auto">
+          <button
+            disabled={!canSubmit}
+            onClick={onSubmit}
+            className="w-full h-11 font-mono text-xs tracking-[0.22em] font-bold rounded-sm transition-all duration-300 text-center"
+            style={{
+              background: canSubmit ? "#FFFFFF" : "rgba(255,255,255,0.02)",
+              border: canSubmit ? "1px solid #F97316" : "1px solid rgba(255,255,255,0.05)",
+              color: canSubmit ? "#000000" : "rgba(255,255,255,0.15)",
+              cursor: canSubmit ? "pointer" : "not-allowed",
+            }}
+          >
+            {saving ? "SAVING..." : "COMPLETE PROFILE"}
+          </button>
+        </div>
+      </footer>
+    </div>
+  );
+}

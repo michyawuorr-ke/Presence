@@ -16,9 +16,10 @@ interface SceneViewProps {
   profile: any;
   masterProfile: any;
   onProfileUpdate: (profile: any) => void;
+  onMasterProfileUpdate: (masterProfile: any) => void;
 }
 
-export default function SceneView({ event, registration, profile, masterProfile, onProfileUpdate }: SceneViewProps) {
+export default function SceneView({ event, registration, profile, masterProfile, onProfileUpdate, onMasterProfileUpdate }: SceneViewProps) {
   const [tab, setTab] = useState<Tab>("scene");
   const [editing, setEditing] = useState(false);
   const [countdown, setCountdown] = useState({ days: 0, hours: 0, minutes: 0, seconds: 0 });
@@ -163,13 +164,14 @@ export default function SceneView({ event, registration, profile, masterProfile,
 	  masterProfile={masterProfile}
           event={event}
           onProfileUpdate={onProfileUpdate}
+          onMasterProfileUpdate={onMasterProfileUpdate}
           isEnded={isEnded}
           registration={registration}
         />
       )}
 
       {/* Bottom Nav */}
-      <div style={{ position: "fixed", bottom: "8px", left: "8px", right: "8px", background: "rgba(15,15,19,0.92)", backdropFilter: "blur(32px)", borderRadius: "20px", border: "1px solid rgba(255,255,255,0.08)", display: "flex", padding: "8px 4px", boxShadow: "0 8px 32px rgba(0,0,0,0.4)", zIndex: 40 }}>
+      <div style={{ position: "fixed", bottom: "calc(8px + env(safe-area-inset-bottom))", left: "8px", right: "8px", background: "rgba(15,15,19,0.92)", backdropFilter: "blur(32px)", borderRadius: "20px", border: "1px solid rgba(255,255,255,0.08)", display: "flex", padding: "8px 4px", boxShadow: "0 8px 32px rgba(0,0,0,0.4)", zIndex: 40 }}>
         {nav.map(item => (
           <button key={item.id} onClick={() => { setTab(item.id as Tab); setEditing(false); }}
             style={{ flex: 1, display: "flex", flexDirection: "column", alignItems: "center", gap: "4px", background: tab === item.id ? "rgba(226,109,52,0.1)" : "none", border: "none", cursor: "pointer", padding: "8px 4px", borderRadius: "12px", transition: "all 0.15s ease", boxShadow: tab === item.id ? "inset 0 0 0 1px rgba(226,109,52,0.15)" : "none", position: "relative" }}>

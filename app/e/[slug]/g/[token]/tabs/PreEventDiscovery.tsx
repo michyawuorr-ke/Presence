@@ -141,8 +141,8 @@ export default function PreEventDiscovery({ event, profile, sentRequests, setSen
       )}
 
       {confirmTarget&&(
-        <div style={{position:"fixed",inset:0,background:"rgba(0,0,0,0.7)",display:"flex",alignItems:"flex-end",zIndex:30}} onClick={()=>{setConfirmTarget(null);setSelectedReason("");}}>
-          <div style={{background:"#0c0c0f",borderRadius:"24px 24px 0 0",padding:"24px",width:"100%",borderTop:"1px solid rgba(255,255,255,0.05)"}} onClick={e=>e.stopPropagation()}>
+        <div style={{position:"fixed",inset:0,background:"rgba(0,0,0,0.7)",display:"flex",alignItems:"flex-end",zIndex:50}} onClick={()=>{setConfirmTarget(null);setSelectedReason("");}}>
+          <div style={{background:"#0c0c0f",borderRadius:"24px 24px 0 0",padding:"24px",paddingBottom:"calc(24px + env(safe-area-inset-bottom))",width:"100%",borderTop:"1px solid rgba(255,255,255,0.05)"}} onClick={e=>e.stopPropagation()}>
             <p style={{fontSize:"10px",color:"#8A7355",letterSpacing:"0.15em",fontWeight:"600",textTransform:"uppercase",marginBottom:"8px"}}>Intentional Handshake</p>
             <p style={{color:"#fff",fontSize:"17px",fontWeight:"500",marginBottom:"4px"}}>Meet {getFirstName(confirmTarget.display_name)}?</p>
             <p style={{color:"#666",fontSize:"13px",marginBottom:"12px"}}>{confirmTarget.role_title||""}</p>
