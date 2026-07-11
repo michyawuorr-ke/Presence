@@ -6,9 +6,10 @@ import SceneTab from "./tabs/SceneTab";
 import NetworkingTab from "./tabs/NetworkingTab";
 import TicketTab from "./tabs/TicketTab";
 import ProfileTab from "./tabs/ProfileTab";
+import ConnectionsTab from "./tabs/ConnectionsTab";
 import { usePendingCount } from "./tabs/queries";
 
-type Tab = "scene" | "networking" | "ticket" | "profile";
+type Tab = "scene" | "networking" | "ticket" | "connections" | "profile";
 
 interface SceneViewProps {
   event: any;
@@ -41,7 +42,8 @@ export default function SceneView({ event, registration, profile, masterProfile,
     { id: "scene", l: "Scene", e: "✦" },
     { id: "networking", l: "Networking", e: "◎" },
     { id: "ticket", l: "Ticket", e: "🎟" },
-    { id: "profile", l: "Profile", e: "◐", badge: pendingCount },
+    { id: "connections", l: "Connections", e: "🤝", badge: pendingCount },
+    { id: "profile", l: "Profile", e: "◐" },
   ];
 
   // QR generation with 60s rotation
@@ -155,6 +157,15 @@ export default function SceneView({ event, registration, profile, masterProfile,
           entryQR={entryQR}
           networkingQR={networkingQR}
           qrError={qrError}
+        />
+      )}
+
+      {tab === "connections" && (
+        <ConnectionsTab
+          profile={profile}
+          event={event}
+          registration={registration}
+          isEnded={isEnded}
         />
       )}
 

@@ -105,15 +105,30 @@ export async function POST(req:NextRequest){
       return NextResponse.json({error:'Cannot scan your own QR'},{status:400});
     }
 
-    // Find handshake between the two
-    const{data:handshake}=await supabase
+    // Find handshake between the two — or create one. In-person QR
+    // scanning is its own consent signal (you physically showed someone
+    // your QR code), so it doesn't require having sent/accepted a
+    // handshake request first. The request flow in Networking/Discovery
+    // stays important for connecting with someone before you're
+    // physically together; scanning is for when you already are.
+    let{data:handshake}=await supabase
       .from('handshakes')
       .select('id')
       .or(`and(sender_id.eq.${sp.id},receiver_id.eq.${tp.id}),and(sender_id.eq.${tp.id},receiver_id.eq.${sp.id})`)
-      .single();
+      .maybeSingle();
 
+    let createdHandshake=false;
     if(!handshake){
-      return NextResponse.json({error:'No connection found. Connect first before scanning.'},{status:404});
+      const{data:newHandshake,error:hsErr}=await supabase
+        .from('handshakes')
+        .insert({sender_id:sp.id,receiver_id:tp.id,status:'accepted'})
+        .select('id')
+        .single();
+      if(hsErr||!newHandshake){
+        return NextResponse.json({error:'Could not create connection'},{status:500});
+      }
+      handshake=newHandshake;
+      createdHandshake=true;
     }
 
     // handshakes has no per-side unlock-status column in the real schema —
@@ -128,8 +143,14 @@ export async function POST(req:NextRequest){
       .eq('unlocked_id',tp.id)
       .maybeSingle();
 
+    const{data:targetProfile}=await supabase
+      .from('guest_profiles')
+      .select('id,display_name,role_title,organisation,bio,linkedin_url,website_url,portfolio_url,show_linkedin,show_website,show_portfolio')
+      .eq('id',tp.id)
+      .single();
+
     if(existingUnlock){
-      return NextResponse.json({success:true,already:true});
+      return NextResponse.json({success:true,already:true,created:createdHandshake,profile:targetProfile});
     }
 
     await supabase
@@ -140,7 +161,7 @@ export async function POST(req:NextRequest){
         unlocked_id:tp.id,
       });
 
-    return NextResponse.json({success:true});
+    return NextResponse.json({success:true,created:createdHandshake,profile:targetProfile});
 
   }catch(err){
     console.error('Unlock error:',err);
