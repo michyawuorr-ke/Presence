@@ -11,23 +11,21 @@ type LoadEntryResult = {
   // This is the primary source of truth for a person's identity
   // (name, role, bio, links). `profile` above is the per-event
   // overlay (guest_profiles) and is secondary.
+  //
+  // Guests never sign in — the registration they filled out for THIS
+  // event (name/email/phone, captured at /register) is what we match
+  // against master_profiles.email to recognise a returning guest.
   masterProfile: any | null;
 };
 
-async function resolveMasterProfile(): Promise<any | null> {
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-
-  if (!user) return null;
-
-  const { data: masterProfile } = await supabase
+async function findMasterProfileByEmail(email: string | null | undefined) {
+  if (!email) return null;
+  const { data } = await supabase
     .from("master_profiles")
     .select("*")
-    .eq("user_id", user.id)
-    .single();
-
-  return masterProfile ?? null;
+    .eq("email", email.trim().toLowerCase())
+    .maybeSingle();
+  return data ?? null;
 }
 
 export async function loadEntry(token: string): Promise<LoadEntryResult> {
@@ -59,17 +57,28 @@ export async function loadEntry(token: string): Promise<LoadEntryResult> {
     .select("id, name, subtitle")
     .eq("event_id", registration.event_id);
 
+  // Host registrations route through bootstrapIdentity's host branch.
+  if (registration.status === "host") {
+    const identity = await bootstrapIdentity(registration);
+    return {
+      status: "scene",
+      registration,
+      event,
+      stations: stations ?? [],
+      profile: identity?.hostProfile ?? null,
+      masterProfile: null,
+    };
+  }
+
+  // Already onboarded for THIS event.
   const { data: profile } = await supabase
     .from("guest_profiles")
     .select("*")
     .eq("registration_id", registration.id)
     .single();
 
-  // Already onboarded for this event — still resolve the real master
-  // profile so profile editing has the correct canonical record to
-  // read from and write to.
   if (profile) {
-    const masterProfile = await resolveMasterProfile();
+    const masterProfile = await findMasterProfileByEmail(registration.guest_email);
     return {
       status: "scene",
       registration,
@@ -80,53 +89,10 @@ export async function loadEntry(token: string): Promise<LoadEntryResult> {
     };
   }
 
-  const identity = await bootstrapIdentity(registration);
-
-  if (!identity) {
-    return {
-      status: "onboarding",
-      registration,
-      event,
-      stations: stations ?? [],
-      profile: null,
-      masterProfile: null,
-    };
-  }
-
-  if (identity.route === "host") {
-    return {
-      status: "scene",
-      registration,
-      event,
-      stations: stations ?? [],
-      profile: identity.hostProfile,
-      masterProfile: null,
-    };
-  }
-
-  if (identity.route === "scene") {
-    return {
-      status: "scene",
-      registration,
-      event,
-      stations: stations ?? [],
-      profile: identity.guestProfile,
-      masterProfile: identity.masterProfile,
-    };
-  }
-
-  if (identity.route === "event_onboarding") {
-    return {
-      status: "onboarding",
-      registration,
-      event,
-      stations: stations ?? [],
-      // Onboarding form pre-fill comes from the master profile; no
-      // per-event guest profile exists yet.
-      profile: null,
-      masterProfile: identity.masterProfile,
-    };
-  }
+  // Not yet onboarded for this event. Check whether this email has
+  // been to a previous Oreeti event — if so, prefill from their
+  // master profile so they only need to fill in event-specific bits.
+  const masterProfile = await findMasterProfileByEmail(registration.guest_email);
 
   return {
     status: "onboarding",
@@ -134,6 +100,6 @@ export async function loadEntry(token: string): Promise<LoadEntryResult> {
     event,
     stations: stations ?? [],
     profile: null,
-    masterProfile: null,
+    masterProfile,
   };
 }

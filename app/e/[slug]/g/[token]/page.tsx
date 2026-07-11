@@ -128,6 +128,7 @@ export default function GuestEntryPage() {
       const data = await submitGuestOnboarding({
         registrationId: registration.id,
         eventId: event.id,
+        guestEmail: registration.guest_email,
         displayName,
         roleTitle: role,
         organisation,
