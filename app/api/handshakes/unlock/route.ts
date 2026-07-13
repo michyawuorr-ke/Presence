@@ -153,13 +153,19 @@ export async function POST(req:NextRequest){
       return NextResponse.json({success:true,already:true,created:createdHandshake,profile:targetProfile});
     }
 
-    await supabase
+    const{error:unlockErr}=await supabase
       .from('profile_unlocks')
       .insert({
+        event_id:scannerReg.event_id,
         handshake_id:handshake.id,
         unlocker_id:sp.id,
         unlocked_id:tp.id,
       });
+
+    if(unlockErr){
+      console.error('profile_unlocks insert error:',unlockErr.message);
+      return NextResponse.json({error:'Could not record the unlock'},{status:500});
+    }
 
     return NextResponse.json({success:true,created:createdHandshake,profile:targetProfile});
 
