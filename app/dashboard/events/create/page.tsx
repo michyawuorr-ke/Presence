@@ -17,6 +17,14 @@ export default function CreateEvent() {
       alert("Please specify a title and venue.");
       return;
     }
+    if (!startTime || !endTime) {
+      alert("Please set both a start and end date/time for the event.");
+      return;
+    }
+    if (new Date(endTime) <= new Date(startTime)) {
+      alert("Event end must be after the start. For a multi-day event, pick a later end date.");
+      return;
+    }
 
     setLoading(true);
     try {
@@ -98,12 +106,13 @@ export default function CreateEvent() {
 
           <div style={{ display: "flex", flexDirection: "column", gap: "16px" }}>
             <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
-              <label style={{ fontSize: "10px", color: "#D4AF37", textTransform: "uppercase", letterSpacing: "0.1em" }}>Start Time</label>
-              <input type="datetime-local" onChange={e => setStartTime(e.target.value)} style={{ background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.06)", padding: "12px", borderRadius: "10px", color: "#fff", outline: "none" }} />
+              <label style={{ fontSize: "10px", color: "#D4AF37", textTransform: "uppercase", letterSpacing: "0.1em" }}>Event Starts</label>
+              <input type="datetime-local" value={startTime} onChange={e => setStartTime(e.target.value)} style={{ background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.06)", padding: "12px", borderRadius: "10px", color: "#fff", outline: "none" }} />
             </div>
             <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
-              <label style={{ fontSize: "10px", color: "#D4AF37", textTransform: "uppercase", letterSpacing: "0.1em" }}>End Time</label>
-              <input type="datetime-local" onChange={e => setEndTime(e.target.value)} style={{ background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.06)", padding: "12px", borderRadius: "10px", color: "#fff", outline: "none" }} />
+              <label style={{ fontSize: "10px", color: "#D4AF37", textTransform: "uppercase", letterSpacing: "0.1em" }}>Event Ends</label>
+              <input type="datetime-local" value={endTime} min={startTime || undefined} onChange={e => setEndTime(e.target.value)} style={{ background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.06)", padding: "12px", borderRadius: "10px", color: "#fff", outline: "none" }} />
+              <p style={{ fontSize: "11px", color: "rgba(255,255,255,0.35)", margin: 0 }}>For a multi-day event, pick a later date here — start and end can be on different days.</p>
             </div>
           </div>
 
