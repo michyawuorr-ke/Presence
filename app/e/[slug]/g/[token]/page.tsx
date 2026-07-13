@@ -66,7 +66,7 @@ export default function GuestEntryPage() {
     presence.website.trim() !== "" ||
     presence.portfolio.trim() !== "";
   const isIntentValid = intents.length > 0;
-  const isStationValid = stationId !== "";
+  const isStationValid = stations.length === 0 || stationId !== "";
   const canSubmit =
     isIdentityValid &&
     isPresenceValid &&
@@ -125,7 +125,7 @@ export default function GuestEntryPage() {
     setSaving(true);
     setError("");
     try {
-      const data = await submitGuestOnboarding({
+      const result = await submitGuestOnboarding({
         registrationId: registration.id,
         eventId: event.id,
         guestEmail: registration.guest_email,
@@ -137,7 +137,8 @@ export default function GuestEntryPage() {
         intents,
         stationId,
       });
-      setProfile(data);
+      setProfile(result.guestProfile);
+      if (result.masterProfile) setMasterProfile(result.masterProfile);
       setStage("scene");
     } catch (err: any) {
       setError(err.message || "Failed to complete profile registration.");

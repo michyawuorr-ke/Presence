@@ -22,9 +22,10 @@ export async function submitGuestOnboarding(params: SubmitGuestOnboardingParams)
   // Upsert it first (keyed on email) so this guest is recognised at
   // future events without ever needing to log in.
   const email = params.guestEmail?.trim().toLowerCase() || null;
+  let masterProfile: any = null;
 
   if (email) {
-    const { error: masterError } = await supabase
+    const { data: updatedMaster, error: masterError } = await supabase
       .from("master_profiles")
       .upsert(
         {
@@ -38,12 +39,16 @@ export async function submitGuestOnboarding(params: SubmitGuestOnboardingParams)
           portfolio_url: params.presence.portfolio,
         },
         { onConflict: "email" }
-      );
+      )
+      .select()
+      .single();
 
     // Don't block onboarding on this — the event-specific guest_profile
     // below is still the source of truth for THIS event either way.
     if (masterError) {
       console.error("Failed to upsert master_profiles:", masterError.message);
+    } else {
+      masterProfile = updatedMaster;
     }
   }
 
@@ -74,5 +79,5 @@ export async function submitGuestOnboarding(params: SubmitGuestOnboardingParams)
 
   if (error) throw error;
 
-  return data;
+  return { guestProfile: data, masterProfile };
 }
