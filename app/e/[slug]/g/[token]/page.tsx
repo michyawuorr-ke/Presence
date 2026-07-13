@@ -139,6 +139,12 @@ export default function GuestEntryPage() {
       });
       setProfile(result.guestProfile);
       if (result.masterProfile) setMasterProfile(result.masterProfile);
+      if (result.masterProfileError) {
+        // Non-blocking — this event's profile still saved fine — but
+        // surface it so we can see the real reason cross-event
+        // recognition isn't working, instead of it failing silently.
+        alert("Note: cross-event profile sync failed — " + result.masterProfileError);
+      }
       setStage("scene");
     } catch (err: any) {
       setError(err.message || "Failed to complete profile registration.");

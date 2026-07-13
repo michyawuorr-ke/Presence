@@ -23,6 +23,7 @@ export async function submitGuestOnboarding(params: SubmitGuestOnboardingParams)
   // future events without ever needing to log in.
   const email = params.guestEmail?.trim().toLowerCase() || null;
   let masterProfile: any = null;
+  let masterProfileError: string | null = null;
 
   if (email) {
     const { data: updatedMaster, error: masterError } = await supabase
@@ -47,9 +48,12 @@ export async function submitGuestOnboarding(params: SubmitGuestOnboardingParams)
     // below is still the source of truth for THIS event either way.
     if (masterError) {
       console.error("Failed to upsert master_profiles:", masterError.message);
+      masterProfileError = masterError.message;
     } else {
       masterProfile = updatedMaster;
     }
+  } else {
+    masterProfileError = "No email on this registration — can't link a master profile.";
   }
 
   const { data, error } = await supabase
@@ -79,5 +83,5 @@ export async function submitGuestOnboarding(params: SubmitGuestOnboardingParams)
 
   if (error) throw error;
 
-  return { guestProfile: data, masterProfile };
+  return { guestProfile: data, masterProfile, masterProfileError };
 }
