@@ -26,31 +26,55 @@ export async function submitGuestOnboarding(params: SubmitGuestOnboardingParams)
   let masterProfileError: string | null = null;
 
   if (email) {
-    const { data: updatedMaster, error: masterError } = await supabase
+    // Check if a master profile already exists for this email.
+    // We can't use upsert(..., { onConflict: "email" }) because
+    // master_profiles also has a UNIQUE constraint on auth_user_id
+    // and every guest row has auth_user_id = null — Postgres treats
+    // all those nulls as distinct (per SQL standard) BUT the
+    // Supabase PostgREST upsert path still trips over it.
+    // Explicit select → update or insert is the safe path.
+    const { data: existing } = await supabase
       .from("master_profiles")
-      .upsert(
-        {
-          email,
-          display_name: params.displayName,
-          role_title: params.roleTitle,
-          organisation: params.organisation,
-          bio: params.bio,
-          linkedin_url: params.presence.linkedin,
-          website_url: params.presence.website,
-          portfolio_url: params.presence.portfolio,
-        },
-        { onConflict: "email" }
-      )
-      .select()
-      .single();
+      .select("id")
+      .eq("email", email)
+      .maybeSingle();
 
-    // Don't block onboarding on this — the event-specific guest_profile
-    // below is still the source of truth for THIS event either way.
-    if (masterError) {
-      console.error("Failed to upsert master_profiles:", masterError.message);
-      masterProfileError = masterError.message;
+    const profileData = {
+      display_name: params.displayName,
+      role_title: params.roleTitle,
+      organisation: params.organisation,
+      bio: params.bio,
+      linkedin_url: params.presence.linkedin,
+      website_url: params.presence.website,
+      portfolio_url: params.presence.portfolio,
+      updated_at: new Date().toISOString(),
+    };
+
+    if (existing?.id) {
+      const { data: updated, error: updateErr } = await supabase
+        .from("master_profiles")
+        .update(profileData)
+        .eq("id", existing.id)
+        .select()
+        .single();
+
+      if (updateErr) {
+        masterProfileError = updateErr.message;
+      } else {
+        masterProfile = updated;
+      }
     } else {
-      masterProfile = updatedMaster;
+      const { data: inserted, error: insertErr } = await supabase
+        .from("master_profiles")
+        .insert({ email, ...profileData })
+        .select()
+        .single();
+
+      if (insertErr) {
+        masterProfileError = insertErr.message;
+      } else {
+        masterProfile = inserted;
+      }
     }
   } else {
     masterProfileError = "No email on this registration — can't link a master profile.";
