@@ -62,26 +62,36 @@ export default function EntryOnboardingScreen({
         .focus-under:focus { border-bottom: 1px solid #F97316 !important; }
       `}</style>
 
-      <header className="w-full pt-12 max-w-md mx-auto text-center">
-        <p className="text-[10px] font-bold tracking-[0.3em] text-[#8A7355] m-0 uppercase">OREETI</p>
+      <header className="w-full pt-10 max-w-md mx-auto text-center">
+        <p className="text-[10px] font-bold tracking-[0.3em] m-0 uppercase" style={{ color: "#E26D34" }}>OREETI</p>
       </header>
 
-      <main className="w-full max-w-md mx-auto flex-1 pt-8 pb-36 overflow-y-auto">
+      <main className="w-full max-w-md mx-auto flex-1 pt-6 pb-36 overflow-y-auto">
         {(restoredIdentity && masterProfile) && (
-          <section className="mb-6 rounded-md border border-[#E26D34]/20 bg-[#E26D34]/5 p-5">
-            <p className="text-[10px] uppercase tracking-[0.25em] text-[#E26D34] font-semibold">
-              Welcome Back
-            </p>
-            <h2 className="mt-2 text-xl font-semibold text-white">
-              Welcome back, {masterProfile.display_name}
-            </h2>
-            <p className="mt-2 text-sm font-medium text-white/80">
-              Your Oreeti profile is ready.
-            </p>
-            <p className="mt-1 text-sm leading-6 text-white/60">
-              Complete your event details below and step into the room.
-            </p>
-          </section>
+          <div className="flex justify-center mb-6">
+            <div
+              style={{
+                background: "linear-gradient(135deg, rgba(226,109,52,0.10) 0%, rgba(226,109,52,0.04) 100%)",
+                border: "1px solid rgba(226,109,52,0.22)",
+                borderRadius: "999px",
+                padding: "10px 20px",
+                display: "inline-flex",
+                alignItems: "center",
+                gap: "10px",
+                boxShadow: "0 0 24px rgba(226,109,52,0.08)",
+              }}
+            >
+              <span style={{ fontSize: "16px", lineHeight: 1 }}>✦</span>
+              <div>
+                <p style={{ margin: 0, fontSize: "11px", color: "#E26D34", fontWeight: 700, letterSpacing: "0.18em", textTransform: "uppercase" }}>
+                  Welcome back
+                </p>
+                <p style={{ margin: 0, fontSize: "13px", color: "rgba(255,255,255,0.75)", fontWeight: 400, marginTop: "1px" }}>
+                  {masterProfile.display_name} · your details are prefilled
+                </p>
+              </div>
+            </div>
+          </div>
         )}
         <section className="mb-6 bg-white/[0.01] border border-white/[0.03] p-5 rounded-md space-y-3">
           <h2 className="text-sm font-medium tracking-tight text-white/80 m-0">About You</h2>
