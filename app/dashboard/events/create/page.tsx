@@ -10,19 +10,21 @@ export default function CreateEvent() {
   const [startTime, setStartTime] = useState("");
   const [endTime, setEndTime] = useState("");
   const [loading, setLoading] = useState(false);
+  const [error, setError] = useState("");
   const router = useRouter();
 
   async function handleCreate() {
-    if (!title || !venue) {
-      alert("Please specify a title and venue.");
+    setError("");
+    if (!title.trim() || !venue.trim()) {
+      setError("Event title and venue are required.");
       return;
     }
     if (!startTime || !endTime) {
-      alert("Please set both a start and end date/time for the event.");
+      setError("Please set both a start and end date/time.");
       return;
     }
     if (new Date(endTime) <= new Date(startTime)) {
-      alert("Event end must be after the start. For a multi-day event, pick a later end date.");
+      setError("End must be after start. For a multi-day event, pick a later end date.");
       return;
     }
 
@@ -30,45 +32,34 @@ export default function CreateEvent() {
     try {
       const slug = title.toLowerCase().replace(/\s+/g, "-").replace(/[^a-z0-9-]/g, "") + "-" + Date.now();
       const { data: { user } } = await supabase.auth.getUser();
+      if (!user) { router.push("/login"); return; }
 
-      if (!user) {
-        alert("Session expired. Please log in again.");
-        router.push("/login");
-        return;
-      }
       const { data: host, error: hostError } = await supabase
         .from("hosts")
-	  .select("id")
-	    .eq("email", user.email)
-	      .single();
+        .select("id")
+        .eq("email", user.email)
+        .single();
 
-	      if (hostError || !host) {
-		        throw new Error("Host record not found.");
-	      }
+      if (hostError || !host) throw new Error("Host record not found.");
 
-      const { data, error } = await supabase.from("events").insert({
-        title,
-        venue,
-        description,
-        start_time: startTime ? startTime + ":00+03:00" : null,
-        end_time: endTime ? endTime + ":00+03:00" : null,
+      const { data, error: evErr } = await supabase.from("events").insert({
+        title: title.trim(),
+        venue: venue.trim(),
+        description: description.trim(),
+        start_time: startTime + ":00+03:00",
+        end_time: endTime + ":00+03:00",
         slug,
         status: "draft",
-        host_id: host.id
+        host_id: host.id,
       }).select("id").single();
 
-      if (error) throw error;
+      if (evErr) throw evErr;
 
-      // Create the host's registration immediately so their guest link is
-      // available from the moment the event exists, not just when it goes live.
       const accessToken = Array.from(
         crypto.getRandomValues(new Uint8Array(32))
-      ).map((b: number) => b.toString(16).padStart(2, '0')).join('');
+      ).map((b: number) => b.toString(16).padStart(2, "0")).join("");
 
-      const appUrl = process.env.NEXT_PUBLIC_APP_URL || window.location.origin;
-      const guestUrl = `${appUrl}/e/${slug}/g/${accessToken}`;
-
-      const { error: regError } = await supabase.from("registrations").insert({
+      await supabase.from("registrations").insert({
         event_id: data.id,
         guest_name: user.email?.split("@")[0] || "Host",
         guest_email: user.email,
@@ -79,46 +70,137 @@ export default function CreateEvent() {
         access_token: accessToken,
       });
 
-      if (regError) {
-        alert("Host registration failed: " + regError.message + "\n\nEvent was created. Event ID: " + data.id);
-      }
-
-      // Direct structural redirect into the newly initiated workspace
       router.push(`/dashboard/events/${data.id}`);
     } catch (err: any) {
-      alert("Database Insertion Failed: " + (err.message || err));
+      setError(err.message || "Something went wrong. Please try again.");
       setLoading(false);
     }
   }
 
+  const inp = {
+    background: "rgba(255,255,255,0.03)",
+    border: "1px solid rgba(255,255,255,0.07)",
+    padding: "15px 16px",
+    borderRadius: "12px",
+    color: "#f0ede8",
+    outline: "none",
+    fontSize: "14px",
+    width: "100%",
+    boxSizing: "border-box" as const,
+    fontFamily: "inherit",
+    transition: "border-color 0.2s",
+  };
+
+  const canSubmit = title.trim() && venue.trim() && startTime && endTime && !loading;
+
   return (
-    <div style={{ padding: "40px 24px", background: "#060608", minHeight: "100vh", color: "#f3f4f6" }}>
-      <div style={{ maxWidth: "500px", margin: "0 auto" }}>
-        <button onClick={() => router.back()} style={{ background: "transparent", border: "none", color: "rgba(255,255,255,0.3)", cursor: "pointer", marginBottom: "32px", fontSize: "14px" }}>← Back</button>
+    <div style={{ minHeight: "100vh", background: "#060608", color: "#f0ede8", padding: "24px 20px 80px" }}>
+      <div style={{ maxWidth: "480px", margin: "0 auto" }}>
 
-        <h1 style={{ fontSize: "28px", fontWeight: "600", marginBottom: "8px", letterSpacing: "-0.02em" }}>New Activation</h1>
-        <p style={{ fontSize: "14px", color: "rgba(255,255,255,0.45)", marginBottom: "40px" }}>Define the event parameters.</p>
+        <button
+          onClick={() => router.back()}
+          style={{ background: "transparent", border: "none", color: "rgba(255,255,255,0.3)", cursor: "pointer", marginBottom: "28px", fontSize: "20px", padding: 0, display: "flex", alignItems: "center", gap: "6px" }}
+        >
+          ←
+        </button>
 
-        <div style={{ display: "flex", flexDirection: "column", gap: "20px" }}>
-          <input placeholder="Event Title" value={title} onChange={e => setTitle(e.target.value)} style={{ background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.06)", padding: "16px", borderRadius: "12px", color: "#fff", outline: "none" }} />
-          <input placeholder="Venue" value={venue} onChange={e => setVenue(e.target.value)} style={{ background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.06)", padding: "16px", borderRadius: "12px", color: "#fff", outline: "none" }} />
-          <textarea placeholder="Event Description" value={description} onChange={e => setDescription(e.target.value)} style={{ background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.06)", padding: "16px", borderRadius: "12px", color: "#fff", outline: "none", minHeight: "100px" }} />
+        <h1 style={{ fontSize: "26px", fontWeight: "700", letterSpacing: "-0.02em", margin: "0 0 4px" }}>New Event</h1>
+        <p style={{ fontSize: "13px", color: "rgba(255,255,255,0.35)", marginBottom: "36px" }}>
+          Keep it simple — details like tickets and stations come after.
+        </p>
 
-          <div style={{ display: "flex", flexDirection: "column", gap: "16px" }}>
-            <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
-              <label style={{ fontSize: "10px", color: "#D4AF37", textTransform: "uppercase", letterSpacing: "0.1em" }}>Event Starts</label>
-              <input type="datetime-local" value={startTime} onChange={e => setStartTime(e.target.value)} style={{ background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.06)", padding: "12px", borderRadius: "10px", color: "#fff", outline: "none" }} />
+        <div style={{ display: "flex", flexDirection: "column", gap: "12px" }}>
+
+          {/* Title */}
+          <div style={{ display: "flex", flexDirection: "column", gap: "6px" }}>
+            <label style={{ fontSize: "10px", color: "#E26D34", textTransform: "uppercase", letterSpacing: "0.12em", fontWeight: "700" }}>Event Title</label>
+            <input
+              value={title}
+              onChange={e => setTitle(e.target.value)}
+              placeholder="e.g. Nairobi Founders Summit"
+              style={inp}
+            />
+          </div>
+
+          {/* Venue */}
+          <div style={{ display: "flex", flexDirection: "column", gap: "6px" }}>
+            <label style={{ fontSize: "10px", color: "#E26D34", textTransform: "uppercase", letterSpacing: "0.12em", fontWeight: "700" }}>Venue</label>
+            <input
+              value={venue}
+              onChange={e => setVenue(e.target.value)}
+              placeholder="e.g. Radisson Blu, Nairobi"
+              style={inp}
+            />
+          </div>
+
+          {/* Description */}
+          <div style={{ display: "flex", flexDirection: "column", gap: "6px" }}>
+            <label style={{ fontSize: "10px", color: "#E26D34", textTransform: "uppercase", letterSpacing: "0.12em", fontWeight: "700" }}>Description <span style={{ color: "rgba(255,255,255,0.2)", fontWeight: "400" }}>· optional</span></label>
+            <textarea
+              value={description}
+              onChange={e => setDescription(e.target.value)}
+              placeholder="What's this event about?"
+              rows={3}
+              style={{ ...inp, resize: "vertical", minHeight: "80px" }}
+            />
+          </div>
+
+          {/* Dates */}
+          <div style={{ display: "flex", flexDirection: "column", gap: "10px", marginTop: "4px" }}>
+            <div style={{ display: "flex", flexDirection: "column", gap: "6px" }}>
+              <label style={{ fontSize: "10px", color: "#E26D34", textTransform: "uppercase", letterSpacing: "0.12em", fontWeight: "700" }}>Starts</label>
+              <input
+                type="datetime-local"
+                value={startTime}
+                onChange={e => setStartTime(e.target.value)}
+                style={{ ...inp, colorScheme: "dark" }}
+              />
             </div>
-            <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
-              <label style={{ fontSize: "10px", color: "#D4AF37", textTransform: "uppercase", letterSpacing: "0.1em" }}>Event Ends</label>
-              <input type="datetime-local" value={endTime} min={startTime || undefined} onChange={e => setEndTime(e.target.value)} style={{ background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.06)", padding: "12px", borderRadius: "10px", color: "#fff", outline: "none" }} />
-              <p style={{ fontSize: "11px", color: "rgba(255,255,255,0.35)", margin: 0 }}>For a multi-day event, pick a later date here — start and end can be on different days.</p>
+            <div style={{ display: "flex", flexDirection: "column", gap: "6px" }}>
+              <label style={{ fontSize: "10px", color: "#E26D34", textTransform: "uppercase", letterSpacing: "0.12em", fontWeight: "700" }}>Ends</label>
+              <input
+                type="datetime-local"
+                value={endTime}
+                min={startTime || undefined}
+                onChange={e => setEndTime(e.target.value)}
+                style={{ ...inp, colorScheme: "dark" }}
+              />
+              <p style={{ fontSize: "11px", color: "rgba(255,255,255,0.25)", margin: "2px 0 0" }}>
+                Multi-day events are supported — just pick a later end date.
+              </p>
             </div>
           </div>
 
-          <button onClick={handleCreate} disabled={loading} style={{ marginTop: "20px", background: "#D4AF37", border: "none", padding: "16px", borderRadius: "12px", color: "#000", fontWeight: "700", cursor: "pointer", fontSize: "15px" }}>
-            {loading ? "Creating your event..." : "Create Event"}
+          {/* Error */}
+          {error && (
+            <div style={{ background: "rgba(248,113,113,0.06)", border: "1px solid rgba(248,113,113,0.2)", borderRadius: "10px", padding: "12px 14px" }}>
+              <p style={{ color: "#f87171", fontSize: "12px", margin: 0 }}>{error}</p>
+            </div>
+          )}
+
+          {/* Submit */}
+          <button
+            onClick={handleCreate}
+            disabled={!canSubmit}
+            style={{
+              marginTop: "8px",
+              padding: "16px",
+              borderRadius: "14px",
+              background: canSubmit ? "linear-gradient(135deg,#221b0f,#13100b)" : "rgba(255,255,255,0.03)",
+              color: canSubmit ? "#D4AF37" : "rgba(255,255,255,0.2)",
+              fontWeight: "700",
+              fontSize: "14px",
+              cursor: canSubmit ? "pointer" : "not-allowed",
+              letterSpacing: "0.04em",
+              textTransform: "uppercase" as const,
+              border: canSubmit ? "1px solid rgba(212,175,55,0.3)" : "1px solid rgba(255,255,255,0.05)",
+              transition: "all 0.2s",
+              width: "100%",
+            }}
+          >
+            {loading ? "Creating..." : "Create Event →"}
           </button>
+
         </div>
       </div>
     </div>
