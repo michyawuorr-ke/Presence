@@ -6,6 +6,7 @@ import { supabase } from "@/lib/supabase/client";
 
 export default function RegisterPage() {
   const [event, setEvent] = useState<any>(null);
+  const [hostProfile, setHostProfile] = useState<any>(null);
   const [ticketTypes, setTicketTypes] = useState<any[]>([]);
   const [selectedTicket, setSelectedTicket] = useState<any>(null);
   const [quantity, setQuantity] = useState(1);
@@ -33,6 +34,16 @@ export default function RegisterPage() {
       const { data: tickets } = await supabase.from("ticket_types").select("*").eq("event_id", ev.id).eq("is_active", true);
       setTicketTypes(tickets ?? []);
       if (tickets?.length) setSelectedTicket(tickets[0]);
+
+      // Load host profile for the organizer card (only if show_in_events is true)
+      const { data: hp } = await supabase
+        .from("host_profiles")
+        .select("display_name,role_title,organisation,bio,avatar_url,website_url,linkedin_url,twitter_url,show_in_events")
+        .eq("host_id", ev.host_id)
+        .eq("show_in_events", true)
+        .maybeSingle();
+      if (hp) setHostProfile(hp);
+
       setLoading(false);
     }
     load();
@@ -207,6 +218,29 @@ export default function RegisterPage() {
           <h1 style={{fontSize:"18px",fontWeight:"600",color:"#fff",letterSpacing:"0.08em",textTransform:"uppercase",marginTop:"24px",marginBottom:"6px"}}>Register</h1>
           <p style={{color:"rgba(255,255,255,0.6)",fontSize:"14px",margin:0}}>Event: {event.title}</p>
         </div>
+
+        {/* Organizer card — only shown when host has show_in_events enabled */}
+        {hostProfile && (
+          <div style={{display:"flex",alignItems:"center",gap:"12px",background:"rgba(212,175,55,0.04)",border:"1px solid rgba(212,175,55,0.1)",borderRadius:"14px",padding:"14px",marginBottom:"28px"}}>
+            <div style={{width:"40px",height:"40px",borderRadius:"50%",border:"1px solid rgba(212,175,55,0.3)",display:"flex",alignItems:"center",justifyContent:"center",overflow:"hidden",flexShrink:0,background:"rgba(212,175,55,0.06)"}}>
+              {hostProfile.avatar_url
+                ? <img src={hostProfile.avatar_url} alt="" style={{width:"100%",height:"100%",objectFit:"cover"}} />
+                : <span style={{fontSize:"15px",fontWeight:"700",color:"#D4AF37"}}>{hostProfile.display_name?.[0]?.toUpperCase()||"O"}</span>
+              }
+            </div>
+            <div style={{flex:1,minWidth:0}}>
+              <div style={{display:"flex",alignItems:"center",gap:"6px",marginBottom:"2px"}}>
+                <p style={{fontSize:"13px",fontWeight:"600",color:"#f0ede8",margin:0}}>{hostProfile.display_name}</p>
+                <span style={{fontSize:"8px",fontWeight:"800",color:"#D4AF37",background:"rgba(212,175,55,0.1)",border:"1px solid rgba(212,175,55,0.2)",borderRadius:"3px",padding:"1px 5px",letterSpacing:"0.1em",flexShrink:0}}>🛡 ORGANIZER</span>
+              </div>
+              {(hostProfile.role_title||hostProfile.organisation) && (
+                <p style={{fontSize:"11px",color:"rgba(255,255,255,0.4)",margin:0}}>
+                  {hostProfile.role_title}{hostProfile.role_title&&hostProfile.organisation?" · ":""}{hostProfile.organisation}
+                </p>
+              )}
+            </div>
+          </div>
+        )}
         {ticketTypes.length > 0 && (
           <div style={{marginBottom:"8px",position:"relative",width:"100%"}}>
             <select value={selectedTicket?.id||""} onChange={e => setSelectedTicket(ticketTypes.find(t => t.id===e.target.value))} disabled={submitting}
