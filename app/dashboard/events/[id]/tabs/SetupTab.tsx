@@ -1,6 +1,7 @@
 "use client";
 import { useState } from "react";
 import { supabase } from "@/lib/supabase/client";
+import PoliciesSection from "./PoliciesSection";
 
 interface SetupTabProps {
   eventId: string;
@@ -137,6 +138,12 @@ export default function SetupTab({ eventId, event, ticketTypes, stations, onTick
           {savingPaybill ? "Saving..." : paybillSaved ? "✓ Saved" : "Save Payment Details"}
         </button>
       </section>
+      {/* ── Policies ── */}
+      <section style={{ marginTop: "32px", borderTop: "1px solid rgba(255,255,255,0.04)", paddingTop: "28px" }}>
+        <p style={{ fontSize: "10px", fontWeight: "700", letterSpacing: "0.15em", color: GOLD, textTransform: "uppercase", marginBottom: "16px" }}>Networking & Role Policies</p>
+        <PoliciesSection eventId={eventId} />
+      </section>
+
     </div>
   );
 }

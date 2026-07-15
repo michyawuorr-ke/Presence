@@ -1,5 +1,18 @@
 "use client";
 
+// Role badge colours — only styling here, no behaviour branching on role name.
+// The badge emoji and label come from the database via the attendee object.
+const ROLE_BADGE_STYLE = {
+  fontSize: "9px",
+  fontWeight: "700",
+  letterSpacing: "0.08em",
+  color: "#D4AF37",
+  background: "rgba(212,175,55,0.08)",
+  border: "1px solid rgba(212,175,55,0.18)",
+  borderRadius: "4px",
+  padding: "2px 6px",
+};
+
 interface AttendeeCardProps {
   attendee: any;
   sent: boolean;
@@ -8,13 +21,22 @@ interface AttendeeCardProps {
 }
 
 export default function AttendeeCard({ attendee, sent, onConnect, live }: AttendeeCardProps) {
+  // role badge: comes from attendee.role (id) + attendee.role_badge (emoji)
+  // Falls back gracefully if not set — no hardcoded role list here.
+  const showBadge = attendee.role && attendee.role !== "attendee" && attendee.role_badge;
+
   return(
     <div style={{background:"#1C1C1E",border:"1px solid rgba(255,255,255,0.07)",borderRadius:"14px",padding:"14px"}}>
       <div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-start",gap:"12px"}}>
         <div style={{flex:1,minWidth:0}}>
-          <div style={{display:"flex",alignItems:"center",gap:"6px"}}>
+          <div style={{display:"flex",alignItems:"center",gap:"6px",flexWrap:"wrap"}}>
             {live&&<span style={{width:"7px",height:"7px",borderRadius:"50%",background:"#4ade80",display:"inline-block",animation:"pulse 2s infinite",flexShrink:0}}/>}
             <p style={{fontSize:"14px",fontWeight:"600",color:"#f1f0f5",margin:0}}>{attendee.display_name}</p>
+            {showBadge && (
+              <span style={ROLE_BADGE_STYLE}>
+                {attendee.role_badge} {attendee.role_label?.toUpperCase() ?? attendee.role.toUpperCase()}
+              </span>
+            )}
           </div>
           {attendee.role_title&&<p style={{fontSize:"12px",color:"#888",margin:"2px 0 0"}}>{attendee.role_title}{attendee.organisation?` · ${attendee.organisation}`:""}</p>}
           {attendee.networking_intents?.length>0&&(

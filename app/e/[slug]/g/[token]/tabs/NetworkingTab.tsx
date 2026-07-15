@@ -60,11 +60,37 @@ export default function NetworkingTab({ event, profile, isLive, isEnded, registr
     const declinedSet=new Set((declinedReqs||[]).map((r:any)=>r.recipient_id));
     setDeclinedIds(declinedSet);
     setSentRequests(sentSet);
+    // load event policy + resolved permissions to apply visibility rules
+    const[{data:eventPolicy},{data:allPerms}]=await Promise.all([
+      supabase.from("event_policies").select("networking_enabled,default_visibility").eq("event_id",event.id).maybeSingle(),
+      supabase.from("resolved_role_permissions").select("role_id,discoverable,bypass_visibility").eq("event_id",event.id),
+    ]);
+
+    // If networking is disabled at the event level, show nobody
+    if(eventPolicy?.networking_enabled===false){setNodes([]);return;}
+
+    const permsByRole=Object.fromEntries((allPerms||[]).map((p:any)=>[p.role_id,p]));
+    const defaultVisibility=eventPolicy?.default_visibility??"visible";
+
     // limit raised to 99 — no artificial cap on visible attendees
     const{data}=await supabase.from("guest_profiles").select("*").eq("event_id",event.id).eq("aura_active",true).eq("networking_visible",true).neq("id",profile.id).limit(99);
     const{data:blockedData}=await supabase.from("guest_blocks").select("blocked_id").eq("blocker_id",profile.id).eq("event_id",event.id);
     const blockedSet=new Set((blockedData||[]).map((b:any)=>b.blocked_id));
-    const filtered=(data||[]).filter((n:any)=>!approvedSet.has(n.id)&&!declinedSet.has(n.id)&&!blockedSet.has(n.id));
+
+    const myPerms=permsByRole[profile.role??"attendee"];
+    const iCanDiscover=myPerms?.can_discover!==false;
+
+    const filtered=(data||[]).filter((n:any)=>{
+      if(approvedSet.has(n.id)||declinedSet.has(n.id)||blockedSet.has(n.id))return false;
+      const theirPerms=permsByRole[n.role??"attendee"];
+      // Are they allowed to be discovered?
+      if(theirPerms?.discoverable===false)return false;
+      // Apply default_visibility unless they bypass it
+      if(defaultVisibility==="hidden"&&!theirPerms?.bypass_visibility)return false;
+      // Can I discover others?
+      if(!iCanDiscover)return false;
+      return true;
+    });
     setNodes(filtered.map((n:any)=>({...n,networking_intents:parseIntents(n.networking_intents)})));
     if(registration?.status!=="host"){
       const hostRes=await fetch('/api/events/host-profile?event_id='+event.id);

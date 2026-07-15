@@ -125,13 +125,18 @@ export function useEventAttendees(eventId: string | undefined, currentProfileId:
     enabled: !!eventId && !!currentProfileId,
     staleTime: 20_000,
     queryFn: async () => {
+      // Join roles so AttendeeCard gets badge + label without hardcoding
       const { data } = await supabase
         .from("guest_profiles")
-        .select("id,display_name,role_title,organisation,networking_intents,target_station_id")
+        .select("id,display_name,role_title,organisation,networking_intents,target_station_id,role,roles(badge,label)")
         .eq("event_id", eventId!)
         .eq("networking_visible", true)
         .neq("id", currentProfileId!);
-      return data || [];
+      return (data || []).map((r: any) => ({
+        ...r,
+        role_badge: r.roles?.badge ?? "👤",
+        role_label: r.roles?.label ?? r.role,
+      }));
     },
   });
 }
