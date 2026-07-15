@@ -139,7 +139,7 @@ export default function EventsPage() {
           <h1 style={{ fontSize: "14px", fontWeight: "600", color: "#fff", letterSpacing: "0.15em", textTransform: "uppercase", margin: "0 0 4px" }}>Your Events</h1>
           <p style={{ fontSize: "11px", color: "#D4AF37", letterSpacing: "0.06em", textTransform: "uppercase", fontWeight: "500", opacity: 0.85 }}>Active Events ({visibleEvents.length})</p>
         </div>
-        <button onClick={() => router.push("/dashboard/events/create")} style={{ padding: "8px 16px", borderRadius: "6px", background: "transparent", color: "#E26D34", border: "1px solid rgba(226,109,52,0.45)", fontSize: "12px", fontWeight: "500", letterSpacing: "0.06em", textTransform: "uppercase", cursor: "pointer" }}>
+        <button onClick={() => router.push("/dashboard/events/create")} style={{ padding: "8px 16px", borderRadius: "6px", background: "transparent", color: "#D4AF37", border: "1px solid rgba(212,175,55,0.45)", fontSize: "12px", fontWeight: "500", letterSpacing: "0.06em", textTransform: "uppercase", cursor: "pointer" }}>
           + Create Event
         </button>
       </div>

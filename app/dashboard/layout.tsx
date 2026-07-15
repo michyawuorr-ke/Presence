@@ -36,7 +36,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
       }}>
         <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", height: "52px" }}>
           <p style={{ fontSize: "19px", fontWeight: "700", letterSpacing: "-0.03em", fontFamily: "'Helvetica Neue',Arial,sans-serif", margin: 0 }}>
-            <span style={{ color: "#ffffff" }}>Or</span><span style={{ color: "#E26D34" }}>ee</span><span style={{ color: "#ffffff" }}>ti</span>
+            <span style={{ color: "#ffffff" }}>Or</span><span style={{ color: "#D4AF37" }}>ee</span><span style={{ color: "#ffffff" }}>ti</span>
           </p>
 
           {/* Avatar button — opens profile menu */}
@@ -89,11 +89,11 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
               return (
                 <button key={tab.path} onClick={() => router.push(tab.path)} style={{
                   padding: "7px 18px", borderRadius: "10px", border: "none",
-                  background: active ? "rgba(226,109,52,0.1)" : "transparent",
-                  color: active ? "#E26D34" : "rgba(255,255,255,0.4)",
+                  background: active ? "rgba(212,175,55,0.1)" : "transparent",
+                  color: active ? "#D4AF37" : "rgba(255,255,255,0.4)",
                   fontSize: "13px", fontWeight: active ? "600" : "400",
                   cursor: "pointer", transition: "all 0.15s",
-                  boxShadow: active ? "inset 0 0 0 1px rgba(226,109,52,0.15)" : "none",
+                  boxShadow: active ? "inset 0 0 0 1px rgba(212,175,55,0.15)" : "none",
                 }}>{tab.label}</button>
               );
             })}

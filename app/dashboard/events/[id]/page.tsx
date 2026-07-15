@@ -1,403 +1,185 @@
 "use client";
-import { useEffect, useState, useCallback } from "react";
-import { useRouter, useParams } from "next/navigation";
+import { useState, useEffect, useCallback } from "react";
+import { useParams, useRouter } from "next/navigation";
 import { supabase } from "@/lib/supabase/client";
+import OverviewTab from "./tabs/OverviewTab";
+import AttendeesTab from "./tabs/AttendeesTab";
+import SetupTab from "./tabs/SetupTab";
+import SettingsTab from "./tabs/SettingsTab";
 
-export default function EventDetailPage() {
+type Tab = "overview" | "attendees" | "setup" | "settings";
+
+const GOLD = "#D4AF37";
+
+export default function EventDashboardPage() {
+  const { id } = useParams() as { id: string };
+  const router = useRouter();
+
+  const [tab, setTab] = useState<Tab>("overview");
   const [event, setEvent] = useState<any>(null);
   const [ticketTypes, setTicketTypes] = useState<any[]>([]);
-  const [stats, setStats] = useState({ registrations: 0, confirmed: 0, pending: 0, revenue: 0, checkins: 0, onAura: 0, handshakes: 0, unlocked: 0 });
-  const [loading, setLoading] = useState(true);
-  const [authError, setAuthError] = useState(false);
-  const [showAddTicket, setShowAddTicket] = useState(false);
-  const [ticketName, setTicketName] = useState("");
-  const [ticketPrice, setTicketPrice] = useState("");
-  const [ticketQty, setTicketQty] = useState("");
-  const [saving, setSaving] = useState(false);
   const [stations, setStations] = useState<any[]>([]);
-  const [stationName, setStationName] = useState("");
-  const [stationSubtitle, setStationSubtitle] = useState("");
-  const [savingStation, setSavingStation] = useState(false);
+  const [stats, setStats] = useState({ registrations: 0, confirmed: 0, checkins: 0, onAura: 0, handshakes: 0, revenue: 0 });
+  const [hostLink, setHostLink] = useState("");
+  const [timeToLive, setTimeToLive] = useState("");
   const [bannerUrl, setBannerUrl] = useState("");
   const [uploadingBanner, setUploadingBanner] = useState(false);
   const [bannerError, setBannerError] = useState("");
-  const [hostLink, setHostLink] = useState("");
-  const [timeToLive, setTimeToLive] = useState("");
   const [ending, setEnding] = useState(false);
-  const router = useRouter();
-  const params = useParams();
-  const id = params.id as string;
+  const [pendingCount, setPendingCount] = useState(0);
+  const [hostProfile, setHostProfile] = useState<any>(null);
+  const [showProfile, setShowProfile] = useState(false);
 
-  const loadStats = useCallback(async (eventId: string) => {
-    const [{ count: total }, { count: confirmed }, { count: checkins }, { count: onAura }, { count: handshakes }, { count: unlocked }] = await Promise.all([
-      supabase.from("registrations").select("*", { count: "exact", head: true }).eq("event_id", eventId),
-      supabase.from("registrations").select("*", { count: "exact", head: true }).eq("event_id", eventId).eq("status", "confirmed"),
-      supabase.from("registrations").select("*", { count: "exact", head: true }).eq("event_id", eventId).eq("checked_in", true),
-      supabase.from("guest_profiles").select("*", { count: "exact", head: true }).eq("event_id", eventId).eq("aura_active", true),
-      supabase.from("handshakes").select("*", { count: "exact", head: true }).eq("event_id", eventId),
-      supabase.from("handshakes").select("*", { count: "exact", head: true }).eq("event_id", eventId).eq("networking_status", "unlocked"),
-    ]);
-    const { data: revenueData } = await supabase.from("registrations").select("amount").eq("event_id", eventId).eq("paid", true);
-    const revenue = (revenueData || []).reduce((sum: number, r: any) => sum + (r.amount || 0), 0);
-    setStats({ registrations: total || 0, confirmed: confirmed || 0, pending: (total || 0) - (confirmed || 0), revenue, checkins: checkins || 0, onAura: onAura || 0, handshakes: handshakes || 0, unlocked: unlocked || 0 });
-  }, []);
+  const load = useCallback(async () => {
+    const { data: ev } = await supabase.from("events").select("*").eq("id", id).single();
+    if (!ev) { router.push("/dashboard/events"); return; }
+    setEvent(ev);
+    setBannerUrl(ev.banner_url || "");
 
-  async function loadStations() {
-    const { data } = await supabase.from("event_stations").select("*").eq("event_id", id).order("created_at", { ascending: true });
-    setStations(data || []);
-  }
+    const { data: tix } = await supabase.from("ticket_types").select("*").eq("event_id", id).order("created_at");
+    setTicketTypes(tix || []);
 
-  async function triggerGoLive(eventId: string, userEmail: string): Promise<boolean> {
-    try {
-      const res = await fetch("/api/events/go-live", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ event_id: eventId, host_email: userEmail }),
-      });
-      const data = await res.json();
-      if (res.ok) {
-        setEvent((prev: any) => ({ ...prev, status: "live" }));
-        setHostLink(data.host_link);
-        return true;
-      } else {
-        setTimeout(() => triggerGoLive(eventId, userEmail), 5000);
-        return false;
-      }
-    } catch {
-      setTimeout(() => triggerGoLive(eventId, userEmail), 5000);
-      return false;
+    const { data: st } = await supabase.from("event_stations").select("*").eq("event_id", id).order("created_at");
+    setStations(st || []);
+
+    const { data: regs } = await supabase.from("registrations").select("status,paid,checked_in,amount").eq("event_id", id);
+    const { data: hs } = await supabase.from("handshakes").select("id").eq("event_id", id);
+    const { data: gp } = await supabase.from("guest_profiles").select("aura_active").eq("event_id", id);
+    setStats({
+      registrations: regs?.filter(r => r.status !== "host").length || 0,
+      confirmed: regs?.filter(r => r.status === "confirmed").length || 0,
+      checkins: regs?.filter(r => r.checked_in).length || 0,
+      onAura: gp?.filter(g => g.aura_active).length || 0,
+      handshakes: hs?.length || 0,
+      revenue: regs?.reduce((s, r) => s + (r.paid ? (r.amount || 0) : 0), 0) || 0,
+    });
+
+    const hostReg = regs ? await supabase.from("registrations").select("access_token").eq("event_id", id).eq("status", "host").single() : null;
+    if (hostReg?.data?.access_token) {
+      setHostLink(`${process.env.NEXT_PUBLIC_APP_URL || window.location.origin}/e/${ev.slug}/g/${hostReg.data.access_token}`);
     }
-  }
 
-  useEffect(() => {
-    async function load() {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) { router.replace("/login"); return; }
-      const { data: ev } = await supabase.from("events").select("*").eq("id", id).single();
-      if (!ev || ev.host_id !== user.id) { setAuthError(true); setLoading(false); return; }
-      const { data: tickets } = await supabase.from("ticket_types").select("*").eq("event_id", id);
-      setEvent(ev);
-      setTicketTypes(tickets ?? []);
-      setBannerUrl(ev.banner_url || "");
-      await loadStats(ev.id);
-      await loadStations();
-      const { data: hostReg } = await supabase
-        .from("registrations")
-	  .select("access_token")
-	    .eq("event_id", id)
-	      .eq("guest_email", user.email)
-	        .eq("status", "host")
-		  .single();
+    const { data: hp } = await supabase.from("host_profiles").select("*").limit(1).single();
+    setHostProfile(hp);
 
-		  if (hostReg) {
-			    const appUrl =
-				        process.env.NEXT_PUBLIC_APP_URL || window.location.origin;
-
-			      setHostLink(`${appUrl}/e/${ev.slug}/g/${hostReg.access_token}`);
-		  }
-      if (ev.status === "scheduled" && new Date(ev.start_time) <= new Date()) {
-        triggerGoLive(id, user.email ?? "");
-      }
-      setLoading(false);
-    }
-    load();
-  }, [id, router, loadStats]);
-
-  useEffect(() => {
-    if (!event?.id) return;
-    const ch = supabase.channel("dashboard-stats:" + event.id)
-      .on("postgres_changes", { event: "*", schema: "public", table: "registrations", filter: "event_id=eq." + event.id }, () => loadStats(event.id))
-      .on("postgres_changes", { event: "*", schema: "public", table: "handshakes", filter: "event_id=eq." + event.id }, () => loadStats(event.id))
-      .on("postgres_changes", { event: "*", schema: "public", table: "guest_profiles", filter: "event_id=eq." + event.id }, () => loadStats(event.id))
-      .subscribe();
-    return () => { supabase.removeChannel(ch); };
-  }, [event?.id, loadStats]);
-
-  useEffect(() => {
-    if (!event || event.status !== "scheduled") return;
-    const tick = setInterval(async () => {
-      const now = new Date();
-      const start = new Date(event.start_time);
-      const diff = start.getTime() - now.getTime();
-      if (diff <= 0) {
-        clearInterval(tick);
-        const { data: { user } } = await supabase.auth.getUser();
-        if (user) triggerGoLive(id, user.email ?? "");
-      } else {
+    if (ev.start_time && ev.status === "scheduled") {
+      const diff = new Date(ev.start_time).getTime() - Date.now();
+      if (diff > 0) {
         const h = Math.floor(diff / 3600000);
         const m = Math.floor((diff % 3600000) / 60000);
-        const s = Math.floor((diff % 60000) / 1000);
-        setTimeToLive(h > 0 ? h + "h " + m + "m" : m > 0 ? m + "m " + s + "s" : s + "s");
+        setTimeToLive(h > 0 ? `${h}h ${m}m` : `${m}m`);
       }
-    }, 1000);
-    return () => clearInterval(tick);
-  }, [event, id]);
+    }
+  }, [id, router]);
 
-  async function handleBannerUpload(e: React.ChangeEvent<HTMLInputElement>) {
-    if (!e.target.files || e.target.files.length === 0) return;
-    const file = e.target.files[0];
-    const allowedTypes = ["image/jpeg", "image/png", "image/webp"];
-    if (!allowedTypes.includes(file.type)) { setBannerError("Only JPG, PNG, or WebP allowed."); return; }
-    if (file.size > 5 * 1024 * 1024) { setBannerError("Image must be under 5MB."); return; }
-    setBannerError(""); setUploadingBanner(true);
-    try {
-      const fileExt = file.name.split(".").pop();
-      const filePath = `${id}/banner_${Date.now()}.${fileExt}`;
-      const { error: uploadError } = await supabase.storage.from("event-banners").upload(filePath, file, { upsert: true });
-      if (uploadError) throw uploadError;
-      const { data: { publicUrl } } = supabase.storage.from("event-banners").getPublicUrl(filePath);
-      await supabase.from("events").update({ banner_url: publicUrl }).eq("id", id);
-      setBannerUrl(publicUrl);
-      setEvent((prev: any) => prev ? { ...prev, banner_url: publicUrl } : prev);
-    } catch { setBannerError("Upload failed. Please try again."); }
-    finally { setUploadingBanner(false); }
-  }
+  useEffect(() => { load(); }, [load]);
 
-  async function handleAddStation(e: React.FormEvent) {
-    e.preventDefault();
-    if (!stationName) return;
-    setSavingStation(true);
-    try {
-      const { data, error } = await supabase.from("event_stations").insert({ event_id: id, name: stationName, subtitle: stationSubtitle }).select().single();
-      if (!error && data) { setStations([...stations, data]); setStationName(""); setStationSubtitle(""); }
-    } catch (err) { console.error(err); }
-    finally { setSavingStation(false); }
-  }
-
-  async function handleDeleteStation(stationId: string) {
-    const { error } = await supabase.from("event_stations").delete().eq("id", stationId);
-    if (!error) setStations(prev => prev.filter(s => s.id !== stationId));
+  async function handleGoLive() {
+    await supabase.from("events").update({ status: "live" }).eq("id", id);
+    load();
   }
 
   async function handleEndEvent() {
-    if (!confirm("End this event? This cannot be undone.")) return;
+    if (!confirm("End this event? Guests will no longer be able to network.")) return;
     setEnding(true);
-    await supabase.from("events").update({ status: "ended" }).eq("id", id);
-    setEvent((prev: any) => ({ ...prev, status: "ended" }));
+    await supabase.from("events").update({ status: "ended", ended_at: new Date().toISOString() }).eq("id", id);
     setEnding(false);
+    load();
   }
 
-  async function handlePublish() {
-    await supabase.from("events").update({ status: "scheduled" }).eq("id", id);
-    setEvent((prev: any) => ({ ...prev, status: "scheduled" }));
-    const { data: { user } } = await supabase.auth.getUser();
-    if (user) {
-      const res = await fetch("/api/events/go-live", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ event_id: id, host_email: user.email }),
-      });
-      const data = await res.json();
-      if (res.ok && data.host_link) setHostLink(data.host_link);
-    }
+  async function handleBannerUpload(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    if (file.size > 5 * 1024 * 1024) { setBannerError("Image must be under 5MB"); return; }
+    setUploadingBanner(true); setBannerError("");
+    const path = `banners/${id}/${Date.now()}.${file.name.split(".").pop()}`;
+    const { error: upErr } = await supabase.storage.from("event-assets").upload(path, file, { upsert: true });
+    if (upErr) { setBannerError(upErr.message); setUploadingBanner(false); return; }
+    const { data: urlData } = supabase.storage.from("event-assets").getPublicUrl(path);
+    await supabase.from("events").update({ banner_url: urlData.publicUrl }).eq("id", id);
+    setBannerUrl(urlData.publicUrl);
+    setUploadingBanner(false);
   }
 
-  async function handleAddTicket() {
-    if (!ticketName) return;
-    setSaving(true);
-    const { data } = await supabase.from("ticket_types").insert({ event_id: id, name: ticketName, price: parseFloat(ticketPrice) || 0, quantity: ticketQty ? parseInt(ticketQty) : null, is_active: true }).select().single();
-    if (data) setTicketTypes([...ticketTypes, data]);
-    setTicketName(""); setTicketPrice(""); setTicketQty("");
-    setShowAddTicket(false); setSaving(false);
+  const nav: { id: Tab; label: string }[] = [
+    { id: "overview", label: "Overview" },
+    { id: "attendees", label: "Attendees" },
+    { id: "setup", label: "Setup" },
+    { id: "settings", label: "Settings" },
+  ];
+
+  if (!event) {
+    return (
+      <div style={{ minHeight: "100vh", background: "#08080a", display: "flex", alignItems: "center", justifyContent: "center" }}>
+        <div style={{ width: "4px", height: "4px", borderRadius: "50%", background: GOLD, boxShadow: `0 0 12px ${GOLD}` }} />
+      </div>
+    );
   }
-
-  function copyLink(text: string) {
-    const el = document.createElement("textarea");
-    el.value = text; el.style.position = "fixed"; el.style.opacity = "0";
-    document.body.appendChild(el); el.focus(); el.select();
-    try { document.execCommand("copy"); } catch (e) {}
-    document.body.removeChild(el);
-  }
-
-  if (loading) return (<div style={{ padding: "24px", maxWidth: "480px", margin: "0 auto" }}><div style={{ width: "38px", height: "38px", borderRadius: "50%", background: "rgba(255,255,255,0.04)", marginBottom: "24px" }}/><div style={{ height: "24px", width: "60%", borderRadius: "8px", background: "rgba(255,255,255,0.04)", marginBottom: "12px" }}/><div style={{ height: "14px", width: "40%", borderRadius: "6px", background: "rgba(255,255,255,0.03)", marginBottom: "32px" }}/><div style={{ height: "80px", borderRadius: "14px", background: "rgba(255,255,255,0.03)", marginBottom: "12px" }}/><div style={{ height: "80px", borderRadius: "14px", background: "rgba(255,255,255,0.03)", marginBottom: "12px" }}/><div style={{ height: "80px", borderRadius: "14px", background: "rgba(255,255,255,0.03)", marginBottom: "12px" }}/><div style={{ height: "48px", borderRadius: "12px", background: "rgba(255,255,255,0.03)" }}/></div>);
-
-  if (authError) return (
-    <div style={{ textAlign: "center", padding: "80px 24px", color: "rgba(255,255,255,0.4)" }}>
-      <p style={{ fontSize: "16px", marginBottom: "16px" }}>You don't have access to this event.</p>
-      <button onClick={() => router.replace("/dashboard/events")} style={{ background: "transparent", border: "1px solid rgba(255,255,255,0.1)", color: "rgba(255,255,255,0.5)", padding: "10px 20px", borderRadius: "8px", cursor: "pointer", fontSize: "13px" }}>← Back to events</button>
-    </div>
-  );
-
-  if (!event) return <div style={{ textAlign: "center", padding: "60px", color: "rgba(255,255,255,0.4)" }}>Event not found.</div>;
-
-  const statusColor: any = { draft: "rgba(255,255,255,0.4)", scheduled: "#D4AF37", live: "#D4AF37", ended: "rgba(255,255,255,0.3)" };
-  const statusBg: any = { draft: "rgba(255,255,255,0.04)", scheduled: "rgba(212,175,55,0.08)", live: "rgba(212,175,55,0.12)", ended: "rgba(255,255,255,0.02)" };
-  const registrationLink = `${typeof window !== "undefined" ? window.location.origin : ""}/register/${event.slug}`;
-  const card = (label: string, value: any, color: string = "#f3f4f6") => (
-    <div style={{ background: "linear-gradient(160deg, #16151a 0%, #0f0e12 100%)", borderRadius: "14px", padding: "16px", border: "1px solid rgba(255,255,255,0.04)" }}>
-      <p style={{ fontSize: "24px", fontWeight: "700", color, lineHeight: "1", marginBottom: "6px" }}>{value}</p>
-      <p style={{ fontSize: "11px", color: "rgba(255,255,255,0.45)", fontWeight: "500", letterSpacing: "0.02em" }}>{label}</p>
-    </div>
-  );
 
   return (
-    <div style={{ background: "#060608", minHeight: "100vh", color: "#f3f4f6" }}>
-      <div style={{ width: "100%", height: "220px", background: "#0a0a0c", position: "relative", overflow: "hidden", borderBottom: "1px solid rgba(255,255,255,0.04)" }}>
-        {(bannerUrl || event?.banner_url) ? (
-          <div style={{ width: "100%", height: "100%", position: "relative" }}>
-            <img src={bannerUrl || event?.banner_url} alt="Event Banner" style={{ width: "100%", height: "100%", objectFit: "cover", objectPosition: "top center" }} />
-            <button onClick={async () => { if (confirm("Remove banner?")) { await supabase.from("events").update({ banner_url: null }).eq("id", id); setBannerUrl(""); setEvent((prev: any) => prev ? { ...prev, banner_url: null } : prev); } }} style={{ position: "absolute", top: "16px", right: "16px", backgroundColor: "rgba(0,0,0,0.5)", backdropFilter: "blur(12px)", color: "rgba(255,255,255,0.8)", border: "1px solid rgba(255,255,255,0.15)", padding: "6px 14px", borderRadius: "20px", fontSize: "11px", fontWeight: "600", cursor: "pointer" }}>Remove ×</button>
+    <div style={{ minHeight: "100vh", background: "#08080a", color: "#f0ede8", fontFamily: "Inter, sans-serif" }}>
+      {/* Top bar */}
+      <header style={{ position: "sticky", top: 0, background: "rgba(8,8,10,0.95)", backdropFilter: "blur(20px)", borderBottom: "1px solid rgba(255,255,255,0.04)", zIndex: 30, padding: "0 16px" }}>
+        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", height: "52px", maxWidth: "480px", margin: "0 auto" }}>
+          <div style={{ display: "flex", alignItems: "center", gap: "10px", minWidth: 0 }}>
+            <button onClick={() => router.push("/dashboard/events")} style={{ background: "none", border: "none", color: "#555", fontSize: "18px", cursor: "pointer", padding: "4px", flexShrink: 0 }}>←</button>
+            <p style={{ fontSize: "14px", fontWeight: "600", color: "#f0ede8", margin: 0, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{event.title}</p>
           </div>
-        ) : (
-          <div style={{ width: "100%", height: "100%", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: "8px" }}>
-            <label style={{ padding: "10px 22px", background: "rgba(255,255,255,0.02)", border: "1px dashed rgba(255,255,255,0.12)", borderRadius: "20px", fontSize: "11px", cursor: "pointer", color: "rgba(255,255,255,0.4)", letterSpacing: "0.02em" }}>
-              {uploadingBanner ? "Uploading..." : "+ Add Banner Image"}
-              <input type="file" accept="image/jpeg,image/png,image/webp" onChange={handleBannerUpload} style={{ display: "none" }} />
-            </label>
-            {bannerError && <p style={{ fontSize: "11px", color: "#f87171", margin: 0 }}>{bannerError}</p>}
-          </div>
-        )}
-      </div>
-
-      <div style={{ maxWidth: "600px", margin: "0 auto", padding: "24px 24px 120px 24px" }}>
-        <button onClick={() => router.back()} style={{ background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.05)", color: "rgba(255,255,255,0.5)", fontSize: "15px", cursor: "pointer", marginBottom: "24px", width: "38px", height: "38px", borderRadius: "50%", display: "flex", alignItems: "center", justifyContent: "center" }}>←</button>
-
-        <div style={{ background: "linear-gradient(160deg, #16151a 0%, #0f0e12 100%)", borderRadius: "24px", padding: "24px", marginBottom: "16px", border: "1px solid rgba(255,255,255,0.04)" }}>
-          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: "16px" }}>
-            <h1 style={{ fontSize: "22px", fontWeight: "600", color: "#f3f4f6", letterSpacing: "-0.01em", flex: 1, marginRight: "16px", margin: 0 }}>{event.title}</h1>
-            <span style={{ fontSize: "10px", textTransform: "uppercase", fontWeight: "700", color: statusColor[event.status], background: statusBg[event.status], padding: "4px 10px", borderRadius: "20px", letterSpacing: "0.08em", border: event.status !== "draft" ? "1px solid rgba(212,175,55,0.2)" : "1px solid rgba(255,255,255,0.05)" }}>{event.status}</span>
-          </div>
-          <p style={{ fontSize: "13px", color: "rgba(255,255,255,0.5)", marginBottom: "6px" }}>📍 {event.venue}</p>
-          <p style={{ fontSize: "13px", color: "rgba(255,255,255,0.5)", margin: 0 }}>🗓 {new Date(event.start_time).toLocaleDateString("en-KE", { weekday: "short", day: "numeric", month: "short", year: "numeric" })}</p>
-        </div>
-
-        <div style={{ marginBottom: "16px" }}>
-          {event.status === "scheduled" && (
-            <div style={{ background: "rgba(212,175,55,0.05)", borderRadius: "16px", padding: "20px", border: "1px solid rgba(212,175,55,0.15)", textAlign: "center" }}>
-              <p style={{ fontSize: "10px", color: "#D4AF37", fontWeight: "700", letterSpacing: "0.1em", textTransform: "uppercase", marginBottom: "6px" }}>Goes live in</p>
-              <p style={{ fontSize: "36px", fontWeight: "700", color: "#D4AF37", margin: 0 }}>{timeToLive || "..."}</p>
-            </div>
-          )}
-          {event.status === "live" && (
-            <button onClick={handleEndEvent} disabled={ending} style={{ width: "100%", padding: "16px", borderRadius: "14px", background: "rgba(248,113,113,0.06)", color: "#f87171", border: "1px solid rgba(248,113,113,0.15)", fontSize: "14px", fontWeight: "600", cursor: "pointer" }}>
-              {ending ? "Ending event..." : "End event"}
-            </button>
-          )}
-        </div>
-
-        {hostLink && (
-          <div style={{ background: "rgba(212,175,55,0.06)", borderRadius: "18px", padding: "18px", marginBottom: "16px", border: "1px solid rgba(212,175,55,0.12)" }}>
-            <p style={{ fontSize: "11px", color: "#D4AF37", fontWeight: "700", letterSpacing: "0.08em", textTransform: "uppercase", marginBottom: "4px" }}>Your host link</p>
-            <p style={{ fontSize: "12px", color: "#93c5fd", wordBreak: "break-all", marginBottom: "12px", fontFamily: "monospace" }}>{hostLink.replace("https://", "")}</p>
-            <button onClick={() => copyLink(hostLink)} style={{ width: "100%", padding: "12px", borderRadius: "10px", background: "rgba(212,175,55,0.12)", color: "#D4AF37", border: "1px solid rgba(212,175,55,0.2)", fontSize: "12px", cursor: "pointer", fontWeight: "600" }}>Copy host link</button>
-          </div>
-        )}
-
-        {event.status !== "draft" && event.status !== "ended" && (
-          <div style={{ background: "rgba(255,255,255,0.02)", borderRadius: "18px", padding: "18px", marginBottom: "16px", border: "1px solid rgba(255,255,255,0.04)" }}>
-            <p style={{ fontSize: "11px", color: "rgba(255,255,255,0.45)", fontWeight: "700", letterSpacing: "0.08em", textTransform: "uppercase", marginBottom: "4px" }}>Registration link</p>
-            <p style={{ fontSize: "12px", color: "#93c5fd", wordBreak: "break-all", marginBottom: "12px", fontFamily: "monospace" }}>{registrationLink.replace("https://", "")}</p>
-            <div style={{ display: "flex", gap: "8px" }}>
-              <button onClick={() => copyLink(registrationLink)} style={{ flex: 1, padding: "12px", borderRadius: "10px", background: "rgba(255,255,255,0.04)", color: "#f3f4f6", border: "1px solid rgba(255,255,255,0.06)", fontSize: "12px", cursor: "pointer", fontWeight: "600" }}>Copy link</button>
-              <button onClick={() => { if (navigator.share) { navigator.share({ title: event?.title || "Oreeti Event", text: "Register for " + (event?.title || "this event"), url: registrationLink }); } else { copyLink(registrationLink); } }} style={{ padding: "12px 16px", borderRadius: "10px", background: "rgba(255,255,255,0.04)", color: "#f3f4f6", border: "1px solid rgba(255,255,255,0.06)", fontSize: "16px", cursor: "pointer" }}>↗</button>
-            </div>
-          </div>
-        )}
-
-        {(event.status === "live" || event.status === "ended") && (
-          <div>
-          <div style={{ background: "#111015", borderRadius: "16px", padding: "18px", marginBottom: "16px", border: "1px solid rgba(255,255,255,0.04)", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-            <div>
-              <p style={{ fontSize: "14px", fontWeight: "600", color: "#f1f0f5", margin: 0 }}>Entry scanner</p>
-              <p style={{ fontSize: "12px", color: "rgba(255,255,255,0.4)", margin: 0 }}>Check in arrivals at the door</p>
-            </div>
-            <button onClick={() => router.push("/dashboard/scanner/" + id)} style={{ padding: "12px 20px", borderRadius: "12px", background: "linear-gradient(135deg, #221b0f, #13100b)", color: "#D4AF37", border: "1px solid rgba(212,175,55,0.25)", fontSize: "12px", cursor: "pointer", fontWeight: "700" }}>Open →</button>
-          </div>
-            <p style={{ fontSize: "11px", color: "rgba(255,255,255,0.3)", margin: "10px 0 0", cursor: "pointer", textDecoration: "underline" }} onClick={() => { const link = window.location.origin + "/scan/" + id + "/" + (event?.scanner_token || ""); navigator.clipboard?.writeText(link).catch(() => {}); copyLink(link); }}>Copy staff scanner link (no login required)</p>
-          </div>
-        )}
-
-        <div style={{ background: "linear-gradient(160deg, #16151a 0%, #0f0e12 100%)", borderRadius: "20px", padding: "20px", marginBottom: "16px", border: "1px solid rgba(255,255,255,0.04)" }}>
-          <div style={{ marginBottom: "16px" }}>
-            <p style={{ fontSize: "10px", fontWeight: "700", color: "rgba(255,255,255,0.3)", letterSpacing: "0.15em", textTransform: "uppercase", marginBottom: "10px" }}>Overview</p>
-            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "8px" }}>
-              {card("Registrations", stats.registrations)}
-              {card("Checked in", stats.checkins, "#D4AF37")}
-            </div>
-          </div>
-          <div style={{ marginBottom: "16px" }}>
-            <p style={{ fontSize: "10px", fontWeight: "700", color: "rgba(255,255,255,0.3)", letterSpacing: "0.15em", textTransform: "uppercase", marginBottom: "10px" }}>Networking</p>
-            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: "8px" }}>
-              {card("Active", stats.onAura, "#D4AF37")}
-              {card("Handshakes", stats.handshakes, "#D4AF37")}
-              {card("Unlocked", stats.unlocked, "#D4AF37")}
-            </div>
-          </div>
-          <div style={{ background: "linear-gradient(160deg, #16151a 0%, #0f0e12 100%)", borderRadius: "20px", padding: "20px", marginBottom: "16px", border: "1px solid rgba(255,255,255,0.04)" }}>
-            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-              <p style={{ fontSize: "10px", fontWeight: "700", color: "rgba(255,255,255,0.3)", letterSpacing: "0.15em", textTransform: "uppercase" }}>Revenue</p>
-              <p style={{ fontSize: "16px", fontWeight: "700", color: "#D4AF37" }}>KES {stats.revenue.toLocaleString()}</p>
-            </div>
-          </div>
-          <button onClick={() => router.push(`/dashboard/events/${id}/tickets`)} style={{ width: "100%", padding: "16px", background: "rgba(212,175,55,0.03)", border: "1px solid rgba(212,175,55,0.2)", borderRadius: "14px", color: "#D4AF37", fontWeight: "600", fontSize: "13px", textTransform: "uppercase", letterSpacing: "0.05em", cursor: "pointer", marginTop: "12px", display: "flex", alignItems: "center", justifyContent: "center", gap: "8px" }}>
-            🎫 Tickets & Revenue →
+          {/* Host profile avatar */}
+          <button onClick={() => setShowProfile(!showProfile)}
+            style={{ width: "32px", height: "32px", borderRadius: "50%", background: `rgba(212,175,55,0.12)`, border: `1px solid rgba(212,175,55,0.25)`, color: GOLD, fontSize: "12px", fontWeight: "700", cursor: "pointer", flexShrink: 0, display: "flex", alignItems: "center", justifyContent: "center" }}>
+            {hostProfile?.display_name?.[0]?.toUpperCase() || "H"}
           </button>
         </div>
 
-        <div style={{ background: "linear-gradient(160deg, #16151a 0%, #0f0e12 100%)", borderRadius: "20px", padding: "20px", marginBottom: "16px", border: "1px solid rgba(255,255,255,0.04)" }}>
-          <p style={{ fontSize: "10px", fontWeight: "700", color: "rgba(255,255,255,0.4)", letterSpacing: "0.12em", textTransform: "uppercase", marginBottom: "16px" }}>Networking stations</p>
-          <form onSubmit={handleAddStation} style={{ display: "flex", flexWrap: "wrap", gap: "8px", background: "rgba(255,255,255,0.01)", padding: "12px", borderRadius: "12px", marginBottom: "16px", border: "1px solid rgba(255,255,255,0.03)" }}>
-            <input value={stationName} onChange={e => setStationName(e.target.value)} placeholder="Station name (e.g. Zone A)" style={{ flex: "1 1 180px", padding: "10px", borderRadius: "8px", border: "1px solid rgba(255,255,255,0.05)", background: "#060608", color: "#fff", fontSize: "12px", outline: "none" }} required />
-            <input value={stationSubtitle} onChange={e => setStationSubtitle(e.target.value)} placeholder="Subtitle (e.g. Fashion & Design)" style={{ flex: "2 1 240px", padding: "10px", borderRadius: "8px", border: "1px solid rgba(255,255,255,0.05)", background: "#060608", color: "#fff", fontSize: "12px", outline: "none" }} />
-            <button type="submit" disabled={savingStation} style={{ padding: "0 16px", height: "36px", borderRadius: "8px", background: "rgba(255,255,255,0.03)", color: "#D4AF37", border: "1px solid rgba(212,175,55,0.2)", fontSize: "11px", fontWeight: "600", textTransform: "uppercase", letterSpacing: "0.05em", cursor: "pointer", marginLeft: "auto" }}>
-              {savingStation ? "Adding..." : "+ Add"}
+        {/* Tab nav */}
+        <div style={{ display: "flex", maxWidth: "480px", margin: "0 auto", borderTop: "1px solid rgba(255,255,255,0.03)" }}>
+          {nav.map(n => (
+            <button key={n.id} onClick={() => setTab(n.id)}
+              style={{ flex: 1, padding: "10px 4px", background: "none", border: "none", borderBottom: tab === n.id ? `2px solid ${GOLD}` : "2px solid transparent", color: tab === n.id ? GOLD : "#555", fontSize: "11px", fontWeight: tab === n.id ? "700" : "500", cursor: "pointer", letterSpacing: "0.06em", transition: "all 0.2s" }}>
+              {n.label}
+              {n.id === "attendees" && pendingCount > 0 && (
+                <span style={{ marginLeft: "4px", background: GOLD, color: "#000", borderRadius: "10px", fontSize: "9px", fontWeight: "800", padding: "1px 5px" }}>{pendingCount}</span>
+              )}
             </button>
-          </form>
-          <div style={{ display: "flex", flexDirection: "column", gap: "10px" }}>
-            {stations.map(s => (
-              <div key={s.id} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "8px 4px" }}>
-                <div>
-                  <h4 style={{ fontSize: "13px", fontWeight: "600", margin: "0 0 2px 0", color: "#f3f4f6" }}>{s.name}</h4>
-                  <p style={{ fontSize: "11px", color: "rgba(255,255,255,0.4)", margin: 0 }}>{s.subtitle || ""}</p>
-                </div>
-                <button onClick={() => handleDeleteStation(s.id)} style={{ background: "transparent", border: "none", color: "rgba(248,113,113,0.45)", fontSize: "11px", cursor: "pointer" }}>Remove</button>
-              </div>
-            ))}
-            {stations.length === 0 && <p style={{ fontSize: "12px", color: "rgba(255,255,255,0.35)", margin: "4px 0 0 0" }}>No stations added yet.</p>}
-          </div>
+          ))}
         </div>
+      </header>
 
-        <div style={{ background: "linear-gradient(160deg, #16151a 0%, #0f0e12 100%)", borderRadius: "20px", padding: "20px", marginBottom: "16px", border: "1px solid rgba(255,255,255,0.04)" }}>
-          <p style={{ fontSize: "10px", fontWeight: "700", color: "rgba(255,255,255,0.4)", letterSpacing: "0.12em", textTransform: "uppercase", marginBottom: "16px" }}>Payment details</p>
-          <p style={{ fontSize: "12px", color: "rgba(255,255,255,0.3)", marginBottom: "12px" }}>Your M-Pesa Paybill or Till number. Attendees see this when paying.</p>
-          <input placeholder="Paybill or Till number" defaultValue={event?.paybill_number || ""} onBlur={async (e) => { if (e.target.value !== (event?.paybill_number || "")) { await supabase.from("events").update({ paybill_number: e.target.value }).eq("id", id); setEvent((prev: any) => ({ ...prev, paybill_number: e.target.value })); } }} style={{ width: "100%", padding: "12px", borderRadius: "10px", border: "1px solid rgba(255,255,255,0.06)", background: "rgba(255,255,255,0.03)", color: "#f3f4f6", fontSize: "13px", outline: "none", marginBottom: "8px", boxSizing: "border-box" as const }} />
-          <input placeholder="Account number (leave blank for Till)" defaultValue={event?.paybill_account || ""} onBlur={async (e) => { if (e.target.value !== (event?.paybill_account || "")) { await supabase.from("events").update({ paybill_account: e.target.value }).eq("id", id); setEvent((prev: any) => ({ ...prev, paybill_account: e.target.value })); } }} style={{ width: "100%", padding: "12px", borderRadius: "10px", border: "1px solid rgba(255,255,255,0.06)", background: "rgba(255,255,255,0.03)", color: "#f3f4f6", fontSize: "13px", outline: "none", boxSizing: "border-box" as const }} />
+      {/* Host profile slide-down */}
+      {showProfile && (
+        <div style={{ position: "fixed", top: "52px", right: "16px", background: "#111", border: "1px solid rgba(212,175,55,0.15)", borderRadius: "14px", padding: "16px", zIndex: 40, minWidth: "200px", boxShadow: "0 8px 32px rgba(0,0,0,0.5)" }}>
+          <p style={{ fontSize: "13px", fontWeight: "600", color: "#f0ede8", margin: "0 0 2px" }}>{hostProfile?.display_name || "Host"}</p>
+          <p style={{ fontSize: "11px", color: "#555", margin: "0 0 14px" }}>{hostProfile?.organisation || ""}</p>
+          <button onClick={() => { router.push("/dashboard/profile"); setShowProfile(false); }}
+            style={{ width: "100%", padding: "8px", borderRadius: "8px", background: "transparent", border: `1px solid rgba(212,175,55,0.2)`, color: GOLD, fontSize: "11px", cursor: "pointer", marginBottom: "6px" }}>
+            Edit Profile
+          </button>
+          <button onClick={async () => { await supabase.auth.signOut(); router.push("/login"); }}
+            style={{ width: "100%", padding: "8px", borderRadius: "8px", background: "transparent", border: "1px solid rgba(255,255,255,0.06)", color: "#555", fontSize: "11px", cursor: "pointer" }}>
+            Sign Out
+          </button>
         </div>
+      )}
 
-        <div style={{ background: "linear-gradient(160deg, #16151a 0%, #0f0e12 100%)", borderRadius: "20px", padding: "20px", marginBottom: "16px", border: "1px solid rgba(255,255,255,0.04)" }}>
-          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "16px" }}>
-            <p style={{ fontSize: "10px", fontWeight: "700", color: "rgba(255,255,255,0.4)", letterSpacing: "0.12em", textTransform: "uppercase", margin: 0 }}>Ticket types</p>
-            <button onClick={() => setShowAddTicket(!showAddTicket)} style={{ padding: "6px 14px", borderRadius: "8px", background: "rgba(212,175,55,0.08)", color: "#D4AF37", border: "1px solid rgba(212,175,55,0.2)", fontSize: "12px", cursor: "pointer", fontWeight: "600" }}>
-              {showAddTicket ? "Cancel" : "+ Add"}
-            </button>
-          </div>
-          {showAddTicket && (
-            <div style={{ background: "#0d0c10", borderRadius: "14px", padding: "16px", marginBottom: "16px", border: "1px solid rgba(255,255,255,0.04)" }}>
-              <input value={ticketName} onChange={e => setTicketName(e.target.value)} placeholder="Ticket name" style={{ width: "100%", padding: "12px", borderRadius: "10px", border: "1px solid rgba(255,255,255,0.06)", background: "rgba(255,255,255,0.03)", color: "#f3f4f6", fontSize: "13px", outline: "none", marginBottom: "8px", boxSizing: "border-box" }} />
-              <input value={ticketPrice} onChange={e => setTicketPrice(e.target.value)} placeholder="Price in KES (0 for free)" type="number" style={{ width: "100%", padding: "12px", borderRadius: "10px", border: "1px solid rgba(255,255,255,0.06)", background: "rgba(255,255,255,0.03)", color: "#f3f4f6", fontSize: "13px", outline: "none", marginBottom: "8px", boxSizing: "border-box" }} />
-              <input value={ticketQty} onChange={e => setTicketQty(e.target.value)} placeholder="Quantity (empty = unlimited)" type="number" style={{ width: "100%", padding: "12px", borderRadius: "10px", border: "1px solid rgba(255,255,255,0.06)", background: "rgba(255,255,255,0.03)", color: "#f3f4f6", fontSize: "13px", outline: "none", marginBottom: "14px", boxSizing: "border-box" }} />
-              <button onClick={handleAddTicket} disabled={saving} style={{ width: "100%", padding: "12px", borderRadius: "10px", background: "linear-gradient(135deg, #221b0f, #13100b)", color: "#D4AF37", border: "1px solid rgba(212,175,55,0.25)", fontSize: "13px", cursor: "pointer", fontWeight: "700" }}>Save ticket type</button>
-            </div>
-          )}
-          <div style={{ display: "flex", flexDirection: "column" }}>
-            {ticketTypes.map(t => (
-              <div key={t.id} style={{ display: "flex", justifyContent: "space-between", padding: "12px 0", borderBottom: "1px solid rgba(255,255,255,0.02)" }}>
-                <div>
-                  <p style={{ fontSize: "14px", fontWeight: "500", color: "#f3f4f6", margin: "0 0 2px 0" }}>{t.name}</p>
-                  <p style={{ fontSize: "11px", color: "rgba(255,255,255,0.35)", margin: 0 }}>{t.quantity ? `${t.quantity} available` : "Unlimited"}</p>
-                </div>
-                <p style={{ fontSize: "14px", color: "#D4AF37", fontWeight: "600", margin: 0 }}>{t.price > 0 ? "KES " + t.price.toLocaleString() : "Free"}</p>
-              </div>
-            ))}
-          </div>
-        </div>
-
-        {event.status === "draft" && (
-          <div style={{ background: "#111015", borderRadius: "20px", padding: "20px", marginBottom: "16px", border: "1px solid rgba(212,175,55,0.2)" }}>
-            <button onClick={handlePublish} style={{ width: "100%", padding: "16px", borderRadius: "14px", background: "linear-gradient(135deg, #221b0f, #13100b)", color: "#D4AF37", border: "1px solid rgba(212,175,55,0.35)", fontSize: "14px", fontWeight: "700", cursor: "pointer", textTransform: "uppercase", letterSpacing: "0.05em" }}>Publish event</button>
-          </div>
+      {/* Tab content */}
+      <main style={{ padding: "20px 16px", maxWidth: "480px", margin: "0 auto" }}>
+        {tab === "overview" && (
+          <OverviewTab event={event} stats={stats} hostLink={hostLink} timeToLive={timeToLive} bannerUrl={bannerUrl}
+            onGoLive={handleGoLive} onEndEvent={handleEndEvent} onBannerUpload={handleBannerUpload}
+            uploadingBanner={uploadingBanner} bannerError={bannerError} ending={ending} />
         )}
-      </div>
+        {tab === "attendees" && <AttendeesTab eventId={id} isLive={event.status === "live"} />}
+        {tab === "setup" && (
+          <SetupTab eventId={id} event={event} ticketTypes={ticketTypes} stations={stations}
+            onTicketAdded={t => setTicketTypes(prev => [...prev, t])}
+            onTicketDeleted={tid => setTicketTypes(prev => prev.filter(t => t.id !== tid))}
+            onStationAdded={s => setStations(prev => [...prev, s])}
+            onStationDeleted={sid => { supabase.from("event_stations").delete().eq("id", sid).then(() => setStations(prev => prev.filter(s => s.id !== sid))); }}
+          />
+        )}
+        {tab === "settings" && <SettingsTab event={event} onEventUpdate={setEvent} />}
+      </main>
     </div>
   );
 }

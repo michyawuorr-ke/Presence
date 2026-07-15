@@ -113,7 +113,7 @@ export default function CreateEvent() {
 
           {/* Title */}
           <div style={{ display: "flex", flexDirection: "column", gap: "6px" }}>
-            <label style={{ fontSize: "10px", color: "#E26D34", textTransform: "uppercase", letterSpacing: "0.12em", fontWeight: "700" }}>Event Title</label>
+            <label style={{ fontSize: "10px", color: "#D4AF37", textTransform: "uppercase", letterSpacing: "0.12em", fontWeight: "700" }}>Event Title</label>
             <input
               value={title}
               onChange={e => setTitle(e.target.value)}
@@ -124,7 +124,7 @@ export default function CreateEvent() {
 
           {/* Venue */}
           <div style={{ display: "flex", flexDirection: "column", gap: "6px" }}>
-            <label style={{ fontSize: "10px", color: "#E26D34", textTransform: "uppercase", letterSpacing: "0.12em", fontWeight: "700" }}>Venue</label>
+            <label style={{ fontSize: "10px", color: "#D4AF37", textTransform: "uppercase", letterSpacing: "0.12em", fontWeight: "700" }}>Venue</label>
             <input
               value={venue}
               onChange={e => setVenue(e.target.value)}
@@ -135,7 +135,7 @@ export default function CreateEvent() {
 
           {/* Description */}
           <div style={{ display: "flex", flexDirection: "column", gap: "6px" }}>
-            <label style={{ fontSize: "10px", color: "#E26D34", textTransform: "uppercase", letterSpacing: "0.12em", fontWeight: "700" }}>Description <span style={{ color: "rgba(255,255,255,0.2)", fontWeight: "400" }}>· optional</span></label>
+            <label style={{ fontSize: "10px", color: "#D4AF37", textTransform: "uppercase", letterSpacing: "0.12em", fontWeight: "700" }}>Description <span style={{ color: "rgba(255,255,255,0.2)", fontWeight: "400" }}>· optional</span></label>
             <textarea
               value={description}
               onChange={e => setDescription(e.target.value)}
@@ -148,7 +148,7 @@ export default function CreateEvent() {
           {/* Dates */}
           <div style={{ display: "flex", flexDirection: "column", gap: "10px", marginTop: "4px" }}>
             <div style={{ display: "flex", flexDirection: "column", gap: "6px" }}>
-              <label style={{ fontSize: "10px", color: "#E26D34", textTransform: "uppercase", letterSpacing: "0.12em", fontWeight: "700" }}>Starts</label>
+              <label style={{ fontSize: "10px", color: "#D4AF37", textTransform: "uppercase", letterSpacing: "0.12em", fontWeight: "700" }}>Starts</label>
               <input
                 type="datetime-local"
                 value={startTime}
@@ -157,7 +157,7 @@ export default function CreateEvent() {
               />
             </div>
             <div style={{ display: "flex", flexDirection: "column", gap: "6px" }}>
-              <label style={{ fontSize: "10px", color: "#E26D34", textTransform: "uppercase", letterSpacing: "0.12em", fontWeight: "700" }}>Ends</label>
+              <label style={{ fontSize: "10px", color: "#D4AF37", textTransform: "uppercase", letterSpacing: "0.12em", fontWeight: "700" }}>Ends</label>
               <input
                 type="datetime-local"
                 value={endTime}
