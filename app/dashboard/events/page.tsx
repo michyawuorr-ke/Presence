@@ -3,125 +3,195 @@ import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { supabase } from "@/lib/supabase/client";
 
+const GOLD = "#D4AF37";
+
+function formatDate(iso: string | null) {
+  if (!iso) return null;
+  const d = new Date(iso);
+  return d.toLocaleDateString("en-KE", { day: "numeric", month: "short", year: "numeric" });
+}
+
+function formatTime(iso: string | null) {
+  if (!iso) return null;
+  return new Date(iso).toLocaleTimeString("en-KE", { hour: "2-digit", minute: "2-digit", hour12: true });
+}
+
+function isUpcoming(start: string | null) {
+  if (!start) return false;
+  return new Date(start) > new Date();
+}
+
+function isMultiDay(start: string | null, end: string | null) {
+  if (!start || !end) return false;
+  return formatDate(start) !== formatDate(end);
+}
+
+const STATUS_CONFIG: Record<string, { color: string; bg: string; border: string; dot: string }> = {
+  live:      { color: "#4ade80", bg: "rgba(74,222,128,0.08)",  border: "rgba(74,222,128,0.2)",  dot: "#4ade80" },
+  scheduled: { color: GOLD,      bg: "rgba(212,175,55,0.08)",  border: "rgba(212,175,55,0.2)",  dot: GOLD },
+  draft:     { color: "#555",    bg: "rgba(255,255,255,0.03)", border: "rgba(255,255,255,0.06)", dot: "#555" },
+  ended:     { color: "#444",    bg: "rgba(255,255,255,0.02)", border: "rgba(255,255,255,0.04)", dot: "#444" },
+};
+
 export default function EventsPage() {
-  const [events, setEvents] = useState<any[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [activeMenu, setActiveMenu] = useState<string | null>(null);
-  const [showHiddenSection, setShowHiddenSection] = useState(false);
   const router = useRouter();
+  const [events, setEvents]     = useState<any[]>([]);
+  const [stats,  setStats]      = useState<Record<string, any>>({});
+  const [loading, setLoading]   = useState(true);
+  const [menuOpen, setMenuOpen] = useState<string | null>(null);
+  const [showHidden, setShowHidden] = useState(false);
 
-  async function loadEvents() {
-    try {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) { router.push("/login"); return; }
+  async function load() {
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) { router.push("/login"); return; }
 
-      const { data, error } = await supabase
-        .from("events")
-        .select("*")
-        .eq("host_id", user.id)
-        .order("created_at", { ascending: false });
+    const { data: evs } = await supabase
+      .from("events")
+      .select("*")
+      .eq("host_id", user.id)
+      .order("created_at", { ascending: false });
 
-      if (error) throw error;
-      setEvents(data || []);
-    } catch (err) {
-      console.error("Error loading events:", err);
-    } finally {
-      setLoading(false);
+    setEvents(evs || []);
+
+    // Load lightweight stats per event
+    if (evs?.length) {
+      const statsMap: Record<string, any> = {};
+      await Promise.all(evs.map(async ev => {
+        const { count } = await supabase
+          .from("registrations")
+          .select("id", { count: "exact", head: true })
+          .eq("event_id", ev.id)
+          .neq("status", "host");
+        statsMap[ev.id] = { registrations: count ?? 0 };
+      }));
+      setStats(statsMap);
     }
+    setLoading(false);
   }
 
   useEffect(() => {
-    loadEvents();
-    const handleOutsideClick = () => setActiveMenu(null);
-    window.addEventListener("click", handleOutsideClick);
-    return () => window.removeEventListener("click", handleOutsideClick);
+    load();
+    const close = () => setMenuOpen(null);
+    window.addEventListener("click", close);
+    return () => window.removeEventListener("click", close);
   }, []);
 
-  async function toggleHide(e: React.MouseEvent, eventId: string, currentHiddenState: boolean) {
-    e.stopPropagation();
-    setActiveMenu(null);
-    try {
-      const { error } = await supabase
-        .from("events")
-        .update({ is_hidden: !currentHiddenState })
-        .eq("id", eventId);
-
-      if (error) throw error;
-      setEvents(prev => prev.map(ev => ev.id === eventId ? { ...ev, is_hidden: !currentHiddenState } : ev));
-    } catch (err) {
-      alert("Failed to update visibility");
-    }
+  async function toggleHide(e: React.MouseEvent, ev: any) {
+    e.stopPropagation(); setMenuOpen(null);
+    await supabase.from("events").update({ is_hidden: !ev.is_hidden }).eq("id", ev.id);
+    setEvents(prev => prev.map(x => x.id === ev.id ? { ...x, is_hidden: !ev.is_hidden } : x));
   }
 
-  async function deleteEvent(e: React.MouseEvent, eventId: string) {
-    e.stopPropagation();
-    setActiveMenu(null);
-    if (!confirm("Are you sure you want to delete this event?")) return;
-    try {
-      const { error } = await supabase
-        .from("events")
-        .delete()
-        .eq("id", eventId);
-
-      if (error) throw error;
-      setEvents(prev => prev.filter(ev => ev.id !== eventId));
-    } catch (err) {
-      alert("Failed to delete event. Check RLS policies.");
-    }
+  async function deleteEvent(e: React.MouseEvent, ev: any) {
+    e.stopPropagation(); setMenuOpen(null);
+    if (!confirm(`Delete "${ev.title}"? This cannot be undone.`)) return;
+    await supabase.from("events").delete().eq("id", ev.id);
+    setEvents(prev => prev.filter(x => x.id !== ev.id));
   }
 
-  if (loading) return (<div style={{ padding: "24px" }}><div style={{ height: "16px", width: "30%", borderRadius: "6px", background: "rgba(255,255,255,0.04)", marginBottom: "32px" }}/><div style={{ padding: "20px 0", borderBottom: "1px solid rgba(255,255,255,0.04)" }}><div style={{ height: "15px", width: "50%", borderRadius: "4px", background: "rgba(255,255,255,0.05)", marginBottom: "10px" }}/><div style={{ height: "12px", width: "35%", borderRadius: "4px", background: "rgba(255,255,255,0.03)" }}/></div><div style={{ padding: "20px 0", borderBottom: "1px solid rgba(255,255,255,0.04)" }}><div style={{ height: "15px", width: "60%", borderRadius: "4px", background: "rgba(255,255,255,0.05)", marginBottom: "10px" }}/><div style={{ height: "12px", width: "40%", borderRadius: "4px", background: "rgba(255,255,255,0.03)" }}/></div><div style={{ padding: "20px 0" }}><div style={{ height: "15px", width: "45%", borderRadius: "4px", background: "rgba(255,255,255,0.05)", marginBottom: "10px" }}/><div style={{ height: "12px", width: "30%", borderRadius: "4px", background: "rgba(255,255,255,0.03)" }}/></div></div>);
+  const visible = events.filter(e => !e.is_hidden);
+  const hidden  = events.filter(e => e.is_hidden);
 
-  const visibleEvents = events.filter(e => !e.is_hidden);
-  const hiddenEvents = events.filter(e => e.is_hidden);
+  const liveEvents      = visible.filter(e => e.status === "live");
+  const upcomingEvents  = visible.filter(e => e.status !== "live" && e.status !== "ended" && isUpcoming(e.start_time));
+  const draftEvents     = visible.filter(e => e.status === "draft" || (!e.status && !isUpcoming(e.start_time)));
+  const pastEvents      = visible.filter(e => e.status === "ended");
 
-  const renderEventItem = (event: any) => {
-    const isMenuOpen = activeMenu === event.id;
+  function EventCard({ ev }: { ev: any }) {
+    const sc = STATUS_CONFIG[ev.status] ?? STATUS_CONFIG.draft;
+    const reg = stats[ev.id]?.registrations ?? 0;
+    const multi = isMultiDay(ev.start_time, ev.end_time);
+    const isMenu = menuOpen === ev.id;
+
     return (
       <div
-        key={event.id}
-        onClick={() => router.push(`/dashboard/events/${event.id}`)}
+        onClick={() => router.push(`/dashboard/events/${ev.id}`)}
         style={{
-          background: "transparent",
-          padding: "20px 0",
-          borderBottom: "1px solid rgba(255,255,255,0.04)",
+          background: "linear-gradient(160deg, rgba(255,255,255,0.025) 0%, rgba(255,255,255,0.01) 100%)",
+          border: `1px solid ${sc.border}`,
+          borderRadius: "18px",
+          padding: "18px",
+          marginBottom: "10px",
           cursor: "pointer",
           position: "relative",
-          transition: "all 0.2s"
+          transition: "border-color 0.2s",
         }}
       >
-        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+        {/* Banner thumbnail if exists */}
+        {ev.banner_url && (
+          <div style={{ width: "100%", height: "80px", borderRadius: "10px", overflow: "hidden", marginBottom: "14px" }}>
+            <img src={ev.banner_url} alt="" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+          </div>
+        )}
+
+        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: "12px" }}>
           <div style={{ flex: 1, minWidth: 0 }}>
-            <div style={{ display: "flex", alignItems: "center", gap: "12px", flexWrap: "wrap" }}>
-              <h2 style={{ fontSize: "15px", fontWeight: "500", margin: 0, color: "#f0ede8", letterSpacing: "0.01em" }}>
-                {event.title || "Untitled Event"}
-              </h2>
-              <span style={{ fontSize: "9px", padding: "1px 5px", borderRadius: "3px", background: event.status === "live" ? "rgba(74,222,128,0.1)" : "rgba(255,255,255,0.05)", color: event.status === "live" ? "#4ade80" : "rgba(255,255,255,0.4)", letterSpacing: "0.06em", textTransform: "uppercase", fontWeight: "600" }}>
-                {event.status}
+
+            {/* Status badge + live dot */}
+            <div style={{ display: "flex", alignItems: "center", gap: "6px", marginBottom: "8px" }}>
+              {ev.status === "live" && (
+                <span style={{ width: "6px", height: "6px", borderRadius: "50%", background: sc.dot, display: "inline-block", flexShrink: 0, boxShadow: `0 0 6px ${sc.dot}` }} />
+              )}
+              <span style={{ fontSize: "9px", fontWeight: "800", letterSpacing: "0.12em", textTransform: "uppercase", color: sc.color, background: sc.bg, border: `1px solid ${sc.border}`, borderRadius: "4px", padding: "2px 7px" }}>
+                {ev.status === "live" ? "Live Now" : ev.status ?? "Draft"}
               </span>
+              {reg > 0 && (
+                <span style={{ fontSize: "10px", color: "#555", fontWeight: "500" }}>{reg} registered</span>
+              )}
             </div>
-            <p style={{ margin: "6px 0 0", fontSize: "12px", color: "rgba(255,255,255,0.4)", letterSpacing: "0.02em" }}>📍 {event.venue || "No Venue Specified"}</p>
+
+            {/* Title */}
+            <h2 style={{ fontSize: "16px", fontWeight: "600", color: "#f0ede8", margin: "0 0 6px", letterSpacing: "-0.01em", lineHeight: "1.3" }}>
+              {ev.title || "Untitled Event"}
+            </h2>
+
+            {/* Venue */}
+            {ev.venue && (
+              <p style={{ fontSize: "12px", color: "#555", margin: "0 0 8px", display: "flex", alignItems: "center", gap: "4px" }}>
+                <span>📍</span> {ev.venue}
+              </p>
+            )}
+
+            {/* Date / time */}
+            {ev.start_time && (
+              <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
+                <span style={{ fontSize: "11px", color: GOLD, fontWeight: "500" }}>
+                  {formatDate(ev.start_time)}
+                </span>
+                <span style={{ fontSize: "11px", color: "#444" }}>·</span>
+                <span style={{ fontSize: "11px", color: "#555" }}>
+                  {formatTime(ev.start_time)}
+                </span>
+                {multi && (
+                  <>
+                    <span style={{ fontSize: "11px", color: "#333" }}>→</span>
+                    <span style={{ fontSize: "11px", color: "#555" }}>{formatDate(ev.end_time)}</span>
+                  </>
+                )}
+              </div>
+            )}
           </div>
 
-          <div style={{ position: "relative", marginLeft: "16px" }} onClick={e => e.stopPropagation()}>
+          {/* Context menu */}
+          <div onClick={e => e.stopPropagation()} style={{ flexShrink: 0 }}>
             <button
-              onClick={(e) => { e.preventDefault(); setActiveMenu(isMenuOpen ? null : event.id); }}
-              style={{ background: "transparent", border: "none", color: "rgba(255,255,255,0.3)", fontSize: "16px", padding: "8px", cursor: "pointer" }}
-            >
+              onClick={e => { e.stopPropagation(); setMenuOpen(isMenu ? null : ev.id); }}
+              style={{ background: "transparent", border: "none", color: "#444", fontSize: "18px", padding: "4px 8px", cursor: "pointer", lineHeight: 1 }}>
               ⋯
             </button>
-            {isMenuOpen && (
-              <div style={{ position: "absolute", right: 0, top: "32px", background: "#0c0c0f", border: "1px solid rgba(255,255,255,0.08)", borderRadius: "8px", padding: "4px", zIndex: 10, minWidth: "100px", boxShadow: "0 4px 20px rgba(0,0,0,0.5)" }}>
-                <button
-                  onClick={(e) => toggleHide(e, event.id, !!event.is_hidden)}
-                  style={{ display: "block", width: "100%", background: "transparent", border: "none", color: "rgba(255,255,255,0.7)", padding: "8px 12px", fontSize: "11px", textTransform: "uppercase", letterSpacing: "0.05em", textAlign: "left", cursor: "pointer" }}
-                >
-                  {event.is_hidden ? "Show" : "Hide"}
+            {isMenu && (
+              <div style={{ position: "absolute", right: "16px", top: "14px", background: "#111", border: "1px solid rgba(255,255,255,0.08)", borderRadius: "10px", padding: "6px", zIndex: 20, minWidth: "130px", boxShadow: "0 8px 32px rgba(0,0,0,0.6)" }}>
+                <button onClick={e => { router.push(`/dashboard/events/${ev.id}`); e.stopPropagation(); }}
+                  style={{ display: "block", width: "100%", background: "transparent", border: "none", color: "#f0ede8", padding: "9px 12px", fontSize: "12px", textAlign: "left", cursor: "pointer", borderRadius: "6px" }}>
+                  Open
                 </button>
-                <button
-                  onClick={(e) => deleteEvent(e, event.id)}
-                  style={{ display: "block", width: "100%", background: "transparent", border: "none", color: "#ef4444", padding: "8px 12px", fontSize: "11px", textTransform: "uppercase", letterSpacing: "0.05em", textAlign: "left", cursor: "pointer", opacity: 0.8 }}
-                >
+                <button onClick={e => toggleHide(e, ev)}
+                  style={{ display: "block", width: "100%", background: "transparent", border: "none", color: "rgba(255,255,255,0.5)", padding: "9px 12px", fontSize: "12px", textAlign: "left", cursor: "pointer", borderRadius: "6px" }}>
+                  {ev.is_hidden ? "Unhide" : "Hide"}
+                </button>
+                <div style={{ height: "1px", background: "rgba(255,255,255,0.05)", margin: "4px 0" }} />
+                <button onClick={e => deleteEvent(e, ev)}
+                  style={{ display: "block", width: "100%", background: "transparent", border: "none", color: "#ef4444", padding: "9px 12px", fontSize: "12px", textAlign: "left", cursor: "pointer", borderRadius: "6px" }}>
                   Delete
                 </button>
               </div>
@@ -130,43 +200,71 @@ export default function EventsPage() {
         </div>
       </div>
     );
-  };
+  }
+
+  function Section({ title, evs, accent = "#555" }: { title: string; evs: any[]; accent?: string }) {
+    if (!evs.length) return null;
+    return (
+      <div style={{ marginBottom: "28px" }}>
+        <p style={{ fontSize: "10px", fontWeight: "700", letterSpacing: "0.15em", color: accent, textTransform: "uppercase", margin: "0 0 12px" }}>{title}</p>
+        {evs.map(ev => <EventCard key={ev.id} ev={ev} />)}
+      </div>
+    );
+  }
+
+  if (loading) return (
+    <div style={{ padding: "24px 16px" }}>
+      {[1,2,3].map(i => (
+        <div key={i} style={{ background: "rgba(255,255,255,0.02)", border: "1px solid rgba(255,255,255,0.04)", borderRadius: "18px", padding: "18px", marginBottom: "10px" }}>
+          <div style={{ height: "12px", width: "40px", borderRadius: "4px", background: "rgba(255,255,255,0.05)", marginBottom: "12px" }} />
+          <div style={{ height: "16px", width: "65%", borderRadius: "4px", background: "rgba(255,255,255,0.06)", marginBottom: "10px" }} />
+          <div style={{ height: "12px", width: "45%", borderRadius: "4px", background: "rgba(255,255,255,0.03)" }} />
+        </div>
+      ))}
+    </div>
+  );
 
   return (
-    <div style={{ maxWidth: "600px", margin: "0 auto", padding: "24px 16px" }}>
-      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "32px" }}>
+    <div style={{ maxWidth: "480px", margin: "0 auto", padding: "20px 16px 60px" }}>
+      {/* Header */}
+      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "28px" }}>
         <div>
-          <h1 style={{ fontSize: "14px", fontWeight: "600", color: "#fff", letterSpacing: "0.15em", textTransform: "uppercase", margin: "0 0 4px" }}>Your Events</h1>
-          <p style={{ fontSize: "11px", color: "#D4AF37", letterSpacing: "0.06em", textTransform: "uppercase", fontWeight: "500", opacity: 0.85 }}>Active Events ({visibleEvents.length})</p>
+          <p style={{ fontSize: "11px", fontWeight: "700", letterSpacing: "0.2em", color: GOLD, textTransform: "uppercase", margin: "0 0 4px" }}>OREETI</p>
+          <h1 style={{ fontSize: "22px", fontWeight: "700", color: "#f0ede8", margin: 0, letterSpacing: "-0.02em" }}>Your Events</h1>
         </div>
-        <button onClick={() => router.push("/dashboard/events/create")} style={{ padding: "8px 16px", borderRadius: "6px", background: "transparent", color: "#D4AF37", border: "1px solid rgba(212,175,55,0.45)", fontSize: "12px", fontWeight: "500", letterSpacing: "0.06em", textTransform: "uppercase", cursor: "pointer" }}>
-          + Create Event
+        <button
+          onClick={() => router.push("/dashboard/events/create")}
+          style={{ padding: "10px 18px", borderRadius: "10px", background: "transparent", color: GOLD, border: "1px solid rgba(212,175,55,0.35)", fontSize: "12px", fontWeight: "600", letterSpacing: "0.06em", cursor: "pointer" }}>
+          + New
         </button>
       </div>
 
-      {visibleEvents.length === 0 ? (
-        <div style={{ textAlign: "center", padding: "40px", border: "1px dashed rgba(255,255,255,0.05)", borderRadius: "8px", marginBottom: "24px" }}>
-          <p style={{ color: "rgba(255,255,255,0.3)", fontSize: "13px", letterSpacing: "0.02em" }}>No active domains. Create an event to begin.</p>
-        </div>
-      ) : (
-        <div style={{ display: "flex", flexDirection: "column", marginBottom: "40px" }}>
-          {visibleEvents.map(renderEventItem)}
+      {/* Empty state */}
+      {visible.length === 0 && !loading && (
+        <div style={{ textAlign: "center", padding: "60px 24px", border: "1px dashed rgba(255,255,255,0.06)", borderRadius: "18px" }}>
+          <p style={{ fontSize: "32px", margin: "0 0 12px" }}>✦</p>
+          <p style={{ fontSize: "14px", color: "#f0ede8", fontWeight: "500", margin: "0 0 6px" }}>No events yet</p>
+          <p style={{ fontSize: "12px", color: "#444", margin: "0 0 24px" }}>Create your first event to get started</p>
+          <button onClick={() => router.push("/dashboard/events/create")}
+            style={{ padding: "10px 24px", borderRadius: "10px", background: "transparent", border: `1px solid rgba(212,175,55,0.35)`, color: GOLD, fontSize: "12px", fontWeight: "600", cursor: "pointer" }}>
+            Create Event
+          </button>
         </div>
       )}
 
-      {hiddenEvents.length > 0 && (
-        <div style={{ marginTop: "24px", borderTop: "1px solid rgba(255,255,255,0.05)", paddingTop: "16px" }}>
-          <button
-            onClick={() => setShowHiddenSection(!showHiddenSection)}
-            style={{ background: "transparent", border: "none", color: "rgba(255,255,255,0.3)", fontSize: "11px", letterSpacing: "0.08em", textTransform: "uppercase", fontWeight: "500", cursor: "pointer", display: "flex", alignItems: "center", gap: "6px", padding: "4px 0" }}
-          >
-            {showHiddenSection ? "▼" : "▶"} Hidden Domains ({hiddenEvents.length})
+      <Section title="Live Now"  evs={liveEvents}     accent="#4ade80" />
+      <Section title="Upcoming"  evs={upcomingEvents}  accent={GOLD} />
+      <Section title="Draft"     evs={draftEvents}     accent="#555" />
+      <Section title="Past"      evs={pastEvents}      accent="#444" />
+
+      {/* Hidden */}
+      {hidden.length > 0 && (
+        <div style={{ borderTop: "1px solid rgba(255,255,255,0.04)", paddingTop: "20px" }}>
+          <button onClick={() => setShowHidden(!showHidden)}
+            style={{ background: "transparent", border: "none", color: "#444", fontSize: "11px", letterSpacing: "0.1em", textTransform: "uppercase", fontWeight: "600", cursor: "pointer", display: "flex", alignItems: "center", gap: "6px", padding: "4px 0", marginBottom: "12px" }}>
+            {showHidden ? "▼" : "▶"} Hidden ({hidden.length})
           </button>
-          {showHiddenSection && (
-            <div style={{ display: "flex", flexDirection: "column", marginTop: "12px", opacity: 0.7 }}>
-              {hiddenEvents.map(renderEventItem)}
-            </div>
-          )}
+          {showHidden && hidden.map(ev => <EventCard key={ev.id} ev={ev} />)}
         </div>
       )}
     </div>

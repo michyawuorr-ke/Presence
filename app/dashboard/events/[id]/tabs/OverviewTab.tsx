@@ -113,15 +113,26 @@ export default function OverviewTab({
         ))}
       </div>
 
-      {/* Links */}
+      {/* Links — registration only shown after publishing */}
       <p style={{ fontSize: "10px", fontWeight: "700", letterSpacing: "0.15em", color: GOLD, textTransform: "uppercase", marginBottom: "12px" }}>Event Links</p>
 
-      <LinkCard
-        label="Registration Link"
-        hint="Share this with people who want to attend"
-        url={registrationLink}
-        icon="🎟"
-      />
+      {isLive || isEnded ? (
+        <LinkCard
+          label="Registration Link"
+          hint="Share with people who want to attend"
+          url={registrationLink}
+          icon="🎟"
+        />
+      ) : (
+        <div style={{ background: "rgba(255,255,255,0.01)", border: "1px dashed rgba(255,255,255,0.06)", borderRadius: "14px", padding: "14px 16px", marginBottom: "10px" }}>
+          <div style={{ display: "flex", alignItems: "center", gap: "8px", marginBottom: "4px" }}>
+            <span style={{ fontSize: "14px" }}>🎟</span>
+            <p style={{ fontSize: "10px", fontWeight: "700", letterSpacing: "0.15em", color: "#444", textTransform: "uppercase", margin: 0 }}>Registration Link</p>
+          </div>
+          <p style={{ fontSize: "11px", color: "#333", margin: 0 }}>Available after publishing — go to Setup to publish</p>
+        </div>
+      )}
+
       <LinkCard
         label="Host Link"
         hint="Your personal access to the event scene"
