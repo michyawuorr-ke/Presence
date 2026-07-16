@@ -22,6 +22,7 @@ export default function RegisterPage() {
   const [currentRegId, setCurrentRegId] = useState("");
   const [paymentState, setPaymentState] = useState<"idle"|"waiting"|"success"|"failed">("idle");
   const [confirmedToken, setConfirmedToken] = useState("");
+  const [isFreeRegistration, setIsFreeRegistration] = useState(false);
   const isSubmittingRef = useRef(false);
   const params = useParams();
   const slug = params.slug as string;
@@ -69,6 +70,7 @@ export default function RegisterPage() {
           access_token: accessToken, guest_access_link: guestUrl,
         });
         if (freeError) throw new Error(freeError.message);
+        setIsFreeRegistration(true);
         setSuccess(true); setSubmitting(false); isSubmittingRef.current = false; return;
       }
       const totalAmount = Number(selectedTicket?.price ?? 0) * quantity;
@@ -129,11 +131,17 @@ export default function RegisterPage() {
   if (success) return (
     <main style={{minHeight:"100vh",display:"flex",alignItems:"center",justifyContent:"center",padding:"24px",background:"#0a0a0a"}}>
       <div style={{maxWidth:"380px",width:"100%",padding:"40px 24px",background:"rgba(255,255,255,0.02)",border:"1px solid rgba(255,255,255,0.06)",borderRadius:"24px",textAlign:"center"}}>
-        <div style={{fontSize:"36px",color:"#40e0d0",marginBottom:"16px"}}>✓</div>
-        <h2 style={{fontSize:"24px",fontWeight:"400",color:"#f5f5f5",marginBottom:"6px"}}>You're In</h2>
+        <div style={{fontSize:"36px",color: isFreeRegistration ? "#4ade80" : "#D4AF37",marginBottom:"16px"}}>
+          {isFreeRegistration ? "✓" : "⏳"}
+        </div>
+        <h2 style={{fontSize:"24px",fontWeight:"400",color:"#f5f5f5",marginBottom:"6px"}}>
+          {isFreeRegistration ? "You're In" : "Payment Submitted"}
+        </h2>
         <p style={{color:"rgba(255,255,255,0.4)",fontSize:"11px",letterSpacing:"0.15em",textTransform:"uppercase",marginBottom:"24px"}}>{event?.title}</p>
         <p style={{color:"#a3a3a3",fontSize:"14px",lineHeight:"1.5",marginBottom:"32px"}}>
-          Your registration is received. The host will confirm your payment shortly.
+          {isFreeRegistration
+            ? "Your spot is confirmed. Head straight into the event."
+            : "Your M-Pesa code has been received. The host will confirm your payment shortly."}
         </p>
         <div style={{background:"rgba(0,0,0,0.15)",border:"1px solid rgba(255,255,255,0.05)",borderRadius:"14px",padding:"24px",marginBottom:"36px",textAlign:"left"}}>
           <div style={{display:"flex",justifyContent:"space-between",marginBottom:"12px",fontSize:"13px"}}>
@@ -142,12 +150,14 @@ export default function RegisterPage() {
           </div>
           <div style={{display:"flex",justifyContent:"space-between",fontSize:"13px"}}>
             <span style={{color:"rgba(255,255,255,0.4)"}}>Status:</span>
-            <span style={{color:"#D4AF37",fontWeight:"500"}}>Pending Verification</span>
+            <span style={{color: isFreeRegistration ? "#4ade80" : "#D4AF37",fontWeight:"500"}}>
+              {isFreeRegistration ? "Confirmed" : "Pending Verification"}
+            </span>
           </div>
         </div>
         <button onClick={() => { if (confirmedToken) window.location.href = window.location.origin + "/e/" + event?.slug + "/g/" + confirmedToken; }}
-          style={{width:"100%",padding:"16px",background:"rgba(255,255,255,0.05)",color:"#f5f5f5",border:"1px solid rgba(255,255,255,0.12)",borderRadius:"12px",fontSize:"13px",fontWeight:"600",letterSpacing:"0.05em",textTransform:"uppercase",cursor:"pointer"}}>
-          Enter Event
+          style={{width:"100%",padding:"16px",background: isFreeRegistration ? "rgba(74,222,128,0.08)" : "rgba(255,255,255,0.05)",color:"#f5f5f5",border:`1px solid ${isFreeRegistration ? "rgba(74,222,128,0.3)" : "rgba(255,255,255,0.12)"}`,borderRadius:"12px",fontSize:"13px",fontWeight:"600",letterSpacing:"0.05em",textTransform:"uppercase",cursor:"pointer"}}>
+          {isFreeRegistration ? "Enter Event →" : "View My Registration"}
         </button>
       </div>
     </main>
