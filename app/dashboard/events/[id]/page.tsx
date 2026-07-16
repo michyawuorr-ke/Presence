@@ -15,12 +15,16 @@ export default function EventDashboardPage() {
   const { id } = useParams() as { id: string };
   const router = useRouter();
 
-  const [tab, setTab] = useState<Tab>("overview");
+  const searchParams = typeof window !== "undefined" ? new URLSearchParams(window.location.search) : null;
+  const [tab, setTab] = useState<Tab>((searchParams?.get("tab") as Tab) ?? "overview");
   const [event, setEvent] = useState<any>(null);
   const [ticketTypes, setTicketTypes] = useState<any[]>([]);
   const [stations, setStations] = useState<any[]>([]);
   const [stats, setStats] = useState({ registrations: 0, confirmed: 0, checkins: 0, onAura: 0, handshakes: 0, revenue: 0 });
   const [hostLink, setHostLink] = useState("");
+  const [registrationLink, setRegistrationLink] = useState("");
+  const [scannerLink, setScannerLink] = useState("");
+  const [scannerToken, setScannerToken] = useState("");
   const [timeToLive, setTimeToLive] = useState("");
   const [bannerUrl, setBannerUrl] = useState("");
   const [uploadingBanner, setUploadingBanner] = useState(false);
@@ -54,9 +58,23 @@ export default function EventDashboardPage() {
       revenue: regs?.reduce((s, r) => s + (r.paid ? (r.amount || 0) : 0), 0) || 0,
     });
 
-    const hostReg = regs ? await supabase.from("registrations").select("access_token").eq("event_id", id).eq("status", "host").single() : null;
-    if (hostReg?.data?.access_token) {
-      setHostLink(`${process.env.NEXT_PUBLIC_APP_URL || window.location.origin}/e/${ev.slug}/g/${hostReg.data.access_token}`);
+    const origin = typeof window !== "undefined" ? window.location.origin : (process.env.NEXT_PUBLIC_APP_URL ?? "");
+
+    // Registration link (public — what you share for people to register)
+    setRegistrationLink(`${origin}/register/${ev.slug}`);
+
+    // Scanner link (for check-in staff)
+    setScannerLink(`${origin}/dashboard/scanner/${ev.id}`);
+
+    // Host link (host's personal access to the event scene)
+    const { data: hostReg } = await supabase
+      .from("registrations")
+      .select("access_token")
+      .eq("event_id", id)
+      .eq("status", "host")
+      .single();
+    if (hostReg?.access_token) {
+      setHostLink(`${origin}/e/${ev.slug}/g/${hostReg.access_token}`);
     }
 
     const { data: hp } = await supabase.from("host_profiles").select("*").limit(1).single();
@@ -165,13 +183,18 @@ export default function EventDashboardPage() {
       {/* Tab content */}
       <main style={{ padding: "20px 16px", maxWidth: "480px", margin: "0 auto" }}>
         {tab === "overview" && (
-          <OverviewTab event={event} stats={stats} hostLink={hostLink} timeToLive={timeToLive} bannerUrl={bannerUrl}
-            onGoLive={handleGoLive} onEndEvent={handleEndEvent} onBannerUpload={handleBannerUpload}
-            uploadingBanner={uploadingBanner} bannerError={bannerError} ending={ending} />
+          <OverviewTab event={event} stats={stats} hostLink={hostLink}
+            registrationLink={registrationLink} scannerLink={scannerLink}
+            timeToLive={timeToLive} bannerUrl={bannerUrl}
+            onBannerUpload={handleBannerUpload}
+            uploadingBanner={uploadingBanner} bannerError={bannerError} />
         )}
         {tab === "attendees" && <AttendeesTab eventId={id} isLive={event.status === "live"} />}
         {tab === "setup" && (
           <SetupTab eventId={id} event={event} ticketTypes={ticketTypes} stations={stations}
+            onGoLive={handleGoLive}
+            onEndEvent={handleEndEvent}
+            ending={ending}
             onTicketAdded={t => setTicketTypes(prev => [...prev, t])}
             onTicketDeleted={tid => setTicketTypes(prev => prev.filter(t => t.id !== tid))}
             onStationAdded={s => setStations(prev => [...prev, s])}

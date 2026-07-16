@@ -70,7 +70,7 @@ export default function CreateEvent() {
         access_token: accessToken,
       });
 
-      router.push(`/dashboard/events/${data.id}`);
+      router.push(`/dashboard/events/${data.id}?tab=setup`);
     } catch (err: any) {
       setError(err.message || "Something went wrong. Please try again.");
       setLoading(false);

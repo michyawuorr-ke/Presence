@@ -8,6 +8,9 @@ interface SetupTabProps {
   event: any;
   ticketTypes: any[];
   stations: any[];
+  onGoLive: () => void;
+  onEndEvent: () => void;
+  ending: boolean;
   onTicketAdded: (t: any) => void;
   onStationAdded: (s: any) => void;
   onStationDeleted: (id: string) => void;
@@ -16,7 +19,7 @@ interface SetupTabProps {
 
 const GOLD = "#D4AF37";
 
-export default function SetupTab({ eventId, event, ticketTypes, stations, onTicketAdded, onStationAdded, onStationDeleted, onTicketDeleted }: SetupTabProps) {
+export default function SetupTab({ eventId, event, ticketTypes, stations, onGoLive, onEndEvent, ending, onTicketAdded, onStationAdded, onStationDeleted, onTicketDeleted }: SetupTabProps) {
   const [ticketName, setTicketName] = useState("");
   const [ticketPrice, setTicketPrice] = useState("");
   const [ticketQty, setTicketQty] = useState("");
@@ -138,6 +141,25 @@ export default function SetupTab({ eventId, event, ticketTypes, stations, onTick
           {savingPaybill ? "Saving..." : paybillSaved ? "✓ Saved" : "Save Payment Details"}
         </button>
       </section>
+      {/* ── Publish / End ── */}
+      <section style={{ marginTop: "32px", borderTop: "1px solid rgba(255,255,255,0.04)", paddingTop: "24px" }}>
+        {event?.status !== "live" && event?.status !== "ended" && (
+          <button onClick={onGoLive}
+            style={{ width: "100%", padding: "14px", borderRadius: "12px", background: GOLD, color: "#000", border: "none", fontSize: "13px", fontWeight: "700", cursor: "pointer", letterSpacing: "0.06em", marginBottom: "10px" }}>
+            PUBLISH EVENT
+          </button>
+        )}
+        {event?.status === "live" && (
+          <button onClick={onEndEvent} disabled={ending}
+            style={{ width: "100%", padding: "12px", borderRadius: "12px", background: "transparent", color: "#555", border: "1px solid rgba(255,255,255,0.07)", fontSize: "12px", cursor: "pointer" }}>
+            {ending ? "Ending..." : "End Event"}
+          </button>
+        )}
+        {event?.status === "ended" && (
+          <p style={{ fontSize: "12px", color: "#444", textAlign: "center", padding: "8px 0" }}>This event has ended.</p>
+        )}
+      </section>
+
       {/* ── Policies ── */}
       <section style={{ marginTop: "32px", borderTop: "1px solid rgba(255,255,255,0.04)", paddingTop: "28px" }}>
         <p style={{ fontSize: "10px", fontWeight: "700", letterSpacing: "0.15em", color: GOLD, textTransform: "uppercase", marginBottom: "16px" }}>Networking & Role Policies</p>
