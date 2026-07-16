@@ -119,8 +119,8 @@ export default function EventsPage() {
       >
         {/* Banner thumbnail if exists */}
         {ev.banner_url && (
-          <div style={{ width: "100%", height: "80px", borderRadius: "10px", overflow: "hidden", marginBottom: "14px" }}>
-            <img src={ev.banner_url} alt="" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+          <div style={{ width: "100%", borderRadius: "10px", overflow: "hidden", marginBottom: "14px", background: "rgba(0,0,0,0.3)" }}>
+            <img src={ev.banner_url} alt="" style={{ width: "100%", height: "auto", display: "block", maxHeight: "200px", objectFit: "contain" }} />
           </div>
         )}
 

@@ -91,10 +91,10 @@ export default function OverviewTab({
       </div>
 
       {/* Banner */}
-      <div style={{ position: "relative", borderRadius: "16px", overflow: "hidden", marginBottom: "20px", background: "rgba(255,255,255,0.02)", border: "1px solid rgba(255,255,255,0.05)", minHeight: "120px", display: "flex", alignItems: "center", justifyContent: "center" }}>
+      <div style={{ position: "relative", borderRadius: "16px", overflow: "hidden", marginBottom: "20px", background: "rgba(255,255,255,0.02)", border: "1px solid rgba(255,255,255,0.05)" }}>
         {bannerUrl
-          ? <img src={bannerUrl} alt="Banner" style={{ width: "100%", height: "160px", objectFit: "cover", display: "block" }} />
-          : <p style={{ fontSize: "12px", color: "#333", margin: 0 }}>No banner uploaded</p>
+          ? <img src={bannerUrl} alt="Banner" style={{ width: "100%", height: "auto", display: "block", maxHeight: "320px", objectFit: "contain" }} />
+          : <div style={{ minHeight: "100px", display: "flex", alignItems: "center", justifyContent: "center" }}><p style={{ fontSize: "12px", color: "#333", margin: 0 }}>No banner uploaded</p></div>
         }
         <label style={{ position: "absolute", bottom: "10px", right: "10px", background: "rgba(0,0,0,0.7)", border: "1px solid rgba(255,255,255,0.1)", borderRadius: "8px", padding: "6px 12px", fontSize: "11px", color: "#fff", cursor: "pointer", backdropFilter: "blur(8px)" }}>
           {uploadingBanner ? "Uploading..." : "Change Banner"}

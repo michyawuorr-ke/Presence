@@ -20,8 +20,8 @@ export default function SceneTab({
   return (
     <div>
       {event?.banner_url && (
-        <div style={{ width: "100%", height: "160px", overflow: "hidden", marginBottom: "4px" }}>
-          <img src={event.banner_url} alt="" style={{ width: "100%", height: "100%", objectFit: "cover", objectPosition: "top center" }} />
+        <div style={{ width: "100%", overflow: "hidden", marginBottom: "4px", background: "#000" }}>
+          <img src={event.banner_url} alt="" style={{ width: "100%", height: "auto", display: "block", maxHeight: "280px", objectFit: "contain" }} />
         </div>
       )}
       <div style={{ padding: "24px 20px" }}>
