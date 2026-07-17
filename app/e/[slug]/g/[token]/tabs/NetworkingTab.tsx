@@ -4,6 +4,7 @@ import { supabase } from "@/lib/supabase/client";
 import { getFirstName, parseIntents, REASON_OPTIONS, PALETTE } from "./shared";
 import AttendeeCard from "./AttendeeCard";
 import PreEventDiscovery from "./PreEventDiscovery";
+import MatchRecommendations from "./MatchRecommendations";
 
 interface NetworkingTabProps {
   event: any;
@@ -213,6 +214,13 @@ export default function NetworkingTab({ event, profile, isLive, isEnded, registr
       `}</style>
 
       <p style={{fontSize:"10px",color:PALETTE.orange,letterSpacing:"0.15em",fontWeight:"600",textTransform:"uppercase",margin:"0 0 16px"}}>Live Now</p>
+
+      <MatchRecommendations
+        profile={profile}
+        event={event}
+        sentRequests={sentRequests}
+        onRequestSent={id => setSentRequests(prev => new Set([...prev, id]))}
+      />
 
       <input
         value={liveSearch}

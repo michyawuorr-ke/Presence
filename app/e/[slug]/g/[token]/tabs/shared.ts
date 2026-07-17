@@ -25,6 +25,9 @@ export function parseIntents(raw: any): string[] {
 
 export const REASON_OPTIONS = ["Capital", "Synergy", "Mentorship", "Opportunities"];
 
+// Full intent definitions — used for display and matching
+export { INTENTS, INTENT_MAP } from "@/lib/matching/intents";
+
 export const PALETTE = {
   orange: "#E26D34",
   gold: "#D4AF37",

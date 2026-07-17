@@ -3,6 +3,7 @@ import { useState } from "react";
 import { supabase } from "@/lib/supabase/client";
 import { getFirstName, parseIntents, REASON_OPTIONS } from "./shared";
 import AttendeeCard from "./AttendeeCard";
+import MatchRecommendations from "./MatchRecommendations";
 import { useEventAttendees, useEventStations, useHostNode, useInvalidators } from "./queries";
 
 interface PreEventDiscoveryProps {
@@ -84,6 +85,13 @@ export default function PreEventDiscovery({ event, profile, sentRequests, setSen
     <div style={{padding:"20px 16px",background:"#0a0a0b",minHeight:"calc(100vh - 100px)"}}>
       <p style={{fontSize:"10px",color:"#8A7355",letterSpacing:"0.15em",fontWeight:"600",textTransform:"uppercase",marginBottom:"4px"}}>Before The Event</p>
       <p style={{fontSize:"13px",color:"rgba(240,237,232,0.4)",marginBottom:"16px"}}>See who's coming and where they'll be.</p>
+
+      <MatchRecommendations
+        profile={profile}
+        event={event}
+        sentRequests={sentRequests}
+        onRequestSent={id => setSentRequests(prev => new Set([...prev, id]))}
+      />
 
       <input
         value={search}
