@@ -127,11 +127,11 @@ export default function MatchRecommendations({ profile, event, sentRequests, onR
                 gap: "12px",
               }}>
 
-              {/* Identity */}
+              {/* Level 1 reveal: first name + industry + intent pills only */}
               <div style={{ flex: 1, minWidth: 0 }}>
                 <div style={{ display: "flex", alignItems: "center", gap: "6px", marginBottom: "2px", flexWrap: "wrap" }}>
                   <p style={{ fontSize: "14px", fontWeight: "600", color: "#f0ede8", margin: 0 }}>
-                    {match.profile.display_name}
+                    {first}
                   </p>
                   {idx === 0 && (
                     <span style={{ fontSize: "8px", fontWeight: "800", color: EMBER, background: "rgba(226,109,52,0.1)", border: "1px solid rgba(226,109,52,0.25)", borderRadius: "3px", padding: "1px 5px", letterSpacing: "0.1em", flexShrink: 0 }}>
@@ -140,10 +140,9 @@ export default function MatchRecommendations({ profile, event, sentRequests, onR
                   )}
                 </div>
 
-                {match.profile.role_title && (
-                  <p style={{ fontSize: "11px", color: "#666", margin: "0 0 6px" }}>
-                    {match.profile.role_title}
-                    {match.profile.organisation ? ` · ${match.profile.organisation}` : ""}
+                {match.profile.industry && (
+                  <p style={{ fontSize: "11px", color: "#8A7355", margin: "0 0 6px", fontWeight: "500" }}>
+                    {match.profile.industry}
                   </p>
                 )}
 

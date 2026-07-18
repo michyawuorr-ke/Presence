@@ -1,7 +1,8 @@
 "use client";
-import { useState, useRef } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import { supabase } from "@/lib/supabase/client";
-import { getFirstName, cleanUrl } from "./shared";
+import { getFirstName, cleanUrl, parseIntents } from "./shared";
+import { INTENT_MAP } from "@/lib/matching/intents";
 import {
   useConnections,
   usePendingRequests,
@@ -122,19 +123,19 @@ export default function ConnectionsTab({ profile, event, registration, isEnded }
     <div style={{ padding: "16px", background: "#08080a", minHeight: "100vh" }}>
       <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", margin: "4px 0 16px" }}>
         <p style={{ fontSize: "18px", fontWeight: "700", color: "#f0ede8", margin: 0 }}>Connections</p>
-        <button onClick={() => startScan(null)} style={{ background: "rgba(226,109,52,0.15)", color: "#E26D34", border: "1px solid rgba(226,109,52,0.3)", borderRadius: "10px", padding: "8px 14px", fontSize: "12px", fontWeight: "600", cursor: "pointer" }}>Scan to Connect</button>
+        <button onClick={() => startScan(null)} style={{ background: "rgba(255,255,255,0.05)", color: "rgba(255,255,255,0.7)", border: "1px solid rgba(255,255,255,0.1)", borderRadius: "10px", padding: "8px 14px", fontSize: "12px", fontWeight: "600", cursor: "pointer" }}>Scan to Connect</button>
       </div>
 
-      {toast && <div style={{ background: "rgba(226,109,52,0.08)", border: "1px solid rgba(226,109,52,0.2)", borderRadius: "12px", padding: "10px 14px", marginBottom: "12px" }}><p style={{ color: "#E26D34", fontSize: "12px", margin: 0, textAlign: "center" }}>{toast}</p></div>}
+      {toast && <div style={{ background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.08)", borderRadius: "12px", padding: "10px 14px", marginBottom: "12px" }}><p style={{ color: "#f0ede8", fontSize: "12px", margin: 0, textAlign: "center" }}>{toast}</p></div>}
 
       {/* Incoming meetup signals */}
       {incomingSignals.length > 0 && (
         <div style={{ marginBottom: "16px" }}>
-          <p style={{ fontSize: "10px", fontWeight: "600", color: "#E26D34", letterSpacing: "0.12em", textTransform: "uppercase", marginBottom: "12px" }}>Meetup Signals</p>
+          <p style={{ fontSize: "10px", fontWeight: "600", color: "#8A7355", letterSpacing: "0.12em", textTransform: "uppercase", marginBottom: "12px" }}>Meetup Signals</p>
           {incomingSignals.map((s: any) => (
             <div key={s.id} style={{ background: "rgba(226,109,52,0.06)", border: "1px solid rgba(226,109,52,0.2)", borderRadius: "14px", padding: "14px", marginBottom: "8px" }}>
-              <p style={{ fontSize: "13px", color: "#f1f0f5", margin: 0 }}><span style={{ fontWeight: "600" }}>{s.senderName}</span> wants to meet at <span style={{ color: "#E26D34", fontWeight: "600" }}>{s.locationLabel}</span></p>
-              <button onClick={() => dismissSignal(s.id)} style={{ marginTop: "8px", fontSize: "11px", fontWeight: "600", color: "#E26D34", background: "transparent", border: "1px solid rgba(226,109,52,0.3)", borderRadius: "8px", padding: "5px 10px", cursor: "pointer" }}>Got it</button>
+              <p style={{ fontSize: "13px", color: "#f1f0f5", margin: 0 }}><span style={{ fontWeight: "600" }}>{s.senderName}</span> wants to meet at <span style={{ color: "#f0ede8", fontWeight: "600" }}>{s.locationLabel}</span></p>
+              <button onClick={() => dismissSignal(s.id)} style={{ marginTop: "8px", fontSize: "11px", fontWeight: "500", color: "rgba(255,255,255,0.5)", background: "transparent", border: "1px solid rgba(255,255,255,0.08)", borderRadius: "8px", padding: "5px 10px", cursor: "pointer" }}>Got it</button>
             </div>
           ))}
         </div>
@@ -143,17 +144,17 @@ export default function ConnectionsTab({ profile, event, registration, isEnded }
       {/* Pending requests */}
       {pendingRequests.length > 0 && (
         <div style={{ marginBottom: "16px" }}>
-          <p style={{ fontSize: "10px", fontWeight: "600", color: "#E26D34", letterSpacing: "0.12em", textTransform: "uppercase", marginBottom: "12px" }}>Wants To Connect</p>
+          <p style={{ fontSize: "10px", fontWeight: "600", color: "#8A7355", letterSpacing: "0.12em", textTransform: "uppercase", marginBottom: "12px" }}>Wants To Connect</p>
           {(pendingRequests as any[]).map((r: any) => (
             <div key={r.requestId} style={{ background: "rgba(226,109,52,0.06)", border: "1px solid rgba(226,109,52,0.2)", borderRadius: "14px", padding: "14px", display: "flex", justifyContent: "space-between", alignItems: "center", gap: "12px", marginBottom: "8px" }}>
               <div style={{ minWidth: 0 }}>
                 <p style={{ fontSize: "14px", fontWeight: "600", color: "#f1f0f5", margin: 0 }}>{r.display_name}</p>
                 {r.role_title && <p style={{ fontSize: "12px", color: "#888", margin: "2px 0 0" }}>{r.role_title}</p>}
-                {r.reason && <span style={{ display: "inline-block", fontSize: "10px", color: "#E26D34", background: "rgba(226,109,52,0.1)", border: "1px solid rgba(226,109,52,0.2)", borderRadius: "5px", padding: "2px 7px", fontWeight: "600", marginTop: "6px" }}>{r.reason}</span>}
+                {r.reason && <span style={{ display: "inline-block", fontSize: "10px", color: "rgba(255,255,255,0.45)", background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.08)", borderRadius: "5px", padding: "2px 7px", fontWeight: "500", marginTop: "6px" }}>{r.reason}</span>}
               </div>
               <div style={{ display: "flex", gap: "6px", flexShrink: 0 }}>
                 <button onClick={() => respondToPending(r.requestId, r.id, false, r.display_name)} style={{ fontSize: "11px", color: "rgba(240,237,232,0.5)", background: "transparent", border: "1px solid rgba(255,255,255,0.1)", borderRadius: "8px", padding: "6px 10px", cursor: "pointer" }}>Decline</button>
-                <button onClick={() => respondToPending(r.requestId, r.id, true, r.display_name)} style={{ fontSize: "11px", fontWeight: "600", color: "#000", background: "#E26D34", border: "none", borderRadius: "8px", padding: "6px 10px", cursor: "pointer" }}>Accept</button>
+                <button onClick={() => respondToPending(r.requestId, r.id, true, r.display_name)} style={{ fontSize: "11px", fontWeight: "600", color: "#000", background: "#fff", border: "none", borderRadius: "8px", padding: "6px 10px", cursor: "pointer" }}>Accept</button>
               </div>
             </div>
           ))}
@@ -162,7 +163,7 @@ export default function ConnectionsTab({ profile, event, registration, isEnded }
 
       {/* Connections */}
       <div>
-        <p style={{ fontSize: "10px", fontWeight: "600", color: "rgba(255,255,255,0.45)", letterSpacing: "0.12em", textTransform: "uppercase", marginBottom: "12px" }}>Connections</p>
+        <p style={{ fontSize: "10px", fontWeight: "600", color: "#8A7355", letterSpacing: "0.12em", textTransform: "uppercase", marginBottom: "12px" }}>Connections</p>
         {connections.length === 0 ? (
           <p style={{ color: "#999", fontSize: "14px", textAlign: "center", padding: "40px 0" }}>{isEnded ? "No connections from this event" : "Connect with people to see them here"}</p>
         ) : (
@@ -171,41 +172,90 @@ export default function ConnectionsTab({ profile, event, registration, isEnded }
             const signalSent = signalSentIds.has(c.id);
             const hasNote = !!(savedNotes as any)[c.id];
             return (
-              <div key={c.id} style={{ background: isUnlocked ? "rgba(226,109,52,0.08)" : "rgba(26,26,36,0.9)", borderRadius: "14px", padding: "14px", marginBottom: "8px", border: isUnlocked ? "1px solid rgba(226,109,52,0.25)" : "1px solid rgba(255,255,255,0.06)" }}>
+              <div key={c.id} style={{ background: "rgba(26,26,36,0.9)", borderRadius: "14px", padding: "14px", marginBottom: "8px", border: "1px solid rgba(255,255,255,0.06)" }}>
                 <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start" }}>
-                  <div style={{ flex: 1 }}>
-                    <p style={{ fontSize: "14px", fontWeight: "600", marginBottom: "1px", color: "#f1f0f5" }}>{c.display_name}</p>
-                    {c.role_title && <p style={{ fontSize: "13px", color: "#666", marginBottom: "2px" }}>{c.role_title}</p>}
-                    {isUnlocked && c.organisation && <p style={{ fontSize: "13px", color: "#999", marginBottom: "8px" }}>{c.organisation}</p>}
+                  <div style={{ flex: 1, minWidth: 0 }}>
+
+                    {/* Level 2: full name + industry + intents */}
+                    <p style={{ fontSize: "14px", fontWeight: "600", marginBottom: "2px", color: "#f1f0f5" }}>{c.display_name}</p>
+                    {c.industry && <p style={{ fontSize: "11px", color: "#8A7355", margin: "0 0 6px", fontWeight: "500" }}>{c.industry}</p>}
+                    <div style={{ display: "flex", flexWrap: "wrap", gap: "4px", marginBottom: "8px" }}>
+                      {parseIntents(c.networking_intents).map((id: string) => {
+                        const intent = (INTENT_MAP as any)[id];
+                        return intent ? (
+                          <span key={id} style={{ fontSize: "10px", color: "#8A7355", background: "rgba(138,115,85,0.1)", border: "1px solid rgba(138,115,85,0.2)", borderRadius: "5px", padding: "2px 7px", fontWeight: "600" }}>{intent.label}</span>
+                        ) : null;
+                      })}
+                    </div>
+
+                    {/* Level 3: after QR scan — role, org, links */}
                     {isUnlocked && (
-                      <div style={{ marginTop: "6px", display: "flex", flexDirection: "column", gap: "4px" }}>
-                        {c.show_linkedin && c.linkedin_url && (
-                          <p style={{ fontSize: "13px", color: "#E26D34", margin: 0 }}>
-                            LinkedIn · {cleanUrl(c.linkedin_url)}
-                          </p>
-                        )}
-                        {c.show_website && c.website_url && (
-                          <p style={{ fontSize: "13px", color: "#E26D34", margin: 0 }}>
-                            Website · {cleanUrl(c.website_url)}
-                          </p>
-                        )}
-                        {c.show_portfolio && c.portfolio_url && (
-                          <p style={{ fontSize: "13px", color: "#E26D34", margin: 0 }}>
-                            Portfolio · {cleanUrl(c.portfolio_url)}
-                          </p>
-                        )}
+                      <div style={{ borderTop: "1px solid rgba(255,255,255,0.04)", paddingTop: "10px", marginTop: "4px" }}>
+                        {c.role_title && <p style={{ fontSize: "12px", color: "rgba(255,255,255,0.5)", margin: "0 0 2px" }}>{c.role_title}</p>}
+                        {c.organisation && <p style={{ fontSize: "12px", color: "rgba(255,255,255,0.35)", margin: "0 0 8px" }}>{c.organisation}</p>}
+                        <div style={{ display: "flex", flexDirection: "column", gap: "4px" }}>
+                          {c.show_linkedin && c.linkedin_url && (
+                            <a href={c.linkedin_url} target="_blank" rel="noopener noreferrer" style={{ fontSize: "12px", color: "rgba(255,255,255,0.6)", textDecoration: "none" }}>
+                              💼 {cleanUrl(c.linkedin_url)}
+                            </a>
+                          )}
+                          {c.show_website && c.website_url && (
+                            <a href={c.website_url} target="_blank" rel="noopener noreferrer" style={{ fontSize: "12px", color: "rgba(255,255,255,0.6)", textDecoration: "none" }}>
+                              🌐 {cleanUrl(c.website_url)}
+                            </a>
+                          )}
+                          {c.show_portfolio && c.portfolio_url && (
+                            <a href={c.portfolio_url} target="_blank" rel="noopener noreferrer" style={{ fontSize: "12px", color: "rgba(255,255,255,0.6)", textDecoration: "none" }}>
+                              🗂 {cleanUrl(c.portfolio_url)}
+                            </a>
+                          )}
+                        </div>
                       </div>
                     )}
                   </div>
-                  {!isUnlocked && <button onClick={() => startScan(c)} style={{ background: "rgba(226,109,52,0.15)", color: "#E26D34", border: "1px solid rgba(226,109,52,0.15)", borderRadius: "8px", padding: "5px 10px", fontSize: "11px", fontWeight: "600", cursor: "pointer", whiteSpace: "nowrap", marginLeft: "8px" }}>Scan to unlock</button>}
-                  {isUnlocked && <span style={{ fontSize: "10px", color: "#E26D34", fontWeight: "600", marginLeft: "8px", background: "rgba(226,109,52,0.12)", padding: "2px 8px", borderRadius: "6px" }}>✓ Unlocked</span>}
-                </div>
-                {isUnlocked && (
-                  <div style={{ display: "flex", gap: "8px", marginTop: "10px" }}>
-                    <button onClick={() => setSignalTarget(c)} disabled={signalSent} style={{ flex: 1, padding: "8px", borderRadius: "8px", background: signalSent ? "rgba(255,255,255,0.03)" : "transparent", border: signalSent ? "1px solid rgba(255,255,255,0.06)" : "1px solid rgba(226,109,52,0.3)", color: signalSent ? "rgba(240,237,232,0.3)" : "#E26D34", fontSize: "12px", fontWeight: "600", cursor: signalSent ? "default" : "pointer" }}>{signalSent ? "Meetup signal sent" : "Signal Meetup →"}</button>
-                    <button onClick={() => { setMemoryTarget(c); setMemoryDraft((savedNotes as any)[c.id] || ""); }} style={{ flexShrink: 0, padding: "8px 12px", borderRadius: "8px", background: "transparent", border: "1px solid rgba(255,255,255,0.1)", color: hasNote ? "#E26D34" : "rgba(240,237,232,0.4)", fontSize: "12px", cursor: "pointer" }}>{hasNote ? "📝 Note" : "+ Note"}</button>
+
+                  <div style={{ display: "flex", flexDirection: "column", gap: "6px", flexShrink: 0, marginLeft: "10px" }}>
+                    {!isUnlocked && (
+                      <button onClick={() => startScan(c)}
+                        style={{ background: "rgba(255,255,255,0.04)", color: "rgba(255,255,255,0.5)", border: "1px solid rgba(255,255,255,0.08)", borderRadius: "8px", padding: "6px 12px", fontSize: "11px", fontWeight: "500", cursor: "pointer", whiteSpace: "nowrap" }}>
+                        Scan to unlock
+                      </button>
+                    )}
+                    {isUnlocked && (
+                      <span style={{ fontSize: "9px", color: "rgba(255,255,255,0.3)", fontWeight: "600", background: "rgba(255,255,255,0.04)", padding: "3px 8px", borderRadius: "5px", letterSpacing: "0.08em" }}>
+                        UNLOCKED
+                      </span>
+                    )}
                   </div>
-                )}
+                </div>
+
+                {/* Actions — Signal Meetup is the ONLY ember element */}
+                <div style={{ display: "flex", gap: "8px", marginTop: "12px" }}>
+                  {/* Signal Meetup — ember, pulses after connection */}
+                  <button onClick={() => setSignalTarget(c)} disabled={signalSent}
+                    style={{
+                      flex: 1, padding: "9px", borderRadius: "8px", fontSize: "12px", fontWeight: "600", cursor: signalSent ? "default" : "pointer",
+                      background: signalSent ? "rgba(255,255,255,0.02)" : "rgba(226,109,52,0.08)",
+                      border: signalSent ? "1px solid rgba(255,255,255,0.05)" : "1px solid rgba(226,109,52,0.3)",
+                      color: signalSent ? "rgba(255,255,255,0.25)" : "#E26D34",
+                      animation: !signalSent ? "pulseGlow 2.5s ease-in-out infinite" : "none",
+                    }}>
+                    {signalSent ? "Signal sent" : "Signal Meetup →"}
+                  </button>
+
+                  {/* Note — neutral */}
+                  <button onClick={() => { setMemoryTarget(c); setMemoryDraft((savedNotes as any)[c.id] || ""); }}
+                    style={{ flexShrink: 0, padding: "9px 14px", borderRadius: "8px", background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.07)", color: "rgba(255,255,255,0.5)", fontSize: "12px", cursor: "pointer" }}>
+                    {hasNote ? "📝" : "+ Note"}
+                  </button>
+                </div>
+
+                <style>{`
+                  @keyframes pulseGlow {
+                    0%, 100% { box-shadow: 0 0 0 0 rgba(226,109,52,0); }
+                    50% { box-shadow: 0 0 0 4px rgba(226,109,52,0.15); }
+                  }
+                `}</style>
               </div>
             );
           })

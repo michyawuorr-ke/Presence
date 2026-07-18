@@ -17,6 +17,7 @@ export interface AttendeeProfile {
   display_name: string;
   role_title?: string;
   organisation?: string;
+  industry?: string;
   bio?: string;
   networking_intents: any; // raw from DB, will be parsed
   target_station_id?: string;
@@ -118,7 +119,7 @@ export function scoreMatch(
   }
 
   // Role complementarity (0–20)
-  const rolePts = Math.min(20, roleScore(me.role_title, them.role_title));
+  let rolePts = Math.min(20, roleScore(me.role_title, them.role_title));
 
   // Behavioural signals (0–20)
   let behaviourPts = 0;
@@ -129,6 +130,11 @@ export function scoreMatch(
   // No prior interaction = fresh opportunity
   if (behaviourPts === 0) behaviourPts = 10;
   behaviourPts = Math.max(0, Math.min(20, behaviourPts + 10));
+
+  // Same industry = shared context, small bonus to role score
+  if (me.industry && them.industry && me.industry === them.industry) {
+    rolePts = Math.min(20, rolePts + 5);
+  }
 
   // Penalise same org — they can meet any time, event is for cross-pollination
   if (sameOrg) stationPts = Math.round(stationPts * 0.4);

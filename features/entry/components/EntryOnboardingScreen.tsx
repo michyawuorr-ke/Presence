@@ -1,3 +1,6 @@
+const EMBER = "#E26D34";
+const DUSK  = "#8A7355";
+
 type EntryOnboardingScreenProps = {
   displayName: string;
   setDisplayName: React.Dispatch<React.SetStateAction<string>>;
@@ -5,10 +8,11 @@ type EntryOnboardingScreenProps = {
   setRole: React.Dispatch<React.SetStateAction<string>>;
   organisation: string;
   setOrganisation: React.Dispatch<React.SetStateAction<string>>;
+  industry: string;
+  setIndustry: React.Dispatch<React.SetStateAction<string>>;
   bio: string;
   setBio: React.Dispatch<React.SetStateAction<string>>;
   masterProfile?: any;
-
   getPresenceLabel: () => string;
   setIsPresenceOpen: React.Dispatch<React.SetStateAction<boolean>>;
   getIntentLabel: () => string;
@@ -23,148 +27,139 @@ type EntryOnboardingScreenProps = {
   onSubmit: () => void;
 };
 
+const INDUSTRIES = [
+  "Technology","Finance & Banking","Healthcare","Education","Agribusiness",
+  "Real Estate","Retail & E-commerce","Media & Creative","Energy","NGO & Social Impact",
+  "Government & Policy","Legal","Consulting","Manufacturing","Logistics & Supply Chain","Other",
+];
+
 export default function EntryOnboardingScreen({
-  displayName,
-  setDisplayName,
-  role,
-  setRole,
-  organisation,
-  setOrganisation,
-  bio,
-  setBio,
+  displayName, setDisplayName,
+  role, setRole,
+  organisation, setOrganisation,
+  industry, setIndustry,
+  bio, setBio,
   masterProfile,
-  getPresenceLabel,
-  setIsPresenceOpen,
-  getIntentLabel,
-  setIsIntentOpen,
-  stations,
-  stationId,
-  setStationId,
-  error,
-  restoredIdentity,
-  canSubmit,
-  saving,
-  onSubmit,
+  getPresenceLabel, setIsPresenceOpen,
+  getIntentLabel, setIsIntentOpen,
+  stations, stationId, setStationId,
+  error, restoredIdentity, canSubmit, saving, onSubmit,
 }: EntryOnboardingScreenProps) {
-  const inpStyle = {
+
+  const inp: React.CSSProperties = {
     width: "100%", padding: "10px 0", background: "transparent", border: "none",
     borderBottom: "1px solid rgba(255,255,255,0.06)", color: "#FDFBF7",
-    fontSize: "14px", outline: "none", borderRadius: 0, transition: "border-color 0.3s",
+    fontSize: "14px", outline: "none", borderRadius: 0,
   };
 
   return (
-    <div className="min-h-screen bg-[#0A0A0A] text-[#FDFBF7] px-6 flex flex-col items-center box-border select-none relative overflow-x-hidden">
-      <style>{`
-        @keyframes slideUpLine { from { height: 0%; } to { height: 100%; } }
-        @keyframes sheetUp { from { transform: translateY(100%); } to { transform: translateY(0); } }
-        .animate-slide-line { animation: slideUpLine 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards; }
-        .animate-sheet-up { animation: sheetUp 0.35s cubic-bezier(0.16, 1, 0.3, 1) forwards; }
-        .focus-under:focus { border-bottom: 1px solid #F97316 !important; }
-      `}</style>
+    <div style={{ minHeight: "100vh", background: "#0A0A0A", color: "#FDFBF7", padding: "0 24px", display: "flex", flexDirection: "column", alignItems: "center", boxSizing: "border-box", overflowX: "hidden" }}>
 
-      <header className="w-full pt-10 max-w-md mx-auto text-center">
-        <p className="text-[10px] font-bold tracking-[0.3em] m-0 uppercase" style={{ color: "#E26D34" }}>OREETI</p>
+      <header style={{ width: "100%", maxWidth: "480px", paddingTop: "48px", textAlign: "center" }}>
+        <p style={{ fontSize: "10px", fontWeight: "700", letterSpacing: "0.3em", color: EMBER, margin: 0, textTransform: "uppercase" }}>OREETI</p>
       </header>
 
-      <main className="w-full max-w-md mx-auto flex-1 pt-6 pb-36 overflow-y-auto">
-        {(restoredIdentity && masterProfile) && (
-          <div className="flex justify-center mb-6">
-            <div
-              style={{
-                background: "linear-gradient(135deg, rgba(226,109,52,0.10) 0%, rgba(226,109,52,0.04) 100%)",
-                border: "1px solid rgba(226,109,52,0.22)",
-                borderRadius: "999px",
-                padding: "10px 20px",
-                display: "inline-flex",
-                alignItems: "center",
-                gap: "10px",
-                boxShadow: "0 0 24px rgba(226,109,52,0.08)",
-              }}
-            >
-              <span style={{ fontSize: "16px", lineHeight: 1 }}>✦</span>
+      <main style={{ width: "100%", maxWidth: "480px", flex: 1, paddingTop: "24px", paddingBottom: "144px", overflowY: "auto" }}>
+
+        {/* Welcome back pill */}
+        {restoredIdentity && masterProfile && (
+          <div style={{ display: "flex", justifyContent: "center", marginBottom: "20px" }}>
+            <div style={{ background: "linear-gradient(135deg, rgba(226,109,52,0.10), rgba(226,109,52,0.04))", border: "1px solid rgba(226,109,52,0.22)", borderRadius: "999px", padding: "10px 20px", display: "inline-flex", alignItems: "center", gap: "10px", boxShadow: "0 0 24px rgba(226,109,52,0.08)" }}>
+              <span style={{ fontSize: "16px" }}>✦</span>
               <div>
-                <p style={{ margin: 0, fontSize: "11px", color: "#E26D34", fontWeight: 700, letterSpacing: "0.18em", textTransform: "uppercase" }}>
-                  Welcome back
-                </p>
-                <p style={{ margin: 0, fontSize: "13px", color: "rgba(255,255,255,0.75)", fontWeight: 400, marginTop: "1px" }}>
-                  {masterProfile.display_name} · your details are prefilled
-                </p>
+                <p style={{ margin: 0, fontSize: "11px", color: EMBER, fontWeight: 700, letterSpacing: "0.18em", textTransform: "uppercase" }}>Welcome back</p>
+                <p style={{ margin: 0, fontSize: "13px", color: "rgba(255,255,255,0.75)", marginTop: "1px" }}>{masterProfile.display_name} · your details are prefilled</p>
               </div>
             </div>
           </div>
         )}
-        <section className="mb-6 bg-white/[0.01] border border-white/[0.03] p-5 rounded-md space-y-3">
-          <h2 className="text-sm font-medium tracking-tight text-white/80 m-0">About You</h2>
-          <input value={displayName} onChange={e => setDisplayName(e.target.value)} placeholder="Your Name" style={inpStyle} className="focus-under" autoComplete="off" />
-          <input value={role} onChange={e => setRole(e.target.value)} placeholder="Role or Title" style={inpStyle} className="focus-under" autoComplete="off" />
-          <input value={organisation} onChange={e => setOrganisation(e.target.value)} placeholder="Organisation / Studio" style={inpStyle} className="focus-under" autoComplete="off" />
-          <textarea value={bio} onChange={e => setBio(e.target.value)} placeholder="Short Bio" rows={2} style={{ ...inpStyle, height: "54px", resize: "none" }} className="focus-under" autoComplete="off" />
+
+        {/* About You */}
+        <section style={{ background: "rgba(255,255,255,0.01)", border: "1px solid rgba(255,255,255,0.03)", padding: "20px", borderRadius: "12px", marginBottom: "16px" }}>
+          <p style={{ fontSize: "10px", fontWeight: "700", letterSpacing: "0.15em", color: DUSK, textTransform: "uppercase", margin: "0 0 16px" }}>About You</p>
+          <input value={displayName} onChange={e => setDisplayName(e.target.value)} placeholder="Your Name" style={inp} autoComplete="off" />
+          <input value={role} onChange={e => setRole(e.target.value)} placeholder="Role or Title" style={{ ...inp, marginTop: "4px" }} autoComplete="off" />
+          <input value={organisation} onChange={e => setOrganisation(e.target.value)} placeholder="Organisation / Studio" style={{ ...inp, marginTop: "4px" }} autoComplete="off" />
+          <textarea value={bio} onChange={e => setBio(e.target.value)} placeholder="Short Bio (optional)" rows={2} style={{ ...inp, marginTop: "4px", resize: "none", height: "54px" }} autoComplete="off" />
         </section>
 
-        <section className="mb-6">
-          <label className="block text-[10px] font-mono tracking-wider text-white/30 uppercase mb-2">Professional Presence</label>
-          <button type="button" onClick={() => setIsPresenceOpen(true)}
-            className="w-full flex items-center justify-between p-4 bg-white/[0.01] border border-white/[0.04] rounded-sm text-left transition-all duration-300 hover:border-white/10"
-            style={{ color: "#FDFBF7" }}>
-            <span className="text-sm font-light tracking-wide">{getPresenceLabel()}</span>
-            <span className="text-[10px] font-mono tracking-widest text-white/20">MANAGE</span>
-          </button>
-        </section>
-
-        <section className="mb-10">
-          <label className="block text-[10px] font-mono tracking-wider text-white/30 uppercase mb-2">What Brings You Here?</label>
-          <button type="button" onClick={() => setIsIntentOpen(true)}
-            className="w-full flex items-center justify-between p-4 bg-white/[0.01] border border-white/[0.04] rounded-sm text-left transition-all duration-300 hover:border-white/10"
-            style={{ color: "#FDFBF7" }}>
-            <span className="text-sm font-light tracking-wide">{getIntentLabel()}</span>
-            <span className="text-[10px] font-mono tracking-widest text-white/20">SELECT</span>
-          </button>
-        </section>
-
-        <section className="mb-6">
-          <label className="block text-[10px] font-mono tracking-wider text-white/30 uppercase mb-3">Networking Station</label>
-          <div className="space-y-3">
-            {stations.length === 0 ? (
-              <div className="p-4 border border-white/5 rounded-sm bg-white/[0.01] text-center">
-                <p className="text-xs text-white/30 m-0 italic">No stations configured for this event yet.</p>
-              </div>
-            ) : stations.map((station) => {
-              const isSelected = stationId === station.id;
+        {/* Industry */}
+        <section style={{ marginBottom: "16px" }}>
+          <label style={{ fontSize: "10px", fontWeight: "700", letterSpacing: "0.15em", color: DUSK, textTransform: "uppercase", display: "block", marginBottom: "10px" }}>Industry</label>
+          <div style={{ display: "flex", flexWrap: "wrap", gap: "8px" }}>
+            {INDUSTRIES.map(ind => {
+              const sel = industry === ind;
               return (
-                <button type="button" key={station.id} onClick={() => setStationId(station.id)}
-                  className="w-full text-left p-4 rounded-sm border flex items-start gap-4 transition-all duration-300 outline-none"
-                  style={{ background: isSelected ? "rgba(249,115,22,0.02)" : "rgba(255,255,255,0.01)", borderColor: isSelected ? "#FFFFFF" : "rgba(255,255,255,0.03)" }}>
-                  <div className="w-4 h-4 rounded-full border mt-0.5 flex items-center justify-center transition-all duration-300 shrink-0"
-                    style={{ borderColor: isSelected ? "#FFFFFF" : "rgba(255,255,255,0.2)", background: isSelected ? "#FFFFFF" : "transparent" }} />
-                  <div className="space-y-0.5">
-                    <h4 className="text-sm font-medium m-0 transition-colors duration-300" style={{ color: isSelected ? "#FFFFFF" : "#FDFBF7" }}>{station.name}</h4>
-                    <p className="text-xs text-white/40 m-0 leading-relaxed">{station.subtitle || "Networking station"}</p>
-                  </div>
+                <button key={ind} onClick={() => setIndustry(sel ? "" : ind)}
+                  style={{ padding: "7px 14px", borderRadius: "20px", border: "1px solid", fontSize: "12px", fontWeight: sel ? "600" : "400", cursor: "pointer",
+                    background: sel ? "rgba(226,109,52,0.1)" : "rgba(255,255,255,0.02)",
+                    borderColor: sel ? "rgba(226,109,52,0.4)" : "rgba(255,255,255,0.06)",
+                    color: sel ? EMBER : "rgba(255,255,255,0.5)",
+                  }}>
+                  {ind}
                 </button>
               );
             })}
           </div>
         </section>
 
-        {error && <p className="text-xs text-[#F97316] text-center mt-4 font-mono">{error}</p>}
+        {/* Professional Presence */}
+        <section style={{ marginBottom: "16px" }}>
+          <label style={{ fontSize: "10px", fontWeight: "700", letterSpacing: "0.15em", color: DUSK, textTransform: "uppercase", display: "block", marginBottom: "8px" }}>Professional Presence</label>
+          <button onClick={() => setIsPresenceOpen(true)}
+            style={{ width: "100%", display: "flex", alignItems: "center", justifyContent: "space-between", padding: "14px", background: "rgba(255,255,255,0.01)", border: "1px solid rgba(255,255,255,0.04)", borderRadius: "10px", cursor: "pointer", color: "#FDFBF7" }}>
+            <span style={{ fontSize: "13px", color: "rgba(255,255,255,0.5)" }}>{getPresenceLabel()}</span>
+            <span style={{ fontSize: "10px", letterSpacing: "0.15em", color: DUSK }}>MANAGE</span>
+          </button>
+        </section>
+
+        {/* What Brings You Here */}
+        <section style={{ marginBottom: "16px" }}>
+          <label style={{ fontSize: "10px", fontWeight: "700", letterSpacing: "0.15em", color: DUSK, textTransform: "uppercase", display: "block", marginBottom: "8px" }}>What Brings You Here?</label>
+          <button onClick={() => setIsIntentOpen(true)}
+            style={{ width: "100%", display: "flex", alignItems: "center", justifyContent: "space-between", padding: "14px", background: "rgba(255,255,255,0.01)", border: "1px solid rgba(255,255,255,0.04)", borderRadius: "10px", cursor: "pointer", color: "#FDFBF7" }}>
+            <span style={{ fontSize: "13px", color: "rgba(255,255,255,0.5)" }}>{getIntentLabel()}</span>
+            <span style={{ fontSize: "10px", letterSpacing: "0.15em", color: DUSK }}>SELECT</span>
+          </button>
+        </section>
+
+        {/* Networking Station */}
+        {stations.length > 0 && (
+          <section style={{ marginBottom: "16px" }}>
+            <label style={{ fontSize: "10px", fontWeight: "700", letterSpacing: "0.15em", color: DUSK, textTransform: "uppercase", display: "block", marginBottom: "10px" }}>Networking Station</label>
+            <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
+              {stations.map(station => {
+                const sel = stationId === station.id;
+                return (
+                  <button key={station.id} onClick={() => setStationId(station.id)}
+                    style={{ display: "flex", alignItems: "center", gap: "12px", padding: "14px", textAlign: "left", borderRadius: "10px", border: "1px solid", cursor: "pointer",
+                      background: sel ? "rgba(226,109,52,0.04)" : "rgba(255,255,255,0.01)",
+                      borderColor: sel ? EMBER : "rgba(255,255,255,0.05)",
+                    }}>
+                    <div style={{ width: "16px", height: "16px", borderRadius: "50%", flexShrink: 0, border: sel ? `2px solid ${EMBER}` : "2px solid rgba(255,255,255,0.2)", background: sel ? EMBER : "transparent" }} />
+                    <div>
+                      <p style={{ fontSize: "13px", fontWeight: "500", color: sel ? "#fff" : "rgba(255,255,255,0.7)", margin: 0 }}>{station.name}</p>
+                      {station.subtitle && <p style={{ fontSize: "11px", color: "rgba(255,255,255,0.35)", margin: "2px 0 0" }}>{station.subtitle}</p>}
+                    </div>
+                  </button>
+                );
+              })}
+            </div>
+          </section>
+        )}
+
+        {error && <p style={{ fontSize: "12px", color: EMBER, textAlign: "center", marginTop: "8px", fontFamily: "monospace" }}>{error}</p>}
       </main>
 
-      <footer
-        className="fixed bottom-0 left-0 right-0 bg-[#0A0A0A]/95 backdrop-blur-md border-t border-white/[0.02] px-6 flex items-center z-40"
-        style={{ paddingTop: "16px", paddingBottom: "calc(16px + env(safe-area-inset-bottom))" }}
-      >
-        <div className="w-full max-w-md mx-auto">
-          <button
-            disabled={!canSubmit}
-            onClick={onSubmit}
-            className="w-full h-11 font-mono text-xs tracking-[0.22em] font-bold rounded-sm transition-all duration-300 text-center"
-            style={{
-              background: canSubmit ? "#FFFFFF" : "rgba(255,255,255,0.02)",
-              border: canSubmit ? "1px solid #F97316" : "1px solid rgba(255,255,255,0.05)",
-              color: canSubmit ? "#000000" : "rgba(255,255,255,0.15)",
+      <footer style={{ position: "fixed", bottom: 0, left: 0, right: 0, background: "rgba(10,10,10,0.95)", backdropFilter: "blur(12px)", borderTop: "1px solid rgba(255,255,255,0.04)", padding: "16px 24px", paddingBottom: "calc(16px + env(safe-area-inset-bottom))", zIndex: 40 }}>
+        <div style={{ maxWidth: "480px", margin: "0 auto" }}>
+          <button disabled={!canSubmit} onClick={onSubmit}
+            style={{ width: "100%", height: "46px", fontFamily: "monospace", fontSize: "12px", letterSpacing: "0.22em", fontWeight: "700", borderRadius: "8px", transition: "all 0.3s",
+              background: canSubmit ? "#fff" : "rgba(255,255,255,0.02)",
+              border: canSubmit ? `1px solid ${EMBER}` : "1px solid rgba(255,255,255,0.05)",
+              color: canSubmit ? "#000" : "rgba(255,255,255,0.15)",
               cursor: canSubmit ? "pointer" : "not-allowed",
-            }}
-          >
+            }}>
             {saving ? "SAVING..." : "COMPLETE PROFILE"}
           </button>
         </div>

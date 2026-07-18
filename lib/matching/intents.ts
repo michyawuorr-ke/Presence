@@ -1,125 +1,91 @@
-// ─────────────────────────────────────────────────────────────────────────────
-// Intent registry — single source of truth for all intent definitions.
-// The labels here must match exactly what's stored in guest_profiles.networking_intents
-// (which stores the `id` field as the value).
-//
-// COMPLEMENTARITY MAP: which intents pair well with which others.
-// This is the core of the matching engine — not just "same intent"
-// but "these two needs complete each other".
-// ─────────────────────────────────────────────────────────────────────────────
+// ─────────────────────────────────────────────────────────────
+// Intent system — grouped sub-categories, not flat labels.
+// The `id` is what gets stored in guest_profiles.networking_intents.
+// The `group` is the visual header in the picker.
+// ─────────────────────────────────────────────────────────────
 
 export interface Intent {
   id: string;
-  label: string;
-  description: string;
-  // When displayed in matchmaking context, what does this person offer vs seek?
-  seeking: string;   // short phrase describing what they want
-  offering: string;  // short phrase describing what they bring
+  label: string;         // what shows on the pill badge
+  group: string;         // header grouping
+  description: string;   // one-line description shown in picker
+  seeking: boolean;      // true = this person wants something, false = they offer it
 }
 
 export const INTENTS: Intent[] = [
-  {
-    id: "Capital",
-    label: "Capital",
-    description: "Fundraising, investors, and strategic ideas.",
-    seeking: "seeking investment",
-    offering: "deploying capital",
-  },
-  {
-    id: "Synergy",
-    label: "Synergy",
-    description: "Collaborators, co-founders, and deep execution partnerships.",
-    seeking: "seeking a co-builder",
-    offering: "open to deep partnerships",
-  },
-  {
-    id: "Mentorship",
-    label: "Mentorship",
-    description: "Actively seeking guidance or looking to offer perspective.",
-    seeking: "seeking a mentor",
-    offering: "available to mentor",
-  },
-  {
-    id: "Opportunities",
-    label: "Opportunities",
-    description: "Career growth, partnerships, and introductions.",
-    seeking: "open to new roles",
-    offering: "has opportunities to share",
-  },
+  // Capital
+  { id: "Fundraising",          label: "Fundraising",            group: "Capital",      description: "Looking to raise capital for my venture",            seeking: true  },
+  { id: "Investor",             label: "Investor",               group: "Capital",      description: "Deploying capital and looking for opportunities",      seeking: false },
+
+  // Synergy
+  { id: "Seeking Co-founder",   label: "Seeking Co-founder",     group: "Synergy",      description: "Looking for a co-founder to build with",              seeking: true  },
+  { id: "Open to Partnerships", label: "Open to Partnerships",   group: "Synergy",      description: "Open to strategic partnerships and collaboration",     seeking: false },
+
+  // Mentorship
+  { id: "Seeking Mentorship",   label: "Seeking Mentorship",     group: "Mentorship",   description: "Looking for guidance from experienced practitioners",   seeking: true  },
+  { id: "Mentoring",            label: "Mentoring",              group: "Mentorship",   description: "Available to mentor and share experience",             seeking: false },
+
+  // Opportunities
+  { id: "Open to New Roles",    label: "Open to New Roles",      group: "Opportunities","description": "Exploring career opportunities and new challenges",   seeking: true  },
+  { id: "Has Opportunities",    label: "Has Opportunities",      group: "Opportunities","description": "Has roles, projects or introductions to offer",       seeking: false },
 ];
+
+export const INTENT_GROUPS = ["Capital", "Synergy", "Mentorship", "Opportunities"] as const;
 
 export const INTENT_MAP: Record<string, Intent> = Object.fromEntries(
   INTENTS.map(i => [i.id, i])
 );
 
-// Which intents complement each other (bidirectional).
-// A score multiplier is applied when two people have complementary intents.
-export const COMPLEMENTARY_PAIRS: Array<[string, string, number]> = [
-  // [intentA, intentB, score bonus 0-1]
-  ["Capital",      "Capital",     0.3],  // Both fundraising/investing — relevant but not perfect
-  ["Capital",      "Synergy",     0.8],  // Founder + investor pairing — high value
-  ["Capital",      "Opportunities", 0.6], // Investor + career seeker — can help each other
-  ["Synergy",      "Synergy",     0.7],  // Two builders — strong pairing
-  ["Synergy",      "Opportunities", 0.5],
-  ["Mentorship",   "Mentorship",  0.5],  // Mentor + mentee — good
-  ["Mentorship",   "Capital",     0.4],
-  ["Mentorship",   "Synergy",     0.5],
-  ["Mentorship",   "Opportunities", 0.7], // Mentor + opportunity seeker — very natural
-  ["Opportunities","Opportunities", 0.3], // Both seeking — lower value
-];
+export const INTENTS_BY_GROUP: Record<string, Intent[]> = INTENTS.reduce(
+  (acc, i) => { (acc[i.group] = acc[i.group] || []).push(i); return acc; },
+  {} as Record<string, Intent[]>
+);
 
-// Get the complementarity score between two sets of intents (0–1)
+// Complementarity: seeker + offerer in the same group = highest score.
+// Seeker + seeker in same group = low. Cross-group = medium if related.
 export function intentScore(intentsA: string[], intentsB: string[]): number {
   if (!intentsA.length || !intentsB.length) return 0;
-
   let best = 0;
   for (const a of intentsA) {
     for (const b of intentsB) {
-      for (const [pA, pB, score] of COMPLEMENTARY_PAIRS) {
-        if ((a === pA && b === pB) || (a === pB && b === pA)) {
-          best = Math.max(best, score);
-        }
+      const iA = INTENT_MAP[a];
+      const iB = INTENT_MAP[b];
+      if (!iA || !iB) continue;
+      let score = 0;
+      if (iA.group === iB.group) {
+        // Same group — seeker + offerer = perfect complement
+        score = iA.seeking !== iB.seeking ? 1.0 : 0.2;
+      } else {
+        // Cross-group pairings that make sense
+        const pair = [iA.group, iB.group].sort().join("+");
+        score = ({ "Capital+Synergy": 0.6, "Mentorship+Opportunities": 0.5, "Capital+Opportunities": 0.4, "Mentorship+Synergy": 0.4 } as any)[pair] ?? 0;
       }
+      best = Math.max(best, score);
     }
   }
   return best;
 }
 
-// Plain-English explanation of why two intent sets match
 export function intentMatchReason(
   myIntents: string[],
   theirIntents: string[],
-  theirName: string
+  theirName: string,
 ): string | null {
   if (!myIntents.length || !theirIntents.length) return null;
-
-  let bestScore = 0;
-  let bestA = "";
-  let bestB = "";
-
+  let best = 0, bestA = "", bestB = "";
   for (const a of myIntents) {
     for (const b of theirIntents) {
-      for (const [pA, pB, score] of COMPLEMENTARY_PAIRS) {
-        if ((a === pA && b === pB) || (a === pB && b === pA)) {
-          if (score > bestScore) {
-            bestScore = score;
-            bestA = a;
-            bestB = b;
-          }
-        }
-      }
+      const iA = INTENT_MAP[a];
+      const iB = INTENT_MAP[b];
+      if (!iA || !iB) continue;
+      const score = iA.group === iB.group && iA.seeking !== iB.seeking ? 1.0 :
+                    iA.group === iB.group ? 0.2 : 0.3;
+      if (score > best) { best = score; bestA = a; bestB = b; }
     }
   }
-
-  if (bestScore < 0.3) return null;
-
+  if (best < 0.3) return null;
   const iA = INTENT_MAP[bestA];
   const iB = INTENT_MAP[bestB];
   if (!iA || !iB) return null;
-
-  const first = myIntents.includes(bestA);
-  const myAction  = first ? iA.seeking  : iA.offering;
-  const theirAction = first ? iB.offering : iB.seeking;
-
-  return `You're ${myAction} and ${theirName} is ${theirAction}`;
+  return `You're ${iA.label.toLowerCase()} and ${theirName} is ${iB.label.toLowerCase()}`;
 }

@@ -116,7 +116,7 @@ export default function SceneView({ event, registration, profile, masterProfile,
   }, [event]);
 
   return (
-    <div style={{ minHeight: "100vh", background: "linear-gradient(170deg,#0a0a0c 0%,#0f0d14 40%,#0a0a0c 100%)", paddingBottom: "100px", fontFamily: "var(--font-inter),-apple-system,sans-serif" }}>
+    <div style={{ minHeight: "100vh", background: "linear-gradient(170deg,#0a0a0c 0%,#0f0d14 40%,#0a0a0c 100%)", paddingBottom: "calc(80px + env(safe-area-inset-bottom))", fontFamily: "var(--font-inter),-apple-system,sans-serif" }}>
       <style>{`
         @keyframes pulse{0%,100%{box-shadow:0 0 0 0 rgba(74,222,128,0.7)}50%{box-shadow:0 0 0 8px rgba(74,222,128,0)}}
         @keyframes spin{to{transform:rotate(360deg)}}
@@ -181,22 +181,43 @@ export default function SceneView({ event, registration, profile, masterProfile,
         />
       )}
 
-      {/* Bottom Nav */}
-      <div style={{ position: "fixed", bottom: "calc(8px + env(safe-area-inset-bottom))", left: "8px", right: "8px", background: "rgba(15,15,19,0.92)", backdropFilter: "blur(32px)", borderRadius: "20px", border: "1px solid rgba(255,255,255,0.08)", display: "flex", padding: "8px 4px", boxShadow: "0 8px 32px rgba(0,0,0,0.4)", zIndex: 40 }}>
-        {nav.map(item => (
-          <button key={item.id} onClick={() => { setTab(item.id as Tab); setEditing(false); }}
-            style={{ flex: 1, display: "flex", flexDirection: "column", alignItems: "center", gap: "4px", background: tab === item.id ? "rgba(226,109,52,0.1)" : "none", border: "none", cursor: "pointer", padding: "8px 4px", borderRadius: "12px", transition: "all 0.15s ease", boxShadow: tab === item.id ? "inset 0 0 0 1px rgba(226,109,52,0.15)" : "none", position: "relative" }}>
-            <span style={{ fontSize: "16px", opacity: tab === item.id ? 1 : 0.35, transform: tab === item.id ? "scale(1.1)" : "scale(1)", transition: "all 0.2s", position: "relative" }}>
-              {item.e}
-              {!!item.badge && item.badge > 0 && (
-                <span style={{ position: "absolute", top: "-6px", right: "-10px", background: "#E26D34", color: "#000", fontSize: "9px", fontWeight: "700", borderRadius: "9px", minWidth: "16px", height: "16px", display: "flex", alignItems: "center", justifyContent: "center", padding: "0 4px", lineHeight: 1 }}>
-                  {item.badge > 9 ? "9+" : item.badge}
+      {/* ── Bottom Navigation ── */}
+      <div style={{
+        position: "fixed", bottom: 0, left: 0, right: 0,
+        background: "rgba(8,8,10,0.96)",
+        backdropFilter: "blur(40px)", WebkitBackdropFilter: "blur(40px)",
+        borderTop: "1px solid rgba(255,255,255,0.05)",
+        zIndex: 40,
+      }}>
+        <div style={{ display: "flex", padding: "0 4px", paddingBottom: "env(safe-area-inset-bottom, 12px)" }}>
+          {nav.map(item => {
+            const active = tab === item.id;
+            return (
+              <button key={item.id}
+                onClick={() => { setTab(item.id as Tab); setEditing(false); }}
+                style={{ flex: 1, display: "flex", flexDirection: "column", alignItems: "center", gap: "4px", background: "none", border: "none", cursor: "pointer", padding: "10px 4px 6px", position: "relative", outline: "none" }}>
+                {/* Active — slim ember line at very top */}
+                <div style={{
+                  position: "absolute", top: 0, left: "50%", transform: "translateX(-50%)",
+                  width: active ? "22px" : "0px", height: "2px",
+                  background: "#E26D34", borderRadius: "0 0 2px 2px",
+                  transition: "width 0.25s cubic-bezier(0.16,1,0.3,1)",
+                }} />
+                {/* Icon */}
+                <span style={{ fontSize: "17px", lineHeight: 1, opacity: active ? 1 : 0.28, transform: active ? "translateY(-1px)" : "none", transition: "all 0.2s", position: "relative" }}>
+                  {item.e}
+                  {!!item.badge && item.badge > 0 && (
+                    <span style={{ position: "absolute", top: "-5px", right: "-8px", background: "#E26D34", color: "#000", fontSize: "8px", fontWeight: "800", borderRadius: "8px", minWidth: "14px", height: "14px", display: "flex", alignItems: "center", justifyContent: "center", padding: "0 3px", lineHeight: 1 }}>
+                      {item.badge > 9 ? "9+" : item.badge}
+                    </span>
+                  )}
                 </span>
-              )}
-            </span>
-            <span style={{ fontSize: "11px", color: tab === item.id ? "#E26D34" : "#999", fontWeight: tab === item.id ? "600" : "400", letterSpacing: "0.02em" }}>{item.l}</span>
-          </button>
-        ))}
+                {/* Label */}
+                <span style={{ fontSize: "10px", color: active ? "#f0ede8" : "rgba(255,255,255,0.28)", fontWeight: active ? "600" : "400", letterSpacing: "0.03em", transition: "all 0.2s" }}>{item.l}</span>
+              </button>
+            );
+          })}
+        </div>
       </div>
     </div>
   );

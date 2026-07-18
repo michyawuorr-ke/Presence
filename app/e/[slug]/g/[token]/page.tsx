@@ -36,6 +36,7 @@ export default function GuestEntryPage() {
   const [displayName, setDisplayName] = useState("");
   const [role, setRole] = useState("");
   const [organisation, setOrganisation] = useState("");
+  const [industry, setIndustry] = useState("");
   const [bio, setBio] = useState("");
   const [presence, setPresence] = useState({ linkedin: "", website: "", portfolio: "" });
   const [isPresenceOpen, setIsPresenceOpen] = useState(false);
@@ -106,6 +107,7 @@ export default function GuestEntryPage() {
         setDisplayName(prefill.display_name ?? "");
         setRole(prefill.role_title ?? "");
         setOrganisation(prefill.organisation ?? "");
+        setIndustry(prefill.industry ?? "");
         setBio(prefill.bio ?? "");
 
         setPresence({
@@ -132,6 +134,7 @@ export default function GuestEntryPage() {
         displayName,
         roleTitle: role,
         organisation,
+        industry,
         bio,
         presence,
         intents,
@@ -192,6 +195,8 @@ export default function GuestEntryPage() {
         setRole={setRole}
         organisation={organisation}
         setOrganisation={setOrganisation}
+        industry={industry}
+        setIndustry={setIndustry}
         bio={bio}
         setBio={setBio}
         masterProfile={masterProfile}

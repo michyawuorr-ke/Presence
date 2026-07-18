@@ -1,42 +1,94 @@
-type IntentModalProps = {
-	  isOpen: boolean;
-	    onClose: () => void;
-	      intents: string[];
-	        toggleIntent: (intent: string) => void;
-};	
+"use client";
+import { INTENTS_BY_GROUP, INTENT_GROUPS, INTENT_MAP } from "@/lib/matching/intents";
 
-export default function IntentModal({
-	  isOpen,
-	    onClose,
-	      intents,
-	        toggleIntent,
-}: IntentModalProps) {
-	  return (
-		      <>
-		            {isOpen && (
+const EMBER = "#E26D34";
+const DUSK  = "#8A7355";
 
-	        <div className="fixed inset-0 bg-black/75 backdrop-blur-sm z-50 flex flex-col justify-end" onClick={onClose}>                                  <div className="w-full bg-[#0E0E0E] border-t border-white/[0.06] rounded-t-xl p-6 max-w-md mx-auto space-y-3 animate-sheet-up" onClick={e => e.stopPropagation()}>                                                        <div className="flex justify-between items-center pb-2 border-b border-white/5">
-		              <h3 className="text-sm font-medium tracking-wide text-white/80 m-0">What Brings You Here?</h3>
-			                    <button type="button" onClick={onClose} className="text-[10px] font-mono text-white/40 hover:text-white tracking-widest bg-transparent border-none cursor-pointer">CLOSE</button>
-					                </div>                                                <div className="space-y-3 max-h-[300px] overflow-y-auto pr-1">
-							              {[
-									                      { id: "Capital", label: "Capital", desc: "Fundraising, investors, and strategic ideas." },
-											                      { id: "Synergy", label: "Synergy", desc: "Collaborators, co-founders, and deep execution partnerships." },
-													                      { id: "Mentorship", label: "Mentorship", desc: "Actively seeking guidance or looking to offer perspective." },
-															                      { id: "Opportunities", label: "Opportunities", desc: "Career growth, partnerships, and introductions." },                                                       ].map((item) => {
-																		                      const isActive = intents.includes(item.id);                                                                 return (
-																					                        <button type="button" key={item.id} onClick={() => toggleIntent(item.id)}
-																								                    className="w-full text-left p-4 bg-white/[0.01] border border-white/[0.03] rounded-sm relative outline-none flex items-center transition-all duration-300"                                                              style={{ paddingLeft: isActive ? "22px" : "16px" }}>
-																										                        {isActive && <div className="absolute left-0 top-0 bottom-0 w-[2px] bg-[#F97316] animate-slide-line" />}
-																													                    <div>                                                   <h4 className="text-sm font-medium m-0 transition-colors duration-300" style={{ color: isActive ? "#FFFFFF" : "#FDFBF7" }}>{item.label}</h4>
-																															                          <p className="text-[11px] text-white/40 m-0 mt-1 leading-relaxed">{item.desc}</p>                         </div>
-																																		                    </button>
-																																				                    );
-																																						                  })}
-																																								              </div>
-																																									                  <button type="button" onClick={onClose} className="w-full h-11 bg-white/5 border border-white/10 rounded-sm font-mono text-[11px] tracking-widest text-[#FDFBF7] mt-2 cursor-pointer hover:bg-white/10 transition-colors">CONFIRM SELECTION</button>
-																																											            </div>
-																																												            </div>
-																																													          )}
-																																														            </>                                                     );
-																																															    }
+interface Props {
+  isOpen: boolean;
+  onClose: () => void;
+  intents: string[];
+  toggleIntent: (id: string) => void;
+}
+
+export default function IntentModal({ isOpen, onClose, intents, toggleIntent }: Props) {
+  if (!isOpen) return null;
+
+  return (
+    <div
+      style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.75)", zIndex: 50, display: "flex", flexDirection: "column", justifyContent: "flex-end" }}
+      onClick={onClose}
+    >
+      <div
+        style={{ background: "#0E0E0E", borderRadius: "24px 24px 0 0", padding: "24px", paddingBottom: "calc(24px + env(safe-area-inset-bottom))", maxHeight: "80vh", overflowY: "auto" }}
+        onClick={e => e.stopPropagation()}
+      >
+        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "6px" }}>
+          <p style={{ fontSize: "14px", fontWeight: "600", color: "#fff", margin: 0 }}>What brings you here?</p>
+          <button onClick={onClose} style={{ background: "transparent", border: "none", color: "#555", fontSize: "20px", cursor: "pointer", lineHeight: 1 }}>×</button>
+        </div>
+        <p style={{ fontSize: "12px", color: "rgba(255,255,255,0.35)", margin: "0 0 20px" }}>Pick the ones that apply — you can select across categories.</p>
+
+        {INTENT_GROUPS.map(group => (
+          <div key={group} style={{ marginBottom: "20px" }}>
+            <p style={{ fontSize: "9px", fontWeight: "700", letterSpacing: "0.18em", color: DUSK, textTransform: "uppercase", margin: "0 0 10px" }}>{group}</p>
+            <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
+              {(INTENTS_BY_GROUP[group] || []).map(intent => {
+                const selected = intents.includes(intent.id);
+                return (
+                  <button
+                    key={intent.id}
+                    onClick={() => toggleIntent(intent.id)}
+                    style={{
+                      display: "flex", alignItems: "flex-start", gap: "12px",
+                      padding: "12px 14px", borderRadius: "10px", textAlign: "left", cursor: "pointer",
+                      background: selected ? "rgba(226,109,52,0.08)" : "rgba(255,255,255,0.02)",
+                      border: selected ? "1px solid rgba(226,109,52,0.35)" : "1px solid rgba(255,255,255,0.05)",
+                      transition: "all 0.2s",
+                    }}
+                  >
+                    {/* Radio indicator */}
+                    <div style={{
+                      width: "16px", height: "16px", borderRadius: "50%", flexShrink: 0, marginTop: "2px",
+                      border: selected ? `2px solid ${EMBER}` : "2px solid rgba(255,255,255,0.2)",
+                      background: selected ? EMBER : "transparent",
+                      transition: "all 0.2s",
+                    }} />
+                    <div>
+                      <p style={{ fontSize: "13px", fontWeight: "600", color: selected ? "#fff" : "rgba(255,255,255,0.7)", margin: "0 0 2px" }}>
+                        {intent.label}
+                      </p>
+                      <p style={{ fontSize: "11px", color: "rgba(255,255,255,0.35)", margin: 0, lineHeight: "1.4" }}>
+                        {intent.description}
+                      </p>
+                    </div>
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+        ))}
+
+        {intents.length > 0 && (
+          <div style={{ marginTop: "4px", padding: "12px 14px", background: "rgba(226,109,52,0.04)", border: "1px solid rgba(226,109,52,0.1)", borderRadius: "10px" }}>
+            <p style={{ fontSize: "10px", color: EMBER, fontWeight: "700", letterSpacing: "0.12em", textTransform: "uppercase", margin: "0 0 6px" }}>Selected</p>
+            <div style={{ display: "flex", flexWrap: "wrap", gap: "6px" }}>
+              {intents.map(id => (
+                <span key={id} style={{ fontSize: "11px", color: EMBER, background: "rgba(226,109,52,0.1)", border: "1px solid rgba(226,109,52,0.25)", borderRadius: "6px", padding: "3px 9px", fontWeight: "600" }}>
+                  {INTENT_MAP[id]?.label ?? id}
+                </span>
+              ))}
+            </div>
+          </div>
+        )}
+
+        <button
+          onClick={onClose}
+          style={{ width: "100%", marginTop: "16px", padding: "12px", borderRadius: "10px", background: EMBER, border: "none", color: "#fff", fontSize: "13px", fontWeight: "700", cursor: "pointer", letterSpacing: "0.06em" }}
+        >
+          Done
+        </button>
+      </div>
+    </div>
+  );
+}

@@ -7,6 +7,7 @@ type SubmitGuestOnboardingParams = {
   displayName: string;
   roleTitle: string;
   organisation: string;
+  industry: string;
   bio: string;
   presence: {
     linkedin: string;
@@ -43,6 +44,7 @@ export async function submitGuestOnboarding(params: SubmitGuestOnboardingParams)
       display_name: params.displayName,
       role_title: params.roleTitle,
       organisation: params.organisation,
+      industry: params.industry,
       bio: params.bio,
       linkedin_url: params.presence.linkedin,
       website_url: params.presence.website,
@@ -88,6 +90,7 @@ export async function submitGuestOnboarding(params: SubmitGuestOnboardingParams)
       display_name: params.displayName,
       role_title: params.roleTitle,
       organisation: params.organisation,
+      industry: params.industry,
       bio: params.bio,
       platform_type: "link",
       platform_value:
