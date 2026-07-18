@@ -153,21 +153,25 @@ export async function POST(req:NextRequest){
       return NextResponse.json({success:true,already:true,created:createdHandshake,profile:targetProfile});
     }
 
+    // Mutual unlock — one person scanning creates unlock rows for both sides.
+    // Neither party had to scan the other; the physical act of showing
+    // your QR is mutual consent.
+    const unlockRows=[
+      { event_id:scannerReg.event_id, handshake_id:handshake.id, unlocker_id:sp.id, unlocked_id:tp.id },
+      { event_id:scannerReg.event_id, handshake_id:handshake.id, unlocker_id:tp.id, unlocked_id:sp.id },
+    ];
+
     const{error:unlockErr}=await supabase
       .from('profile_unlocks')
-      .insert({
-        event_id:scannerReg.event_id,
-        handshake_id:handshake.id,
-        unlocker_id:sp.id,
-        unlocked_id:tp.id,
-      });
+      .insert(unlockRows)
+      .select();
 
     if(unlockErr){
       console.error('profile_unlocks insert error:',unlockErr.message);
       return NextResponse.json({error:'Could not record the unlock'},{status:500});
     }
 
-    return NextResponse.json({success:true,created:createdHandshake,profile:targetProfile});
+    return NextResponse.json({success:true,created:createdHandshake,profile:targetProfile,unlock_id:unlockRows[0]?.handshake_id});
 
   }catch(err){
     console.error('Unlock error:',err);

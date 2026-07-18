@@ -23,10 +23,16 @@ export function parseIntents(raw: any): string[] {
   return [];
 }
 
-export const REASON_OPTIONS = ["Capital", "Synergy", "Mentorship", "Opportunities"];
-
-// Full intent definitions — used for display and matching
-export { INTENTS, INTENT_MAP } from "@/lib/matching/intents";
+// REASON_OPTIONS kept for backward compatibility but now points to
+// the sub-category intent ids from the matching library.
+// Use INTENTS / INTENTS_BY_GROUP / INTENT_GROUPS directly for new UI.
+export { INTENTS, INTENTS_BY_GROUP, INTENT_GROUPS, INTENT_MAP } from "@/lib/matching/intents";
+export const REASON_OPTIONS = [
+  "Fundraising","Investor",
+  "Seeking Co-founder","Open to Partnerships",
+  "Seeking Mentorship","Mentoring",
+  "Open to New Roles","Has Opportunities",
+];
 
 export const PALETTE = {
   orange: "#E26D34",

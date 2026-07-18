@@ -1,7 +1,7 @@
 "use client";
 import { useEffect, useState, useRef, useCallback } from "react";
 import { supabase } from "@/lib/supabase/client";
-import { getFirstName, parseIntents, REASON_OPTIONS, PALETTE } from "./shared";
+import { getFirstName, parseIntents, REASON_OPTIONS, PALETTE, INTENTS_BY_GROUP, INTENT_GROUPS, INTENT_MAP } from "./shared";
 import AttendeeCard from "./AttendeeCard";
 import PreEventDiscovery from "./PreEventDiscovery";
 import MatchRecommendations from "./MatchRecommendations";
@@ -280,24 +280,34 @@ export default function NetworkingTab({ event, profile, isLive, isEnded, registr
               <div style={{margin:"12px 0"}}>
                 <p style={{fontSize:"10px",color:"rgba(240,237,232,0.3)",letterSpacing:"0.1em",textTransform:"uppercase",marginBottom:"6px"}}>Their interests</p>
                 <div style={{display:"flex",flexWrap:"wrap",gap:"6px"}}>
-                  {confirmNode.networking_intents.map((intent:string)=>(
-                    <span key={intent} style={{fontSize:"11px",color:PALETTE.orange,background:"rgba(226,109,52,0.08)",border:"1px solid rgba(226,109,52,0.2)",borderRadius:"5px",padding:"3px 10px",fontWeight:"600"}}>{intent}</span>
-                  ))}
+                  {confirmNode.networking_intents.map((intent:string)=>{
+                    const iObj=(INTENT_MAP as any)[intent];
+                    return <span key={intent} style={{fontSize:"11px",color:PALETTE.orange,background:"rgba(226,109,52,0.08)",border:"1px solid rgba(226,109,52,0.2)",borderRadius:"5px",padding:"3px 10px",fontWeight:"600"}}>{iObj?.label??intent}</span>;
+                  })}
                 </div>
               </div>
             )}
-            <p style={{fontSize:"10px",color:"rgba(240,237,232,0.3)",letterSpacing:"0.1em",textTransform:"uppercase",marginBottom:"8px",marginTop:"8px"}}>Why do you want to connect?</p>
-            <div style={{display:"flex",flexWrap:"wrap",gap:"6px",marginBottom:"4px"}}>
-              {REASON_OPTIONS.map(reason=>(
-                <button key={reason} onClick={()=>setSelectedLiveReason(reason)} style={{fontSize:"12px",fontWeight:"600",padding:"6px 12px",borderRadius:"8px",cursor:"pointer",background:selectedLiveReason===reason?PALETTE.orange:"transparent",color:selectedLiveReason===reason?"#000":PALETTE.orange,border:`1px solid rgba(226,109,52,0.4)`}}>
-                  {reason}
-                </button>
-              ))}
-            </div>
+            <p style={{fontSize:"10px",color:"rgba(240,237,232,0.3)",letterSpacing:"0.1em",textTransform:"uppercase",marginBottom:"12px",marginTop:"8px"}}>Why do you want to connect?</p>
+            {INTENT_GROUPS.map(group=>(
+              <div key={group} style={{marginBottom:"10px"}}>
+                <p style={{fontSize:"9px",fontWeight:"700",letterSpacing:"0.16em",color:"#8A7355",textTransform:"uppercase",margin:"0 0 6px"}}>{group}</p>
+                <div style={{display:"flex",flexWrap:"wrap",gap:"6px"}}>
+                  {(INTENTS_BY_GROUP[group]||[]).map(intent=>(
+                    <button key={intent.id} onClick={()=>setSelectedLiveReason(intent.id)}
+                      style={{fontSize:"12px",fontWeight:"600",padding:"7px 12px",borderRadius:"8px",cursor:"pointer",
+                        background:selectedLiveReason===intent.id?"rgba(226,109,52,0.12)":"rgba(255,255,255,0.03)",
+                        color:selectedLiveReason===intent.id?PALETTE.orange:"rgba(240,237,232,0.5)",
+                        border:selectedLiveReason===intent.id?"1px solid rgba(226,109,52,0.4)":"1px solid rgba(255,255,255,0.07)"}}>
+                      {intent.label}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            ))}
             <div style={{display:"flex",gap:"12px",marginTop:"16px"}}>
               <button onClick={()=>{setConfirmNode(null);setSelectedLiveReason("");}} style={{flex:1,padding:"11px",borderRadius:"10px",background:"transparent",color:"rgba(240,237,232,0.5)",border:"1px solid rgba(240,237,232,0.15)",fontSize:"13px",fontWeight:"500",letterSpacing:"0.08em",textTransform:"uppercase",cursor:"pointer"}}>Cancel</button>
               <button onClick={()=>sendRequest(confirmNode)} disabled={!selectedLiveReason} style={{flex:1,padding:"11px",borderRadius:"10px",background:"transparent",color:selectedLiveReason?PALETTE.orange:"rgba(240,237,232,0.2)",border:`1px solid rgba(226,109,52,0.4)`,fontSize:"13px",fontWeight:"500",letterSpacing:"0.08em",textTransform:"uppercase",cursor:selectedLiveReason?"pointer":"default"}}>
-                Send Handshake Request →
+                Send Request →
               </button>
             </div>
           </div>

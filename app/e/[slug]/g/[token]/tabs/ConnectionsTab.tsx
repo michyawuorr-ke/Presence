@@ -3,6 +3,7 @@ import { useState, useEffect, useCallback, useRef } from "react";
 import { supabase } from "@/lib/supabase/client";
 import { getFirstName, cleanUrl, parseIntents } from "./shared";
 import { INTENT_MAP } from "@/lib/matching/intents";
+import DisclosureSheet from "./DisclosureSheet";
 import {
   useConnections,
   usePendingRequests,
@@ -32,6 +33,7 @@ export default function ConnectionsTab({ profile, event, registration, isEnded }
   const [memoryDraft, setMemoryDraft] = useState("");
   const [memorySaving, setMemorySaving] = useState(false);
   const [unlocked, setUnlocked] = useState<Set<string>>(new Set());
+  const [disclosureTarget, setDisclosureTarget] = useState<any>(null); // {profile, unlockId}
 
   // ── Cached queries ─────────────────────────────────────────────────────────
   const { data: connections = [] } = useConnections(profile?.id);
@@ -168,7 +170,7 @@ export default function ConnectionsTab({ profile, event, registration, isEnded }
           <p style={{ color: "#999", fontSize: "14px", textAlign: "center", padding: "40px 0" }}>{isEnded ? "No connections from this event" : "Connect with people to see them here"}</p>
         ) : (
           (connections as any[]).map((c: any) => {
-            const isUnlocked = unlockedSet.has(c.id) || unlocked.has(c.id);
+            const isUnlocked = c.qrUnlocked || unlocked.has(c.id);
             const signalSent = signalSentIds.has(c.id);
             const hasNote = !!(savedNotes as any)[c.id];
             return (
@@ -222,8 +224,8 @@ export default function ConnectionsTab({ profile, event, registration, isEnded }
                       </button>
                     )}
                     {isUnlocked && (
-                      <span style={{ fontSize: "9px", color: "rgba(255,255,255,0.3)", fontWeight: "600", background: "rgba(255,255,255,0.04)", padding: "3px 8px", borderRadius: "5px", letterSpacing: "0.08em" }}>
-                        UNLOCKED
+                      <span style={{ fontSize: "9px", color: "#8A7355", fontWeight: "600", background: "rgba(138,115,85,0.08)", border: "1px solid rgba(138,115,85,0.15)", padding: "3px 8px", borderRadius: "5px", letterSpacing: "0.08em" }}>
+                        QR Unlocked
                       </span>
                     )}
                   </div>
@@ -305,6 +307,20 @@ export default function ConnectionsTab({ profile, event, registration, isEnded }
             <button onClick={() => setMemoryTarget(null)} style={{ width: "100%", marginTop: "8px", padding: "10px", background: "transparent", border: "none", color: "#8a7355", fontSize: "12px", cursor: "pointer" }}>Skip for now</button>
           </div>
         </div>
+      )}
+      {disclosureTarget && profile && (
+        <DisclosureSheet
+          unlockId={disclosureTarget.unlockId}
+          ownerId={profile.id}
+          viewerId={disclosureTarget.profile.id}
+          viewerName={disclosureTarget.profile.display_name ?? "them"}
+          myProfile={profile}
+          onSave={() => {
+            setDisclosureTarget(null);
+            showToast(`Shared with ${getFirstName(disclosureTarget.profile.display_name)}`);
+          }}
+          onSkip={() => setDisclosureTarget(null)}
+        />
       )}
     </div>
   );

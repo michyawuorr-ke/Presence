@@ -52,16 +52,32 @@ export function useConnections(profileId: string | undefined) {
         h.sender_id === profileId ? h.receiver_id : h.sender_id
       );
 
-      const { data: profiles } = await supabase
-        .from("guest_profiles")
-        .select("*")
-        .in("id", connectedIds);
+      const [{ data: profiles }, { data: unlocks }] = await Promise.all([
+        supabase.from("guest_profiles").select("*").in("id", connectedIds),
+        // Load profile_unlocks for THIS profile — both directions.
+        // A connection is only "unlocked" if an actual QR scan happened.
+        supabase.from("profile_unlocks")
+          .select("unlocker_id,unlocked_id")
+          .or(`unlocker_id.eq.${profileId},unlocked_id.eq.${profileId}`),
+      ]);
+
+      // Build a set of profile ids where a scan has occurred in either direction
+      const scannedSet = new Set<string>();
+      (unlocks || []).forEach((u: any) => {
+        if (u.unlocker_id === profileId) scannedSet.add(u.unlocked_id);
+        if (u.unlocked_id === profileId) scannedSet.add(u.unlocker_id);
+      });
 
       return (profiles || []).map((p: any) => {
         const hs = handshakes.find(
           (h: any) => h.sender_id === p.id || h.receiver_id === p.id
         );
-        return { ...p, handshakeId: hs?.id };
+        return {
+          ...p,
+          handshakeId: hs?.id,
+          // Only true after an actual QR scan — not just from connecting
+          qrUnlocked: scannedSet.has(p.id),
+        };
       });
     },
   });

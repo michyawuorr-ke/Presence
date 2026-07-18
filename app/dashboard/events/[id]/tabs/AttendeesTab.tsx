@@ -26,6 +26,10 @@ export default function AttendeesTab({ eventId, isLive }: AttendeesTabProps) {
   const [confirming, setConfirming] = useState<string | null>(null);
   const [updatingRole, setUpdatingRole] = useState<string | null>(null);
   const [notification, setNotification] = useState("");
+  // Introduction: host selects two attendees to connect
+  const [introMode, setIntroMode] = useState(false);
+  const [introSelected, setIntroSelected] = useState<any[]>([]);
+  const [introducing, setIntroducing] = useState(false);
 
   function toast(msg: string, ms = 2500) {
     setNotification(msg);
@@ -108,6 +112,32 @@ export default function AttendeesTab({ eventId, isLive }: AttendeesTabProps) {
     checked_in: registrations.filter(r => r.checked_in).length,
   };
 
+  async function introduceAttendees() {
+    if (introSelected.length !== 2) return;
+    setIntroducing(true);
+    const [a, b] = introSelected;
+    const { data: profiles } = await supabase
+      .from("guest_profiles")
+      .select("id,registration_id")
+      .in("registration_id", [a.id, b.id]);
+    if (!profiles || profiles.length < 2) { toast("Couldn't find profiles for both attendees"); setIntroducing(false); return; }
+    const [pA, pB] = profiles;
+    const { error } = await supabase.from("handshakes").insert({ sender_id: pA.id, receiver_id: pB.id, status: "accepted" });
+    setIntroducing(false);
+    if (error) { toast("Introduction failed: " + error.message); return; }
+    toast(`✓ ${a.guest_name} and ${b.guest_name} are now connected`);
+    setIntroMode(false);
+    setIntroSelected([]);
+  }
+
+  function toggleIntroSelect(reg: any) {
+    setIntroSelected(prev => {
+      if (prev.find((r: any) => r.id === reg.id)) return prev.filter((r: any) => r.id !== reg.id);
+      if (prev.length >= 2) return [prev[1], reg];
+      return [...prev, reg];
+    });
+  }
+
   if (loading) return (
     <div style={{ padding: "40px", textAlign: "center" }}>
       <p style={{ color: "#555", fontSize: "13px" }}>Loading attendees...</p>
@@ -119,6 +149,29 @@ export default function AttendeesTab({ eventId, isLive }: AttendeesTabProps) {
       {notification && (
         <div style={{ background: "rgba(212,175,55,0.06)", border: "1px solid rgba(212,175,55,0.2)", borderRadius: "10px", padding: "10px 14px", marginBottom: "14px" }}>
           <p style={{ color: GOLD, fontSize: "12px", margin: 0, textAlign: "center" }}>{notification}</p>
+        </div>
+      )}
+
+      {/* Introduction mode */}
+      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "14px" }}>
+        <p style={{ fontSize: "10px", fontWeight: "700", letterSpacing: "0.12em", color: GOLD, textTransform: "uppercase", margin: 0 }}>
+          {introMode ? `Select 2 attendees to connect (${introSelected.length}/2)` : "Attendees"}
+        </p>
+        <button onClick={() => { setIntroMode(!introMode); setIntroSelected([]); }}
+          style={{ padding: "5px 12px", borderRadius: "8px", background: introMode ? "rgba(212,175,55,0.1)" : "transparent", border: "1px solid rgba(212,175,55,0.25)", color: GOLD, fontSize: "11px", fontWeight: "600", cursor: "pointer" }}>
+          {introMode ? "Cancel" : "Introduce Two"}
+        </button>
+      </div>
+
+      {introMode && introSelected.length === 2 && (
+        <div style={{ background: "rgba(212,175,55,0.06)", border: "1px solid rgba(212,175,55,0.2)", borderRadius: "12px", padding: "14px", marginBottom: "14px" }}>
+          <p style={{ fontSize: "12px", color: GOLD, margin: "0 0 10px", fontWeight: "500" }}>
+            Connect <strong>{introSelected[0].guest_name}</strong> with <strong>{introSelected[1].guest_name}</strong>
+          </p>
+          <button onClick={introduceAttendees} disabled={introducing}
+            style={{ width: "100%", padding: "10px", borderRadius: "8px", background: GOLD, border: "none", color: "#000", fontSize: "12px", fontWeight: "700", cursor: "pointer" }}>
+            {introducing ? "Connecting..." : "Confirm Introduction"}
+          </button>
         </div>
       )}
 
@@ -144,8 +197,11 @@ export default function AttendeesTab({ eventId, isLive }: AttendeesTabProps) {
         </p>
       ) : filtered.map(r => {
         const roleObj = roles.find(x => x.id === r.role);
+        const isIntroSelected = introSelected.some((s: any) => s.id === r.id);
         return (
-          <div key={r.id} style={{ background: "rgba(255,255,255,0.01)", border: "1px solid rgba(255,255,255,0.04)", borderRadius: "14px", padding: "14px", marginBottom: "8px" }}>
+          <div key={r.id}
+            onClick={() => introMode && toggleIntroSelect(r)}
+            style={{ background: isIntroSelected ? "rgba(212,175,55,0.06)" : "rgba(255,255,255,0.01)", border: `1px solid ${isIntroSelected ? "rgba(212,175,55,0.3)" : "rgba(255,255,255,0.04)"}`, borderRadius: "14px", padding: "14px", marginBottom: "8px", cursor: introMode ? "pointer" : "default" }}>
             <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: "10px" }}>
               <div style={{ flex: 1, minWidth: 0 }}>
                 {/* Name + check-in badge + role badge */}
