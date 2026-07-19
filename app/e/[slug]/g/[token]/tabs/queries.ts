@@ -13,6 +13,7 @@ export const keys = {
   hostNode:       (eventId: string) => ["host_node", eventId] as const,
   savedNotes:     (profileId: string) => ["saved_notes", profileId] as const,
   incomingSignals:(profileId: string, eventId: string) => ["incoming_signals", profileId, eventId] as const,
+  introductions:  (profileId: string, eventId: string) => ["introductions", profileId, eventId] as const,
 };
 
 // ─── Hooks ───────────────────────────────────────────────────────────────────
@@ -246,16 +247,60 @@ export function useIncomingSignals(profileId: string | undefined, eventId: strin
 // ─── Invalidation helpers ─────────────────────────────────────────────────────
 // Call these after mutations so the cache stays in sync without a full page reload.
 
+/** Host introductions pending for this guest — used in ConnectionsTab */
+export function useIntroductions(profileId: string | undefined, eventId: string | undefined) {
+  return useQuery({
+    queryKey: keys.introductions(profileId ?? "", eventId ?? ""),
+    enabled: !!profileId && !!eventId,
+    staleTime: 10_000,
+    queryFn: async () => {
+      // Fetch introductions where this guest is either party
+      const { data: intros } = await supabase
+        .from("host_introductions")
+        .select("id,guest_a_id,guest_b_id,note,status_a,status_b,created_at")
+        .eq("event_id", eventId!)
+        .or(`guest_a_id.eq.${profileId},guest_b_id.eq.${profileId}`);
+
+      if (!intros?.length) return [];
+
+      // Filter to only introductions where THIS guest's status is still pending
+      const myPending = intros.filter((i: any) => {
+        const isA = i.guest_a_id === profileId;
+        return isA ? i.status_a === "pending" : i.status_b === "pending";
+      });
+
+      // For each introduction, fetch the OTHER person's profile (Level 1 reveal)
+      const otherIds = myPending.map((i: any) =>
+        i.guest_a_id === profileId ? i.guest_b_id : i.guest_a_id
+      );
+
+      const { data: others } = await supabase
+        .from("guest_profiles")
+        .select("id,display_name,industry,networking_intents,role")
+        .in("id", otherIds);
+
+      return myPending.map((i: any) => {
+        const isA      = i.guest_a_id === profileId;
+        const otherId  = isA ? i.guest_b_id : i.guest_a_id;
+        const myStatus = isA ? i.status_a  : i.status_b;
+        const other    = (others || []).find((p: any) => p.id === otherId);
+        return { id: i.id, isA, myStatus, other, note: i.note };
+      }).filter((i: any) => i.other && i.myStatus === "pending");
+    },
+  });
+}
+
 export function useInvalidators(profileId: string, eventId: string) {
   const qc = useQueryClient();
   return {
-    invalidateConnections: () => qc.invalidateQueries({ queryKey: keys.connections(profileId) }),
-    invalidatePending: () => {
+    invalidateConnections:  () => qc.invalidateQueries({ queryKey: keys.connections(profileId) }),
+    invalidatePending:      () => {
       qc.invalidateQueries({ queryKey: keys.pendingCount(profileId, eventId) });
       qc.invalidateQueries({ queryKey: keys.pendingRequests(profileId, eventId) });
     },
-    invalidateAttendees: () => qc.invalidateQueries({ queryKey: keys.attendees(eventId) }),
-    invalidateSignals: () => qc.invalidateQueries({ queryKey: keys.incomingSignals(profileId, eventId) }),
-    invalidateNotes: () => qc.invalidateQueries({ queryKey: keys.savedNotes(profileId) }),
+    invalidateAttendees:    () => qc.invalidateQueries({ queryKey: keys.attendees(eventId) }),
+    invalidateSignals:      () => qc.invalidateQueries({ queryKey: keys.incomingSignals(profileId, eventId) }),
+    invalidateNotes:        () => qc.invalidateQueries({ queryKey: keys.savedNotes(profileId) }),
+    invalidateIntroductions:() => qc.invalidateQueries({ queryKey: keys.introductions(profileId, eventId) }),
   };
 }

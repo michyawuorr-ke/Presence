@@ -7,7 +7,7 @@ import NetworkingTab from "./tabs/NetworkingTab";
 import TicketTab from "./tabs/TicketTab";
 import ProfileTab from "./tabs/ProfileTab";
 import ConnectionsTab from "./tabs/ConnectionsTab";
-import { usePendingCount } from "./tabs/queries";
+import { usePendingCount, useIntroductions } from "./tabs/queries";
 
 type Tab = "scene" | "networking" | "ticket" | "connections" | "profile";
 
@@ -34,6 +34,8 @@ export default function SceneView({ event, registration, profile, masterProfile,
 
   // Cached pending count for nav badge — no manual effect needed
   const { data: pendingCount = 0 } = usePendingCount(profile?.id, event?.id);
+  const { data: introductions = [] } = useIntroductions(profile?.id, event?.id);
+  const connectionsBadge = pendingCount + (introductions as any[]).length;
 
   const isLive = eventStatus === "live";
   const isEnded = eventStatus === "ended";
@@ -42,7 +44,7 @@ export default function SceneView({ event, registration, profile, masterProfile,
     { id: "scene", l: "Scene", e: "✦" },
     { id: "networking", l: "Networking", e: "◎" },
     { id: "ticket", l: "Ticket", e: "🎟" },
-    { id: "connections", l: "Connections", e: "🤝", badge: pendingCount },
+    { id: "connections", l: "Connections", e: "🤝", badge: connectionsBadge },
     { id: "profile", l: "Profile", e: "◐" },
   ];
 

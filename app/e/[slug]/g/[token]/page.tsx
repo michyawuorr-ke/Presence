@@ -100,21 +100,26 @@ export default function GuestEntryPage() {
 
       // Onboarding pre-fill: master profile is the canonical source
       // (guest_profiles doesn't exist yet for this event).
+      // Always seed from registration name first — this is what they typed
+      // when registering for this event and should be the default display name.
+      // masterProfile overrides if they've attended a previous Oreeti event.
+      const registrationName = result.registration?.guest_name ?? "";
       const prefill = result.masterProfile ?? result.profile;
       if (prefill) {
         setMasterProfile(result.masterProfile ?? null);
-
-        setDisplayName(prefill.display_name ?? "");
+        setDisplayName(prefill.display_name || registrationName);
         setRole(prefill.role_title ?? "");
         setOrganisation(prefill.organisation ?? "");
         setIndustry(prefill.industry ?? "");
         setBio(prefill.bio ?? "");
-
         setPresence({
           linkedin: prefill.linkedin_url ?? "",
           website: prefill.website_url ?? "",
           portfolio: prefill.portfolio_url ?? "",
         });
+      } else if (registrationName) {
+        // First-time Oreeti guest — at least prefill their name
+        setDisplayName(registrationName);
       }
 
       setStage("onboarding");
