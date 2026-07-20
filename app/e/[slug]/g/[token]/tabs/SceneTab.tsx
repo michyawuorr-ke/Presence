@@ -20,11 +20,11 @@ export default function SceneTab({
   return (
     <div>
       <div style={{ padding: "20px 20px 0" }}>
-        {/* OREETI wordmark — ember/white, same as guest onboarding */}
-        <p style={{ fontSize: "11px", fontWeight: "700", letterSpacing: "0.28em", margin: "0 0 16px", fontFamily: "'Helvetica Neue',Arial,sans-serif" }}>
-          <span style={{ color: "#ffffff" }}>OR</span>
-          <span style={{ color: PALETTE.orange }}>EE</span>
-          <span style={{ color: "#ffffff" }}>TI</span>
+        {/* OREETI wordmark — matches host dashboard: Or(white) ee(gold) ti(white) */}
+        <p style={{ fontSize: "19px", fontWeight: "700", letterSpacing: "-0.03em", fontFamily: "'Helvetica Neue',Arial,sans-serif", margin: "0 0 0" }}>
+          <span style={{ color: "#ffffff" }}>Or</span>
+          <span style={{ color: "#E26D34" }}>ee</span>
+          <span style={{ color: "#ffffff" }}>ti</span>
         </p>
       </div>
 

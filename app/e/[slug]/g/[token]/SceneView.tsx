@@ -43,8 +43,8 @@ export default function SceneView({ event, registration, profile, masterProfile,
   const nav = [
     { id: "scene", l: "Scene", e: "✦" },
     { id: "networking", l: "Networking", e: "◎" },
-    { id: "ticket", l: "Ticket", e: "🎟" },
-    { id: "connections", l: "Connections", e: "🤝", badge: connectionsBadge },
+    { id: "ticket", l: "Ticket", e: "◈" },
+    { id: "connections", l: "Connects", e: "⬡", badge: connectionsBadge },
     { id: "profile", l: "Profile", e: "◐" },
   ];
 

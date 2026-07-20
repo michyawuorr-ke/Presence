@@ -1,62 +1,23 @@
 "use client";
 
-import { useEffect } from "react";
-
-export default function GuestRouteError({
+export default function Error({
   error,
   reset,
 }: {
   error: Error & { digest?: string };
   reset: () => void;
 }) {
-  useEffect(() => {
-    // eslint-disable-next-line no-console
-    console.error("Guest route error:", error);
-  }, [error]);
-
   return (
-    <div
-      style={{
-        minHeight: "100vh",
-        background: "#0a0a0a",
-        color: "#FDFBF7",
-        padding: "24px",
-        fontFamily: "monospace",
-        fontSize: "12px",
-        lineHeight: "1.6",
-        wordBreak: "break-word",
-      }}
-    >
-      <p style={{ color: "#F97316", fontSize: "14px", marginBottom: "16px", fontWeight: "bold" }}>
-        DIAGNOSTIC ERROR VIEW (temporary)
+    <div style={{ minHeight: "100vh", background: "#0A0A0A", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", padding: "32px", textAlign: "center" }}>
+      <p style={{ fontSize: "28px", margin: "0 0 16px" }}>✦</p>
+      <p style={{ fontSize: "16px", fontWeight: "600", color: "#f0ede8", margin: "0 0 8px" }}>Something went wrong</p>
+      <p style={{ fontSize: "13px", color: "rgba(255,255,255,0.4)", margin: "0 0 28px", lineHeight: "1.6", maxWidth: "280px" }}>
+        Your connection may have dropped or the event is loading. Try again — your progress is saved.
       </p>
-      <p style={{ color: "#fff", marginBottom: "8px" }}>
-        <strong>Message:</strong> {error.message || "(no message)"}
-      </p>
-      {error.digest && (
-        <p style={{ color: "#888", marginBottom: "8px" }}>
-          <strong>Digest:</strong> {error.digest}
-        </p>
-      )}
-      <p style={{ color: "#888", marginBottom: "16px" }}>
-        <strong>Stack:</strong>
-      </p>
-      <pre style={{ whiteSpace: "pre-wrap", color: "#aaa", background: "#111", padding: "12px", borderRadius: "8px" }}>
-        {error.stack || "(no stack available)"}
-      </pre>
       <button
         onClick={reset}
-        style={{
-          marginTop: "20px",
-          padding: "10px 20px",
-          background: "#F97316",
-          color: "#000",
-          border: "none",
-          borderRadius: "8px",
-          fontFamily: "monospace",
-        }}
-      >
-        Try again
+        style={{ padding: "12px 28px", borderRadius: "10px", background: "transparent", border: "1px solid rgba(226,109,52,0.4)", color: "#E26D34", fontSize: "13px", fontWeight: "600", cursor: "pointer", letterSpacing: "0.06em" }}>
+        Try Again
       </button>
     </div>
   );

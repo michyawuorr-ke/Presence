@@ -33,7 +33,12 @@ export default function SettingsTab({ event, onEventUpdate }: SettingsTabProps) 
       .single();
     setSaving(false);
     if (err) { setError(err.message); return; }
-    if (data) { onEventUpdate(data); setSaved(true); setTimeout(() => setSaved(false), 2500); }
+    // Merge the saved fields back but preserve the event's current status —
+    // saving details must never override ended/live status
+    if (data) {
+      onEventUpdate({ ...event, ...data, status: event.status });
+      setSaved(true); setTimeout(() => setSaved(false), 2500);
+    }
   }
 
   const inp = { width: "100%", padding: "11px 12px", borderRadius: "10px", border: "1px solid rgba(255,255,255,0.06)", background: "rgba(255,255,255,0.02)", color: "#fff", fontSize: "13px", outline: "none", boxSizing: "border-box" as const, marginBottom: "10px" };

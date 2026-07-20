@@ -115,13 +115,20 @@ export default function EventDashboardPage() {
     const file = e.target.files?.[0];
     if (!file) return;
     if (file.size > 5 * 1024 * 1024) { setBannerError("Image must be under 5MB"); return; }
+    const validTypes = ["image/jpeg", "image/png", "image/webp"];
+    if (!validTypes.includes(file.type)) { setBannerError("Only JPEG, PNG, or WebP images allowed"); return; }
     setUploadingBanner(true); setBannerError("");
-    const path = `banners/${id}/${Date.now()}.${file.name.split(".").pop()}`;
-    const { error: upErr } = await supabase.storage.from("event-assets").upload(path, file, { upsert: true });
-    if (upErr) { setBannerError(upErr.message); setUploadingBanner(false); return; }
-    const { data: urlData } = supabase.storage.from("event-assets").getPublicUrl(path);
-    await supabase.from("events").update({ banner_url: urlData.publicUrl }).eq("id", id);
-    setBannerUrl(urlData.publicUrl);
+    try {
+      const path = `banners/${id}/${Date.now()}.${file.name.split(".").pop()}`;
+      const { error: upErr } = await supabase.storage.from("event-assets").upload(path, file, { upsert: true });
+      if (upErr) { setBannerError(`Upload failed: ${upErr.message}`); setUploadingBanner(false); return; }
+      const { data: urlData } = supabase.storage.from("event-assets").getPublicUrl(path);
+      const { error: updateErr } = await supabase.from("events").update({ banner_url: urlData.publicUrl }).eq("id", id);
+      if (updateErr) { setBannerError(`Saved image but couldn't update event: ${updateErr.message}`); }
+      else { setBannerUrl(urlData.publicUrl); }
+    } catch (err: any) {
+      setBannerError("Upload failed — check your connection and try again");
+    }
     setUploadingBanner(false);
   }
 

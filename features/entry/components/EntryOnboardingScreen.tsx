@@ -56,7 +56,7 @@ export default function EntryOnboardingScreen({
     <div style={{ minHeight: "100vh", background: "#0A0A0A", color: "#FDFBF7", padding: "0 24px", display: "flex", flexDirection: "column", alignItems: "center", boxSizing: "border-box", overflowX: "hidden" }}>
 
       <header style={{ width: "100%", maxWidth: "480px", paddingTop: "48px", textAlign: "center" }}>
-        <p style={{ fontSize: "10px", fontWeight: "700", letterSpacing: "0.3em", color: EMBER, margin: 0, textTransform: "uppercase" }}>OREETI</p>
+        <p style={{ fontSize: "19px", fontWeight: "700", letterSpacing: "-0.03em", fontFamily: "'Helvetica Neue',Arial,sans-serif", margin: 0 }}><span style={{ color: "#ffffff" }}>Or</span><span style={{ color: "#E26D34" }}>ee</span><span style={{ color: "#ffffff" }}>ti</span></p>
       </header>
 
       <main style={{ width: "100%", maxWidth: "480px", flex: 1, paddingTop: "24px", paddingBottom: "144px", overflowY: "auto" }}>
