@@ -19,17 +19,23 @@ export default function SceneTab({
 }: SceneTabProps) {
   return (
     <div>
+      <div style={{ padding: "20px 20px 0" }}>
+        {/* OREETI wordmark — ember/white, same as guest onboarding */}
+        <p style={{ fontSize: "11px", fontWeight: "700", letterSpacing: "0.28em", margin: "0 0 16px", fontFamily: "'Helvetica Neue',Arial,sans-serif" }}>
+          <span style={{ color: "#ffffff" }}>OR</span>
+          <span style={{ color: PALETTE.orange }}>EE</span>
+          <span style={{ color: "#ffffff" }}>TI</span>
+        </p>
+      </div>
+
+      {/* Banner sits below the wordmark */}
       {event?.banner_url && (
-        <div style={{ width: "100%", overflow: "hidden", marginBottom: "4px", background: "#000" }}>
+        <div style={{ width: "100%", overflow: "hidden", marginBottom: "20px", background: "#000" }}>
           <img src={event.banner_url} alt="" style={{ width: "100%", height: "auto", display: "block", maxHeight: "280px", objectFit: "contain" }} />
         </div>
       )}
-      <div style={{ padding: "24px 20px" }}>
-        <p style={{ fontSize: "18px", fontWeight: "700", letterSpacing: "-0.02em", marginBottom: "20px", fontFamily: "'Helvetica Neue',Arial,sans-serif" }}>
-          <span style={{ color: "#ffffff" }}>Or</span>
-          <span style={{ color: PALETTE.orange }}>ee</span>
-          <span style={{ color: "#ffffff" }}>ti</span>
-        </p>
+
+      <div style={{ padding: "0 20px" }}>
         <h1 style={{ fontSize: "28px", fontWeight: "500", color: "#f0ede8", marginBottom: "8px", letterSpacing: "-0.03em", lineHeight: "1.15" }}>
           {event?.title}
         </h1>

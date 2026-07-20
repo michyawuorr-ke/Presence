@@ -40,13 +40,21 @@ export default function AttendeesTab({ eventId, isLive }: AttendeesTabProps) {
     const [{ data: regs }, allRoles] = await Promise.all([
       supabase
         .from("registrations")
-        .select("*, ticket_types(name, price)")
+        .select("*, ticket_types(name, price), guest_profiles(id, display_name, role)")
         .eq("event_id", eventId)
         .neq("status", "host")
         .order("created_at", { ascending: false }),
       getAllRoles(),
     ]);
-    setRegistrations(regs || []);
+    // Prefer the name the guest confirmed in onboarding (guest_profiles.display_name)
+    // over what was typed at registration (guest_name) — these can differ if the
+    // guest corrected their name during onboarding.
+    const enriched = (regs || []).map((r: any) => ({
+      ...r,
+      display_name: r.guest_profiles?.display_name || r.guest_name,
+      guest_profile_id: r.guest_profiles?.id ?? null,
+    }));
+    setRegistrations(enriched);
     // Exclude organizer from the assignment dropdown — that's set by host status
     setRoles(allRoles.filter(r => r.id !== "organizer"));
     setLoading(false);
@@ -95,7 +103,7 @@ export default function AttendeesTab({ eventId, isLive }: AttendeesTabProps) {
 
   const filtered = registrations.filter(r => {
     const matchSearch = !search ||
-      r.guest_name?.toLowerCase().includes(search.toLowerCase()) ||
+      (r.display_name ?? r.guest_name)?.toLowerCase().includes(search.toLowerCase()) ||
       r.guest_email?.toLowerCase().includes(search.toLowerCase());
     const matchFilter =
       filter === "all"        ? true :
@@ -243,7 +251,7 @@ export default function AttendeesTab({ eventId, isLive }: AttendeesTabProps) {
               <div style={{ flex: 1, minWidth: 0 }}>
                 {/* Name + check-in badge + role badge */}
                 <div style={{ display: "flex", alignItems: "center", gap: "6px", flexWrap: "wrap", marginBottom: "3px" }}>
-                  <p style={{ fontSize: "14px", fontWeight: "600", color: "#f0ede8", margin: 0 }}>{r.guest_name}</p>
+                  <p style={{ fontSize: "14px", fontWeight: "600", color: "#f0ede8", margin: 0 }}>{r.display_name}</p>
                   {r.checked_in && (
                     <span style={{ fontSize: "9px", fontWeight: "700", color: "#22c55e", background: "rgba(34,197,94,0.1)", border: "1px solid rgba(34,197,94,0.2)", borderRadius: "4px", padding: "2px 6px", letterSpacing: "0.08em" }}>IN</span>
                   )}

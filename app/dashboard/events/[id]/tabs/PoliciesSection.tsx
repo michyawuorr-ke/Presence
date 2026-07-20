@@ -40,14 +40,25 @@ export default function PoliciesSection({ eventId }: Props) {
       ]);
       setRoles(allRoles);
       setPerms(eventPerms);
-      setPolicy(eventPolicy ?? {
-        id: "",
-        event_id: eventId,
-        networking_enabled: true,
-        default_visibility: "visible",
-        mutual_discovery: false,
-        self_select_roles: ["attendee"],
-      });
+
+      if (eventPolicy) {
+        setPolicy(eventPolicy);
+      } else {
+        // No policy row yet — create the default now so toggles work immediately
+        const created = await upsertEventPolicy(eventId, {
+          networking_enabled: true,
+          default_visibility: "visible",
+          mutual_discovery: false,
+          self_select_roles: ["attendee"],
+        });
+        setPolicy(created ?? {
+          id: "", event_id: eventId,
+          networking_enabled: true,
+          default_visibility: "visible",
+          mutual_discovery: false,
+          self_select_roles: ["attendee"],
+        });
+      }
     }
     load();
   }, [eventId]);

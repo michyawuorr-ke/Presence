@@ -94,6 +94,12 @@ export default function EventDashboardPage() {
 
   async function handleGoLive() {
     await supabase.from("events").update({ status: "live" }).eq("id", id);
+    // Ensure an event_policies row exists so networking policies are enforced.
+    // Uses upsert so re-publishing doesn't overwrite any existing config.
+    await supabase.from("event_policies").upsert(
+      { event_id: id, networking_enabled: true, default_visibility: "visible", mutual_discovery: false, self_select_roles: ["attendee"] },
+      { onConflict: "event_id", ignoreDuplicates: true }
+    );
     load();
   }
 
