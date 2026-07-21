@@ -62,26 +62,13 @@ const structuredData = {
   "author": { "@type": "Organization", "name": "Oreeti", "url": "https://oreeti.com" },
 };
 
-// Replace GTM-XXXXXXX below with your real GTM container ID when you have it.
-// GTM handles GA4 + all other Google tags from one place — you only need this one snippet.
-const GTM_ID = process.env.NEXT_PUBLIC_GTM_ID ?? "";
-
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="en" className={inter.variable}>
       <head>
-        {/* Google Tag Manager — fires before anything else */}
-        {GTM_ID && (
-          <script
-            dangerouslySetInnerHTML={{
-              __html: `(function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({'gtm.start':
-new Date().getTime(),event:'gtm.js'});var f=d.getElementsByTagName(s)[0],
-j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
-'https://www.googletagmanager.com/gtm.js?id='+i+dl;f.parentNode.insertBefore(j,f);
-})(window,document,'script','dataLayer','${GTM_ID}');`,
-            }}
-          />
-        )}
+        {/* Google Tag Manager */}
+        <script dangerouslySetInnerHTML={{ __html: `(function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({'gtm.start':new Date().getTime(),event:'gtm.js'});var f=d.getElementsByTagName(s)[0],j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src='https://www.googletagmanager.com/gtm.js?id='+i+dl;f.parentNode.insertBefore(j,f);})(window,document,'script','dataLayer','GTM-5H5ZQC9P');` }} />
+        {/* End Google Tag Manager */}
 
         <link rel="preconnect" href="https://fonts.googleapis.com" />
         <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
@@ -95,17 +82,9 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
         />
       </head>
       <body style={{ fontFamily: "var(--font-inter),-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif", background: "#0a0a0c", color: "#EAE6DF" }}>
-        {/* GTM noscript fallback — required for users with JS disabled */}
-        {GTM_ID && (
-          <noscript>
-            <iframe
-              src={`https://www.googletagmanager.com/ns.html?id=${GTM_ID}`}
-              height="0"
-              width="0"
-              style={{ display: "none", visibility: "hidden" }}
-            />
-          </noscript>
-        )}
+        {/* Google Tag Manager (noscript) */}
+        <noscript><iframe src="https://www.googletagmanager.com/ns.html?id=GTM-5H5ZQC9P" height="0" width="0" style={{ display: "none", visibility: "hidden" }}></iframe></noscript>
+        {/* End Google Tag Manager (noscript) */}
         <QueryProvider>{children}</QueryProvider>
         <Analytics />
       </body>
