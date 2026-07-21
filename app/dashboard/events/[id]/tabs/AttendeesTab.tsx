@@ -125,52 +125,31 @@ export default function AttendeesTab({ eventId, isLive }: AttendeesTabProps) {
     setIntroducing(true);
     const [a, b] = introSelected;
 
-    // Get the host's own guest_profile for this event
-    const { data: { user } } = await supabase.auth.getUser();
-    if (!user) { toast("Not authenticated"); setIntroducing(false); return; }
-
-    const { data: hostReg } = await supabase
-      .from("registrations")
-      .select("id")
-      .eq("event_id", eventId)
-      .eq("status", "host")
-      .single();
-
-    const { data: hostProfile } = hostReg ? await supabase
-      .from("guest_profiles")
-      .select("id")
-      .eq("registration_id", hostReg.id)
-      .maybeSingle() : { data: null };
-
-    // Get guest_profile ids for both attendees
     const { data: profiles } = await supabase
       .from("guest_profiles")
-      .select("id,display_name,registration_id")
+      .select("id, registration_id")
       .in("registration_id", [a.id, b.id]);
 
     const pA = (profiles ?? []).find((p: any) => p.registration_id === a.id);
     const pB = (profiles ?? []).find((p: any) => p.registration_id === b.id);
 
     if (!pA || !pB) {
-      toast("One or both attendees haven't completed onboarding yet");
+      const missing = !pA ? a.display_name : b.display_name;
+      toast(`${missing} hasn't completed onboarding yet — they need to enter the event first`);
       setIntroducing(false);
       return;
     }
 
-    // Create introduction record — NOT a connection.
-    // Both guests receive a notification "Host wants to introduce you to X."
-    // They can then choose to connect themselves.
     const { error } = await supabase.from("host_introductions").insert({
-      event_id:        eventId,
-      host_profile_id: hostProfile?.id ?? null,
-      guest_a_id:      pA.id,
-      guest_b_id:      pB.id,
-      note:            `${a.guest_name} · ${b.guest_name}`,
+      event_id:   eventId,
+      guest_a_id: pA.id,
+      guest_b_id: pB.id,
+      note:       `${a.display_name} · ${b.display_name}`,
     });
 
     setIntroducing(false);
-    if (error) { toast("Introduction failed: " + error.message); return; }
-    toast(`✓ Introduction sent — ${a.guest_name} and ${b.guest_name} will each receive a notification`);
+    if (error) { toast(`Introduction failed: ${error.message}`); return; }
+    toast(`✓ ${a.display_name} and ${b.display_name} will each get an introduction notification`);
     setIntroMode(false);
     setIntroSelected([]);
   }
