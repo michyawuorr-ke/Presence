@@ -35,6 +35,7 @@ export default function GuestEntryPage() {
   const [displayName, setDisplayName] = useState("");
   const [role, setRole] = useState("");
   const [organisation, setOrganisation] = useState("");
+  const [industry, setIndustry] = useState("");
   const [bio, setBio] = useState("");
   const [presence, setPresence] = useState({ linkedin: "", website: "", portfolio: "" });
   const [isPresenceOpen, setIsPresenceOpen] = useState(false);
@@ -120,6 +121,8 @@ setPresence({
 	    const data = await submitGuestOnboarding({
 		      registrationId: registration.id,
 		        eventId: event.id,
+		          guestEmail: registration?.email ?? null,
+		          industry,
 			  displayName,
 			    roleTitle: role,
 			      organisation,
@@ -162,6 +165,7 @@ setPresence({
         profile={profile}
 	masterProfile={profile}
         onProfileUpdate={setProfile}
+        onMasterProfileUpdate={() => {}}
       />
     );
   }
@@ -187,6 +191,11 @@ return (
 								      setStationId={setStationId}
 								          error={error}
 									  restoredIdentity={!!profile}
+									  industry={industry}
+									  setIndustry={setIndustry}
+									  canSubmit={canSubmit}
+									  saving={saving}
+									  onSubmit={handleFinalSubmission}
 									    />
 
 <PresenceModal
