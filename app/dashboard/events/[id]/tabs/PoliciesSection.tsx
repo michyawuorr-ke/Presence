@@ -39,7 +39,24 @@ export default function PoliciesSection({ eventId }: Props) {
         getEventPolicy(eventId),
       ]);
       setRoles(allRoles);
-      setPerms(eventPerms);
+
+      // resolved_role_permissions is a view that merges role_permission_defaults
+      // with event_role_policies overrides. If no event_role_policies rows exist
+      // yet for this event, the view returns nothing and all permission checks
+      // fall back to code defaults (bypass_visibility=false, discoverable=true)
+      // — meaning VIP bypass and hidden-visibility settings never fire even when
+      // toggled in the UI. Fix: seed a row for every role using its defaults,
+      // so the view always has something to return for this event.
+      if(Object.keys(eventPerms).length===0 && allRoles.length>0){
+        await Promise.all(allRoles.filter(r=>r.id!=="organizer").map(r=>
+          upsertRoleOverride(eventId, r.id, {})
+        ));
+        // Re-fetch after seeding so perms state is populated
+        const seeded = await getEventPermissions(eventId);
+        setPerms(seeded);
+      } else {
+        setPerms(eventPerms);
+      }
 
       if (eventPolicy) {
         setPolicy(eventPolicy);

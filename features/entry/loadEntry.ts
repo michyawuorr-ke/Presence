@@ -57,6 +57,26 @@ export async function loadEntry(token: string): Promise<LoadEntryResult> {
     .select("id, name, subtitle")
     .eq("event_id", registration.event_id);
 
+  // Early-access gate: if the event hasn't gone live yet, only hosts
+  // and roles with bypass_visibility (VIP, Speaker, etc.) can enter.
+  // Regular attendees get a "not started yet" holding screen.
+  if (event?.status === "upcoming") {
+    const isHost = registration.status === "host";
+    const role = registration.role ?? "attendee";
+    const isPrivileged = isHost || ["vip", "speaker"].includes(role);
+
+    if (!isPrivileged) {
+      return {
+        status: "not_started",
+        registration,
+        event,
+        stations: stations ?? [],
+        profile: null,
+        masterProfile: null,
+      } as any;
+    }
+  }
+
   // Host registrations route through bootstrapIdentity's host branch.
   if (registration.status === "host") {
     const identity = await bootstrapIdentity(registration);

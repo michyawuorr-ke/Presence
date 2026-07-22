@@ -141,7 +141,45 @@ export default function NetworkingTab({ event, profile, isLive, isEnded, registr
       })
       .subscribe();
     channelRef.current=ch;
-    return()=>{clearInterval(interval);supabase.removeChannel(ch);};
+
+    // When the host upgrades a guest's role (e.g. attendee → VIP), the
+    // guest_profiles row is updated. Re-fetch nodes so the new role badge
+    // and permission (bypass_visibility etc.) take effect immediately —
+    // without the upgraded guest needing to refresh their screen.
+    const roleChangeCh=supabase.channel("role-change:"+event.id)
+      .on("postgres_changes",{event:"UPDATE",schema:"public",table:"guest_profiles",filter:"event_id=eq."+event.id},(payload:any)=>{
+        // Update the node in-place if it's already visible, or re-fetch
+        // in case visibility changed (e.g. newly bypass_visibility VIP
+        // should appear even when default_visibility=hidden).
+        setNodes(prev=>{
+          const idx=prev.findIndex((n:any)=>n.id===payload.new.id);
+          if(idx===-1){
+            // Node wasn't visible before — re-fetch to apply new permissions
+            fetchNodes();
+            return prev;
+          }
+          const updated=[...prev];
+          updated[idx]={...updated[idx],...payload.new,networking_intents:parseIntents(payload.new.networking_intents)};
+          return updated;
+        });
+      })
+      .subscribe();
+
+    // When the host changes event_policies (e.g. flips default_visibility
+    // to hidden mid-event), re-run the full node fetch so the new policy
+    // is applied immediately to every guest's screen — no refresh needed.
+    const policyCh=supabase.channel("policy-change:"+event.id)
+      .on("postgres_changes",{event:"*",schema:"public",table:"event_policies",filter:"event_id=eq."+event.id},()=>{
+        fetchNodes();
+      })
+      .subscribe();
+
+    return()=>{
+      clearInterval(interval);
+      supabase.removeChannel(ch);
+      supabase.removeChannel(roleChangeCh);
+      supabase.removeChannel(policyCh);
+    };
   },[isLive,event,profile,networkingActive,fetchNodes]);
 
   async function startNetworking(){

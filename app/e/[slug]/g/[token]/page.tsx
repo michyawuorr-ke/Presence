@@ -15,7 +15,7 @@ interface Station {
   subtitle: string;
 }
 
-type Stage = "loading" | "not_found" | "onboarding" | "scene";
+type Stage = "loading" | "not_found" | "not_started" | "onboarding" | "scene";
 
 export default function GuestEntryPage() {
   const { token } = useParams() as { token: string };
@@ -84,6 +84,11 @@ export default function GuestEntryPage() {
 
       if (result.status === "not_found") {
         setStage("not_found");
+        return;
+      }
+
+      if ((result.status as any) === "not_started") {
+        setStage("not_started");
         return;
       }
 
@@ -162,6 +167,18 @@ export default function GuestEntryPage() {
       <div className="min-h-screen bg-[#0A0A0A] text-[#FDFBF7] flex flex-col items-center justify-center px-6 text-center gap-2">
         <p className="text-sm font-medium text-white/80">This invite link isn&apos;t valid</p>
         <p className="text-xs text-white/40">Double-check the link or ask your host to resend it.</p>
+      </div>
+    );
+  }
+
+  if (stage === "not_started") {
+    return (
+      <div className="min-h-screen bg-[#0A0A0A] text-[#FDFBF7] flex flex-col items-center justify-center px-6 text-center gap-4">
+        <div style={{ width: 48, height: 48, borderRadius: "50%", background: "rgba(226,109,52,0.08)", border: "1px solid rgba(226,109,52,0.2)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 22 }}>⏳</div>
+        <div>
+          <p className="text-sm font-medium text-white/80" style={{ marginBottom: 4 }}>Event hasn&apos;t started yet</p>
+          <p className="text-xs text-white/40">Your link is valid — come back once the host opens the event.</p>
+        </div>
       </div>
     );
   }
