@@ -145,6 +145,8 @@ export function scoreMatch(
   const reasons: string[] = [];
   const theirFirst = them.display_name?.split(" ")[0] ?? "them";
 
+  // scoreMatch(me, them, ...) — `me` is always the viewer this ranked list is
+  // being built for, so myIntents is the viewer's own intents here.
   const intentReason = intentMatchReason(myIntents, theirIntents, theirFirst);
   if (intentReason) reasons.push(intentReason);
 

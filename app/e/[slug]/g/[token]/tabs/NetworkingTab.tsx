@@ -2,6 +2,7 @@
 import { useEffect, useState, useRef, useCallback } from "react";
 import { supabase } from "@/lib/supabase/client";
 import { getFirstName, parseIntents, REASON_OPTIONS, PALETTE, INTENTS_BY_GROUP, INTENT_GROUPS, INTENT_MAP } from "./shared";
+import { intentReasonFromStoredIntent } from "@/lib/matching/intents";
 import AttendeeCard from "./AttendeeCard";
 import PreEventDiscovery from "./PreEventDiscovery";
 import MatchRecommendations from "./MatchRecommendations";
@@ -318,11 +319,19 @@ export default function NetworkingTab({ event, profile, isLive, isEnded, registr
         <div style={{position:"fixed",inset:0,background:"rgba(0,0,0,0.7)",display:"flex",alignItems:"flex-end",zIndex:50}}>
           <div style={{background:"#1a1a1a",borderRadius:"24px 24px 0 0",padding:"28px",paddingBottom:"calc(28px + env(safe-area-inset-bottom))",width:"100%",animation:"slideUp 0.3s ease"}}>
             <p style={{color:"#fff",fontSize:"18px",fontWeight:"500",marginBottom:"8px"}}>{getFirstName(incoming.requester_name)} wants to connect</p>
-            {incoming.reason?(
-              <p style={{color:"#666",fontSize:"14px",marginBottom:"28px"}}>Reason: <span style={{color:PALETTE.orange,fontWeight:"600"}}>{incoming.reason}</span></p>
-            ):(
-              <p style={{color:"#666",fontSize:"14px",marginBottom:"28px"}}>Connection request</p>
-            )}
+            {(()=>{
+              // incoming.reason is a stored INTENT ID (what the requester was
+              // responding to), never a pre-baked sentence. Recompute it here
+              // from the current viewer's (recipient's) own intents so it
+              // always reads correctly, regardless of who sent the request.
+              const myIntents=parseIntents(profile?.networking_intents);
+              const computedReason=intentReasonFromStoredIntent(incoming.reason,myIntents,getFirstName(incoming.requester_name));
+              return computedReason?(
+                <p style={{color:"#666",fontSize:"14px",marginBottom:"28px"}}>Reason: <span style={{color:PALETTE.orange,fontWeight:"600"}}>{computedReason}</span></p>
+              ):(
+                <p style={{color:"#666",fontSize:"14px",marginBottom:"28px"}}>Connection request</p>
+              );
+            })()}
             <div style={{display:"flex",gap:"12px"}}>
               <button onClick={()=>respondRequest(false)} style={{flex:1,padding:"14px",borderRadius:"14px",background:"#333",color:"#fff",border:"none",fontSize:"15px",cursor:"pointer"}}>Decline</button>
               <button onClick={()=>respondRequest(true)} style={{flex:1,padding:"14px",borderRadius:"14px",background:"#4ade80",color:"#000",border:"none",fontSize:"15px",fontWeight:"500",cursor:"pointer"}}>Approve ✓</button>

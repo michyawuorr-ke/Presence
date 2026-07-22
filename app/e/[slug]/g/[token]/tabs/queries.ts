@@ -122,7 +122,7 @@ export function usePendingRequests(profileId: string | undefined, eventId: strin
 
       const { data: requesters } = await supabase
         .from("guest_profiles")
-        .select("id,display_name,role_title")
+        .select("id,display_name,role_title,networking_intents")
         .in("id", reqs.map((r: any) => r.requester_id));
 
       return reqs.map((r: any) => {

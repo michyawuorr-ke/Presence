@@ -1,7 +1,7 @@
 "use client";
 import { useState } from "react";
 import { supabase } from "@/lib/supabase/client";
-import { cleanUrl } from "./shared";
+import { cleanUrl, toHref } from "./shared";
 
 interface ProfileTabProps {
   profile: any;
@@ -148,9 +148,9 @@ export default function ProfileTab({ profile, masterProfile, event, onProfileUpd
   };
 
   const presenceLinks = [
-    { key: "linkedin", label: "LinkedIn", value: masterProfile?.linkedin_url, visible: profile?.show_linkedin ?? true },
-    { key: "website", label: "Website", value: masterProfile?.website_url, visible: profile?.show_website ?? true },
-    { key: "portfolio", label: "Portfolio", value: masterProfile?.portfolio_url, visible: profile?.show_portfolio ?? true },
+    { key: "linkedin", label: "LinkedIn", value: masterProfile?.linkedin_url, visible: profile?.show_linkedin ?? true, icon: "in" },
+    { key: "website", label: "Website", value: masterProfile?.website_url, visible: profile?.show_website ?? true, icon: "web" },
+    { key: "portfolio", label: "Portfolio", value: masterProfile?.portfolio_url, visible: profile?.show_portfolio ?? true, icon: "folio" },
   ];
 
   return (
@@ -171,22 +171,73 @@ export default function ProfileTab({ profile, masterProfile, event, onProfileUpd
           <p style={{ fontSize: "10px", letterSpacing: "0.12em", textTransform: "uppercase", color: "rgba(240,237,232,0.35)", marginBottom: "14px" }}>
             Professional Presence
           </p>
-          <div style={{ display: "flex", flexDirection: "column", gap: "10px" }}>
-            {presenceLinks.map((link) => (
-              <div key={link.key} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: "12px" }}>
-                <div>
-                  <div style={{ color: "rgba(240,237,232,0.55)", fontSize: "13px" }}>{link.label}</div>
-                  <div style={{ color: accent, fontSize: "13px" }}>{link.value ? cleanUrl(link.value) : "Not added"}</div>
+          <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
+            {presenceLinks.map((link) => {
+              const href = link.value ? toHref(link.value) : "";
+              return (
+                <div key={link.key} style={{ display: "flex", alignItems: "center", gap: "10px" }}>
+                  {href ? (
+                    <a
+                      href={href}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      style={{
+                        flex: 1,
+                        minWidth: 0,
+                        display: "flex",
+                        alignItems: "center",
+                        gap: "12px",
+                        padding: "11px 12px",
+                        borderRadius: "12px",
+                        background: "rgba(255,255,255,0.02)",
+                        border: "1px solid rgba(255,255,255,0.06)",
+                        textDecoration: "none",
+                        transition: "background 0.15s ease, border-color 0.15s ease",
+                      }}
+                    >
+                      <div style={{
+                        width: "30px", height: "30px", borderRadius: "9px", flexShrink: 0,
+                        background: accentBg, border: "1px solid " + accentBorder,
+                        display: "flex", alignItems: "center", justifyContent: "center",
+                        color: accent, fontSize: "12px", fontWeight: "700",
+                      }}>
+                        {link.icon === "in" ? "in" : link.icon === "web" ? "🌐" : "✦"}
+                      </div>
+                      <div style={{ minWidth: 0, flex: 1 }}>
+                        <div style={{ color: "rgba(240,237,232,0.4)", fontSize: "10px", letterSpacing: "0.04em", textTransform: "uppercase", marginBottom: "1px" }}>{link.label}</div>
+                        <div style={{ color: accent, fontSize: "13px", fontWeight: "500", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{cleanUrl(link.value)}</div>
+                      </div>
+                    </a>
+                  ) : (
+                    <div style={{
+                      flex: 1, display: "flex", alignItems: "center", gap: "12px",
+                      padding: "11px 12px", borderRadius: "12px",
+                      background: "rgba(255,255,255,0.01)", border: "1px dashed rgba(255,255,255,0.06)",
+                    }}>
+                      <div style={{
+                        width: "30px", height: "30px", borderRadius: "9px", flexShrink: 0,
+                        background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.06)",
+                        display: "flex", alignItems: "center", justifyContent: "center",
+                        color: "rgba(240,237,232,0.25)", fontSize: "12px", fontWeight: "700",
+                      }}>
+                        {link.icon === "in" ? "in" : link.icon === "web" ? "🌐" : "✦"}
+                      </div>
+                      <div style={{ minWidth: 0, flex: 1 }}>
+                        <div style={{ color: "rgba(240,237,232,0.4)", fontSize: "10px", letterSpacing: "0.04em", textTransform: "uppercase", marginBottom: "1px" }}>{link.label}</div>
+                        <div style={{ color: "rgba(240,237,232,0.3)", fontSize: "13px" }}>Not added</div>
+                      </div>
+                    </div>
+                  )}
+                  <button
+                    type="button"
+                    onClick={() => toggleLinkVisibility(link.key)}
+                    style={{ padding: "6px 10px", borderRadius: "8px", border: "1px solid " + accentBorder, background: link.visible ? accentBg : "transparent", color: link.visible ? accent : "rgba(240,237,232,0.45)", fontSize: "11px", fontWeight: "600", cursor: "pointer", flexShrink: 0 }}
+                  >
+                    {link.visible ? "Visible" : "Hidden"}
+                  </button>
                 </div>
-                <button
-                  type="button"
-                  onClick={() => toggleLinkVisibility(link.key)}
-                  style={{ padding: "6px 10px", borderRadius: "8px", border: "1px solid " + accentBorder, background: link.visible ? accentBg : "transparent", color: link.visible ? accent : "rgba(240,237,232,0.45)", fontSize: "11px", fontWeight: "600", cursor: "pointer", flexShrink: 0 }}
-                >
-                  {link.visible ? "Visible" : "Hidden"}
-                </button>
-              </div>
-            ))}
+              );
+            })}
           </div>
         </div>
       </div>

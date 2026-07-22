@@ -2,6 +2,7 @@
 import { useState, useEffect, useCallback } from "react";
 import { supabase } from "@/lib/supabase/client";
 import { rankMatches, type AttendeeProfile, type InteractionMap } from "@/lib/matching/score";
+import { bestIntentPair } from "@/lib/matching/intents";
 import { parseIntents, getFirstName, INTENT_MAP } from "./shared";
 
 interface Props {
@@ -71,11 +72,17 @@ export default function MatchRecommendations({ profile, event, sentRequests, onR
   async function sendRequest(match: ReturnType<typeof rankMatches>[0]) {
     if (sending) return;
     setSending(match.profile.id);
+    // Store the RECIPIENT's own intent id (never a baked sentence) so the
+    // match reason can be recomputed correctly from each side's own
+    // perspective at display time — see intentReasonFromStoredIntent.
+    const myIntents = parseIntents(profile?.networking_intents);
+    const theirIntents = parseIntents(match.profile.networking_intents);
+    const pair = bestIntentPair(myIntents, theirIntents);
     await supabase.from("handshake_requests").insert({
       event_id:     event.id,
       requester_id: profile.id,
       recipient_id: match.profile.id,
-      reason:       match.intentReason ?? match.reasons[0] ?? "Oreeti match",
+      reason:       pair?.other.id ?? null,
       status:       "pending",
     });
     onRequestSent(match.profile.id);

@@ -66,26 +66,63 @@ export function intentScore(intentsA: string[], intentsB: string[]): number {
   return best;
 }
 
+// Always call with the CURRENT VIEWER's own intents as `viewerIntents` and the
+// OTHER PERSON's intents as `otherIntents`. The returned sentence always reads
+// "You're X and <otherName> is Y" from viewerIntents' point of view — never
+// store this sentence; recompute it fresh for whoever is looking at the screen.
 export function intentMatchReason(
-  myIntents: string[],
-  theirIntents: string[],
-  theirName: string,
+  viewerIntents: string[],
+  otherIntents: string[],
+  otherName: string,
 ): string | null {
-  if (!myIntents.length || !theirIntents.length) return null;
-  let best = 0, bestA = "", bestB = "";
-  for (const a of myIntents) {
-    for (const b of theirIntents) {
-      const iA = INTENT_MAP[a];
-      const iB = INTENT_MAP[b];
-      if (!iA || !iB) continue;
-      const score = iA.group === iB.group && iA.seeking !== iB.seeking ? 1.0 :
-                    iA.group === iB.group ? 0.2 : 0.3;
-      if (score > best) { best = score; bestA = a; bestB = b; }
+  const pair = bestIntentPair(viewerIntents, otherIntents);
+  if (!pair) return null;
+  const { viewer, other } = pair;
+  return `You're ${viewer.label.toLowerCase()} and ${otherName} is ${other.label.toLowerCase()}`;
+}
+
+// Finds the best-complementing intent pair between two people, viewer-first.
+// Returns null if nothing scores above the relevance threshold.
+export function bestIntentPair(
+  viewerIntents: string[],
+  otherIntents: string[],
+): { viewer: Intent; other: Intent } | null {
+  if (!viewerIntents.length || !otherIntents.length) return null;
+  let best = 0, bestViewerId = "", bestOtherId = "";
+  for (const v of viewerIntents) {
+    for (const o of otherIntents) {
+      const iV = INTENT_MAP[v];
+      const iO = INTENT_MAP[o];
+      if (!iV || !iO) continue;
+      const score = iV.group === iO.group && iV.seeking !== iO.seeking ? 1.0 :
+                    iV.group === iO.group ? 0.2 : 0.3;
+      if (score > best) { best = score; bestViewerId = v; bestOtherId = o; }
     }
   }
   if (best < 0.3) return null;
-  const iA = INTENT_MAP[bestA];
-  const iB = INTENT_MAP[bestB];
-  if (!iA || !iB) return null;
-  return `You're ${iA.label.toLowerCase()} and ${theirName} is ${iB.label.toLowerCase()}`;
+  const iV = INTENT_MAP[bestViewerId];
+  const iO = INTENT_MAP[bestOtherId];
+  if (!iV || !iO) return null;
+  return { viewer: iV, other: iO };
+}
+
+// Recompute a match-reason sentence from a single STORED intent id (e.g. the
+// recipient's intent that a handshake request was originally sent in response
+// to) plus the current viewer's own intents. Use this wherever a `reason`
+// value loaded from the database is about to be displayed — never render a
+// stored sentence directly, since a sentence baked at send-time is only
+// correct for the sender, not for whoever is viewing it later.
+export function intentReasonFromStoredIntent(
+  storedIntentId: string | null | undefined,
+  viewerIntents: string[],
+  otherName: string,
+): string | null {
+  if (!storedIntentId) return null;
+  const stored = INTENT_MAP[storedIntentId];
+  if (!stored) return null;
+  const pair = bestIntentPair(viewerIntents, [storedIntentId]);
+  if (pair) {
+    return `You're ${pair.viewer.label.toLowerCase()} and ${otherName} is ${pair.other.label.toLowerCase()}`;
+  }
+  return `${otherName} is ${stored.label.toLowerCase()}`;
 }

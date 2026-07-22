@@ -10,6 +10,13 @@ export function cleanUrl(url: string) {
   return url.replace(/^(https?:\/\/)?(www\.)?/, "");
 }
 
+// Stored URLs are often saved without a scheme (e.g. "linkedin.com/in/x").
+// Links must have a real https:// href to be clickable — this guarantees one.
+export function toHref(url: string) {
+  if (!url) return "";
+  return /^https?:\/\//i.test(url) ? url : `https://${url}`;
+}
+
 export function parseIntents(raw: any): string[] {
   if (Array.isArray(raw)) return raw;
   if (typeof raw === "string" && raw.trim()) {

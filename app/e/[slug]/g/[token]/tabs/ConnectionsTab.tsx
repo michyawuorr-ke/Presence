@@ -1,8 +1,8 @@
 "use client";
 import { useState, useRef } from "react";
 import { supabase } from "@/lib/supabase/client";
-import { getFirstName, cleanUrl, parseIntents } from "./shared";
-import { INTENT_MAP } from "@/lib/matching/intents";
+import { getFirstName, cleanUrl, toHref, parseIntents } from "./shared";
+import { INTENT_MAP, intentReasonFromStoredIntent } from "@/lib/matching/intents";
 import DisclosureSheet from "./DisclosureSheet";
 import {
   useConnections, usePendingRequests, useSavedNotes, useIncomingSignals,
@@ -250,11 +250,20 @@ export default function ConnectionsTab({ profile, event, registration, isEnded }
               <div style={{ minWidth: 0 }}>
                 {/* Level 1 reveal on pending request — first name only */}
                 <p style={{ fontSize: "14px", fontWeight: "600", color: "#f1f0f5", margin: "0 0 2px" }}>{getFirstName(r.display_name)}</p>
-                {r.reason && (
-                  <span style={{ display: "inline-block", fontSize: "10px", color: "rgba(255,255,255,0.45)", background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.08)", borderRadius: "5px", padding: "2px 7px", fontWeight: "500", marginTop: "4px" }}>
-                    {(INTENT_MAP as any)[r.reason]?.label ?? r.reason}
-                  </span>
-                )}
+                {r.reason && (()=>{
+                  // r.reason is the stored intent id (the recipient's own
+                  // intent that the request responded to). Recompute the
+                  // full sentence from the current viewer's own intents so
+                  // it's never a leftover of the sender's perspective.
+                  const myIntents = parseIntents(profile?.networking_intents);
+                  const computed = intentReasonFromStoredIntent(r.reason, myIntents, getFirstName(r.display_name));
+                  const label = computed ?? (INTENT_MAP as any)[r.reason]?.label ?? null;
+                  return label ? (
+                    <span style={{ display: "inline-block", fontSize: "10px", color: "rgba(255,255,255,0.45)", background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.08)", borderRadius: "5px", padding: "2px 7px", fontWeight: "500", marginTop: "4px" }}>
+                      {label}
+                    </span>
+                  ) : null;
+                })()}
               </div>
               <div style={{ display: "flex", gap: "6px", flexShrink: 0 }}>
                 <button onClick={() => respondToPending(r.requestId, r.id, false, r.display_name)}
@@ -311,20 +320,26 @@ export default function ConnectionsTab({ profile, event, registration, isEnded }
                     <div style={{ borderTop: "1px solid rgba(255,255,255,0.04)", paddingTop: "10px", marginTop: "4px" }}>
                       {c.role_title && <p style={{ fontSize: "12px", color: "rgba(255,255,255,0.5)", margin: "0 0 2px" }}>{c.role_title}</p>}
                       {c.organisation && <p style={{ fontSize: "12px", color: "rgba(255,255,255,0.35)", margin: "0 0 8px" }}>{c.organisation}</p>}
-                      <div style={{ display: "flex", flexDirection: "column", gap: "4px" }}>
+                      <div style={{ display: "flex", flexDirection: "column", gap: "6px" }}>
                         {c.show_linkedin && c.linkedin_url && (
-                          <a href={c.linkedin_url} target="_blank" rel="noopener noreferrer" style={{ fontSize: "12px", color: "rgba(255,255,255,0.6)", textDecoration: "none" }}>
-                            💼 {cleanUrl(c.linkedin_url)}
+                          <a href={toHref(c.linkedin_url)} target="_blank" rel="noopener noreferrer"
+                            style={{ display: "flex", alignItems: "center", gap: "8px", fontSize: "12px", color: "rgba(255,255,255,0.7)", textDecoration: "none", padding: "6px 8px", borderRadius: "8px", background: "rgba(255,255,255,0.02)", border: "1px solid rgba(255,255,255,0.05)" }}>
+                            <span style={{ width: "18px", height: "18px", borderRadius: "5px", background: "rgba(226,109,52,0.1)", border: "1px solid rgba(226,109,52,0.2)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "9px", fontWeight: "700", color: EMBER, flexShrink: 0 }}>in</span>
+                            <span style={{ overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{cleanUrl(c.linkedin_url)}</span>
                           </a>
                         )}
                         {c.show_website && c.website_url && (
-                          <a href={c.website_url} target="_blank" rel="noopener noreferrer" style={{ fontSize: "12px", color: "rgba(255,255,255,0.6)", textDecoration: "none" }}>
-                            🌐 {cleanUrl(c.website_url)}
+                          <a href={toHref(c.website_url)} target="_blank" rel="noopener noreferrer"
+                            style={{ display: "flex", alignItems: "center", gap: "8px", fontSize: "12px", color: "rgba(255,255,255,0.7)", textDecoration: "none", padding: "6px 8px", borderRadius: "8px", background: "rgba(255,255,255,0.02)", border: "1px solid rgba(255,255,255,0.05)" }}>
+                            <span style={{ width: "18px", height: "18px", borderRadius: "5px", background: "rgba(226,109,52,0.1)", border: "1px solid rgba(226,109,52,0.2)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "10px", flexShrink: 0 }}>🌐</span>
+                            <span style={{ overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{cleanUrl(c.website_url)}</span>
                           </a>
                         )}
                         {c.show_portfolio && c.portfolio_url && (
-                          <a href={c.portfolio_url} target="_blank" rel="noopener noreferrer" style={{ fontSize: "12px", color: "rgba(255,255,255,0.6)", textDecoration: "none" }}>
-                            🗂 {cleanUrl(c.portfolio_url)}
+                          <a href={toHref(c.portfolio_url)} target="_blank" rel="noopener noreferrer"
+                            style={{ display: "flex", alignItems: "center", gap: "8px", fontSize: "12px", color: "rgba(255,255,255,0.7)", textDecoration: "none", padding: "6px 8px", borderRadius: "8px", background: "rgba(255,255,255,0.02)", border: "1px solid rgba(255,255,255,0.05)" }}>
+                            <span style={{ width: "18px", height: "18px", borderRadius: "5px", background: "rgba(226,109,52,0.1)", border: "1px solid rgba(226,109,52,0.2)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "10px", flexShrink: 0 }}>✦</span>
+                            <span style={{ overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{cleanUrl(c.portfolio_url)}</span>
                           </a>
                         )}
                       </div>
