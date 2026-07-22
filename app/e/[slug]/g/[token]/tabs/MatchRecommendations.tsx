@@ -9,13 +9,12 @@ interface Props {
   profile: any;
   event: any;
   sentRequests: Set<string>;
-  nodeIds: Set<string>;  // ids already shown in the live networking list — exclude from recommendations
   onRequestSent: (id: string) => void;
 }
 
 const EMBER = "#E26D34";
 
-export default function MatchRecommendations({ profile, event, sentRequests, nodeIds, onRequestSent }: Props) {
+export default function MatchRecommendations({ profile, event, sentRequests, onRequestSent }: Props) {
   const [matches, setMatches] = useState<ReturnType<typeof rankMatches>>([]);
   const [loading, setLoading] = useState(true);
   const [sending, setSending] = useState<string | null>(null);
@@ -56,13 +55,12 @@ export default function MatchRecommendations({ profile, event, sentRequests, nod
       blockedIds:   new Set((blocked   || []).map((b: any) => b.blocked_id)),
     };
 
-    // Exclude anyone already visible in the live networking list to avoid duplication
-    const eligibleAttendees = (attendees || []).filter((a: any) => !nodeIds.has(a.id));
-
-    // Top 3 only — these are curated, not a full list
+    // Top 3 curated picks from ALL networking_visible attendees.
+    // These may also appear in the live list — that's intentional.
+    // "For You" is a curated lens, the live list is the full room.
     const ranked = rankMatches(
       profile as AttendeeProfile,
-      eligibleAttendees as AttendeeProfile[],
+      (attendees || []) as AttendeeProfile[],
       interactions,
       3,
     );

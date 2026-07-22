@@ -113,6 +113,7 @@ export default function SceneView({ event, registration, profile, masterProfile,
     const hsCh = supabase.channel("handshakes-count:" + event.id)
       .on("postgres_changes", { event: "INSERT", schema: "public", table: "handshakes" }, () => fetchCounts())
       .on("postgres_changes", { event: "INSERT", schema: "public", table: "guest_profiles", filter: "event_id=eq." + event.id }, () => fetchCounts())
+      .on("postgres_changes", { event: "UPDATE", schema: "public", table: "guest_profiles", filter: "event_id=eq." + event.id }, () => fetchCounts())
       .subscribe();
     return () => { clearInterval(interval); supabase.removeChannel(hsCh); };
   }, [event]);

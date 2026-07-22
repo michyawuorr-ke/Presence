@@ -72,11 +72,22 @@ export default function NetworkingTab({ event, profile, isLive, isEnded, registr
     const newRolesMap=Object.fromEntries((allRoles||[]).map((r:any)=>[r.id,r]));
     setRolesMap(newRolesMap);
 
-    // If networking is disabled at the event level, show nobody
-    if(eventPolicy?.networking_enabled===false){setNodes([]);return;}
+    // Ensure we always have a policy row — upsert defaults if none exists yet.
+    // This means the host never needs to visit the Policies tab first for
+    // basic behaviour (networking enabled, default visible) to work correctly.
+    let policy = eventPolicy;
+    if (!policy) {
+      await supabase.from("event_policies").upsert({
+        event_id: event.id,
+        networking_enabled: true,
+        default_visibility: "visible",
+      }, { onConflict: "event_id", ignoreDuplicates: true });
+      policy = { networking_enabled: true, default_visibility: "visible" };
+    }
+    if(policy?.networking_enabled===false){setNodes([]);return;}
 
     const permsByRole=Object.fromEntries((allPerms||[]).map((p:any)=>[p.role_id,p]));
-    const defaultVisibility=eventPolicy?.default_visibility??"visible";
+    const defaultVisibility=policy?.default_visibility??"visible";
 
     // limit raised to 99 — no artificial cap on visible attendees
     const{data}=await supabase.from("guest_profiles").select("*").eq("event_id",event.id).eq("aura_active",true).eq("networking_visible",true).neq("id",profile.id).limit(99);
@@ -261,7 +272,6 @@ export default function NetworkingTab({ event, profile, isLive, isEnded, registr
         profile={profile}
         event={event}
         sentRequests={sentRequests}
-        nodeIds={new Set(nodes.map((n:any)=>n.id))}
         onRequestSent={id => setSentRequests(prev => new Set([...prev, id]))}
       />
 

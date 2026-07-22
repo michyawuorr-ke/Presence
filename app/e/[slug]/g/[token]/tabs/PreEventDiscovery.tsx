@@ -90,7 +90,6 @@ export default function PreEventDiscovery({ event, profile, sentRequests, setSen
         profile={profile}
         event={event}
         sentRequests={sentRequests}
-        nodeIds={new Set()}
         onRequestSent={id => setSentRequests(prev => new Set([...prev, id]))}
       />
 
