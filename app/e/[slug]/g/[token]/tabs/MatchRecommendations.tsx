@@ -9,12 +9,13 @@ interface Props {
   profile: any;
   event: any;
   sentRequests: Set<string>;
+  nodeIds: Set<string>;  // ids already shown in the live networking list — exclude from recommendations
   onRequestSent: (id: string) => void;
 }
 
 const EMBER = "#E26D34";
 
-export default function MatchRecommendations({ profile, event, sentRequests, onRequestSent }: Props) {
+export default function MatchRecommendations({ profile, event, sentRequests, nodeIds, onRequestSent }: Props) {
   const [matches, setMatches] = useState<ReturnType<typeof rankMatches>>([]);
   const [loading, setLoading] = useState(true);
   const [sending, setSending] = useState<string | null>(null);
@@ -40,8 +41,8 @@ export default function MatchRecommendations({ profile, event, sentRequests, onR
         .or(`sender_id.eq.${profile.id},receiver_id.eq.${profile.id}`),
       supabase.from("handshake_requests").select("recipient_id")
         .eq("requester_id", profile.id).eq("event_id", event.id),
-      supabase.from("handshake_requests").select("requester_id")
-        .eq("recipient_id", profile.id).eq("status", "declined"),
+      supabase.from("handshake_requests").select("recipient_id")
+        .eq("requester_id", profile.id).eq("event_id", event.id).eq("status", "declined"),
       supabase.from("guest_blocks").select("blocked_id")
         .eq("blocker_id", profile.id).eq("event_id", event.id),
     ]);
@@ -51,14 +52,17 @@ export default function MatchRecommendations({ profile, event, sentRequests, onR
         h.sender_id === profile.id ? h.receiver_id : h.sender_id
       )),
       requestedIds: new Set((requested || []).map((r: any) => r.recipient_id)),
-      declinedIds:  new Set((declined  || []).map((r: any) => r.requester_id)),
+      declinedIds:  new Set((declined  || []).map((r: any) => r.recipient_id)),
       blockedIds:   new Set((blocked   || []).map((b: any) => b.blocked_id)),
     };
+
+    // Exclude anyone already visible in the live networking list to avoid duplication
+    const eligibleAttendees = (attendees || []).filter((a: any) => !nodeIds.has(a.id));
 
     // Top 3 only — these are curated, not a full list
     const ranked = rankMatches(
       profile as AttendeeProfile,
-      (attendees || []) as AttendeeProfile[],
+      eligibleAttendees as AttendeeProfile[],
       interactions,
       3,
     );

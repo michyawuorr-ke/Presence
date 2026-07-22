@@ -28,6 +28,7 @@ export default function NetworkingTab({ event, profile, isLive, isEnded, registr
   const[notification,setNotification]=useState<string>("");
   const channelRef=useRef<any>(null);
   const[declinedIds,setDeclinedIds]=useState<Set<string>>(new Set());
+  const[rolesMap,setRolesMap]=useState<Record<string,any>>({});
 
   useEffect(()=>{
     if(!profile||auraLoaded)return;
@@ -62,11 +63,14 @@ export default function NetworkingTab({ event, profile, isLive, isEnded, registr
     const declinedSet=new Set((declinedReqs||[]).map((r:any)=>r.recipient_id));
     setDeclinedIds(declinedSet);
     setSentRequests(sentSet);
-    // load event policy + resolved permissions to apply visibility rules
-    const[{data:eventPolicy},{data:allPerms}]=await Promise.all([
+    // load event policy + resolved permissions + roles (for badge lookup) in parallel
+    const[{data:eventPolicy},{data:allPerms},{data:allRoles}]=await Promise.all([
       supabase.from("event_policies").select("networking_enabled,default_visibility").eq("event_id",event.id).maybeSingle(),
       supabase.from("resolved_role_permissions").select("role_id,discoverable,bypass_visibility").eq("event_id",event.id),
+      supabase.from("roles").select("id,badge,label"),
     ]);
+    const newRolesMap=Object.fromEntries((allRoles||[]).map((r:any)=>[r.id,r]));
+    setRolesMap(newRolesMap);
 
     // If networking is disabled at the event level, show nobody
     if(eventPolicy?.networking_enabled===false){setNodes([]);return;}
@@ -93,7 +97,7 @@ export default function NetworkingTab({ event, profile, isLive, isEnded, registr
       if(!iCanDiscover)return false;
       return true;
     });
-    setNodes(filtered.map((n:any)=>({...n,networking_intents:parseIntents(n.networking_intents)})));
+    setNodes(filtered.map((n:any)=>({...n,networking_intents:parseIntents(n.networking_intents),role_badge:newRolesMap[n.role]?.badge??null})));
     if(registration?.status!=="host"){
       const hostRes=await fetch('/api/events/host-profile?event_id='+event.id);
       const hostData=await hostRes.json();
@@ -103,8 +107,7 @@ export default function NetworkingTab({ event, profile, isLive, isEnded, registr
 
   useEffect(()=>{
     if(!isLive||!event||!profile||!networkingActive)return;
-    fetchNodes();
-    const interval=setInterval(fetchNodes,60000);
+    fetchNodes(); // initial load only — realtime channels below handle all updates
     const ch=supabase.channel("aura:"+event.id)
       .on("broadcast",{event:"aura_ignited"},(payload:any)=>{
         setNodes(prev=>{
@@ -159,7 +162,8 @@ export default function NetworkingTab({ event, profile, isLive, isEnded, registr
             return prev;
           }
           const updated=[...prev];
-          updated[idx]={...updated[idx],...payload.new,networking_intents:parseIntents(payload.new.networking_intents)};
+          const rb=rolesMap[payload.new.role]?.badge??null;
+          updated[idx]={...updated[idx],...payload.new,networking_intents:parseIntents(payload.new.networking_intents),role_badge:rb};
           return updated;
         });
       })
@@ -175,7 +179,6 @@ export default function NetworkingTab({ event, profile, isLive, isEnded, registr
       .subscribe();
 
     return()=>{
-      clearInterval(interval);
       supabase.removeChannel(ch);
       supabase.removeChannel(roleChangeCh);
       supabase.removeChannel(policyCh);
@@ -258,6 +261,7 @@ export default function NetworkingTab({ event, profile, isLive, isEnded, registr
         profile={profile}
         event={event}
         sentRequests={sentRequests}
+        nodeIds={new Set(nodes.map((n:any)=>n.id))}
         onRequestSent={id => setSentRequests(prev => new Set([...prev, id]))}
       />
 
@@ -295,6 +299,8 @@ export default function NetworkingTab({ event, profile, isLive, isEnded, registr
             <p style={{color:"#555",fontSize:"14px",textAlign:"center",padding:"60px 0"}}>No one else is networking right now.</p>
           )}
           {networkingActive&&nodes.filter((node:any)=>{
+            // Never show declined or already-connected people in the live list
+            if(declinedIds.has(node.id))return false;
             const q=liveSearch.trim().toLowerCase();
             if(!q)return true;
             return node.display_name?.toLowerCase().includes(q)
