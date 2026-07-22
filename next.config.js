@@ -1,5 +1,6 @@
 /** @type {import('next').Config} */
 const nextConfig = {
+	allowedDevOrigins: ["192.168.0.14"],
   reactStrictMode: true,
 
   // Compress responses — critical for mobile on Kenyan networks
