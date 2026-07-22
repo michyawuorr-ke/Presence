@@ -2,9 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { useParams } from "next/navigation";
-import { supabase } from "@/lib/supabase/client";
 import { loadEntry } from "@/features/entry/loadEntry";
-import { bootstrapIdentity } from "@/features/entry/bootstrapIdentity";
 import { submitGuestOnboarding } from "@/features/entry/submitGuestOnboarding";
 import EntryOnboardingScreen from "@/features/entry/components/EntryOnboardingScreen";
 import PresenceModal from "@/features/entry/components/PresenceModal";
@@ -29,6 +27,7 @@ export default function GuestEntryPage() {
   const [registration, setRegistration] = useState<any>(null);
   const [event, setEvent] = useState<any>(null);
   const [profile, setProfile] = useState<any>(null);
+  const [masterProfile, setMasterProfile] = useState<any>(null);
   const [stations, setStations] = useState<Station[]>([]);
 
   // Onboarding form fields
@@ -42,96 +41,106 @@ export default function GuestEntryPage() {
   const [intents, setIntents] = useState<string[]>([]);
   const [isIntentOpen, setIsIntentOpen] = useState(false);
   const [stationId, setStationId] = useState("");
+
   const getPresenceLabel = () => {
-	    const added = [];
-	      if (presence.linkedin.trim()) added.push("LinkedIn");
-	        if (presence.website.trim()) added.push("Website");
-		  if (presence.portfolio.trim()) added.push("Portfolio");
-		    return added.length === 0 ? "Add Professional Links" : `${added.join(" • ")} Linked`;
+    const added = [];
+    if (presence.linkedin.trim()) added.push("LinkedIn");
+    if (presence.website.trim()) added.push("Website");
+    if (presence.portfolio.trim()) added.push("Portfolio");
+    return added.length === 0 ? "Add Professional Links" : `${added.join(" • ")} Linked`;
   };
 
   const getIntentLabel = () =>
     intents.length === 0 ? "Select Intent" : intents.join(" + ");
 
-    const toggleIntent = (id: string) => {
-	      setIntents(prev =>
-			     prev.includes(id) ? prev.filter(i => i !== id) : [...prev, id]
-			       );
-    };
+  const toggleIntent = (id: string) => {
+    setIntents(prev =>
+      prev.includes(id) ? prev.filter(i => i !== id) : [...prev, id]
+    );
+  };
 
-    const isIdentityValid = displayName.trim() !== "" && role.trim() !== "";
-    const isPresenceValid =
-	      presence.linkedin.trim() !== "" ||
-	        presence.website.trim() !== "" ||
-		  presence.portfolio.trim() !== "";
-    const isIntentValid = intents.length > 0;
-    const isStationValid = stationId !== "";
-    const canSubmit =
-	      isIdentityValid &&
-	        isPresenceValid &&
-		  isIntentValid &&
-		    isStationValid &&
-		      !saving;
+  const isIdentityValid = displayName.trim() !== "" && role.trim() !== "";
+  const isPresenceValid =
+    presence.linkedin.trim() !== "" ||
+    presence.website.trim() !== "" ||
+    presence.portfolio.trim() !== "";
+  const isIntentValid = intents.length > 0;
+  const isStationValid = stations.length === 0 || stationId !== "";
+  const canSubmit =
+    isIdentityValid &&
+    isPresenceValid &&
+    isIntentValid &&
+    isStationValid &&
+    !saving;
 
-  // Resolve token -> registration -> event -> existing profile (gates onboarding vs scene)
-useEffect(() => {
-	  if (!token) return;
+  // Resolve token -> registration -> event -> existing profile
+  useEffect(() => {
+    if (!token) return;
+    async function run() {
+      const result = await loadEntry(token);
+      setRegistration(result.registration);
+      setEvent(result.event);
+      setStations(result.stations);
 
-	    async function run() {
-		        const result = await loadEntry(token);
+      if (result.status === "not_found") {
+        setStage("not_found");
+        return;
+      }
 
-			    setRegistration(result.registration);
-			        setEvent(result.event);
-				    setStations(result.stations);
+      if (result.status === "scene") {
+        setProfile(result.profile);
+        setMasterProfile(result.masterProfile ?? null);
+        setStage("scene");
+        return;
+      }
 
-				        if (result.status === "not_found") {
-						      setStage("not_found");
-						            return;
-							        }
+      // Onboarding pre-fill from master profile (returning guest) or registration name (first-timer)
+      const registrationName = result.registration?.guest_name ?? "";
+      const prefill = result.masterProfile ?? result.profile;
+      if (prefill) {
+        setMasterProfile(result.masterProfile ?? null);
+        setDisplayName(prefill.display_name || registrationName);
+        setRole(prefill.role_title ?? "");
+        setOrganisation(prefill.organisation ?? "");
+        setIndustry(prefill.industry ?? "");
+        setBio(prefill.bio ?? "");
+        setPresence({
+          linkedin: prefill.linkedin_url ?? "",
+          website: prefill.website_url ?? "",
+          portfolio: prefill.portfolio_url ?? "",
+        });
+      } else if (registrationName) {
+        setDisplayName(registrationName);
+      }
 
-								    if (result.status === "scene") {
-									          setProfile(result.profile);
-										        setStage("scene");
-											      return;
-											          }
+      setStage("onboarding");
+    }
+    run();
+  }, [token]);
 
-					if (result.profile) {
-						    setProfile(result.profile);
-
-						        setDisplayName(result.profile.display_name ?? "");
-							    setRole(result.profile.role_title ?? "");
-							        setOrganisation(result.profile.organisation ?? "");
-								    setBio(result.profile.bio ?? "");
-
-setPresence({
-	  linkedin: result.profile.linkedin_url ?? "",
-	    website: result.profile.website_url ?? "",
-	      portfolio: result.profile.portfolio_url ?? "",
-});
-
-					}setStage("onboarding");
-}						
-													  run();
-}, [token]);
   async function handleFinalSubmission() {
     if (!canSubmit || !registration || !event) return;
     setSaving(true);
     setError("");
     try {
-	    const data = await submitGuestOnboarding({
-		      registrationId: registration.id,
-		        eventId: event.id,
-		          guestEmail: registration?.email ?? null,
-		          industry,
-			  displayName,
-			    roleTitle: role,
-			      organisation,
-			        bio,
-				  presence,
-				    intents,
-				      stationId,
-	    });
-      setProfile(data);
+      const result = await submitGuestOnboarding({
+        registrationId: registration.id,
+        eventId: event.id,
+        guestEmail: registration.guest_email ?? null,
+        displayName,
+        roleTitle: role,
+        organisation,
+        industry,
+        bio,
+        presence,
+        intents,
+        stationId,
+      });
+      setProfile(result.guestProfile);
+      if (result.masterProfile) setMasterProfile(result.masterProfile);
+      if (result.masterProfileError) {
+        console.warn("cross-event profile sync failed:", result.masterProfileError);
+      }
       setStage("scene");
     } catch (err: any) {
       setError(err.message || "Failed to complete profile registration.");
@@ -151,7 +160,7 @@ setPresence({
   if (stage === "not_found") {
     return (
       <div className="min-h-screen bg-[#0A0A0A] text-[#FDFBF7] flex flex-col items-center justify-center px-6 text-center gap-2">
-        <p className="text-sm font-medium text-white/80">This invite link isn't valid</p>
+        <p className="text-sm font-medium text-white/80">This invite link isn&apos;t valid</p>
         <p className="text-xs text-white/40">Double-check the link or ask your host to resend it.</p>
       </div>
     );
@@ -163,53 +172,53 @@ setPresence({
         event={event}
         registration={registration}
         profile={profile}
-	masterProfile={profile}
+        masterProfile={masterProfile}
         onProfileUpdate={setProfile}
-        onMasterProfileUpdate={() => {}}
+        onMasterProfileUpdate={setMasterProfile}
       />
     );
   }
 
-return (
+  return (
+    <>
+      <EntryOnboardingScreen
+        displayName={displayName}
+        setDisplayName={setDisplayName}
+        role={role}
+        setRole={setRole}
+        organisation={organisation}
+        setOrganisation={setOrganisation}
+        industry={industry}
+        setIndustry={setIndustry}
+        bio={bio}
+        setBio={setBio}
+        masterProfile={masterProfile}
+        getPresenceLabel={getPresenceLabel}
+        setIsPresenceOpen={setIsPresenceOpen}
+        getIntentLabel={getIntentLabel}
+        setIsIntentOpen={setIsIntentOpen}
+        stations={stations}
+        stationId={stationId}
+        setStationId={setStationId}
+        error={error}
+        restoredIdentity={!!masterProfile}
+        canSubmit={canSubmit}
+        saving={saving}
+        onSubmit={handleFinalSubmission}
+      />
 
-	<>
-	  <EntryOnboardingScreen
-	      displayName={displayName}
-	          setDisplayName={setDisplayName}
-		      role={role}
-		          setRole={setRole}
-			      organisation={organisation}
-			          setOrganisation={setOrganisation}
-				      bio={bio}
-				          setBio={setBio}
-					      getPresenceLabel={getPresenceLabel}
-					          setIsPresenceOpen={setIsPresenceOpen}
-						      getIntentLabel={getIntentLabel}
-						          setIsIntentOpen={setIsIntentOpen}
-							      stations={stations}
-							          stationId={stationId}
-								      setStationId={setStationId}
-								          error={error}
-									  restoredIdentity={!!profile}
-									  industry={industry}
-									  setIndustry={setIndustry}
-									  canSubmit={canSubmit}
-									  saving={saving}
-									  onSubmit={handleFinalSubmission}
-									    />
-
-<PresenceModal
-  isOpen={true}
-    onClose={() => setIsPresenceOpen(false)}
-      presence={presence}
+      <PresenceModal
+        isOpen={isPresenceOpen}
+        onClose={() => setIsPresenceOpen(false)}
+        presence={presence}
         setPresence={setPresence}
-	  />
-<IntentModal
-  isOpen={isIntentOpen}
-    onClose={() => setIsIntentOpen(false)}
-      intents={intents}
+      />
+      <IntentModal
+        isOpen={isIntentOpen}
+        onClose={() => setIsIntentOpen(false)}
+        intents={intents}
         toggleIntent={toggleIntent}
-	/>
-	  </>
-);
+      />
+    </>
+  );
 }
