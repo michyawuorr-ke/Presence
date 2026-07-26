@@ -85,7 +85,7 @@ export async function loadEntry(token: string): Promise<LoadEntryResult> {
       registration,
       event,
       stations: stations ?? [],
-      profile: identity?.hostProfile ?? null,
+      profile: identity?.guestProfile ?? identity?.hostProfile ?? null,
       masterProfile: null,
     };
   }
