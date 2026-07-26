@@ -59,7 +59,19 @@ export async function bootstrapIdentity(reg: any) {
     const json = await res.json();
     guestProfile = json.profile ?? null;
   } catch (e) {
-    console.warn("Failed to bootstrap host guest_profile:", e);
+    console.warn("Failed to bootstrap host guest_profile via API:", e);
+  }
+
+  // Fallback: if API failed (e.g. SUPABASE_SERVICE_ROLE_KEY not set in env),
+  // try reading an existing guest_profiles row directly.
+  if (!guestProfile) {
+    const { data: existing } = await supabase
+      .from("guest_profiles")
+      .select("*")
+      .eq("registration_id", reg.id)
+      .maybeSingle();
+    guestProfile = existing ?? null;
+    if (guestProfile) console.log("bootstrapIdentity: used fallback anon read for host guest_profile");
   }
 
   return {

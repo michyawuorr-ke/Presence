@@ -11,15 +11,15 @@ export async function POST(req: NextRequest) {
     const { guest_profile_id, display_name, role_title, organisation, bio, linkedin_url, website_url, portfolio_url } = await req.json();
     if (!guest_profile_id) return NextResponse.json({ error: 'Missing guest_profile_id' }, { status: 400 });
 
-    const { data: profile, error } = await supabase
+    const { data: profiles, error } = await supabase
       .from('guest_profiles')
       .update({ display_name, role_title, organisation, bio, linkedin_url, website_url, portfolio_url })
       .eq('id', guest_profile_id)
-      .select()
-      .single();
+      .select();
 
     if (error) return NextResponse.json({ error: error.message }, { status: 500 });
-    return NextResponse.json({ profile });
+    if (!profiles || profiles.length === 0) return NextResponse.json({ error: 'Profile not found — check guest_profile_id' }, { status: 404 });
+    return NextResponse.json({ profile: profiles[0] });
   } catch (err: any) {
     return NextResponse.json({ error: err.message }, { status: 500 });
   }
