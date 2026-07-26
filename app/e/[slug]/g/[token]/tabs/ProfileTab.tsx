@@ -27,12 +27,40 @@ function EditProfile({ profile, masterProfile, onSave, onSaveError }: any) {
   const [saving, setSaving] = useState(false);
 
   async function save() {
+    setSaving(true);
+
+    // Hosts have no masterProfile — save directly to guest_profiles only.
+    // Guests with a masterProfile save there first, then sync to guest_profiles.
     if (!masterProfile?.id) {
-      onSaveError("Your profile isn't fully loaded yet — please try again in a moment.");
+      if (!profile?.id) {
+        setSaving(false);
+        onSaveError("Your profile isn't fully loaded yet — please try again in a moment.");
+        return;
+      }
+      // Host path — update guest_profiles directly via API to bypass RLS
+      const res = await fetch("/api/events/host-profile/update", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          guest_profile_id: profile.id,
+          display_name: displayName,
+          role_title: role,
+          organisation,
+          bio,
+          linkedin_url: linkedin,
+          website_url: website,
+          portfolio_url: portfolio,
+        }),
+      });
+      const json = await res.json();
+      setSaving(false);
+      if (json.error) {
+        onSaveError(json.error);
+      } else {
+        onSave(masterProfile, json.profile ?? profile);
+      }
       return;
     }
-
-    setSaving(true);
 
     const { data: updatedMaster, error: masterError } = await supabase
       .from("master_profiles")
@@ -55,8 +83,6 @@ function EditProfile({ profile, masterProfile, onSave, onSaveError }: any) {
       return;
     }
 
-    // guest_profiles is a per-event overlay kept in sync so this
-    // event's attendee list / connections show the latest info too.
     let updatedGuest = profile;
     if (profile?.id) {
       const { data, error: guestError } = await supabase
@@ -72,8 +98,6 @@ function EditProfile({ profile, masterProfile, onSave, onSaveError }: any) {
         .single();
 
       if (guestError) {
-        // Master profile already saved successfully — surface a
-        // narrower warning rather than treating this as a full failure.
         onSaveError("Saved your profile, but this event's attendee card couldn't be refreshed.");
       } else if (data) {
         updatedGuest = data;

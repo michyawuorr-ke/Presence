@@ -43,7 +43,8 @@ export default function NetworkingTab({ event, profile, isLive, isEnded, registr
       const{data:declined}=await supabase.from("handshake_requests").select("recipient_id").eq("requester_id",profile.id).eq("event_id",event.id).eq("status","declined");
       setDeclinedIds(new Set((declined||[]).map((r:any)=>r.recipient_id)));
       if(registration?.status==="host"){
-        await supabase.from("guest_profiles").update({aura_active:true,networking_visible:true}).eq("id",profile.id);
+        // Hosts are always active — set state immediately without DB round-trip
+        // (the server already created their guest_profiles row with networking_visible=true)
         setNetworkingActive(true);
       }
       setAuraLoaded(true);
@@ -53,6 +54,7 @@ export default function NetworkingTab({ event, profile, isLive, isEnded, registr
 
   const fetchNodes=useCallback(async()=>{
     if(!profile||!event)return;
+    // Hosts are always considered active in the networking view
     const{data:approved}=await supabase.from("handshakes").select("sender_id,receiver_id").or("sender_id.eq."+profile.id+",receiver_id.eq."+profile.id);
     const approvedSet=new Set<string>();
     (approved||[]).forEach((h:any)=>{
