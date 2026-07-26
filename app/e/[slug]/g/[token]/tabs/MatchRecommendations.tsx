@@ -68,6 +68,7 @@ export default function MatchRecommendations({ profile, event, sentRequests, onR
 
     setMatches(ranked);
     setLoading(false);
+    if (onRecommended) onRecommended(new Set(ranked.slice(0, 3).map((m: any) => m.profile.id)));
   }, [profile?.id, event?.id]);
 
   useEffect(() => { load(); }, [load]);

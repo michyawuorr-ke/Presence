@@ -17,7 +17,7 @@ interface NetworkingTabProps {
 
 export default function NetworkingTab({ event, profile, isLive, isEnded, registration }: NetworkingTabProps) {
   const[networkingActive,setNetworkingActive]=useState(false);
-  const[recommendedIds,setRecommendedIds]=useState<Set<string>>(new Set());
+  const recommendedIdsRef=useRef<Set<string>>(new Set());
   const[auraLoaded,setAuraLoaded]=useState(false);
   const[nodes,setNodes]=useState<any[]>([]);
   const[hostNode,setHostNode]=useState<any>(null);
@@ -277,7 +277,7 @@ export default function NetworkingTab({ event, profile, isLive, isEnded, registr
         event={event}
         sentRequests={sentRequests}
         onRequestSent={id => setSentRequests(prev => new Set([...prev, id]))}
-        onRecommended={ids => setRecommendedIds(ids)}
+        onRecommended={ids => { recommendedIdsRef.current=ids; }}
       />
 
       <input
@@ -316,7 +316,7 @@ export default function NetworkingTab({ event, profile, isLive, isEnded, registr
           {networkingActive&&nodes.filter((node:any)=>{
             // Never show declined people or those already in the For You section
             if(declinedIds.has(node.id))return false;
-            if(recommendedIds.has(node.id))return false;
+            if(recommendedIdsRef.current.has(node.id))return false;
             const q=liveSearch.trim().toLowerCase();
             if(!q)return true;
             return node.display_name?.toLowerCase().includes(q)
