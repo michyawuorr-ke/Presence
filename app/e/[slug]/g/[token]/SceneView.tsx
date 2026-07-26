@@ -100,7 +100,7 @@ export default function SceneView({ event, registration, profile, masterProfile,
   useEffect(() => {
     if (!event) return;
     async function fetchCounts() {
-      const { data: eventGuests, count: nc } = await supabase.from("guest_profiles").select("id", { count: "exact" }).eq("event_id", event.id).eq("aura_active", true);
+      const { data: eventGuests, count: nc } = await supabase.from("guest_profiles").select("id", { count: "exact" }).eq("event_id", event.id).eq("networking_visible", true);
       setNetworkingCount(nc || 0);
       const { data: allEventGuestIds } = await supabase.from("guest_profiles").select("id").eq("event_id", event.id);
       const ids = (allEventGuestIds || []).map((g: any) => g.id);

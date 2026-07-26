@@ -34,7 +34,7 @@ export default function NetworkingTab({ event, profile, isLive, isEnded, registr
     if(!profile||auraLoaded)return;
     async function loadAura(){
       const{data:prof}=await supabase.from("guest_profiles").select("aura_active,networking_visible").eq("id",profile.id).single();
-      const isActive=prof?.aura_active??false;
+      const isActive=prof?.networking_visible??false;
       setNetworkingActive(isActive);
       const{data:sent}=await supabase.from("handshake_requests").select("recipient_id").eq("requester_id",profile.id).eq("event_id",event.id).in("status",["pending","approved"]);
       setSentRequests(new Set((sent||[]).map((r:any)=>r.recipient_id)));
@@ -90,7 +90,7 @@ export default function NetworkingTab({ event, profile, isLive, isEnded, registr
     const defaultVisibility=policy?.default_visibility??"visible";
 
     // limit raised to 99 — no artificial cap on visible attendees
-    const{data}=await supabase.from("guest_profiles").select("*").eq("event_id",event.id).eq("aura_active",true).eq("networking_visible",true).neq("id",profile.id).limit(99);
+    const{data}=await supabase.from("guest_profiles").select("*").eq("event_id",event.id).eq("networking_visible",true).neq("id",profile.id).limit(99);
     const{data:blockedData}=await supabase.from("guest_blocks").select("blocked_id").eq("blocker_id",profile.id).eq("event_id",event.id);
     const blockedSet=new Set((blockedData||[]).map((b:any)=>b.blocked_id));
 
@@ -256,6 +256,7 @@ export default function NetworkingTab({ event, profile, isLive, isEnded, registr
       </div>
     );
   }
+
 
   return(
     <div style={{background:"linear-gradient(160deg,#0f0f13 0%,#12101a 100%)",minHeight:"calc(100vh - 100px)",position:"relative",padding:"16px"}}>
