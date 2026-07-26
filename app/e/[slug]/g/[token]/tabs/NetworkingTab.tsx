@@ -17,6 +17,7 @@ interface NetworkingTabProps {
 
 export default function NetworkingTab({ event, profile, isLive, isEnded, registration }: NetworkingTabProps) {
   const[networkingActive,setNetworkingActive]=useState(false);
+  const[recommendedIds,setRecommendedIds]=useState<Set<string>>(new Set());
   const[auraLoaded,setAuraLoaded]=useState(false);
   const[nodes,setNodes]=useState<any[]>([]);
   const[hostNode,setHostNode]=useState<any>(null);
@@ -29,6 +30,7 @@ export default function NetworkingTab({ event, profile, isLive, isEnded, registr
   const channelRef=useRef<any>(null);
   const[declinedIds,setDeclinedIds]=useState<Set<string>>(new Set());
   const[rolesMap,setRolesMap]=useState<Record<string,any>>({});
+  const rolesMapRef=useRef<Record<string,any>>({});
 
   useEffect(()=>{
     if(!profile||auraLoaded)return;
@@ -71,6 +73,7 @@ export default function NetworkingTab({ event, profile, isLive, isEnded, registr
     ]);
     const newRolesMap=Object.fromEntries((allRoles||[]).map((r:any)=>[r.id,r]));
     setRolesMap(newRolesMap);
+    rolesMapRef.current=newRolesMap;
 
     // Ensure we always have a policy row — upsert defaults if none exists yet.
     // This means the host never needs to visit the Policies tab first for
@@ -173,7 +176,7 @@ export default function NetworkingTab({ event, profile, isLive, isEnded, registr
             return prev;
           }
           const updated=[...prev];
-          const rb=rolesMap[payload.new.role]?.badge??null;
+          const rb=rolesMapRef.current[payload.new.role]?.badge??null;
           updated[idx]={...updated[idx],...payload.new,networking_intents:parseIntents(payload.new.networking_intents),role_badge:rb};
           return updated;
         });
@@ -274,6 +277,7 @@ export default function NetworkingTab({ event, profile, isLive, isEnded, registr
         event={event}
         sentRequests={sentRequests}
         onRequestSent={id => setSentRequests(prev => new Set([...prev, id]))}
+        onRecommended={ids => setRecommendedIds(ids)}
       />
 
       <input
@@ -310,8 +314,9 @@ export default function NetworkingTab({ event, profile, isLive, isEnded, registr
             <p style={{color:"#555",fontSize:"14px",textAlign:"center",padding:"60px 0"}}>No one else is networking right now.</p>
           )}
           {networkingActive&&nodes.filter((node:any)=>{
-            // Never show declined or already-connected people in the live list
+            // Never show declined people or those already in the For You section
             if(declinedIds.has(node.id))return false;
+            if(recommendedIds.has(node.id))return false;
             const q=liveSearch.trim().toLowerCase();
             if(!q)return true;
             return node.display_name?.toLowerCase().includes(q)

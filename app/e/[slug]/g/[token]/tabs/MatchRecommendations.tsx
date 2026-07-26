@@ -10,11 +10,12 @@ interface Props {
   event: any;
   sentRequests: Set<string>;
   onRequestSent: (id: string) => void;
+  onRecommended?: (ids: Set<string>) => void;
 }
 
 const EMBER = "#E26D34";
 
-export default function MatchRecommendations({ profile, event, sentRequests, onRequestSent }: Props) {
+export default function MatchRecommendations({ profile, event, sentRequests, onRequestSent, onRecommended }: Props) {
   const [matches, setMatches] = useState<ReturnType<typeof rankMatches>>([]);
   const [loading, setLoading] = useState(true);
   const [sending, setSending] = useState<string | null>(null);
