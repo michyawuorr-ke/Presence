@@ -6,11 +6,11 @@ const supabase=createClient(
   process.env.SUPABASE_SERVICE_ROLE_KEY!
 );
 
+// GET — fetch host node for display in the networking list
 export async function GET(req:NextRequest){
   const eventId=req.nextUrl.searchParams.get('event_id');
   if(!eventId)return NextResponse.json({error:'Missing event_id'},{status:400});
 
-  // Get event host
   const{data:event}=await supabase
     .from('events')
     .select('host_id,status')
@@ -21,7 +21,6 @@ export async function GET(req:NextRequest){
     return NextResponse.json({host:null});
   }
 
-  // Get host info first
   const{data:host}=await supabase
     .from('hosts')
     .select('id,name,email')
@@ -30,7 +29,6 @@ export async function GET(req:NextRequest){
 
   if(!host)return NextResponse.json({host:null});
 
-  // Get host profile using hosts.id
   const{data:hostProfile}=await supabase
     .from('host_profiles')
     .select('*')
@@ -47,4 +45,49 @@ export async function GET(req:NextRequest){
       is_host:true,
     }
   });
+}
+
+// POST — upsert a guest_profiles row for the host using service role
+// (bypasses RLS which blocks anon inserts). Called from bootstrapIdentity.
+export async function POST(req:NextRequest){
+  try{
+    const{registration_id,event_id,display_name,role_title,organisation,bio,linkedin_url,website_url,portfolio_url}=await req.json();
+    if(!registration_id||!event_id)return NextResponse.json({error:'Missing fields'},{status:400});
+
+    // Check if already exists
+    const{data:existing}=await supabase
+      .from('guest_profiles')
+      .select('*')
+      .eq('registration_id',registration_id)
+      .maybeSingle();
+
+    if(existing)return NextResponse.json({profile:existing});
+
+    const{data:profile,error}=await supabase
+      .from('guest_profiles')
+      .insert({
+        registration_id,
+        event_id,
+        display_name:    display_name||'Host',
+        role_title:      role_title||'Event Host',
+        organisation:    organisation||'',
+        bio:             bio||'',
+        linkedin_url:    linkedin_url||null,
+        website_url:     website_url||null,
+        portfolio_url:   portfolio_url||null,
+        role:            'organizer',
+        networking_visible: true,
+        aura_active:     false,
+        show_linkedin:   true,
+        show_website:    true,
+        show_portfolio:  true,
+      })
+      .select()
+      .single();
+
+    if(error)return NextResponse.json({error:error.message},{status:500});
+    return NextResponse.json({profile});
+  }catch(err:any){
+    return NextResponse.json({error:err.message},{status:500});
+  }
 }
