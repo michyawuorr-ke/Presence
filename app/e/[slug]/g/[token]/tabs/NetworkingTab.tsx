@@ -36,7 +36,8 @@ export default function NetworkingTab({ event, profile, isLive, isEnded, registr
     if(!profile||auraLoaded)return;
     async function loadAura(){
       const{data:prof}=await supabase.from("guest_profiles").select("aura_active,networking_visible").eq("id",profile.id).single();
-      const isActive=prof?.networking_visible??false;
+      // Default true — new guests should be visible immediately after onboarding
+      const isActive=prof?.networking_visible??true;
       setNetworkingActive(isActive);
       const{data:sent}=await supabase.from("handshake_requests").select("recipient_id").eq("requester_id",profile.id).eq("event_id",event.id).in("status",["pending","approved"]);
       setSentRequests(new Set((sent||[]).map((r:any)=>r.recipient_id)));
@@ -120,32 +121,23 @@ export default function NetworkingTab({ event, profile, isLive, isEnded, registr
     const myPerms=permsByRole[profile.role??"attendee"];
     const iCanDiscover=myPerms?.can_discover!==false;
 
-    console.log("[fetchNodes] raw data count:", data?.length, "profile.id:", profile.id, "profile.role:", profile.role);
-    console.log("[fetchNodes] approvedSet:", [...approvedSet], "declinedSet:", [...declinedSet]);
-    console.log("[fetchNodes] effectivePerms:", effectivePerms);
-    console.log("[fetchNodes] defaultVisibility:", defaultVisibility, "iCanDiscover:", iCanDiscover);
 
     const filtered=(data||[]).filter((n:any)=>{
       if(approvedSet.has(n.id)||declinedSet.has(n.id)||blockedSet.has(n.id)){
-        console.log("[filter] removed by sets:", n.display_name, n.id);
-        return false;
+            return false;
       }
       const theirPerms=permsByRole[n.role??"attendee"];
       if(theirPerms?.discoverable===false){
-        console.log("[filter] not discoverable:", n.display_name, n.role, theirPerms);
-        return false;
+            return false;
       }
       if(defaultVisibility==="hidden"&&!theirPerms?.bypass_visibility){
-        console.log("[filter] hidden by default_visibility:", n.display_name);
-        return false;
+            return false;
       }
       if(!iCanDiscover){
-        console.log("[filter] viewer cannot discover:", profile.role);
-        return false;
+            return false;
       }
       return true;
     });
-    console.log("[fetchNodes] filtered count:", filtered.length);
     setNodes(filtered.map((n:any)=>({...n,networking_intents:parseIntents(n.networking_intents),role_badge:newRolesMap[n.role]?.badge??null})));
     if(registration?.status!=="host"){
       const hostRes=await fetch('/api/events/host-profile?event_id='+event.id);

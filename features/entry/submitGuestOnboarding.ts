@@ -99,6 +99,10 @@ export async function submitGuestOnboarding(params: SubmitGuestOnboardingParams)
         params.presence.portfolio.trim() ||
         "",
       aura_active: false,
+      networking_visible: true,
+      show_linkedin: true,
+      show_website: true,
+      show_portfolio: true,
       networking_intents: JSON.stringify(params.intents),
       target_station_id: params.stationId,
       linkedin_url: params.presence.linkedin,
