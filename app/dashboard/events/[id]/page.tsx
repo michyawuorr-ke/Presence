@@ -46,14 +46,21 @@ export default function EventDashboardPage() {
     const { data: st } = await supabase.from("event_stations").select("*").eq("event_id", id).order("created_at");
     setStations(st || []);
 
-    const { data: regs } = await supabase.from("registrations").select("status,paid,checked_in,amount").eq("event_id", id);
-    const { data: hs } = await supabase.from("handshakes").select("id").eq("event_id", id);
-    const { data: gp } = await supabase.from("guest_profiles").select("aura_active").eq("event_id", id);
+    const [{ data: regs }, { data: hs }, { data: gp }] = await Promise.all([
+      supabase.from("registrations").select("status,paid,checked_in,amount").eq("event_id", id),
+      supabase.from("handshake_requests").select("id").eq("event_id", id).eq("status", "accepted"),
+      supabase.from("guest_profiles").select("networking_visible").eq("event_id", id),
+    ]);
     setStats({
+      // All registrations except the host's own
       registrations: regs?.filter(r => r.status !== "host").length || 0,
-      confirmed: regs?.filter(r => r.status === "confirmed").length || 0,
+      // Paid + confirmed guests only (not pending)
+      confirmed: regs?.filter(r => r.status === "confirmed" && r.paid).length || 0,
+      // Checked in guests
       checkins: regs?.filter(r => r.checked_in).length || 0,
-      onAura: gp?.filter(g => g.aura_active).length || 0,
+      // Guests who have enabled networking visibility
+      onAura: gp?.filter(g => g.networking_visible).length || 0,
+      // Accepted connection requests (not pending)
       handshakes: hs?.length || 0,
       revenue: regs?.reduce((s, r) => s + (r.paid ? (r.amount || 0) : 0), 0) || 0,
     });
