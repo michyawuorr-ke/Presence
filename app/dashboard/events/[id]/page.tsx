@@ -156,21 +156,18 @@ export default function EventDashboardPage() {
 
   return (
     <div style={{ minHeight: "100vh", background: "#08080a", color: "#f0ede8", fontFamily: "Inter, sans-serif" }}>
-      {/* Top bar */}
-      <header style={{ position: "sticky", top: 0, background: "rgba(8,8,10,0.95)", backdropFilter: "blur(20px)", borderBottom: "1px solid rgba(255,255,255,0.04)", zIndex: 30, padding: "0 16px" }}>
-        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", height: "52px", maxWidth: "480px", margin: "0 auto" }}>
-          <div style={{ display: "flex", alignItems: "center", gap: "10px", minWidth: 0 }}>
-            <button onClick={() => router.push("/dashboard/events")} style={{ background: "none", border: "none", color: "#555", fontSize: "18px", cursor: "pointer", padding: "4px", flexShrink: 0 }}>←</button>
-            <p style={{ fontSize: "14px", fontWeight: "600", color: "#f0ede8", margin: 0, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{event.title}</p>
-          </div>
-
+      {/* Event title + back — sits below the layout header */}
+      <div style={{ padding: "12px 16px 0", maxWidth: "480px", margin: "0 auto" }}>
+        <div style={{ display: "flex", alignItems: "center", gap: "10px", minWidth: 0, marginBottom: "12px" }}>
+          <button onClick={() => router.push("/dashboard/events")} style={{ background: "none", border: "none", color: "#555", fontSize: "18px", cursor: "pointer", padding: "4px", flexShrink: 0 }}>←</button>
+          <p style={{ fontSize: "15px", fontWeight: "600", color: "#f0ede8", margin: 0, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{event.title}</p>
         </div>
 
         {/* Tab nav */}
-        <div style={{ display: "flex", maxWidth: "480px", margin: "0 auto", borderTop: "1px solid rgba(255,255,255,0.03)" }}>
+        <div style={{ display: "flex", borderBottom: "1px solid rgba(255,255,255,0.05)" }}>
           {nav.map(n => (
             <button key={n.id} onClick={() => setTab(n.id)}
-              style={{ flex: 1, padding: "10px 4px", background: "none", border: "none", borderBottom: tab === n.id ? `2px solid ${GOLD}` : "2px solid transparent", color: tab === n.id ? GOLD : "#555", fontSize: "11px", fontWeight: tab === n.id ? "700" : "500", cursor: "pointer", letterSpacing: "0.06em", transition: "all 0.2s" }}>
+              style={{ flex: 1, padding: "9px 4px", background: "none", border: "none", borderBottom: tab === n.id ? `2px solid ${GOLD}` : "2px solid transparent", color: tab === n.id ? GOLD : "#555", fontSize: "11px", fontWeight: tab === n.id ? "700" : "500", cursor: "pointer", letterSpacing: "0.06em", transition: "all 0.2s" }}>
               {n.label}
               {n.id === "attendees" && pendingCount > 0 && (
                 <span style={{ marginLeft: "4px", background: GOLD, color: "#000", borderRadius: "10px", fontSize: "9px", fontWeight: "800", padding: "1px 5px" }}>{pendingCount}</span>
@@ -178,7 +175,7 @@ export default function EventDashboardPage() {
             </button>
           ))}
         </div>
-      </header>
+      </div>
 
       {/* Tab content */}
       <main style={{ padding: "20px 16px", maxWidth: "480px", margin: "0 auto" }}>

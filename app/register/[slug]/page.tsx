@@ -25,6 +25,7 @@ export default function RegisterPage() {
   const [isFreeRegistration, setIsFreeRegistration] = useState(false);
   const [selfSelectRoles, setSelfSelectRoles] = useState<string[]>([]);
   const [selectedRole, setSelectedRole] = useState("attendee");
+  const [stations, setStations] = useState<any[]>([]);
   const isSubmittingRef = useRef(false);
   const params = useParams();
   const slug = params.slug as string;
@@ -38,7 +39,11 @@ export default function RegisterPage() {
       setTicketTypes(tickets ?? []);
       if (tickets?.length) setSelectedTicket(tickets[0]);
       // Load self-select roles from event_policies
-      const { data: policy } = await supabase.from("event_policies").select("self_select_roles").eq("event_id", ev.id).maybeSingle();
+      const [{ data: policy }, { data: stationData }] = await Promise.all([
+        supabase.from("event_policies").select("self_select_roles").eq("event_id", ev.id).maybeSingle(),
+        supabase.from("event_stations").select("id,name,subtitle").eq("event_id", ev.id).order("created_at"),
+      ]);
+      setStations(stationData ?? []);
       const roles = Array.isArray(policy?.self_select_roles) ? policy.self_select_roles : [];
       setSelfSelectRoles(roles);
       // Default to attendee unless attendee not in list
@@ -241,6 +246,24 @@ export default function RegisterPage() {
             <p style={{color:"rgba(255,255,255,0.4)",fontSize:"12px",margin:"8px 0 0",textAlign:"center",maxWidth:"320px",lineHeight:1.6}}>{event.description}</p>
           )}
         </div>
+
+        {/* Stations / Shows — only shown when event has stations configured */}
+        {stations.length > 0 && (
+          <div style={{marginBottom:"24px"}}>
+            <p style={{fontSize:"10px",fontWeight:"700",letterSpacing:"0.12em",textTransform:"uppercase",color:"rgba(255,255,255,0.3)",marginBottom:"10px"}}>Shows at this Event</p>
+            <div style={{display:"flex",flexDirection:"column",gap:"8px"}}>
+              {stations.map((s:any) => (
+                <div key={s.id} style={{display:"flex",alignItems:"center",gap:"12px",background:"rgba(255,255,255,0.02)",border:"1px solid rgba(255,255,255,0.06)",borderRadius:"12px",padding:"12px 14px"}}>
+                  <div style={{width:"8px",height:"8px",borderRadius:"50%",background:"#E26D34",flexShrink:0}} />
+                  <div>
+                    <p style={{fontSize:"13px",fontWeight:"600",color:"#f0ede8",margin:"0 0 2px"}}>{s.name}</p>
+                    {s.subtitle && <p style={{fontSize:"11px",color:"rgba(255,255,255,0.4)",margin:0}}>{s.subtitle}</p>}
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
 
         {/* Organizer card — only shown when host has show_in_events enabled */}
         {hostProfile && (
