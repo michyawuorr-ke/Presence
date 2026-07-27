@@ -95,6 +95,9 @@ export default function AttendeesTab({ eventId, isLive }: AttendeesTabProps) {
     await supabase.from("registrations").update({ role: newRole }).eq("id", regId);
     if (guestProfileId) {
       await supabase.from("guest_profiles").update({ role: newRole }).eq("id", guestProfileId);
+    } else {
+      // Fallback: update by registration_id in case guest_profile_id wasn't resolved
+      await supabase.from("guest_profiles").update({ role: newRole }).eq("registration_id", regId);
     }
     toast(`${name} is now ${roles.find(r => r.id === newRole)?.label ?? newRole}`);
     setUpdatingRole(null);
@@ -259,7 +262,7 @@ export default function AttendeesTab({ eventId, isLive }: AttendeesTabProps) {
                   <select
                     value={r.role || "attendee"}
                     disabled={updatingRole === r.id}
-                    onChange={e => updateRole(r.id, r.guest_profile_id ?? null, e.target.value, r.guest_name)}
+                    onChange={e => updateRole(r.id, Array.isArray(r.guest_profiles) ? r.guest_profiles[0]?.id ?? null : r.guest_profiles?.id ?? null, e.target.value, r.guest_name)}
                     style={{ background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.08)", color: "#f0ede8", fontSize: "11px", borderRadius: "6px", padding: "4px 8px", outline: "none", cursor: "pointer" }}>
                     {roles.map(role => (
                       <option key={role.id} value={role.id}>
