@@ -149,6 +149,19 @@ export default function MatchRecommendations({ profile, event, sentRequests, onR
                       TOP
                     </span>
                   )}
+                  {match.profile.role && match.profile.role !== "attendee" && (() => {
+                    const ROLE_CHIPS: Record<string,{label:string;color:string;bg:string;border:string}> = {
+                      vip:      { label:"VIP",     color:"#D4AF37", bg:"rgba(212,175,55,0.1)",  border:"rgba(212,175,55,0.25)" },
+                      speaker:  { label:"Speaker", color:"#E26D34", bg:"rgba(226,109,52,0.1)",  border:"rgba(226,109,52,0.25)" },
+                      organizer:{ label:"Host",    color:"#A78BFA", bg:"rgba(167,139,250,0.1)", border:"rgba(167,139,250,0.25)" },
+                    };
+                    const chip = ROLE_CHIPS[match.profile.role];
+                    return chip ? (
+                      <span style={{ fontSize:"9px", fontWeight:"700", letterSpacing:"0.04em", color:chip.color, background:chip.bg, border:"1px solid "+chip.border, borderRadius:"5px", padding:"1px 6px", flexShrink:0 }}>
+                        {chip.label}
+                      </span>
+                    ) : null;
+                  })()}
                 </div>
 
                 {match.profile.industry && (

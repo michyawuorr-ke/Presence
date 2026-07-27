@@ -23,6 +23,8 @@ export default function RegisterPage() {
   const [paymentState, setPaymentState] = useState<"idle"|"waiting"|"success"|"failed">("idle");
   const [confirmedToken, setConfirmedToken] = useState("");
   const [isFreeRegistration, setIsFreeRegistration] = useState(false);
+  const [selfSelectRoles, setSelfSelectRoles] = useState<string[]>([]);
+  const [selectedRole, setSelectedRole] = useState("attendee");
   const isSubmittingRef = useRef(false);
   const params = useParams();
   const slug = params.slug as string;
@@ -35,6 +37,12 @@ export default function RegisterPage() {
       const { data: tickets } = await supabase.from("ticket_types").select("*").eq("event_id", ev.id).eq("is_active", true);
       setTicketTypes(tickets ?? []);
       if (tickets?.length) setSelectedTicket(tickets[0]);
+      // Load self-select roles from event_policies
+      const { data: policy } = await supabase.from("event_policies").select("self_select_roles").eq("event_id", ev.id).maybeSingle();
+      const roles = Array.isArray(policy?.self_select_roles) ? policy.self_select_roles : [];
+      setSelfSelectRoles(roles);
+      // Default to attendee unless attendee not in list
+      if (roles.length && !roles.includes("attendee")) setSelectedRole(roles[0]);
 
       // Load host profile for the organizer card (only if show_in_events is true)
       const { data: hp } = await supabase
@@ -66,6 +74,7 @@ export default function RegisterPage() {
         const { error: freeError } = await supabase.from("registrations").insert({
           event_id: event?.id, ticket_type_id: selectedTicket?.id || null,
           guest_name: name, guest_email: email, guest_phone: phone,
+          role: selectedRole || "attendee",
           status: "confirmed", amount: 0, paid: true,
           access_token: accessToken, guest_access_link: guestUrl,
         });
@@ -77,6 +86,7 @@ export default function RegisterPage() {
       const { data: reg, error: regError } = await supabase.from("registrations").insert({
         event_id: event?.id, ticket_type_id: selectedTicket?.id,
         guest_name: name, guest_email: email, guest_phone: phone,
+        role: selectedRole || "attendee",
         status: "pending", amount: totalAmount, paid: false,
         access_token: accessToken, guest_access_link: guestUrl,
       }).select().single();
@@ -267,6 +277,25 @@ export default function RegisterPage() {
         <input value={name} onChange={e=>setName(e.target.value)} placeholder="Your Name" type="text" disabled={submitting} style={inp}/>
         <input value={email} onChange={e=>setEmail(e.target.value)} placeholder="Email Address" type="email" disabled={submitting} style={inp}/>
         <input value={phone} onChange={e=>setPhone(e.target.value)} placeholder="M-Pesa Number" type="tel" disabled={submitting} style={inp}/>
+        {selfSelectRoles.length > 1 && (
+          <div style={{marginTop:"12px"}}>
+            <p style={{fontSize:"11px",color:"rgba(255,255,255,0.45)",letterSpacing:"0.06em",textTransform:"uppercase",marginBottom:"8px"}}>Attending as</p>
+            <div style={{display:"flex",gap:"8px",flexWrap:"wrap"}}>
+              {selfSelectRoles.map((r:string) => {
+                const labels: Record<string,string> = { attendee:"Attendee", speaker:"Speaker", vip:"VIP" };
+                return (
+                  <button key={r} type="button" onClick={()=>setSelectedRole(r)} disabled={submitting}
+                    style={{padding:"8px 16px",borderRadius:"8px",border:"1px solid",fontSize:"12px",fontWeight:"600",cursor:"pointer",
+                      background: selectedRole===r ? "rgba(212,175,55,0.12)" : "transparent",
+                      borderColor: selectedRole===r ? "rgba(212,175,55,0.4)" : "rgba(255,255,255,0.1)",
+                      color: selectedRole===r ? "#D4AF37" : "rgba(255,255,255,0.5)"}}>
+                    {labels[r] ?? r}
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+        )}
       </div>
       <div style={{width:"100%",marginBottom:"24px"}}>
         {error && <p style={{color:"#ef4444",fontSize:"12px",marginBottom:"16px",textAlign:"center"}}>{error}</p>}

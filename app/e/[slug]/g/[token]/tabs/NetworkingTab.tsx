@@ -77,6 +77,17 @@ export default function NetworkingTab({ event, profile, isLive, isEnded, registr
     setRolesMap(newRolesMap);
     rolesMapRef.current=newRolesMap;
 
+    // If resolved_role_permissions returned nothing (RLS may block anon reads
+    // on the view), fall back to reading event_role_policies directly.
+    let effectivePerms = allPerms;
+    if (!effectivePerms || effectivePerms.length === 0) {
+      const { data: rawPolicies } = await supabase
+        .from("event_role_policies")
+        .select("role_id,discoverable,bypass_visibility,can_discover")
+        .eq("event_id", event.id);
+      if (rawPolicies && rawPolicies.length > 0) effectivePerms = rawPolicies;
+    }
+
     // Ensure we always have a policy row — upsert defaults if none exists yet.
     // This means the host never needs to visit the Policies tab first for
     // basic behaviour (networking enabled, default visible) to work correctly.
@@ -91,7 +102,7 @@ export default function NetworkingTab({ event, profile, isLive, isEnded, registr
     }
     if(policy?.networking_enabled===false){setNodes([]);return;}
 
-    const permsByRole=Object.fromEntries((allPerms||[]).map((p:any)=>[p.role_id,p]));
+    const permsByRole=Object.fromEntries((effectivePerms||[]).map((p:any)=>[p.role_id,p]));
     const defaultVisibility=policy?.default_visibility??"visible";
 
     // limit raised to 99 — no artificial cap on visible attendees
