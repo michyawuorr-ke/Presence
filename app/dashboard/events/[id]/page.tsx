@@ -49,7 +49,7 @@ export default function EventDashboardPage() {
     const [{ data: regs }, { data: hs }, { data: gp }] = await Promise.all([
       supabase.from("registrations").select("status,paid,checked_in,amount").eq("event_id", id),
       supabase.from("handshake_requests").select("id").eq("event_id", id).eq("status", "accepted"),
-      supabase.from("guest_profiles").select("networking_visible").eq("event_id", id),
+      supabase.from("guest_profiles").select("networking_visible,role").eq("event_id", id),
     ]);
     setStats({
       // All registrations except the host's own
@@ -59,7 +59,8 @@ export default function EventDashboardPage() {
       // Checked in guests
       checkins: regs?.filter(r => r.checked_in).length || 0,
       // Guests who have enabled networking visibility
-      onAura: gp?.filter(g => g.networking_visible).length || 0,
+      // Exclude organizer from networking count — they are not a registered guest
+      onAura: gp?.filter(g => g.networking_visible && g.role !== "organizer").length || 0,
       // Accepted connection requests (not pending)
       handshakes: hs?.length || 0,
       revenue: regs?.reduce((s, r) => s + (r.paid ? (r.amount || 0) : 0), 0) || 0,

@@ -14,15 +14,20 @@ interface OverviewTabProps {
   bannerError: string;
 }
 
-const GOLD = "#D4AF37";
+const GOLD  = "#D4AF37";
+const EMBER = "#E26D34";
+const IVORY = "rgba(240,237,232,0.85)";
+const DIM   = "rgba(240,237,232,0.35)";
+const FAINT = "rgba(255,255,255,0.04)";
 
-const LINK_ICONS: Record<string, string> = {
-  registration: `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 12V22H4V12"/><path d="M22 7H2v5h20V7z"/><path d="M12 22V7"/><path d="M12 7H7.5a2.5 2.5 0 0 1 0-5C11 2 12 7 12 7z"/><path d="M12 7h4.5a2.5 2.5 0 0 0 0-5C13 2 12 7 12 7z"/></svg>`,
-  host: `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>`,
-  scanner: `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 7V5a2 2 0 0 1 2-2h2"/><path d="M17 3h2a2 2 0 0 1 2 2v2"/><path d="M21 17v2a2 2 0 0 1-2 2h-2"/><path d="M7 21H5a2 2 0 0 1-2-2v-2"/><line x1="7" y1="12" x2="17" y2="12"/></svg>`,
+const ICONS = {
+  registration: `<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="7" width="20" height="14" rx="2"/><path d="M16 7V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v2"/><line x1="12" y1="12" x2="12" y2="16"/><line x1="10" y1="14" x2="14" y2="14"/></svg>`,
+  host:         `<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>`,
+  scanner:      `<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 7V5a2 2 0 0 1 2-2h2"/><path d="M17 3h2a2 2 0 0 1 2 2v2"/><path d="M21 17v2a2 2 0 0 1-2 2h-2"/><path d="M7 21H5a2 2 0 0 1-2-2v-2"/><line x1="7" y1="12" x2="17" y2="12"/></svg>`,
+  share:        `<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/></svg>`,
 };
 
-function LinkCard({ label, hint, url, icon }: { label: string; hint: string; url: string; icon: string }) {
+function LinkCard({ label, hint, url, icon }: { label: string; hint: string; url: string; icon: keyof typeof ICONS }) {
   const [copied, setCopied] = useState(false);
 
   function copy() {
@@ -43,22 +48,21 @@ function LinkCard({ label, hint, url, icon }: { label: string; hint: string; url
   if (!url) return null;
 
   return (
-    <div style={{ background: "rgba(212,175,55,0.03)", border: "1px solid rgba(212,175,55,0.1)", borderRadius: "14px", padding: "14px 16px", marginBottom: "10px" }}>
-      <div style={{ display: "flex", alignItems: "center", gap: "8px", marginBottom: "6px" }}>
-        <span style={{ display:"flex",alignItems:"center",color:GOLD }} dangerouslySetInnerHTML={{__html:LINK_ICONS[icon]??LINK_ICONS.registration}}/>
-        <p style={{ fontSize: "10px", fontWeight: "700", letterSpacing: "0.15em", color: GOLD, textTransform: "uppercase", margin: 0 }}>{label}</p>
+    <div style={{ background: FAINT, border: "1px solid rgba(255,255,255,0.06)", borderRadius: "14px", padding: "14px 16px", marginBottom: "10px" }}>
+      <div style={{ display: "flex", alignItems: "center", gap: "8px", marginBottom: "4px" }}>
+        <span style={{ display: "flex", alignItems: "center", color: DIM }} dangerouslySetInnerHTML={{ __html: ICONS[icon] }} />
+        <p style={{ fontSize: "10px", fontWeight: "700", letterSpacing: "0.12em", color: DIM, textTransform: "uppercase", margin: 0 }}>{label}</p>
       </div>
-      <p style={{ fontSize: "11px", color: "#444", margin: "0 0 10px" }}>{hint}</p>
-      <p style={{ fontSize: "11px", color: "#555", margin: "0 0 10px", wordBreak: "break-all", fontFamily: "monospace" }}>{url}</p>
+      <p style={{ fontSize: "11px", color: "rgba(255,255,255,0.2)", margin: "0 0 8px" }}>{hint}</p>
+      <p style={{ fontSize: "11px", color: "rgba(255,255,255,0.35)", margin: "0 0 10px", wordBreak: "break-all", fontFamily: "monospace" }}>{url}</p>
       <div style={{ display: "flex", gap: "8px" }}>
         <button onClick={copy}
-          style={{ flex: 1, padding: "8px", borderRadius: "8px", background: "transparent", border: "1px solid rgba(212,175,55,0.25)", color: copied ? "#22c55e" : GOLD, fontSize: "11px", fontWeight: "600", cursor: "pointer" }}>
-          {copied ? "✓ Copied" : "Copy"}
+          style={{ flex: 1, padding: "8px", borderRadius: "8px", background: copied ? "rgba(34,197,94,0.08)" : "rgba(226,109,52,0.08)", border: `1px solid ${copied ? "rgba(34,197,94,0.25)" : "rgba(226,109,52,0.25)"}`, color: copied ? "#22c55e" : EMBER, fontSize: "11px", fontWeight: "600", cursor: "pointer", letterSpacing: "0.04em" }}>
+          {copied ? "✓ Copied" : "Copy Link"}
         </button>
         <button onClick={share}
-          style={{ width: "36px", padding: "8px", borderRadius: "8px", background: "transparent", border: "1px solid rgba(212,175,55,0.25)", color: GOLD, fontSize: "14px", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center" }}>
-          ↑
-        </button>
+          style={{ width: "36px", padding: "8px", borderRadius: "8px", background: "rgba(226,109,52,0.08)", border: "1px solid rgba(226,109,52,0.25)", color: EMBER, fontSize: "14px", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center" }}
+          dangerouslySetInnerHTML={{ __html: ICONS.share }} />
       </div>
     </div>
   );
@@ -69,30 +73,37 @@ export default function OverviewTab({
   timeToLive, bannerUrl, onBannerUpload, uploadingBanner, bannerError
 }: OverviewTabProps) {
 
-  const isLive      = event?.status === "live";
-  const isEnded     = event?.status === "ended";
-  const isDraft     = !isLive && !isEnded;
+  const isLive  = event?.status === "live";
+  const isEnded = event?.status === "ended";
+  const isDraft = !isLive && !isEnded;
 
-  const statusColor = isLive ? "#22c55e" : isEnded ? "#555" : GOLD;
-  const statusLabel = isLive ? "● LIVE" : isEnded ? "✓ ENDED" : "◌ DRAFT";
-
+  // Stat cards — Ember accent on the two live-energy stats
   const statCards = [
-    { label: "Registered", value: stats.registrations },
-    { label: "Confirmed",  value: stats.confirmed },
-    { label: "Checked In", value: stats.checkins },
-    { label: "Networking", value: stats.onAura },
-    { label: "Handshakes", value: stats.handshakes },
-    { label: "Revenue",    value: `KES ${(stats.revenue || 0).toLocaleString()}` },
+    { label: "Registered", value: stats.registrations,  accent: false },
+    { label: "Confirmed",  value: stats.confirmed,       accent: false },
+    { label: "Checked In", value: stats.checkins,        accent: false },
+    { label: "Networking", value: stats.onAura,          accent: true  },
+    { label: "Connections",value: stats.handshakes,      accent: true  },
+    { label: "Revenue",    value: `KES ${(stats.revenue || 0).toLocaleString()}`, accent: false },
   ];
 
   return (
     <div style={{ paddingBottom: "48px" }}>
 
-      {/* Status + countdown */}
+      {/* Status row */}
       <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "20px" }}>
-        <span style={{ fontSize: "10px", fontWeight: "700", letterSpacing: "0.15em", color: statusColor }}>{statusLabel}</span>
+        {isLive ? (
+          <span style={{ display: "flex", alignItems: "center", gap: "6px", fontSize: "10px", fontWeight: "700", letterSpacing: "0.15em", color: EMBER }}>
+            <span style={{ width: 6, height: 6, borderRadius: "50%", background: EMBER, display: "inline-block", boxShadow: `0 0 6px ${EMBER}` }} />
+            LIVE
+          </span>
+        ) : isEnded ? (
+          <span style={{ fontSize: "10px", fontWeight: "700", letterSpacing: "0.15em", color: "#555" }}>✓ ENDED</span>
+        ) : (
+          <span style={{ fontSize: "10px", fontWeight: "700", letterSpacing: "0.15em", color: GOLD }}>◌ DRAFT</span>
+        )}
         {timeToLive && isDraft && (
-          <span style={{ fontSize: "12px", color: GOLD, fontWeight: "500" }}>Goes live in {timeToLive}</span>
+          <span style={{ fontSize: "11px", color: DIM, fontWeight: "500" }}>Goes live in <span style={{ color: GOLD }}>{timeToLive}</span></span>
         )}
       </div>
 
@@ -107,50 +118,36 @@ export default function OverviewTab({
           <input type="file" accept="image/jpeg,image/png,image/webp" onChange={onBannerUpload} style={{ display: "none" }} />
         </label>
       </div>
-      {bannerError && <p style={{ fontSize: "11px", color: "#E26D34", marginBottom: "12px" }}>{bannerError}</p>}
+      {bannerError && <p style={{ fontSize: "11px", color: EMBER, marginBottom: "12px" }}>{bannerError}</p>}
 
       {/* Stats grid */}
-      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: "8px", marginBottom: "24px" }}>
+      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: "8px", marginBottom: "28px" }}>
         {statCards.map(s => (
-          <div key={s.label} style={{ background: "rgba(255,255,255,0.02)", border: "1px solid rgba(255,255,255,0.04)", borderRadius: "12px", padding: "14px 10px", textAlign: "center" }}>
-            <p style={{ fontSize: "18px", fontWeight: "700", color: "#f0ede8", margin: "0 0 4px", letterSpacing: "-0.02em" }}>{s.value}</p>
-            <p style={{ fontSize: "9px", color: "#555", textTransform: "uppercase", letterSpacing: "0.1em", margin: 0 }}>{s.label}</p>
+          <div key={s.label} style={{
+            background: s.accent ? "rgba(226,109,52,0.04)" : FAINT,
+            border: `1px solid ${s.accent ? "rgba(226,109,52,0.12)" : "rgba(255,255,255,0.04)"}`,
+            borderRadius: "12px", padding: "14px 10px", textAlign: "center"
+          }}>
+            <p style={{ fontSize: "18px", fontWeight: "700", color: s.accent ? EMBER : IVORY, margin: "0 0 4px", letterSpacing: "-0.02em" }}>{s.value}</p>
+            <p style={{ fontSize: "9px", color: s.accent ? "rgba(226,109,52,0.6)" : "#555", textTransform: "uppercase", letterSpacing: "0.1em", margin: 0 }}>{s.label}</p>
           </div>
         ))}
       </div>
 
-      {/* Links — registration only shown after publishing */}
-      <p style={{ fontSize: "10px", fontWeight: "700", letterSpacing: "0.15em", color: GOLD, textTransform: "uppercase", marginBottom: "12px" }}>Event Links</p>
+      {/* Links */}
+      <p style={{ fontSize: "9px", fontWeight: "700", letterSpacing: "0.15em", color: DIM, textTransform: "uppercase", marginBottom: "12px" }}>Event Links</p>
 
       {isLive || isEnded ? (
-        <LinkCard
-          label="Registration Link"
-          hint="Share with people who want to attend"
-          url={registrationLink}
-          icon="registration"
-        />
+        <LinkCard label="Registration Link" hint="Share with attendees" url={registrationLink} icon="registration" />
       ) : (
-        <div style={{ background: "rgba(255,255,255,0.01)", border: "1px dashed rgba(255,255,255,0.06)", borderRadius: "14px", padding: "14px 16px", marginBottom: "10px" }}>
-          <div style={{ display: "flex", alignItems: "center", gap: "8px", marginBottom: "4px" }}>
-            <span style={{ display:"flex",alignItems:"center",color:"#444" }} dangerouslySetInnerHTML={{__html:LINK_ICONS.registration}}/>
-            <p style={{ fontSize: "10px", fontWeight: "700", letterSpacing: "0.15em", color: "#444", textTransform: "uppercase", margin: 0 }}>Registration Link</p>
-          </div>
-          <p style={{ fontSize: "11px", color: "#333", margin: 0 }}>Available after publishing — go to Setup to publish</p>
+        <div style={{ background: FAINT, border: "1px dashed rgba(255,255,255,0.06)", borderRadius: "14px", padding: "14px 16px", marginBottom: "10px" }}>
+          <p style={{ fontSize: "10px", fontWeight: "700", letterSpacing: "0.12em", color: "#333", textTransform: "uppercase", margin: "0 0 4px" }}>Registration Link</p>
+          <p style={{ fontSize: "11px", color: "#2a2a2a", margin: 0 }}>Available after publishing</p>
         </div>
       )}
 
-      <LinkCard
-        label="Host Link"
-        hint="Your personal access to the event scene"
-        url={hostLink}
-        icon="host"
-      />
-      <LinkCard
-        label="Check-In Scanner"
-        hint="Open on a device at the door for scanning"
-        url={scannerLink}
-        icon="scanner"
-      />
+      <LinkCard label="Host Link"       hint="Your personal access to the event" url={hostLink}       icon="host"    />
+      <LinkCard label="Check-In Scanner" hint="Open at the door for scanning"      url={scannerLink}   icon="scanner" />
     </div>
   );
 }
