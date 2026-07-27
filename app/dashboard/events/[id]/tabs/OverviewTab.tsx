@@ -93,8 +93,8 @@ export default function OverviewTab({
       {/* Status row */}
       <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "20px" }}>
         {isLive ? (
-          <span style={{ display: "flex", alignItems: "center", gap: "6px", fontSize: "10px", fontWeight: "700", letterSpacing: "0.15em", color: EMBER }}>
-            <span style={{ width: 6, height: 6, borderRadius: "50%", background: EMBER, display: "inline-block", boxShadow: `0 0 6px ${EMBER}` }} />
+          <span style={{ display: "flex", alignItems: "center", gap: "6px", fontSize: "10px", fontWeight: "700", letterSpacing: "0.15em", color: "#22c55e" }}>
+            <span style={{ width: 6, height: 6, borderRadius: "50%", background: "#22c55e", display: "inline-block", boxShadow: "0 0 6px #22c55e" }} />
             LIVE
           </span>
         ) : isEnded ? (

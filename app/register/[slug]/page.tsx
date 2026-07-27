@@ -237,6 +237,9 @@ export default function RegisterPage() {
           <p className="living-tagline">The room activated</p>
           <h1 style={{fontSize:"18px",fontWeight:"600",color:"#fff",letterSpacing:"0.08em",textTransform:"uppercase",marginTop:"24px",marginBottom:"6px"}}>Register</h1>
           <p style={{color:"rgba(255,255,255,0.6)",fontSize:"14px",margin:0}}>Event: {event.title}</p>
+          {event.description && (
+            <p style={{color:"rgba(255,255,255,0.4)",fontSize:"12px",margin:"8px 0 0",textAlign:"center",maxWidth:"320px",lineHeight:1.6}}>{event.description}</p>
+          )}
         </div>
 
         {/* Organizer card — only shown when host has show_in_events enabled */}
@@ -251,7 +254,7 @@ export default function RegisterPage() {
             <div style={{flex:1,minWidth:0}}>
               <div style={{display:"flex",alignItems:"center",gap:"6px",marginBottom:"2px"}}>
                 <p style={{fontSize:"13px",fontWeight:"600",color:"#f0ede8",margin:0}}>{hostProfile.display_name}</p>
-                <span style={{fontSize:"8px",fontWeight:"800",color:"#D4AF37",background:"rgba(212,175,55,0.1)",border:"1px solid rgba(212,175,55,0.2)",borderRadius:"3px",padding:"1px 5px",letterSpacing:"0.1em",flexShrink:0}}>🛡 ORGANIZER</span>
+                <span style={{display:"inline-flex",alignItems:"center",gap:"3px",fontSize:"8px",fontWeight:"800",color:"#D4AF37",background:"rgba(212,175,55,0.1)",border:"1px solid rgba(212,175,55,0.2)",borderRadius:"3px",padding:"2px 6px",letterSpacing:"0.1em",flexShrink:0}}><svg width="8" height="8" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>ORGANIZER</span>
               </div>
               {(hostProfile.role_title||hostProfile.organisation) && (
                 <p style={{fontSize:"11px",color:"rgba(255,255,255,0.4)",margin:0}}>

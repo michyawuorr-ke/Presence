@@ -32,7 +32,6 @@ export default function EventDashboardPage() {
   const [ending, setEnding] = useState(false);
   const [pendingCount, setPendingCount] = useState(0);
   const [hostProfile, setHostProfile] = useState<any>(null);
-  const [showProfile, setShowProfile] = useState(false);
 
   const load = useCallback(async () => {
     const { data: ev } = await supabase.from("events").select("*").eq("id", id).single();
@@ -164,11 +163,7 @@ export default function EventDashboardPage() {
             <button onClick={() => router.push("/dashboard/events")} style={{ background: "none", border: "none", color: "#555", fontSize: "18px", cursor: "pointer", padding: "4px", flexShrink: 0 }}>←</button>
             <p style={{ fontSize: "14px", fontWeight: "600", color: "#f0ede8", margin: 0, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{event.title}</p>
           </div>
-          {/* Host profile avatar */}
-          <button onClick={() => setShowProfile(!showProfile)}
-            style={{ width: "32px", height: "32px", borderRadius: "50%", background: `rgba(212,175,55,0.12)`, border: `1px solid rgba(212,175,55,0.25)`, color: GOLD, fontSize: "12px", fontWeight: "700", cursor: "pointer", flexShrink: 0, display: "flex", alignItems: "center", justifyContent: "center" }}>
-            {hostProfile?.display_name?.[0]?.toUpperCase() || "H"}
-          </button>
+
         </div>
 
         {/* Tab nav */}
@@ -184,22 +179,6 @@ export default function EventDashboardPage() {
           ))}
         </div>
       </header>
-
-      {/* Host profile slide-down */}
-      {showProfile && (
-        <div style={{ position: "fixed", top: "52px", right: "16px", background: "#111", border: "1px solid rgba(212,175,55,0.15)", borderRadius: "14px", padding: "16px", zIndex: 40, minWidth: "200px", boxShadow: "0 8px 32px rgba(0,0,0,0.5)" }}>
-          <p style={{ fontSize: "13px", fontWeight: "600", color: "#f0ede8", margin: "0 0 2px" }}>{hostProfile?.display_name || "Host"}</p>
-          <p style={{ fontSize: "11px", color: "#555", margin: "0 0 14px" }}>{hostProfile?.organisation || ""}</p>
-          <button onClick={() => { router.push("/dashboard/profile"); setShowProfile(false); }}
-            style={{ width: "100%", padding: "8px", borderRadius: "8px", background: "transparent", border: `1px solid rgba(212,175,55,0.2)`, color: GOLD, fontSize: "11px", cursor: "pointer", marginBottom: "6px" }}>
-            Edit Profile
-          </button>
-          <button onClick={async () => { await supabase.auth.signOut(); router.push("/login"); }}
-            style={{ width: "100%", padding: "8px", borderRadius: "8px", background: "transparent", border: "1px solid rgba(255,255,255,0.06)", color: "#555", fontSize: "11px", cursor: "pointer" }}>
-            Sign Out
-          </button>
-        </div>
-      )}
 
       {/* Tab content */}
       <main style={{ padding: "20px 16px", maxWidth: "480px", margin: "0 auto" }}>
