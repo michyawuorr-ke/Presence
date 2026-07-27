@@ -77,6 +77,28 @@ export async function POST(req:NextRequest){
         .single();
 
       registration=newReg;
+
+      // Create host guest_profiles immediately when registration is first made
+      // so they can enter the app and use networking before the event goes live.
+      if(newReg){
+        await supabase.from('guest_profiles').insert({
+          registration_id:    newReg.id,
+          event_id,
+          display_name:       hostProfile?.display_name||host.name,
+          role_title:         hostProfile?.role_title||'Event Host',
+          organisation:       hostProfile?.organisation||'',
+          bio:                hostProfile?.bio||'',
+          linkedin_url:       hostProfile?.linkedin_url||null,
+          website_url:        hostProfile?.website_url||null,
+          portfolio_url:      hostProfile?.portfolio_url||null,
+          role:               'organizer',
+          networking_visible: true,
+          aura_active:        false,
+          show_linkedin:      true,
+          show_website:       true,
+          show_portfolio:     true,
+        });
+      }
     }
 
     // Update event status to live
@@ -84,6 +106,7 @@ export async function POST(req:NextRequest){
       .from('events')
       .update({status:'live'})
       .eq('id',event_id);
+
 
     return NextResponse.json({
       success:true,

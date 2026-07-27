@@ -36,42 +36,38 @@ export async function bootstrapIdentity(reg: any) {
     .eq("host_id", host.id)
     .single();
 
-  // Upsert a guest_profiles row for the host via the server-side API
-  // (uses service role key to bypass RLS — anon client can't insert here).
-  const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? "";
-  let guestProfile: any = null;
-  try {
-    const res = await fetch(`${appUrl}/api/events/host-profile`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        registration_id: reg.id,
-        event_id:        reg.event_id,
-        display_name:    hostProfile?.display_name ?? host.name,
-        role_title:      hostProfile?.role_title ?? "Event Host",
-        organisation:    hostProfile?.organisation ?? "",
-        bio:             hostProfile?.bio ?? "",
-        linkedin_url:    hostProfile?.linkedin_url ?? null,
-        website_url:     hostProfile?.website_url ?? null,
-        portfolio_url:   hostProfile?.portfolio_url ?? null,
-      }),
-    });
-    const json = await res.json();
-    guestProfile = json.profile ?? null;
-  } catch (e) {
-    console.warn("Failed to bootstrap host guest_profile via API:", e);
-  }
+  // Try to read existing guest_profiles row for this host registration.
+  // go-live creates it for new registrations; for existing ones we call
+  // the server API which uses service role to create it if missing.
+  let { data: guestProfile } = await supabase
+    .from("guest_profiles")
+    .select("*")
+    .eq("registration_id", reg.id)
+    .maybeSingle();
 
-  // Fallback: if API failed (e.g. SUPABASE_SERVICE_ROLE_KEY not set in env),
-  // try reading an existing guest_profiles row directly.
   if (!guestProfile) {
-    const { data: existing } = await supabase
-      .from("guest_profiles")
-      .select("*")
-      .eq("registration_id", reg.id)
-      .maybeSingle();
-    guestProfile = existing ?? null;
-    if (guestProfile) console.log("bootstrapIdentity: used fallback anon read for host guest_profile");
+    try {
+      const base = typeof window !== "undefined" ? window.location.origin : (process.env.NEXT_PUBLIC_APP_URL ?? "");
+      const res = await fetch(`${base}/api/events/host-profile`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          registration_id: reg.id,
+          event_id:        reg.event_id,
+          display_name:    hostProfile?.display_name ?? host.name,
+          role_title:      hostProfile?.role_title ?? "Event Host",
+          organisation:    hostProfile?.organisation ?? "",
+          bio:             hostProfile?.bio ?? "",
+          linkedin_url:    hostProfile?.linkedin_url ?? null,
+          website_url:     hostProfile?.website_url ?? null,
+          portfolio_url:   hostProfile?.portfolio_url ?? null,
+        }),
+      });
+      const json = await res.json();
+      guestProfile = json.profile ?? null;
+    } catch(e) {
+      console.warn("Could not create host guest_profile:", e);
+    }
   }
 
   return {
