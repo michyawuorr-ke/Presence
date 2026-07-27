@@ -61,10 +61,17 @@ export default function NetworkingTab({ event, profile, isLive, isEnded, registr
       if(h.sender_id!==profile.id)approvedSet.add(h.sender_id);
       if(h.receiver_id!==profile.id)approvedSet.add(h.receiver_id);
     });
-    const{data:sentReqs}=await supabase.from("handshake_requests").select("recipient_id").eq("requester_id",profile.id).eq("event_id",event.id).in("status",["pending","approved"]);
+    const{data:sentReqs}=await supabase.from("handshake_requests").select("recipient_id").eq("requester_id",profile.id).eq("event_id",event.id).eq("status","pending");
     const sentSet=new Set((sentReqs||[]).map((r:any)=>r.recipient_id));
     const{data:declinedReqs}=await supabase.from("handshake_requests").select("recipient_id").eq("requester_id",profile.id).eq("event_id",event.id).eq("status","declined");
+    // Also fetch approved connections to exclude from live list (they appear in Connections tab)
+    const{data:approvedReqs}=await supabase.from("handshake_requests").select("recipient_id,requester_id").eq("event_id",event.id).eq("status","approved").or("requester_id.eq."+profile.id+",recipient_id.eq."+profile.id);
     const declinedSet=new Set((declinedReqs||[]).map((r:any)=>r.recipient_id));
+    // Also add approved handshake_requests to approvedSet (handshakes table may be empty)
+    (approvedReqs||[]).forEach((h:any)=>{
+      if(h.requester_id!==profile.id)approvedSet.add(h.requester_id);
+      if(h.recipient_id!==profile.id)approvedSet.add(h.recipient_id);
+    });
     setDeclinedIds(declinedSet);
     setSentRequests(sentSet);
     // load event policy + resolved permissions + roles (for badge lookup) in parallel
