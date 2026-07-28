@@ -36,8 +36,7 @@ export default function NetworkingTab({ event, profile, isLive, isEnded, registr
     if(!profile||auraLoaded)return;
     async function loadAura(){
       const{data:prof}=await supabase.from("guest_profiles").select("aura_active,networking_visible").eq("id",profile.id).single();
-      // Default true — new guests should be visible immediately after onboarding
-      const isActive=prof?.networking_visible??true;
+      const isActive=prof?.networking_visible??false;
       setNetworkingActive(isActive);
       const{data:sent}=await supabase.from("handshake_requests").select("recipient_id").eq("requester_id",profile.id).eq("event_id",event.id).in("status",["pending","approved"]);
       setSentRequests(new Set((sent||[]).map((r:any)=>r.recipient_id)));

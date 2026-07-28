@@ -82,6 +82,16 @@ export async function submitGuestOnboarding(params: SubmitGuestOnboardingParams)
     masterProfileError = "No email on this registration — can't link a master profile.";
   }
 
+  // Read the host's default_visibility policy to set networking_visible correctly.
+  // This respects the host's configuration — not a code default.
+  const { data: policy } = await supabase
+    .from("event_policies")
+    .select("default_visibility")
+    .eq("event_id", params.eventId)
+    .maybeSingle();
+  const defaultVisibility = policy?.default_visibility ?? "visible";
+  const networkingVisible = defaultVisibility === "visible";
+
   const { data, error } = await supabase
     .from("guest_profiles")
     .insert({
@@ -99,10 +109,7 @@ export async function submitGuestOnboarding(params: SubmitGuestOnboardingParams)
         params.presence.portfolio.trim() ||
         "",
       aura_active: false,
-      networking_visible: true,
-      show_linkedin: true,
-      show_website: true,
-      show_portfolio: true,
+      networking_visible: networkingVisible,
       networking_intents: JSON.stringify(params.intents),
       target_station_id: params.stationId,
       linkedin_url: params.presence.linkedin,
