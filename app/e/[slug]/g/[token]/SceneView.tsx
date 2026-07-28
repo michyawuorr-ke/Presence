@@ -157,6 +157,7 @@ export default function SceneView({ event, registration, profile, masterProfile,
       {tab === "ticket" && (
         <TicketTab
           event={event}
+          registration={registration}
           entryQR={entryQR}
           networkingQR={networkingQR}
           qrError={qrError}

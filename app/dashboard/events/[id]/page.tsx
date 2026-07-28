@@ -15,8 +15,7 @@ export default function EventDashboardPage() {
   const { id } = useParams() as { id: string };
   const router = useRouter();
 
-  const searchParams = typeof window !== "undefined" ? new URLSearchParams(window.location.search) : null;
-  const [tab, setTab] = useState<Tab>((searchParams?.get("tab") as Tab) ?? "overview");
+  const [tab, setTab] = useState<Tab>("overview");
   const [event, setEvent] = useState<any>(null);
   const [ticketTypes, setTicketTypes] = useState<any[]>([]);
   const [stations, setStations] = useState<any[]>([]);
@@ -47,7 +46,13 @@ export default function EventDashboardPage() {
 
     const [{ data: regs }, { data: hs }, { data: gp }] = await Promise.all([
       supabase.from("registrations").select("status,paid,checked_in,amount").eq("event_id", id),
-      supabase.from("handshake_requests").select("id").eq("event_id", id).eq("status", "accepted"),
+      // Count connections from both tables: handshake_requests (approved) and handshakes (QR scans)
+      Promise.all([
+        supabase.from("handshake_requests").select("id").eq("event_id", id).eq("status", "approved"),
+        supabase.from("handshakes").select("id").eq("event_id", id),
+      ]).then(([{data: hrs}, {data: hss}]) => ({
+        data: [...(hrs || []), ...(hss || [])]
+      })),
       supabase.from("guest_profiles").select("networking_visible,role").eq("event_id", id),
     ]);
     setStats({
@@ -61,7 +66,7 @@ export default function EventDashboardPage() {
       // Exclude organizer from networking count — they are not a registered guest
       onAura: gp?.filter(g => g.networking_visible && g.role !== "organizer").length || 0,
       // Accepted connection requests (not pending)
-      handshakes: hs?.length || 0,
+      handshakes: (hs as any)?.data?.length || 0,
       revenue: regs?.reduce((s, r) => s + (r.paid ? (r.amount || 0) : 0), 0) || 0,
     });
 

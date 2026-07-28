@@ -3,13 +3,32 @@ import { useState } from "react";
 
 interface TicketTabProps {
   event: any;
+  registration: any;
   entryQR: string;
   networkingQR: string;
   qrError: boolean;
 }
 
-export default function TicketTab({ event, entryQR, networkingQR, qrError }: TicketTabProps) {
+export default function TicketTab({ event, registration, entryQR, networkingQR, qrError }: TicketTabProps) {
   const [copied, setCopied] = useState(false);
+  const [emailSent, setEmailSent] = useState(false);
+  const [emailSending, setEmailSending] = useState(false);
+
+  async function sendAccessEmail() {
+    if (!registration?.id || !event?.id) return;
+    setEmailSending(true);
+    try {
+      const res = await fetch("/api/email/access-link", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ registration_id: registration.id, event_id: event.id }),
+      });
+      const json = await res.json();
+      if (json.sent) { setEmailSent(true); setTimeout(() => setEmailSent(false), 4000); }
+    } finally {
+      setEmailSending(false);
+    }
+  }
 
   function copyLink() {
     const url = typeof window !== "undefined" ? window.location.href : "";
@@ -65,10 +84,18 @@ export default function TicketTab({ event, entryQR, networkingQR, qrError }: Tic
       <div style={{background:"rgba(255,255,255,0.02)",border:"1px solid rgba(255,255,255,0.05)",borderRadius:"16px",padding:"16px",marginTop:"8px"}}>
         <p style={{fontSize:"10px",fontWeight:"700",letterSpacing:"0.12em",textTransform:"uppercase",color:"rgba(255,255,255,0.3)",margin:"0 0 6px"}}>Your Access Link</p>
         <p style={{fontSize:"11px",color:"rgba(255,255,255,0.25)",margin:"0 0 12px",lineHeight:1.5}}>Save or share this link to return to the event anytime — no login needed.</p>
-        <button onClick={copyLink}
-          style={{width:"100%",padding:"11px",borderRadius:"10px",background:copied?"rgba(74,222,128,0.08)":"rgba(226,109,52,0.08)",border:`1px solid ${copied?"rgba(74,222,128,0.3)":"rgba(226,109,52,0.3)"}`,color:copied?"#4ade80":"#E26D34",fontSize:"12px",fontWeight:"600",cursor:"pointer"}}>
-          {copied ? "✓ Copied" : "Copy / Share My Link"}
-        </button>
+        <div style={{display:"flex",gap:"8px"}}>
+          <button onClick={copyLink}
+            style={{flex:1,padding:"11px",borderRadius:"10px",background:copied?"rgba(74,222,128,0.08)":"rgba(226,109,52,0.08)",border:`1px solid ${copied?"rgba(74,222,128,0.3)":"rgba(226,109,52,0.3)"}`,color:copied?"#4ade80":"#E26D34",fontSize:"12px",fontWeight:"600",cursor:"pointer"}}>
+            {copied ? "✓ Copied" : "Copy Link"}
+          </button>
+          {registration?.guest_email && (
+            <button onClick={sendAccessEmail} disabled={emailSending||emailSent}
+              style={{flex:1,padding:"11px",borderRadius:"10px",background:emailSent?"rgba(74,222,128,0.08)":"rgba(255,255,255,0.04)",border:`1px solid ${emailSent?"rgba(74,222,128,0.3)":"rgba(255,255,255,0.08)"}`,color:emailSent?"#4ade80":"rgba(255,255,255,0.5)",fontSize:"12px",fontWeight:"600",cursor:emailSending||emailSent?"default":"pointer"}}>
+              {emailSent?"✓ Sent":emailSending?"Sending...":"Email Me"}
+            </button>
+          )}
+        </div>
       </div>
     </div>
   );
