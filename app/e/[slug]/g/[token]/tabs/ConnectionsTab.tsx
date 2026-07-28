@@ -362,22 +362,24 @@ export default function ConnectionsTab({ profile, event, registration, isEnded }
                 </div>
               </div>
 
-              {/* Actions — Signal Meetup is the ONLY ember element */}
+              {/* Actions — Signal Meetup before scan, Note always */}
               <div style={{ display: "flex", gap: "8px", marginTop: "12px" }}>
-                <button onClick={() => setSignalTarget(c)} disabled={signalSent}
-                  style={{
-                    flex: 1, padding: "9px", borderRadius: "8px", fontSize: "12px", fontWeight: "600",
-                    cursor: signalSent ? "default" : "pointer",
-                    background: signalSent ? "rgba(255,255,255,0.02)" : "rgba(226,109,52,0.08)",
-                    border: signalSent ? "1px solid rgba(255,255,255,0.05)" : "1px solid rgba(226,109,52,0.3)",
-                    color: signalSent ? "rgba(255,255,255,0.25)" : EMBER,
-                    animation: !signalSent ? "pulseGlow 2.5s ease-in-out infinite" : "none",
-                  }}>
-                  {signalSent ? "Signal sent" : "Signal Meetup →"}
-                </button>
+                {!isUnlocked && (
+                  <button onClick={() => setSignalTarget(c)} disabled={signalSent}
+                    style={{
+                      flex: 1, padding: "9px", borderRadius: "8px", fontSize: "12px", fontWeight: "600",
+                      cursor: signalSent ? "default" : "pointer",
+                      background: signalSent ? "rgba(255,255,255,0.02)" : "rgba(226,109,52,0.08)",
+                      border: signalSent ? "1px solid rgba(255,255,255,0.05)" : "1px solid rgba(226,109,52,0.3)",
+                      color: signalSent ? "rgba(255,255,255,0.25)" : EMBER,
+                      animation: !signalSent ? "pulseGlow 2.5s ease-in-out infinite" : "none",
+                    }}>
+                    {signalSent ? "Signal sent" : "Signal Meetup →"}
+                  </button>
+                )}
                 <button onClick={() => { setMemoryTarget(c); setMemoryDraft((savedNotes as any)[c.id] || ""); }}
-                  style={{ flexShrink: 0, padding: "9px 14px", borderRadius: "8px", background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.07)", color: hasNote ? DUSK : "rgba(255,255,255,0.4)", fontSize: "12px", cursor: "pointer" }}>
-                  {hasNote ? "📝" : "+ Note"}
+                  style={{ flex: isUnlocked ? 1 : 0, flexShrink: 0, padding: "9px 14px", borderRadius: "8px", background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.07)", color: hasNote ? DUSK : "rgba(255,255,255,0.4)", fontSize: "12px", cursor: "pointer" }}>
+                  {hasNote ? "✎ Edit note" : "+ Note"}
                 </button>
               </div>
 

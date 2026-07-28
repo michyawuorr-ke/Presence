@@ -166,6 +166,27 @@ export default function RegisterPage() {
             </span>
           </div>
         </div>
+        {/* Re-entry link — guests must save this to return to the app */}
+        {confirmedToken && (
+          <div style={{background:"rgba(255,255,255,0.02)",border:"1px solid rgba(255,255,255,0.06)",borderRadius:"12px",padding:"16px",marginBottom:"16px",textAlign:"left"}}>
+            <p style={{fontSize:"10px",fontWeight:"700",letterSpacing:"0.12em",textTransform:"uppercase",color:"rgba(255,255,255,0.35)",margin:"0 0 8px"}}>Your Event Link</p>
+            <p style={{fontSize:"11px",color:"rgba(255,255,255,0.25)",margin:"0 0 10px",lineHeight:1.5}}>Save this link — it's how you get back into the event anytime.</p>
+            <div style={{background:"rgba(0,0,0,0.3)",borderRadius:"8px",padding:"10px 12px",marginBottom:"10px",wordBreak:"break-all",fontFamily:"monospace",fontSize:"10px",color:"rgba(255,255,255,0.4)"}}>
+              {window.location.origin + "/e/" + event?.slug + "/g/" + confirmedToken}
+            </div>
+            <button onClick={() => {
+              const link = window.location.origin + "/e/" + event?.slug + "/g/" + confirmedToken;
+              if (navigator.share) {
+                navigator.share({ title: event?.title + " — My Event Link", url: link }).catch(() => navigator.clipboard?.writeText(link));
+              } else {
+                navigator.clipboard?.writeText(link);
+              }
+            }}
+              style={{width:"100%",padding:"10px",background:"rgba(226,109,52,0.08)",color:"#E26D34",border:"1px solid rgba(226,109,52,0.3)",borderRadius:"8px",fontSize:"12px",fontWeight:"600",cursor:"pointer"}}>
+              Copy / Share My Link
+            </button>
+          </div>
+        )}
         <button onClick={() => { if (confirmedToken) window.location.href = window.location.origin + "/e/" + event?.slug + "/g/" + confirmedToken; }}
           style={{width:"100%",padding:"16px",background: isFreeRegistration ? "rgba(74,222,128,0.08)" : "rgba(255,255,255,0.05)",color:"#f5f5f5",border:`1px solid ${isFreeRegistration ? "rgba(74,222,128,0.3)" : "rgba(255,255,255,0.12)"}`,borderRadius:"12px",fontSize:"13px",fontWeight:"600",letterSpacing:"0.05em",textTransform:"uppercase",cursor:"pointer"}}>
           {isFreeRegistration ? "Enter Event →" : "View My Registration"}

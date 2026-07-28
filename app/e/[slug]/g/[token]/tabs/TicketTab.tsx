@@ -1,4 +1,5 @@
 "use client";
+import { useState } from "react";
 
 interface TicketTabProps {
   event: any;
@@ -8,6 +9,20 @@ interface TicketTabProps {
 }
 
 export default function TicketTab({ event, entryQR, networkingQR, qrError }: TicketTabProps) {
+  const [copied, setCopied] = useState(false);
+
+  function copyLink() {
+    const url = typeof window !== "undefined" ? window.location.href : "";
+    if (navigator.share) {
+      navigator.share({ title: event?.title + " — My Event Link", url }).catch(() => navigator.clipboard?.writeText(url));
+    } else {
+      navigator.clipboard?.writeText(url).then(() => {
+        setCopied(true);
+        setTimeout(() => setCopied(false), 2000);
+      });
+    }
+  }
+
   return (
     <div style={{padding:"12px"}}>
       <p style={{fontSize:"10px",letterSpacing:"0.3em",color:"#999",textTransform:"uppercase",marginBottom:"12px",textAlign:"center"}}>Your Ticket</p>
@@ -44,6 +59,16 @@ export default function TicketTab({ event, entryQR, networkingQR, qrError }: Tic
             }
           </div>
         </details>
+      </div>
+
+      {/* Re-entry link — this page URL IS the guest's access link */}
+      <div style={{background:"rgba(255,255,255,0.02)",border:"1px solid rgba(255,255,255,0.05)",borderRadius:"16px",padding:"16px",marginTop:"8px"}}>
+        <p style={{fontSize:"10px",fontWeight:"700",letterSpacing:"0.12em",textTransform:"uppercase",color:"rgba(255,255,255,0.3)",margin:"0 0 6px"}}>Your Access Link</p>
+        <p style={{fontSize:"11px",color:"rgba(255,255,255,0.25)",margin:"0 0 12px",lineHeight:1.5}}>Save or share this link to return to the event anytime — no login needed.</p>
+        <button onClick={copyLink}
+          style={{width:"100%",padding:"11px",borderRadius:"10px",background:copied?"rgba(74,222,128,0.08)":"rgba(226,109,52,0.08)",border:`1px solid ${copied?"rgba(74,222,128,0.3)":"rgba(226,109,52,0.3)"}`,color:copied?"#4ade80":"#E26D34",fontSize:"12px",fontWeight:"600",cursor:"pointer"}}>
+          {copied ? "✓ Copied" : "Copy / Share My Link"}
+        </button>
       </div>
     </div>
   );
