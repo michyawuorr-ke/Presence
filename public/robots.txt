@@ -1,0 +1,4 @@
+User-agent: *
+Allow: /
+
+Sitemap: https://oreeti.com/sitemap.xml

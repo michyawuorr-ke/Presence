@@ -49,18 +49,42 @@ export const metadata: Metadata = {
   },
 };
 
-const structuredData = {
-  "@context": "https://schema.org",
-  "@type": "SoftwareApplication",
-  "name": "Oreeti",
-  "applicationCategory": "BusinessApplication",
-  "operatingSystem": "Web",
-  "url": "https://oreeti.com",
-  "description": "Live event activation platform for East Africa — QR networking, M-Pesa ticketing, consent-first connections.",
-  "offers": { "@type": "Offer", "price": "0", "priceCurrency": "KES" },
-  "areaServed": { "@type": "Place", "name": "East Africa" },
-  "author": { "@type": "Organization", "name": "Oreeti", "url": "https://oreeti.com" },
-};
+const structuredData = [
+  {
+    "@context": "https://schema.org",
+    "@type": "SoftwareApplication",
+    "name": "Oreeti",
+    "alternateName": ["Oreeti App", "Oreeti Events"],
+    "applicationCategory": "BusinessApplication",
+    "applicationSubCategory": "Event Management Software",
+    "operatingSystem": "Web, Android, iOS",
+    "url": "https://oreeti.com",
+    "sameAs": ["https://oreeti.com"],
+    "description": "Oreeti is a live event activation and networking platform for physical events in East Africa. Features QR-based networking, M-Pesa ticketing, consent-first connections, and real-time attendee discovery.",
+    "screenshot": "https://oreeti.com/og-image.png",
+    "offers": { "@type": "Offer", "price": "0", "priceCurrency": "KES" },
+    "areaServed": { "@type": "Place", "name": "East Africa" },
+    "author": {
+      "@type": "Organization",
+      "name": "Oreeti",
+      "url": "https://oreeti.com",
+      "logo": "https://oreeti.com/icon-512.png",
+      "description": "Oreeti builds live event technology for East Africa."
+    },
+  },
+  {
+    "@context": "https://schema.org",
+    "@type": "WebSite",
+    "name": "Oreeti",
+    "url": "https://oreeti.com",
+    "description": "Oreeti — live event activation and networking platform",
+    "potentialAction": {
+      "@type": "SearchAction",
+      "target": "https://oreeti.com/?q={search_term_string}",
+      "query-input": "required name=search_term_string"
+    }
+  }
+];
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
