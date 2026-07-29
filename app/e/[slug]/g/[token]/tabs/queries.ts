@@ -69,7 +69,7 @@ export function useConnections(profileId: string | undefined) {
         if (u.unlocked_id === profileId) scannedSet.add(u.unlocker_id);
       });
 
-      return (profiles || []).map((p: any) => {
+      const mapped = (profiles || []).map((p: any) => {
         const hs = handshakes.find(
           (h: any) => h.sender_id === p.id || h.receiver_id === p.id
         );
@@ -79,6 +79,12 @@ export function useConnections(profileId: string | undefined) {
           // Only true after an actual QR scan — not just from connecting
           qrUnlocked: scannedSet.has(p.id),
         };
+      });
+      // Host/organizer always first, then everyone else in order received
+      return mapped.sort((a: any, b: any) => {
+        if (a.role === "organizer") return -1;
+        if (b.role === "organizer") return 1;
+        return 0;
       });
     },
   });

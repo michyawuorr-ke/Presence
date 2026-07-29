@@ -332,6 +332,7 @@ export default function NetworkingTab({ event, profile, isLive, isEnded, registr
               <div>
                 <p style={{fontSize:"9px",fontWeight:"700",color:PALETTE.gold,letterSpacing:"0.1em",margin:"0 0 4px"}}>★ ORGANIZER</p>
                 <p style={{fontSize:"14px",fontWeight:"600",color:"#f1f0f5",margin:0}}>{hostNode.display_name}</p>
+                {hostNode.events_count > 0 && <p style={{fontSize:"10px",color:"rgba(212,175,55,0.6)",margin:"2px 0 0"}}>{hostNode.events_count} event{hostNode.events_count !== 1 ? "s" : ""} hosted</p>}
               </div>
               <button onClick={()=>setConfirmNode({...hostNode,is_host:true})} style={{fontSize:"11px",fontWeight:"600",color:PALETTE.gold,background:"transparent",border:`1px solid rgba(212,175,55,0.4)`,borderRadius:"8px",padding:"6px 12px",cursor:"pointer"}}>Connect</button>
             </div>

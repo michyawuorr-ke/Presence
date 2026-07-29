@@ -38,10 +38,16 @@ export async function GET(req:NextRequest){
 
   if(!hostProfile)return NextResponse.json({host:null});
 
+  const{count:eventsCount}=await supabase
+    .from('events')
+    .select('id',{count:'exact',head:true})
+    .eq('host_id',host.id);
+
   return NextResponse.json({
     host:{
       ...hostProfile,
       display_name:hostProfile.display_name||host?.name,
+      events_count:eventsCount??0,
       is_host:true,
     }
   });

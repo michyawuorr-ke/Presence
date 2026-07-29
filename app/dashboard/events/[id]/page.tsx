@@ -44,17 +44,16 @@ export default function EventDashboardPage() {
     const { data: st } = await supabase.from("event_stations").select("*").eq("event_id", id).order("created_at");
     setStations(st || []);
 
-    const [{ data: regs }, { data: hs }, { data: gp }] = await Promise.all([
+    const [{ data: regs }, { data: gp }] = await Promise.all([
       supabase.from("registrations").select("status,paid,checked_in,amount").eq("event_id", id),
-      // Count connections from both tables: handshake_requests (approved) and handshakes (QR scans)
-      Promise.all([
-        supabase.from("handshake_requests").select("id").eq("event_id", id).eq("status", "approved"),
-        supabase.from("handshakes").select("id").eq("event_id", id),
-      ]).then(([{data: hrs}, {data: hss}]) => ({
-        data: [...(hrs || []), ...(hss || [])]
-      })),
       supabase.from("guest_profiles").select("networking_visible,role").eq("event_id", id),
     ]);
+    // Count connections from both tables separately — nested Promise.all breaks destructuring
+    const [{ data: approvedReqs }, { data: scannedHandshakes }] = await Promise.all([
+      supabase.from("handshake_requests").select("id").eq("event_id", id).eq("status", "approved"),
+      supabase.from("handshakes").select("id").eq("event_id", id),
+    ]);
+    const totalConnections = (approvedReqs?.length || 0) + (scannedHandshakes?.length || 0);
     setStats({
       // All registrations except the host's own
       registrations: regs?.filter(r => r.status !== "host").length || 0,
@@ -66,7 +65,7 @@ export default function EventDashboardPage() {
       // Exclude organizer from networking count — they are not a registered guest
       onAura: gp?.filter(g => g.networking_visible && g.role !== "organizer").length || 0,
       // Accepted connection requests (not pending)
-      handshakes: (hs as any)?.data?.length || 0,
+      handshakes: totalConnections,
       revenue: regs?.reduce((s, r) => s + (r.paid ? (r.amount || 0) : 0), 0) || 0,
     });
 
