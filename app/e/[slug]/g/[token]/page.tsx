@@ -54,9 +54,11 @@ export default function GuestEntryPage() {
     intents.length === 0 ? "Select Intent" : intents.join(" + ");
 
   const toggleIntent = (id: string) => {
-    setIntents(prev =>
-      prev.includes(id) ? prev.filter(i => i !== id) : [...prev, id]
-    );
+    setIntents(prev => {
+      if (prev.includes(id)) return prev.filter(i => i !== id);
+      if (prev.length >= 2) return prev; // max 2
+      return [...prev, id];
+    });
   };
 
   const isIdentityValid = displayName.trim() !== "" && role.trim() !== "";

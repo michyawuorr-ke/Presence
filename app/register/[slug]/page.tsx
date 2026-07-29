@@ -16,15 +16,33 @@ export default function RegisterPage() {
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
   const [success, setSuccess] = useState(false);
+  const [linkCopied, setLinkCopied] = useState(false);
+  const [emailSent, setEmailSent] = useState(false);
+  const [emailSending, setEmailSending] = useState(false);
   const [error, setError] = useState("");
   const [manualMpesaCode, setManualMpesaCode] = useState("");
   const [isSavingCode, setIsSavingCode] = useState(false);
   const [currentRegId, setCurrentRegId] = useState("");
   const [paymentState, setPaymentState] = useState<"idle"|"waiting"|"success"|"failed">("idle");
   const [confirmedToken, setConfirmedToken] = useState("");
+  const [confirmedRegId, setConfirmedRegId] = useState<string|null>(null);
   const [isFreeRegistration, setIsFreeRegistration] = useState(false);
   const [selfSelectRoles, setSelfSelectRoles] = useState<string[]>([]);
   const [selectedRole, setSelectedRole] = useState("attendee");
+
+  async function sendAccessEmail() {
+    if (!confirmedRegId || !event?.id) return;
+    setEmailSending(true);
+    try {
+      const res = await fetch("/api/email/access-link", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ registration_id: confirmedRegId, event_id: event.id }),
+      });
+      const json = await res.json();
+      if (json.sent) { setEmailSent(true); setTimeout(() => setEmailSent(false), 4000); }
+    } finally { setEmailSending(false); }
+  }
 
   const isSubmittingRef = useRef(false);
   const params = useParams();
@@ -80,6 +98,9 @@ export default function RegisterPage() {
           access_token: accessToken, guest_access_link: guestUrl,
         });
         if (freeError) throw new Error(freeError.message);
+        // Fetch the newly created registration id for email sending
+        const { data: newReg } = await supabase.from("registrations").select("id").eq("access_token", accessToken).maybeSingle();
+        setConfirmedRegId(newReg?.id ?? null);
         setIsFreeRegistration(true);
         setSuccess(true); setSubmitting(false); isSubmittingRef.current = false; return;
       }
@@ -108,6 +129,7 @@ export default function RegisterPage() {
         .update({ mpesa_receipt: manualMpesaCode.trim(), status: "pending" })
         .eq("id", currentRegId);
       if (updateError) throw new Error(updateError.message);
+      setConfirmedRegId(currentRegId ?? null);
       setSuccess(true); isSubmittingRef.current = false;
     } catch (err) {
       setError((err as any).message || "Failed to save code. Please try again.");
@@ -174,17 +196,19 @@ export default function RegisterPage() {
             <div style={{background:"rgba(0,0,0,0.3)",borderRadius:"8px",padding:"10px 12px",marginBottom:"10px",wordBreak:"break-all",fontFamily:"monospace",fontSize:"10px",color:"rgba(255,255,255,0.4)"}}>
               {window.location.origin + "/e/" + event?.slug + "/g/" + confirmedToken}
             </div>
-            <button onClick={() => {
-              const link = window.location.origin + "/e/" + event?.slug + "/g/" + confirmedToken;
-              if (navigator.share) {
-                navigator.share({ title: event?.title + " — My Event Link", url: link }).catch(() => navigator.clipboard?.writeText(link));
-              } else {
-                navigator.clipboard?.writeText(link);
-              }
-            }}
-              style={{width:"100%",padding:"10px",background:"rgba(226,109,52,0.08)",color:"#E26D34",border:"1px solid rgba(226,109,52,0.3)",borderRadius:"8px",fontSize:"12px",fontWeight:"600",cursor:"pointer"}}>
-              Copy / Share My Link
-            </button>
+            <div style={{display:"flex",gap:"8px"}}>
+              <button onClick={() => {
+                const link = window.location.origin + "/e/" + event?.slug + "/g/" + confirmedToken;
+                navigator.clipboard?.writeText(link).then(() => { setLinkCopied(true); setTimeout(() => setLinkCopied(false), 2000); });
+              }}
+                style={{flex:1,padding:"10px",background:linkCopied?"rgba(74,222,128,0.08)":"rgba(226,109,52,0.08)",color:linkCopied?"#4ade80":"#E26D34",border:`1px solid ${linkCopied?"rgba(74,222,128,0.3)":"rgba(226,109,52,0.3)"}`,borderRadius:"8px",fontSize:"12px",fontWeight:"600",cursor:"pointer"}}>
+                {linkCopied ? "✓ Copied" : "Copy Link"}
+              </button>
+              <button onClick={sendAccessEmail} disabled={emailSending||emailSent}
+                style={{flex:1,padding:"10px",background:emailSent?"rgba(74,222,128,0.08)":"rgba(255,255,255,0.04)",color:emailSent?"#4ade80":"rgba(255,255,255,0.5)",border:`1px solid ${emailSent?"rgba(74,222,128,0.3)":"rgba(255,255,255,0.08)"}`,borderRadius:"8px",fontSize:"12px",fontWeight:"600",cursor:emailSending||emailSent?"default":"pointer"}}>
+                {emailSent?"✓ Sent":emailSending?"Sending...":"Email Me"}
+              </button>
+            </div>
           </div>
         )}
         <button onClick={() => { if (confirmedToken) window.location.href = window.location.origin + "/e/" + event?.slug + "/g/" + confirmedToken; }}
