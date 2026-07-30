@@ -2,10 +2,10 @@
 import { useEffect, useState, useRef, useCallback } from "react";
 import { supabase } from "@/lib/supabase/client";
 import { getFirstName, parseIntents, REASON_OPTIONS, PALETTE, INTENTS_BY_GROUP, INTENT_GROUPS, INTENT_MAP } from "./shared";
-import { intentReasonFromStoredIntent } from "@/lib/matching/intents";
 import AttendeeCard from "./AttendeeCard";
 import PreEventDiscovery from "./PreEventDiscovery";
 import MatchRecommendations from "./MatchRecommendations";
+import MissedConnections from "./MissedConnections";
 
 interface NetworkingTabProps {
   event: any;
@@ -21,7 +21,6 @@ export default function NetworkingTab({ event, profile, isLive, isEnded, registr
   const[auraLoaded,setAuraLoaded]=useState(false);
   const[nodes,setNodes]=useState<any[]>([]);
   const[hostNode,setHostNode]=useState<any>(null);
-  const[incoming,setIncoming]=useState<any>(null);
   const[confirmNode,setConfirmNode]=useState<any>(null);
   const[selectedLiveReason,setSelectedLiveReason]=useState("");
   const[liveSearch,setLiveSearch]=useState("");
@@ -159,12 +158,9 @@ export default function NetworkingTab({ event, profile, isLive, isEnded, registr
       .on("broadcast",{event:"aura_invisible"},(payload:any)=>{
         setNodes(prev=>prev.filter((n:any)=>n.id!==payload.payload.guest_profile_id));
       })
-      .on("broadcast",{event:"handshake_requested"},(payload:any)=>{
-        if(payload.payload.recipient_id===profile.id){
-          setIncoming(payload.payload);
-          setTimeout(()=>setIncoming(null),300000);
-        }
-      })
+      // Incoming requests are surfaced reliably in the Connections tab
+      // (usePendingRequests — a plain DB query, not tied to being on this
+      // screen at the right second). No local popup needed here anymore.
       .on("broadcast",{event:"handshake_declined"},(payload:any)=>{
         if(payload.payload.requester_id===profile.id){
           setNodes(prev=>prev.filter((n:any)=>n.id!==payload.payload.recipient_id));
@@ -250,20 +246,6 @@ export default function NetworkingTab({ event, profile, isLive, isEnded, registr
     await channelRef.current?.send({type:"broadcast",event:"handshake_requested",payload:{request_id:req?.id,requester_id:profile.id,recipient_id:node.id,requester_name:profile.display_name,reason}});
   }
 
-  async function respondRequest(approved:boolean){
-    if(!incoming)return;
-    const status=approved?"approved":"declined";
-    await supabase.from("handshake_requests").update({status}).eq("id",incoming.request_id);
-    if(approved){
-      const{error:hsErr}=await supabase.from("handshakes").insert({sender_id:incoming.requester_id,receiver_id:profile.id,status:"accepted"});
-      if(hsErr){setNotification("❌ Connect error: "+hsErr.message);setTimeout(()=>setNotification(""),8000);}
-      else{setNotification("✓ Handshake created!");}
-      await channelRef.current?.send({type:"broadcast",event:"handshake_approved",payload:{requester_id:incoming.requester_id,recipient_id:profile.id,requester_name:incoming.requester_name,recipient_name:profile.display_name}});
-    }
-    setIncoming(null);
-    fetchNodes();
-  }
-
   if(!isLive&&!isEnded){
     return(
       <PreEventDiscovery
@@ -278,11 +260,7 @@ export default function NetworkingTab({ event, profile, isLive, isEnded, registr
 
   if(isEnded){
     return(
-      <div style={{padding:"24px 20px",textAlign:"center",background:"#0a0a0b",minHeight:"calc(100vh - 100px)",display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center"}}>
-        <p style={{fontSize:"48px",marginBottom:"16px",opacity:0.2}}>◎</p>
-        <p style={{fontSize:"16px",color:"#555",marginBottom:"8px"}}>Networking has closed</p>
-        <p style={{fontSize:"14px",color:"#444"}}>Your connections are saved in Profile</p>
-      </div>
+      <MissedConnections event={event} profile={profile} />
     );
   }
 
@@ -396,31 +374,6 @@ export default function NetworkingTab({ event, profile, isLive, isEnded, registr
               <button onClick={()=>sendRequest(confirmNode)} disabled={!selectedLiveReason} style={{flex:1,padding:"11px",borderRadius:"10px",background:"transparent",color:selectedLiveReason?PALETTE.orange:"rgba(240,237,232,0.2)",border:`1px solid rgba(226,109,52,0.4)`,fontSize:"13px",fontWeight:"500",letterSpacing:"0.08em",textTransform:"uppercase",cursor:selectedLiveReason?"pointer":"default"}}>
                 Send Request →
               </button>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {incoming&&(
-        <div style={{position:"fixed",inset:0,background:"rgba(0,0,0,0.7)",display:"flex",alignItems:"flex-end",zIndex:50}}>
-          <div style={{background:"#1a1a1a",borderRadius:"24px 24px 0 0",padding:"28px",paddingBottom:"calc(28px + env(safe-area-inset-bottom))",width:"100%",animation:"slideUp 0.3s ease"}}>
-            <p style={{color:"#fff",fontSize:"18px",fontWeight:"500",marginBottom:"8px"}}>{getFirstName(incoming.requester_name)} wants to connect</p>
-            {(()=>{
-              // incoming.reason is a stored INTENT ID (what the requester was
-              // responding to), never a pre-baked sentence. Recompute it here
-              // from the current viewer's (recipient's) own intents so it
-              // always reads correctly, regardless of who sent the request.
-              const myIntents=parseIntents(profile?.networking_intents);
-              const computedReason=intentReasonFromStoredIntent(incoming.reason,myIntents,getFirstName(incoming.requester_name));
-              return computedReason?(
-                <p style={{color:"#666",fontSize:"14px",marginBottom:"28px"}}>Reason: <span style={{color:PALETTE.orange,fontWeight:"600"}}>{computedReason}</span></p>
-              ):(
-                <p style={{color:"#666",fontSize:"14px",marginBottom:"28px"}}>Connection request</p>
-              );
-            })()}
-            <div style={{display:"flex",gap:"12px"}}>
-              <button onClick={()=>respondRequest(false)} style={{flex:1,padding:"14px",borderRadius:"14px",background:"#333",color:"#fff",border:"none",fontSize:"15px",cursor:"pointer"}}>Decline</button>
-              <button onClick={()=>respondRequest(true)} style={{flex:1,padding:"14px",borderRadius:"14px",background:"#4ade80",color:"#000",border:"none",fontSize:"15px",fontWeight:"500",cursor:"pointer"}}>Approve ✓</button>
             </div>
           </div>
         </div>

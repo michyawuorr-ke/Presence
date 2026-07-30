@@ -48,12 +48,12 @@ export default function EventDashboardPage() {
       supabase.from("registrations").select("status,paid,checked_in,amount").eq("event_id", id),
       supabase.from("guest_profiles").select("networking_visible,role").eq("event_id", id),
     ]);
-    // Count connections from both tables separately — nested Promise.all breaks destructuring
-    const [{ data: approvedReqs }, { data: scannedHandshakes }] = await Promise.all([
-      supabase.from("handshake_requests").select("id").eq("event_id", id).eq("status", "approved"),
-      supabase.from("handshakes").select("id").eq("event_id", id),
-    ]);
-    const totalConnections = (approvedReqs?.length || 0) + (scannedHandshakes?.length || 0);
+    // handshakes is the single source of truth for an actual connection —
+    // both the request-accept flow and the QR-scan flow write a row there,
+    // so counting handshake_requests(approved) on top of it double-counts
+    // every request-made connection (scan-made ones never touch handshake_requests
+    // at all, which is what made the double count easy to miss).
+    const { data: eventHandshakes } = await supabase.from("handshakes").select("id").eq("event_id", id);
     setStats({
       // All registrations except the host's own
       registrations: regs?.filter(r => r.status !== "host").length || 0,
@@ -64,8 +64,8 @@ export default function EventDashboardPage() {
       // Guests who have enabled networking visibility
       // Exclude organizer from networking count — they are not a registered guest
       onAura: gp?.filter(g => g.networking_visible && g.role !== "organizer").length || 0,
-      // Accepted connection requests (not pending)
-      handshakes: totalConnections,
+      // Distinct connections made (see comment above — not requests + handshakes)
+      handshakes: eventHandshakes?.length || 0,
       revenue: regs?.reduce((s, r) => s + (r.paid ? (r.amount || 0) : 0), 0) || 0,
     });
 

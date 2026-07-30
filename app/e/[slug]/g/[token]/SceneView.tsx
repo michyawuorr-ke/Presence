@@ -26,6 +26,8 @@ export default function SceneView({ event, registration, profile, masterProfile,
   const [countdown, setCountdown] = useState({ days: 0, hours: 0, minutes: 0, seconds: 0 });
   const [networkingCount, setNetworkingCount] = useState(0);
   const [connectionsCount, setConnectionsCount] = useState(0);
+  const [attendeeCount, setAttendeeCount] = useState(0);
+  const [qrScanCount, setQrScanCount] = useState(0);
   const [fiveMin, setFiveMin] = useState(false);
   const [eventStatus, setEventStatus] = useState(event?.status || "");
   const [entryQR, setEntryQR] = useState("");
@@ -104,9 +106,15 @@ export default function SceneView({ event, registration, profile, masterProfile,
       setNetworkingCount(nc || 0);
       const { data: allEventGuestIds } = await supabase.from("guest_profiles").select("id").eq("event_id", event.id);
       const ids = (allEventGuestIds || []).map((g: any) => g.id);
-      if (ids.length === 0) { setConnectionsCount(0); return; }
+      setAttendeeCount(ids.length);
+      if (ids.length === 0) { setConnectionsCount(0); setQrScanCount(0); return; }
       const { count: cc } = await supabase.from("handshakes").select("*", { count: "exact", head: true }).or(`sender_id.in.(${ids.join(",")}),receiver_id.in.(${ids.join(",")})`);
       setConnectionsCount(cc || 0);
+      // profile_unlocks writes two rows per scan (one per side of the mutual
+      // unlock), so distinct handshake_id is the actual scan count, not row count.
+      const { data: unlockRows } = await supabase.from("profile_unlocks").select("handshake_id").eq("event_id", event.id);
+      const distinctScans = new Set((unlockRows || []).map((r: any) => r.handshake_id));
+      setQrScanCount(distinctScans.size);
     }
     fetchCounts();
     const interval = setInterval(fetchCounts, 15000);
@@ -114,6 +122,7 @@ export default function SceneView({ event, registration, profile, masterProfile,
       .on("postgres_changes", { event: "INSERT", schema: "public", table: "handshakes" }, () => fetchCounts())
       .on("postgres_changes", { event: "INSERT", schema: "public", table: "guest_profiles", filter: "event_id=eq." + event.id }, () => fetchCounts())
       .on("postgres_changes", { event: "UPDATE", schema: "public", table: "guest_profiles", filter: "event_id=eq." + event.id }, () => fetchCounts())
+      .on("postgres_changes", { event: "INSERT", schema: "public", table: "profile_unlocks", filter: "event_id=eq." + event.id }, () => fetchCounts())
       .subscribe();
     return () => { clearInterval(interval); supabase.removeChannel(hsCh); };
   }, [event]);
@@ -139,8 +148,10 @@ export default function SceneView({ event, registration, profile, masterProfile,
           countdown={countdown}
           networkingCount={networkingCount}
           connectionsCount={connectionsCount}
+          attendeeCount={attendeeCount}
+          qrScanCount={qrScanCount}
           onGoNetworking={() => setTab("networking")}
-          onViewConnections={() => setTab("profile")}
+          onViewConnections={() => setTab("connections")}
         />
       )}
 

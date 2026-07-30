@@ -105,15 +105,18 @@ export async function POST(req:NextRequest){
       return NextResponse.json({error:'Cannot scan your own QR'},{status:400});
     }
 
-    // Find handshake between the two — or create one. In-person QR
-    // scanning is its own consent signal (you physically showed someone
+    // Find handshake between the two AT THIS EVENT — or create one. In-person
+    // QR scanning is its own consent signal (you physically showed someone
     // your QR code), so it doesn't require having sent/accepted a
     // handshake request first. The request flow in Networking/Discovery
     // stays important for connecting with someone before you're
     // physically together; scanning is for when you already are.
+    // Scoped by event_id — the same two people can legitimately reconnect
+    // at a different event without this matching a prior event's row.
     let{data:handshake}=await supabase
       .from('handshakes')
       .select('id')
+      .eq('event_id',scannerReg.event_id)
       .or(`and(sender_id.eq.${sp.id},receiver_id.eq.${tp.id}),and(sender_id.eq.${tp.id},receiver_id.eq.${sp.id})`)
       .maybeSingle();
 
@@ -121,7 +124,7 @@ export async function POST(req:NextRequest){
     if(!handshake){
       const{data:newHandshake,error:hsErr}=await supabase
         .from('handshakes')
-        .insert({sender_id:sp.id,receiver_id:tp.id,status:'accepted'})
+        .insert({sender_id:sp.id,receiver_id:tp.id,event_id:scannerReg.event_id,status:'accepted'})
         .select('id')
         .single();
       if(hsErr||!newHandshake){

@@ -1,7 +1,7 @@
 "use client";
 import { useState, useRef } from "react";
 import { supabase } from "@/lib/supabase/client";
-import { getFirstName, cleanUrl, toHref, parseIntents } from "./shared";
+import { getFirstName, cleanUrl, toHref, toWhatsAppHref, parseIntents } from "./shared";
 import { INTENT_MAP, intentReasonFromStoredIntent } from "@/lib/matching/intents";
 import DisclosureSheet from "./DisclosureSheet";
 import {
@@ -34,7 +34,7 @@ export default function ConnectionsTab({ profile, event, registration, isEnded }
   const [unlocked,             setUnlocked]             = useState<Set<string>>(new Set());
   const [disclosureTarget,     setDisclosureTarget]     = useState<any>(null);
 
-  const { data: connections   = [] } = useConnections(profile?.id);
+  const { data: connections   = [] } = useConnections(profile?.id, event?.id);
   const { data: pendingRequests = [] } = usePendingRequests(profile?.id, event?.id);
   const { data: savedNotes    = {} } = useSavedNotes(profile?.id);
   const { data: incomingSignals = [] } = useIncomingSignals(profile?.id, event?.id);
@@ -54,7 +54,7 @@ export default function ConnectionsTab({ profile, event, registration, isEnded }
       .eq("id", requestId);
     if (error) { showToast("❌ " + error.message, 5000); return; }
     if (approve) {
-      await supabase.from("handshakes").insert({ sender_id: requesterId, receiver_id: profile.id, status: "accepted" });
+      await supabase.from("handshakes").insert({ sender_id: requesterId, receiver_id: profile.id, event_id: event.id, status: "accepted" });
       showToast(`Connected with ${getFirstName(name)}`);
     } else {
       showToast(`Declined ${getFirstName(name)}`);
@@ -172,13 +172,23 @@ export default function ConnectionsTab({ profile, event, registration, isEnded }
       )}
 
       {/* Header + Scan CTA */}
-      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", margin: "4px 0 16px" }}>
-        <p style={{ fontSize: "18px", fontWeight: "700", color: "#f0ede8", margin: 0 }}>Connections</p>
-        <button onClick={() => startScan(null)}
-          style={{ background: "rgba(255,255,255,0.05)", color: "rgba(255,255,255,0.7)", border: "1px solid rgba(255,255,255,0.1)", borderRadius: "10px", padding: "8px 14px", fontSize: "12px", fontWeight: "600", cursor: "pointer" }}>
-          Scan to Connect
-        </button>
+      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", margin: "4px 0 4px" }}>
+        <p style={{ fontSize: "18px", fontWeight: "700", color: "#f0ede8", margin: 0 }}>
+          {isEnded ? "Your Recap" : "Connections"}
+        </p>
+        {!isEnded && (
+          <button onClick={() => startScan(null)}
+            style={{ background: "rgba(255,255,255,0.05)", color: "rgba(255,255,255,0.7)", border: "1px solid rgba(255,255,255,0.1)", borderRadius: "10px", padding: "8px 14px", fontSize: "12px", fontWeight: "600", cursor: "pointer" }}>
+            Scan to Connect
+          </button>
+        )}
       </div>
+      {isEnded && (
+        <p style={{ fontSize: "13px", color: "rgba(240,237,232,0.4)", margin: "0 0 16px" }}>
+          You made <span style={{ color: EMBER, fontWeight: "600" }}>{connections.length}</span> connection{connections.length === 1 ? "" : "s"} at {event?.title || "this event"}.
+        </p>
+      )}
+      {!isEnded && <div style={{ marginBottom: "12px" }} />}
 
       {/* ── Host introductions ── */}
       {(introductions as any[]).length > 0 && (
@@ -321,6 +331,13 @@ export default function ConnectionsTab({ profile, event, registration, isEnded }
                       {c.role_title && <p style={{ fontSize: "12px", color: "rgba(255,255,255,0.5)", margin: "0 0 2px" }}>{c.role_title}</p>}
                       {c.organisation && <p style={{ fontSize: "12px", color: "rgba(255,255,255,0.35)", margin: "0 0 8px" }}>{c.organisation}</p>}
                       <div style={{ display: "flex", flexDirection: "column", gap: "6px" }}>
+                        {c.show_phone && c.phone_number && (
+                          <a href={toWhatsAppHref(c.phone_number)} target="_blank" rel="noopener noreferrer"
+                            style={{ display: "flex", alignItems: "center", gap: "8px", fontSize: "12px", color: "rgba(255,255,255,0.7)", textDecoration: "none", padding: "6px 8px", borderRadius: "8px", background: "rgba(255,255,255,0.02)", border: "1px solid rgba(255,255,255,0.05)" }}>
+                            <span style={{ width: "18px", height: "18px", borderRadius: "5px", background: "rgba(74,222,128,0.12)", border: "1px solid rgba(74,222,128,0.25)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "10px", flexShrink: 0 }}>💬</span>
+                            <span style={{ overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>WhatsApp {c.phone_number}</span>
+                          </a>
+                        )}
                         {c.show_linkedin && c.linkedin_url && (
                           <a href={toHref(c.linkedin_url)} target="_blank" rel="noopener noreferrer"
                             style={{ display: "flex", alignItems: "center", gap: "8px", fontSize: "12px", color: "rgba(255,255,255,0.7)", textDecoration: "none", padding: "6px 8px", borderRadius: "8px", background: "rgba(255,255,255,0.02)", border: "1px solid rgba(255,255,255,0.05)" }}>
@@ -348,7 +365,7 @@ export default function ConnectionsTab({ profile, event, registration, isEnded }
                 </div>
 
                 <div style={{ display: "flex", flexDirection: "column", gap: "6px", flexShrink: 0, marginLeft: "10px" }}>
-                  {!isUnlocked && (
+                  {!isUnlocked && !isEnded && (
                     <button onClick={() => startScan(c)}
                       style={{ background: "rgba(255,255,255,0.04)", color: "rgba(255,255,255,0.5)", border: "1px solid rgba(255,255,255,0.08)", borderRadius: "8px", padding: "6px 12px", fontSize: "11px", fontWeight: "500", cursor: "pointer", whiteSpace: "nowrap" }}>
                       Scan to unlock
@@ -362,9 +379,18 @@ export default function ConnectionsTab({ profile, event, registration, isEnded }
                 </div>
               </div>
 
-              {/* Actions — Signal Meetup before scan, Note always */}
+              {/* Note — visible inline once saved, not just editable */}
+              {hasNote && (
+                <div style={{ borderTop: "1px solid rgba(255,255,255,0.04)", marginTop: "12px", paddingTop: "10px" }}>
+                  <p style={{ fontSize: "12px", color: "rgba(240,237,232,0.55)", lineHeight: "1.5", margin: 0, whiteSpace: "pre-wrap" }}>
+                    {(savedNotes as any)[c.id]}
+                  </p>
+                </div>
+              )}
+
+              {/* Actions — Signal Meetup before scan (live only), Note always */}
               <div style={{ display: "flex", gap: "8px", marginTop: "12px" }}>
-                {!isUnlocked && (
+                {!isUnlocked && !isEnded && (
                   <button onClick={() => setSignalTarget(c)} disabled={signalSent}
                     style={{
                       flex: 1, padding: "9px", borderRadius: "8px", fontSize: "12px", fontWeight: "600",
@@ -378,7 +404,7 @@ export default function ConnectionsTab({ profile, event, registration, isEnded }
                   </button>
                 )}
                 <button onClick={() => { setMemoryTarget(c); setMemoryDraft((savedNotes as any)[c.id] || ""); }}
-                  style={{ flex: isUnlocked ? 1 : 0, flexShrink: 0, padding: "9px 14px", borderRadius: "8px", background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.07)", color: hasNote ? DUSK : "rgba(255,255,255,0.4)", fontSize: "12px", cursor: "pointer" }}>
+                  style={{ flex: (isUnlocked || isEnded) ? 1 : 0, flexShrink: 0, padding: "9px 14px", borderRadius: "8px", background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.07)", color: hasNote ? DUSK : "rgba(255,255,255,0.4)", fontSize: "12px", cursor: "pointer" }}>
                   {hasNote ? "✎ Edit note" : "+ Note"}
                 </button>
               </div>

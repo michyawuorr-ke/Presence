@@ -1,5 +1,6 @@
 "use client";
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import { supabase } from "@/lib/supabase/client";
 
 interface OverviewTabProps {
   event: any;
@@ -77,8 +78,73 @@ export default function OverviewTab({
   const isEnded = event?.status === "ended";
   const isDraft = !isLive && !isEnded;
 
-  // Stat cards — Ember accent on the two live-energy stats
-  const statCards = [
+  // ── Post-event report data ──────────────────────────────────────────────
+  // Fetched separately from the live `stats` prop since these numbers only
+  // make sense once the event has ended, and computing "most connected
+  // person" / scan rate needs per-guest breakdowns the live stat counts don't carry.
+  const [reportLoading, setReportLoading] = useState(true);
+  const [attendeeCount, setAttendeeCount] = useState(0);
+  const [topConnector, setTopConnector] = useState<{ name: string; count: number } | null>(null);
+  const [scanRate, setScanRate] = useState(0);
+
+  useEffect(() => {
+    if (!isEnded || !event?.id) return;
+    let cancelled = false;
+    async function loadReport() {
+      const [{ data: guests }, { data: hs }, { data: unlocks }] = await Promise.all([
+        supabase.from("guest_profiles").select("id,display_name,role").eq("event_id", event.id),
+        supabase.from("handshakes").select("id,sender_id,receiver_id").eq("event_id", event.id),
+        supabase.from("profile_unlocks").select("handshake_id").eq("event_id", event.id),
+      ]);
+      if (cancelled) return;
+
+      const attendees = (guests || []).filter((g: any) => g.role !== "organizer");
+      setAttendeeCount(attendees.length);
+
+      // Most connected person — count appearances per guest across all handshakes
+      const countByGuest = new Map<string, number>();
+      (hs || []).forEach((h: any) => {
+        countByGuest.set(h.sender_id, (countByGuest.get(h.sender_id) || 0) + 1);
+        countByGuest.set(h.receiver_id, (countByGuest.get(h.receiver_id) || 0) + 1);
+      });
+      let top: { name: string; count: number } | null = null;
+      countByGuest.forEach((count, guestId) => {
+        if (!top || count > top.count) {
+          const g = attendees.find((a: any) => a.id === guestId);
+          if (g) top = { name: g.display_name, count };
+        }
+      });
+      setTopConnector(top);
+
+      // Scan rate — % of connections that were confirmed via an actual QR
+      // scan (profile_unlocks writes 2 rows per scan, one per side, so
+      // distinct handshake_id is the real scan count, not row count).
+      const scannedHandshakeIds = new Set((unlocks || []).map((u: any) => u.handshake_id));
+      const totalHandshakes = hs?.length || 0;
+      setScanRate(totalHandshakes > 0 ? Math.round((scannedHandshakeIds.size / totalHandshakes) * 100) : 0);
+
+      setReportLoading(false);
+    }
+    loadReport();
+    return () => { cancelled = true; };
+  }, [isEnded, event?.id]);
+
+  // Networking density — connections per attendee. Uses the live handshake
+  // count from `stats` (already fixed to be distinct, not double-counted)
+  // against the attendee count fetched above.
+  const density = attendeeCount > 0 ? (stats.handshakes / attendeeCount).toFixed(1) : "0";
+
+  // Stat cards — Ember accent on the two live-energy stats. "Networking"
+  // (live visibility count) is dropped once ended since it's a frozen,
+  // meaningless number after guests have left — the report section below
+  // replaces it with numbers that are actually meaningful post-event.
+  const statCards = isEnded ? [
+    { label: "Registered", value: stats.registrations,  accent: false },
+    { label: "Confirmed",  value: stats.confirmed,       accent: false },
+    { label: "Checked In", value: stats.checkins,        accent: false },
+    { label: "Connections",value: stats.handshakes,      accent: true  },
+    { label: "Revenue",    value: `KES ${(stats.revenue || 0).toLocaleString()}`, accent: false },
+  ] : [
     { label: "Registered", value: stats.registrations,  accent: false },
     { label: "Confirmed",  value: stats.confirmed,       accent: false },
     { label: "Checked In", value: stats.checkins,        accent: false },
@@ -133,6 +199,39 @@ export default function OverviewTab({
           </div>
         ))}
       </div>
+
+      {/* ── Post-event report ── */}
+      {isEnded && (
+        <div style={{ marginBottom: "28px" }}>
+          <p style={{ fontSize: "9px", fontWeight: "700", letterSpacing: "0.15em", color: DIM, textTransform: "uppercase", marginBottom: "12px" }}>Networking Report</p>
+          {reportLoading ? (
+            <div style={{ height: "100px", borderRadius: "12px", background: FAINT }} />
+          ) : (
+            <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
+              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "8px" }}>
+                <div style={{ background: FAINT, border: "1px solid rgba(255,255,255,0.04)", borderRadius: "12px", padding: "14px" }}>
+                  <p style={{ fontSize: "18px", fontWeight: "700", color: IVORY, margin: "0 0 4px", letterSpacing: "-0.02em" }}>{density}</p>
+                  <p style={{ fontSize: "9px", color: "#555", textTransform: "uppercase", letterSpacing: "0.08em", margin: 0 }}>Connections / Attendee</p>
+                </div>
+                <div style={{ background: FAINT, border: "1px solid rgba(255,255,255,0.04)", borderRadius: "12px", padding: "14px" }}>
+                  <p style={{ fontSize: "18px", fontWeight: "700", color: IVORY, margin: "0 0 4px", letterSpacing: "-0.02em" }}>{scanRate}%</p>
+                  <p style={{ fontSize: "9px", color: "#555", textTransform: "uppercase", letterSpacing: "0.08em", margin: 0 }}>Scan Rate</p>
+                </div>
+              </div>
+              <div style={{ background: "rgba(212,175,55,0.04)", border: "1px solid rgba(212,175,55,0.15)", borderRadius: "12px", padding: "14px 16px" }}>
+                <p style={{ fontSize: "9px", fontWeight: "700", letterSpacing: "0.12em", color: GOLD, textTransform: "uppercase", margin: "0 0 4px" }}>Most Connected</p>
+                {topConnector ? (
+                  <p style={{ fontSize: "14px", color: IVORY, margin: 0 }}>
+                    {topConnector.name} — <span style={{ color: GOLD, fontWeight: "700" }}>{topConnector.count}</span> connection{topConnector.count === 1 ? "" : "s"}
+                  </p>
+                ) : (
+                  <p style={{ fontSize: "13px", color: "#555", margin: 0 }}>No connections were made at this event.</p>
+                )}
+              </div>
+            </div>
+          )}
+        </div>
+      )}
 
       {/* Links */}
       <p style={{ fontSize: "9px", fontWeight: "700", letterSpacing: "0.15em", color: DIM, textTransform: "uppercase", marginBottom: "12px" }}>Event Links</p>

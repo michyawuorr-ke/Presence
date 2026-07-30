@@ -8,6 +8,8 @@ interface SceneTabProps {
   countdown: { days: number; hours: number; minutes: number; seconds: number };
   networkingCount: number;
   connectionsCount: number;
+  attendeeCount: number;
+  qrScanCount: number;
   onGoNetworking: () => void;
   onViewConnections: () => void;
 }
@@ -15,6 +17,7 @@ interface SceneTabProps {
 export default function SceneTab({
   event, isLive, isEnded, countdown,
   networkingCount, connectionsCount,
+  attendeeCount, qrScanCount,
   onGoNetworking, onViewConnections,
 }: SceneTabProps) {
   return (
@@ -46,10 +49,23 @@ export default function SceneTab({
 
         {isEnded ? (
           <div style={{ background: "linear-gradient(135deg,#0a0a0b,#1a1a1a)", borderRadius: "24px", padding: "28px", marginBottom: "16px", textAlign: "center" }}>
-            <p style={{ color: "#fff", fontSize: "18px", marginBottom: "8px" }}>Event has ended</p>
-            <p style={{ color: "#666", fontSize: "14px", marginBottom: "16px" }}>Your connections are saved</p>
+            <p style={{ fontSize: "11px", color: "rgba(240,237,232,0.35)", letterSpacing: "0.15em", textTransform: "uppercase", marginBottom: "12px" }}>This event has ended</p>
+            <div style={{ display: "flex", justifyContent: "center", alignItems: "baseline", gap: "6px", flexWrap: "wrap", marginBottom: "8px" }}>
+              <span style={{ color: "#f0ede8", fontSize: "15px" }}>
+                <b style={{ fontWeight: 700, color: PALETTE.orange }}>{attendeeCount}</b> people attended
+              </span>
+              <span style={{ color: "rgba(240,237,232,0.25)" }}>·</span>
+              <span style={{ color: "#f0ede8", fontSize: "15px" }}>
+                <b style={{ fontWeight: 700, color: PALETTE.orange }}>{connectionsCount}</b> connections made
+              </span>
+              <span style={{ color: "rgba(240,237,232,0.25)" }}>·</span>
+              <span style={{ color: "#f0ede8", fontSize: "15px" }}>
+                <b style={{ fontWeight: 700, color: PALETTE.orange }}>{qrScanCount}</b> QR scans
+              </span>
+            </div>
+            <p style={{ color: "#666", fontSize: "14px", margin: "16px 0 20px" }}>Your connections from this event are saved</p>
             <button onClick={onViewConnections} style={{ padding: "12px 24px", borderRadius: "14px", background: "#fff", color: "#000", border: "none", fontSize: "14px", cursor: "pointer", fontWeight: "500" }}>
-              View connections →
+              Explore your connections →
             </button>
           </div>
         ) : isLive ? (

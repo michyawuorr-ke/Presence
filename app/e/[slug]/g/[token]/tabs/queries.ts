@@ -9,6 +9,7 @@ export const keys = {
   pendingCount:   (profileId: string, eventId: string) => ["pending_count", profileId, eventId] as const,
   pendingRequests:(profileId: string, eventId: string) => ["pending_requests", profileId, eventId] as const,
   attendees:      (eventId: string) => ["attendees", eventId] as const,
+  missedConnections: (profileId: string, eventId: string) => ["missed_connections", profileId, eventId] as const,
   stations:       (eventId: string) => ["stations", eventId] as const,
   hostNode:       (eventId: string) => ["host_node", eventId] as const,
   savedNotes:     (profileId: string) => ["saved_notes", profileId] as const,
@@ -36,16 +37,71 @@ export function useGuestProfile(profileId: string | undefined) {
 }
 
 /** All connections (handshakes) for a profile — used in ProfileTab */
-export function useConnections(profileId: string | undefined) {
+/** Post-event "missed connections" — attendees the guest never connected with
+ * (no handshake, no pending/approved request either direction). Unlike
+ * useEventAttendees, this ignores networking_visible — that flag governed who
+ * showed up live; post-event everyone who attended is eligible to reconnect with. */
+export function useMissedConnections(eventId: string | undefined, profileId: string | undefined) {
   return useQuery({
-    queryKey: keys.connections(profileId ?? ""),
+    queryKey: keys.missedConnections(profileId ?? "", eventId ?? ""),
+    enabled: !!eventId && !!profileId,
+    staleTime: 20_000,
+    queryFn: async () => {
+      const [{ data: allAttendees }, { data: handshakes }, { data: requests }] = await Promise.all([
+        supabase
+          .from("guest_profiles")
+          .select("id,display_name,role_title,organisation,networking_intents,industry,role,roles(badge,label)")
+          .eq("event_id", eventId!)
+          .neq("id", profileId!),
+        supabase
+          .from("handshakes")
+          .select("sender_id,receiver_id")
+          .or(`sender_id.eq.${profileId},receiver_id.eq.${profileId}`),
+        supabase
+          .from("handshake_requests")
+          .select("requester_id,recipient_id,status")
+          .eq("event_id", eventId!)
+          .or(`requester_id.eq.${profileId},recipient_id.eq.${profileId}`)
+          .in("status", ["pending", "approved"]),
+      ]);
+
+      const excluded = new Set<string>();
+      (handshakes || []).forEach((h: any) => {
+        excluded.add(h.sender_id === profileId ? h.receiver_id : h.sender_id);
+      });
+      (requests || []).forEach((r: any) => {
+        excluded.add(r.requester_id === profileId ? r.recipient_id : r.requester_id);
+      });
+
+      return (allAttendees || [])
+        .filter((a: any) => !excluded.has(a.id))
+        .map((r: any) => ({
+          ...r,
+          role_badge: r.roles?.badge ?? "👤",
+          role_label: r.roles?.label ?? r.role,
+        }));
+    },
+  });
+}
+
+/** Connections (handshakes) for a profile, optionally scoped to one event —
+ * used in ConnectionsTab. Without eventId, returns all-time connections
+ * (kept for callers that want a cross-event view). Contact visibility per
+ * connection resolves connection_disclosures (the per-viewer override set
+ * right after a scan) over the connection's own guest_profiles show_*
+ * defaults, since a scan-time choice is more specific than a standing default. */
+export function useConnections(profileId: string | undefined, eventId?: string) {
+  return useQuery({
+    queryKey: eventId ? [...keys.connections(profileId ?? ""), eventId] : keys.connections(profileId ?? ""),
     enabled: !!profileId,
     staleTime: 15_000,
     queryFn: async () => {
-      const { data: handshakes } = await supabase
+      let handshakeQuery = supabase
         .from("handshakes")
-        .select("id,sender_id,receiver_id,status")
+        .select("id,sender_id,receiver_id,status,event_id")
         .or(`sender_id.eq.${profileId},receiver_id.eq.${profileId}`);
+      if (eventId) handshakeQuery = handshakeQuery.eq("event_id", eventId);
+      const { data: handshakes } = await handshakeQuery;
 
       if (!handshakes?.length) return [];
 
@@ -53,13 +109,19 @@ export function useConnections(profileId: string | undefined) {
         h.sender_id === profileId ? h.receiver_id : h.sender_id
       );
 
-      const [{ data: profiles }, { data: unlocks }] = await Promise.all([
+      const [{ data: profiles }, { data: unlocks }, { data: disclosures }] = await Promise.all([
         supabase.from("guest_profiles").select("*").in("id", connectedIds),
         // Load profile_unlocks for THIS profile — both directions.
         // A connection is only "unlocked" if an actual QR scan happened.
         supabase.from("profile_unlocks")
           .select("unlocker_id,unlocked_id")
           .or(`unlocker_id.eq.${profileId},unlocked_id.eq.${profileId}`),
+        // Per-viewer disclosure choices THEY made for ME specifically
+        // (owner_id = them, viewer_id = me) — overrides their profile defaults.
+        supabase.from("connection_disclosures")
+          .select("owner_id,show_linkedin,show_website,show_portfolio,show_phone")
+          .eq("viewer_id", profileId!)
+          .in("owner_id", connectedIds),
       ]);
 
       // Build a set of profile ids where a scan has occurred in either direction
@@ -69,15 +131,26 @@ export function useConnections(profileId: string | undefined) {
         if (u.unlocked_id === profileId) scannedSet.add(u.unlocker_id);
       });
 
+      const disclosureMap = new Map<string, any>();
+      (disclosures || []).forEach((d: any) => disclosureMap.set(d.owner_id, d));
+
       const mapped = (profiles || []).map((p: any) => {
         const hs = handshakes.find(
           (h: any) => h.sender_id === p.id || h.receiver_id === p.id
         );
+        const disclosure = disclosureMap.get(p.id);
         return {
           ...p,
           handshakeId: hs?.id,
           // Only true after an actual QR scan — not just from connecting
           qrUnlocked: scannedSet.has(p.id),
+          // Per-viewer override wins when it exists; otherwise fall back to
+          // their own profile defaults. Phone has no profile-level default —
+          // it's only ever shown via an explicit per-viewer disclosure.
+          show_linkedin:  disclosure ? disclosure.show_linkedin  : (p.show_linkedin ?? true),
+          show_website:   disclosure ? disclosure.show_website   : (p.show_website ?? true),
+          show_portfolio: disclosure ? disclosure.show_portfolio : (p.show_portfolio ?? true),
+          show_phone:     disclosure ? disclosure.show_phone     : false,
         };
       });
       // Host/organizer always first, then everyone else in order received
