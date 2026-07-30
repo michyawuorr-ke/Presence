@@ -86,6 +86,7 @@ export default function OverviewTab({
   const [attendeeCount, setAttendeeCount] = useState(0);
   const [topConnector, setTopConnector] = useState<{ name: string; count: number } | null>(null);
   const [scanRate, setScanRate] = useState(0);
+  const [hourlyBuckets, setHourlyBuckets] = useState<{ label: string; count: number }[]>([]);
 
   useEffect(() => {
     if (!isEnded || !event?.id) return;
@@ -93,7 +94,7 @@ export default function OverviewTab({
     async function loadReport() {
       const [{ data: guests }, { data: hs }, { data: unlocks }] = await Promise.all([
         supabase.from("guest_profiles").select("id,display_name,role").eq("event_id", event.id),
-        supabase.from("handshakes").select("id,sender_id,receiver_id").eq("event_id", event.id),
+        supabase.from("handshakes").select("id,sender_id,receiver_id,created_at").eq("event_id", event.id),
         supabase.from("profile_unlocks").select("handshake_id").eq("event_id", event.id),
       ]);
       if (cancelled) return;
@@ -123,16 +124,60 @@ export default function OverviewTab({
       const totalHandshakes = hs?.length || 0;
       setScanRate(totalHandshakes > 0 ? Math.round((scannedHandshakeIds.size / totalHandshakes) * 100) : 0);
 
+      // Hourly activity — bucket connections by the hour they were made,
+      // relative to event start, so the chart reads as "hour 1, hour 2..."
+      // regardless of what time of day the event actually started.
+      if (hs && hs.length > 0 && event.start_time) {
+        const startMs = new Date(event.start_time).getTime();
+        const buckets = new Map<number, number>();
+        hs.forEach((h: any) => {
+          if (!h.created_at) return;
+          const hoursSinceStart = Math.max(0, Math.floor((new Date(h.created_at).getTime() - startMs) / 3600000));
+          buckets.set(hoursSinceStart, (buckets.get(hoursSinceStart) || 0) + 1);
+        });
+        const maxHour = Math.max(...Array.from(buckets.keys()), 0);
+        const filled = Array.from({ length: maxHour + 1 }, (_, i) => ({
+          label: `Hr ${i + 1}`,
+          count: buckets.get(i) || 0,
+        }));
+        setHourlyBuckets(filled);
+      } else {
+        setHourlyBuckets([]);
+      }
+
       setReportLoading(false);
     }
     loadReport();
     return () => { cancelled = true; };
-  }, [isEnded, event?.id]);
+  }, [isEnded, event?.id, event?.start_time]);
 
   // Networking density — connections per attendee. Uses the live handshake
   // count from `stats` (already fixed to be distinct, not double-counted)
   // against the attendee count fetched above.
   const density = attendeeCount > 0 ? (stats.handshakes / attendeeCount).toFixed(1) : "0";
+
+  // Narrative summary — describes what happened, no "good/bad" judgment.
+  // There's no benchmark data yet (new product), so this states facts in
+  // plain language rather than grading them against a target.
+  function buildNarrative(): string {
+    if (attendeeCount === 0) return "No attendance data was recorded for this event.";
+    const parts: string[] = [];
+    parts.push(`${attendeeCount} ${attendeeCount === 1 ? "person" : "people"} attended ${event?.title || "this event"}.`);
+    if (stats.handshakes === 0) {
+      parts.push("No connections were made during the event.");
+    } else {
+      parts.push(`Guests made ${stats.handshakes} connection${stats.handshakes === 1 ? "" : "s"}${scanRate > 0 ? `, ${scanRate}% of them confirmed through an in-person QR scan` : ""}.`);
+      if (topConnector) {
+        parts.push(`${topConnector.name} connected with the most people, at ${topConnector.count}.`);
+      }
+      if (hourlyBuckets.length > 1) {
+        const peak = hourlyBuckets.reduce((a, b) => (b.count > a.count ? b : a), hourlyBuckets[0]);
+        if (peak.count > 0) parts.push(`Networking activity peaked during ${peak.label.toLowerCase()} of the event.`);
+      }
+    }
+    return parts.join(" ");
+  }
+  const narrative = buildNarrative();
 
   // Stat cards — Ember accent on the two live-energy stats. "Networking"
   // (live visibility count) is dropped once ended since it's a frozen,
@@ -203,21 +248,35 @@ export default function OverviewTab({
       {/* ── Post-event report ── */}
       {isEnded && (
         <div style={{ marginBottom: "28px" }}>
-          <p style={{ fontSize: "9px", fontWeight: "700", letterSpacing: "0.15em", color: DIM, textTransform: "uppercase", marginBottom: "12px" }}>Networking Report</p>
+          <p style={{ fontSize: "9px", fontWeight: "700", letterSpacing: "0.15em", color: DIM, textTransform: "uppercase", marginBottom: "12px" }}>Event Report</p>
           {reportLoading ? (
-            <div style={{ height: "100px", borderRadius: "12px", background: FAINT }} />
+            <div style={{ height: "180px", borderRadius: "12px", background: FAINT }} />
           ) : (
-            <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
+            <div style={{ display: "flex", flexDirection: "column", gap: "10px" }}>
+
+              {/* Narrative summary */}
+              <div style={{ background: FAINT, border: "1px solid rgba(255,255,255,0.05)", borderRadius: "14px", padding: "16px" }}>
+                <p style={{ fontSize: "13px", color: IVORY, lineHeight: "1.6", margin: 0 }}>{narrative}</p>
+              </div>
+
+              {/* Metric cards with interpretive lines */}
               <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "8px" }}>
                 <div style={{ background: FAINT, border: "1px solid rgba(255,255,255,0.04)", borderRadius: "12px", padding: "14px" }}>
-                  <p style={{ fontSize: "18px", fontWeight: "700", color: IVORY, margin: "0 0 4px", letterSpacing: "-0.02em" }}>{density}</p>
-                  <p style={{ fontSize: "9px", color: "#555", textTransform: "uppercase", letterSpacing: "0.08em", margin: 0 }}>Connections / Attendee</p>
+                  <p style={{ fontSize: "22px", fontWeight: "700", color: IVORY, margin: "0 0 2px", letterSpacing: "-0.02em" }}>{density}</p>
+                  <p style={{ fontSize: "9px", color: "#555", textTransform: "uppercase", letterSpacing: "0.08em", margin: "0 0 6px" }}>Connections / Attendee</p>
+                  <p style={{ fontSize: "10.5px", color: "rgba(240,237,232,0.4)", margin: 0, lineHeight: "1.4" }}>
+                    {attendeeCount > 0 ? `${stats.handshakes} connections across ${attendeeCount} attendees` : "No attendance recorded"}
+                  </p>
                 </div>
                 <div style={{ background: FAINT, border: "1px solid rgba(255,255,255,0.04)", borderRadius: "12px", padding: "14px" }}>
-                  <p style={{ fontSize: "18px", fontWeight: "700", color: IVORY, margin: "0 0 4px", letterSpacing: "-0.02em" }}>{scanRate}%</p>
-                  <p style={{ fontSize: "9px", color: "#555", textTransform: "uppercase", letterSpacing: "0.08em", margin: 0 }}>Scan Rate</p>
+                  <p style={{ fontSize: "22px", fontWeight: "700", color: IVORY, margin: "0 0 2px", letterSpacing: "-0.02em" }}>{scanRate}%</p>
+                  <p style={{ fontSize: "9px", color: "#555", textTransform: "uppercase", letterSpacing: "0.08em", margin: "0 0 6px" }}>Scan Rate</p>
+                  <p style={{ fontSize: "10.5px", color: "rgba(240,237,232,0.4)", margin: 0, lineHeight: "1.4" }}>
+                    {stats.handshakes > 0 ? "share of connections confirmed in person" : "no connections to measure"}
+                  </p>
                 </div>
               </div>
+
               <div style={{ background: "rgba(212,175,55,0.04)", border: "1px solid rgba(212,175,55,0.15)", borderRadius: "12px", padding: "14px 16px" }}>
                 <p style={{ fontSize: "9px", fontWeight: "700", letterSpacing: "0.12em", color: GOLD, textTransform: "uppercase", margin: "0 0 4px" }}>Most Connected</p>
                 {topConnector ? (
@@ -228,6 +287,32 @@ export default function OverviewTab({
                   <p style={{ fontSize: "13px", color: "#555", margin: 0 }}>No connections were made at this event.</p>
                 )}
               </div>
+
+              {/* Activity timeline — connections per hour since event start */}
+              {hourlyBuckets.length > 1 && (
+                <div style={{ background: FAINT, border: "1px solid rgba(255,255,255,0.04)", borderRadius: "12px", padding: "14px 16px 12px" }}>
+                  <p style={{ fontSize: "9px", fontWeight: "700", letterSpacing: "0.12em", color: DIM, textTransform: "uppercase", margin: "0 0 12px" }}>Networking Activity</p>
+                  <div style={{ display: "flex", alignItems: "flex-end", gap: "6px", height: "64px" }}>
+                    {(() => {
+                      const maxCount = Math.max(...hourlyBuckets.map(b => b.count), 1);
+                      return hourlyBuckets.map(b => (
+                        <div key={b.label} style={{ flex: 1, display: "flex", flexDirection: "column", alignItems: "center", gap: "4px", height: "100%", justifyContent: "flex-end" }}>
+                          <div style={{
+                            width: "100%", borderRadius: "3px 3px 0 0",
+                            height: `${Math.max((b.count / maxCount) * 100, b.count > 0 ? 6 : 2)}%`,
+                            background: b.count > 0 ? "rgba(226,109,52,0.5)" : "rgba(255,255,255,0.04)",
+                          }} />
+                        </div>
+                      ));
+                    })()}
+                  </div>
+                  <div style={{ display: "flex", gap: "6px", marginTop: "6px" }}>
+                    {hourlyBuckets.map(b => (
+                      <p key={b.label} style={{ flex: 1, fontSize: "8px", color: "#444", textAlign: "center", margin: 0 }}>{b.label}</p>
+                    ))}
+                  </div>
+                </div>
+              )}
             </div>
           )}
         </div>
