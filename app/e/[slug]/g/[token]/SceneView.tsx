@@ -177,6 +177,9 @@ export default function SceneView({ event, registration, profile, masterProfile,
           entryQR={entryQR}
           networkingQR={networkingQR}
           qrError={qrError}
+          isEnded={isEnded}
+          onGoToScene={() => setTab("scene")}
+          onGoToConnections={() => setTab("connections")}
         />
       )}
 
