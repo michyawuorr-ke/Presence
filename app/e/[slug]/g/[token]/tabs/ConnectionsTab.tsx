@@ -4,6 +4,7 @@ import { supabase } from "@/lib/supabase/client";
 import { getFirstName, cleanUrl, toHref, toWhatsAppHref, parseIntents } from "./shared";
 import { INTENT_MAP, intentReasonFromStoredIntent } from "@/lib/matching/intents";
 import DisclosureSheet from "./DisclosureSheet";
+import AcceptDisclosureSheet from "./AcceptDisclosureSheet";
 import {
   useConnections, usePendingRequests, useSavedNotes, useIncomingSignals,
   useEventStations, useInvalidators, useIntroductions,
@@ -33,6 +34,7 @@ export default function ConnectionsTab({ profile, event, registration, isEnded }
   const [memorySaving,         setMemorySaving]         = useState(false);
   const [unlocked,             setUnlocked]             = useState<Set<string>>(new Set());
   const [disclosureTarget,     setDisclosureTarget]     = useState<any>(null);
+  const [acceptDisclosureTarget, setAcceptDisclosureTarget] = useState<any>(null);
 
   const { data: connections   = [] } = useConnections(profile?.id, event?.id);
   const { data: pendingRequests = [] } = usePendingRequests(profile?.id, event?.id);
@@ -388,6 +390,21 @@ export default function ConnectionsTab({ profile, event, registration, isEnded }
                 </div>
               )}
 
+              {/* Post-event, request/accept connections (no scan) get an
+                  explicit opt-in prompt instead of auto-revealing contact
+                  details — accepting the request only means "we're
+                  connected," not "here's my contact info." Only shows
+                  once, until answered (share or skip both count). */}
+              {isEnded && !isUnlocked && !c.acceptDisclosurePrompted && (
+                <div style={{ borderTop: "1px solid rgba(255,255,255,0.04)", marginTop: "12px", paddingTop: "12px" }}>
+                  <p style={{ fontSize: "12.5px", color: "rgba(240,237,232,0.6)", margin: "0 0 8px" }}>Share contact details with {getFirstName(c.display_name)}?</p>
+                  <button onClick={() => setAcceptDisclosureTarget(c)}
+                    style={{ width: "100%", padding: "10px", borderRadius: "9px", background: "rgba(226,109,52,0.08)", border: "1px solid rgba(226,109,52,0.3)", color: EMBER, fontSize: "12.5px", fontWeight: "600", cursor: "pointer" }}>
+                    Choose what to share →
+                  </button>
+                </div>
+              )}
+
               {/* Actions — Signal Meetup before scan (live only), Note always */}
               <div style={{ display: "flex", gap: "8px", marginTop: "12px" }}>
                 {!isUnlocked && !isEnded && (
@@ -474,7 +491,7 @@ export default function ConnectionsTab({ profile, event, registration, isEnded }
         </div>
       )}
 
-      {/* ── Per-connection disclosure sheet ── */}
+      {/* ── Per-connection disclosure sheet (post-scan) ── */}
       {disclosureTarget && profile && (
         <DisclosureSheet
           unlockId={disclosureTarget.unlockId}
@@ -487,6 +504,25 @@ export default function ConnectionsTab({ profile, event, registration, isEnded }
             showToast(`Shared with ${getFirstName(disclosureTarget.profile.display_name)}`);
           }}
           onSkip={() => setDisclosureTarget(null)}
+        />
+      )}
+
+      {/* ── Per-connection disclosure sheet (post-event accept) ── */}
+      {acceptDisclosureTarget && profile && (
+        <AcceptDisclosureSheet
+          ownerId={profile.id}
+          viewerId={acceptDisclosureTarget.id}
+          viewerName={acceptDisclosureTarget.display_name ?? "them"}
+          myProfile={profile}
+          onSave={() => {
+            showToast(`Shared with ${getFirstName(acceptDisclosureTarget.display_name)}`);
+            setAcceptDisclosureTarget(null);
+            invalidate.invalidateConnections();
+          }}
+          onSkip={() => {
+            setAcceptDisclosureTarget(null);
+            invalidate.invalidateConnections();
+          }}
         />
       )}
     </div>

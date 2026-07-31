@@ -110,7 +110,7 @@ export function useConnections(profileId: string | undefined, eventId?: string) 
         h.sender_id === profileId ? h.receiver_id : h.sender_id
       );
 
-      const [{ data: profiles }, { data: unlocks }, { data: disclosures }] = await Promise.all([
+      const [{ data: profiles }, { data: unlocks }, { data: disclosures }, { data: myDisclosures }] = await Promise.all([
         supabase.from("guest_profiles").select("*").in("id", connectedIds),
         // Load profile_unlocks for THIS profile — both directions.
         // A connection is only "unlocked" if an actual QR scan happened.
@@ -123,6 +123,15 @@ export function useConnections(profileId: string | undefined, eventId?: string) 
           .select("owner_id,show_linkedin,show_website,show_portfolio,show_phone")
           .eq("viewer_id", profileId!)
           .in("owner_id", connectedIds),
+        // MY OWN accept-based disclosure decisions (owner_id = me, unlock_id
+        // null) — tells us whether I've already been prompted for each
+        // connection post-event, so the "Share contact details?" prompt
+        // doesn't reappear once actioned (share OR explicit skip both count).
+        supabase.from("connection_disclosures")
+          .select("viewer_id")
+          .eq("owner_id", profileId!)
+          .is("unlock_id", null)
+          .in("viewer_id", connectedIds),
       ]);
 
       // Build a set of profile ids where a scan has occurred in either direction
@@ -135,6 +144,13 @@ export function useConnections(profileId: string | undefined, eventId?: string) 
       const disclosureMap = new Map<string, any>();
       (disclosures || []).forEach((d: any) => disclosureMap.set(d.owner_id, d));
 
+      // Connections where I've already made an accept-based disclosure
+      // decision (shared or explicitly skipped) — the prompt only shows
+      // for connections NOT in this set.
+      const myDisclosurePromptedSet = new Set<string>(
+        (myDisclosures || []).map((d: any) => d.viewer_id)
+      );
+
       const mapped = (profiles || []).map((p: any) => {
         const hs = handshakes.find(
           (h: any) => h.sender_id === p.id || h.receiver_id === p.id
@@ -145,6 +161,9 @@ export function useConnections(profileId: string | undefined, eventId?: string) 
           handshakeId: hs?.id,
           // Only true after an actual QR scan — not just from connecting
           qrUnlocked: scannedSet.has(p.id),
+          // Have I already been prompted (and responded, share or skip) for
+          // an accept-based disclosure with this connection?
+          acceptDisclosurePrompted: myDisclosurePromptedSet.has(p.id),
           // Per-viewer override wins when it exists; otherwise fall back to
           // their own profile defaults. Phone has no profile-level default —
           // it's only ever shown via an explicit per-viewer disclosure.
