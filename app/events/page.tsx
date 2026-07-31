@@ -46,22 +46,35 @@ export default function EventsDirectoryPage() {
 
   return (
     <div style={{ background: "var(--base)", minHeight: "100vh" }}>
+      <style>{`body { max-width: 100% !important; }`}</style>
       <Nav />
 
-      <div style={{ maxWidth: 720, margin: "0 auto", padding: "120px 24px 40px" }}>
-        <p style={{
-          fontSize: 11, letterSpacing: "0.2em", textTransform: "uppercase",
-          color: "var(--ember)", fontWeight: 700, margin: "0 0 12px",
-        }}>
-          Happening on Oreeti
-        </p>
+      <section style={{ padding: "160px 32px 60px", maxWidth: 900, margin: "0 auto" }}>
+        <p className="eyebrow reveal" style={{ marginBottom: 20 }}>Happening on Oreeti</p>
         <h1 style={{
-          fontSize: "clamp(28px, 5vw, 40px)", fontWeight: 700, color: "var(--ivory)",
-          letterSpacing: "-0.02em", margin: "0 0 32px", lineHeight: 1.15,
-        }}>
-          Find an event to join
+          fontFamily: "var(--font-display)",
+          fontSize: "clamp(34px,5.5vw,60px)",
+          fontWeight: 500,
+          color: "var(--ivory)",
+          lineHeight: 1.08,
+          letterSpacing: "-0.025em",
+          margin: "0 0 24px",
+          maxWidth: 700,
+        }}
+          data-reveal
+        >
+          A room is only as good as who's in it.
         </h1>
+        <p style={{
+          fontSize: 17, color: "var(--dusk)", lineHeight: 1.75, maxWidth: 520, marginBottom: 48,
+        }}
+          data-reveal data-delay="100"
+        >
+          These are the events open for anyone to walk into — no invite required, just a reason to show up. Find one, register, and see who else is in the room.
+        </p>
+      </section>
 
+      <div style={{ maxWidth: 720, margin: "0 auto", padding: "0 32px 40px" }}>
         <input
           value={search}
           onChange={e => setSearch(e.target.value)}
