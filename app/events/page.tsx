@@ -12,6 +12,7 @@ interface DirectoryEvent {
   start_time: string;
   slug: string;
   status: string;
+  banner_url: string | null;
 }
 
 export default function EventsDirectoryPage() {
@@ -27,7 +28,7 @@ export default function EventsDirectoryPage() {
       // "what's happening" surface, not an archive).
       const { data } = await supabase
         .from("events")
-        .select("id,title,venue,description,start_time,slug,status")
+        .select("id,title,venue,description,start_time,slug,status,banner_url")
         .eq("is_public", true)
         .in("status", ["scheduled", "live"])
         .order("start_time", { ascending: true });
@@ -90,7 +91,7 @@ export default function EventsDirectoryPage() {
         {loading ? (
           <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
             {[0, 1, 2].map(i => (
-              <div key={i} style={{ height: 96, borderRadius: 16, background: "rgba(255,255,255,0.02)" }} />
+              <div key={i} style={{ height: 220, borderRadius: 16, background: "rgba(255,255,255,0.02)" }} />
             ))}
           </div>
         ) : filtered.length === 0 ? (
@@ -111,35 +112,52 @@ export default function EventsDirectoryPage() {
                   key={event.id}
                   href={`/register/${event.slug}`}
                   style={{
-                    display: "block", padding: "20px 22px", borderRadius: 16,
+                    display: "block", borderRadius: 16, overflow: "hidden",
                     background: "rgba(255,255,255,0.02)", border: "1px solid rgba(255,255,255,0.06)",
                     textDecoration: "none", transition: "border-color 0.15s ease",
                   }}
                 >
-                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: 16 }}>
-                    <div style={{ minWidth: 0, flex: 1 }}>
-                      {event.status === "live" && (
-                        <span style={{
-                          display: "inline-flex", alignItems: "center", gap: 5,
-                          fontSize: 10, fontWeight: 700, letterSpacing: "0.08em",
-                          color: "#22c55e", marginBottom: 6,
-                        }}>
-                          <span style={{ width: 6, height: 6, borderRadius: "50%", background: "#22c55e" }} />
-                          LIVE NOW
+                  {/* Banner — real image when the host uploaded one, otherwise
+                      a gradient + initial-letter monogram so every card still
+                      has visual presence rather than a blank gap. A page of
+                      pure text reads as a directory listing, not something
+                      that invites curiosity. */}
+                  <div style={{ position: "relative", width: "100%", aspectRatio: "16 / 7", background: event.banner_url ? "#000" : "linear-gradient(135deg, rgba(226,109,52,0.35), rgba(212,175,55,0.25))" }}>
+                    {event.banner_url ? (
+                      <img src={event.banner_url} alt="" style={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }} />
+                    ) : (
+                      <div style={{ position: "absolute", inset: 0, display: "flex", alignItems: "center", justifyContent: "center" }}>
+                        <span style={{ fontFamily: "var(--font-display)", fontSize: 40, fontWeight: 500, color: "rgba(255,255,255,0.35)" }}>
+                          {event.title?.trim()?.charAt(0)?.toUpperCase() || "?"}
                         </span>
-                      )}
-                      <h2 style={{ fontSize: 17, fontWeight: 600, color: "var(--ivory)", margin: "0 0 4px", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
-                        {event.title}
-                      </h2>
-                      {event.description && (
-                        <p style={{ fontSize: 13, color: "var(--dusk)", margin: "0 0 10px", lineHeight: 1.5, display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical", overflow: "hidden" }}>
-                          {event.description}
-                        </p>
-                      )}
-                      <div style={{ display: "flex", flexWrap: "wrap", gap: "4px 14px", fontSize: 12, color: "rgba(240,237,232,0.4)" }}>
-                        {date && <span>📅 {date}{time ? ` · ${time}` : ""}</span>}
-                        {event.venue && <span>📍 {event.venue}</span>}
                       </div>
+                    )}
+                    {event.status === "live" && (
+                      <span style={{
+                        position: "absolute", top: 12, left: 12,
+                        display: "inline-flex", alignItems: "center", gap: 5,
+                        fontSize: 10, fontWeight: 700, letterSpacing: "0.08em",
+                        color: "#fff", background: "rgba(34,197,94,0.9)",
+                        padding: "4px 9px", borderRadius: 20,
+                      }}>
+                        <span style={{ width: 6, height: 6, borderRadius: "50%", background: "#fff" }} />
+                        LIVE NOW
+                      </span>
+                    )}
+                  </div>
+
+                  <div style={{ padding: "16px 20px 20px" }}>
+                    <h2 style={{ fontSize: 17, fontWeight: 600, color: "var(--ivory)", margin: "0 0 4px", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                      {event.title}
+                    </h2>
+                    {event.description && (
+                      <p style={{ fontSize: 13, color: "var(--dusk)", margin: "0 0 10px", lineHeight: 1.5, display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical", overflow: "hidden" }}>
+                        {event.description}
+                      </p>
+                    )}
+                    <div style={{ display: "flex", flexWrap: "wrap", gap: "4px 14px", fontSize: 12, color: "rgba(240,237,232,0.4)" }}>
+                      {date && <span>📅 {date}{time ? ` · ${time}` : ""}</span>}
+                      {event.venue && <span>📍 {event.venue}</span>}
                     </div>
                   </div>
                 </a>
