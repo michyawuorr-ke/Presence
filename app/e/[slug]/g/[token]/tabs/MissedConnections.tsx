@@ -18,7 +18,9 @@ export default function MissedConnections({ event, profile }: MissedConnectionsP
   const [notification, setNotification] = useState("");
   const [sentIds, setSentIds] = useState<Set<string>>(new Set());
 
-  const { data: missed = [], isLoading } = useMissedConnections(event?.id, profile?.id);
+  const { data, isLoading } = useMissedConnections(event?.id, profile?.id);
+  const missed = data?.items ?? [];
+  const truncated = data?.truncated ?? false;
   const invalidate = useInvalidators(profile?.id ?? "", event?.id ?? "");
 
   const endedAt = event?.end_time ? new Date(event.end_time) : null;
@@ -85,6 +87,12 @@ export default function MissedConnections({ event, profile }: MissedConnectionsP
       <p style={{ fontSize: "12px", color: PALETTE.orange, marginBottom: "16px" }}>
         {hoursLeft > 0 ? `This window closes in ${hoursLeft}h` : "This window is closing soon"}
       </p>
+
+      {truncated && (
+        <p style={{ fontSize: "11px", color: "rgba(240,237,232,0.3)", marginBottom: "16px" }}>
+          This is a large event — showing the first 300 people you may have missed.
+        </p>
+      )}
 
       {notification && (
         <div style={{ background: "rgba(226,109,52,0.08)", border: "1px solid rgba(226,109,52,0.2)", borderRadius: "10px", padding: "10px 14px", marginBottom: "16px" }}>

@@ -47,12 +47,20 @@ export function useMissedConnections(eventId: string | undefined, profileId: str
     enabled: !!eventId && !!profileId,
     staleTime: 20_000,
     queryFn: async () => {
-      const [{ data: allAttendees }, { data: handshakes }, { data: requests }] = await Promise.all([
+      // Capped at 300 raw attendees before exclusion filtering — post-filter
+      // capping would risk hiding real missed connections if the excluded
+      // ones happened to sort first, so this caps the input instead and
+      // flags `truncated` so the UI can be honest about it rather than
+      // silently showing an incomplete list at a very large event.
+      const ATTENDEE_FETCH_CAP = 300;
+      const [{ data: allAttendees, count: totalAttendeeCount }, { data: handshakes }, { data: requests }] = await Promise.all([
         supabase
           .from("guest_profiles")
-          .select("id,display_name,role_title,organisation,networking_intents,industry,role,roles(badge,label)")
+          .select("id,display_name,role_title,organisation,networking_intents,industry,role,roles(badge,label)", { count: "exact" })
           .eq("event_id", eventId!)
-          .neq("id", profileId!),
+          .neq("id", profileId!)
+          .order("created_at", { ascending: true })
+          .limit(ATTENDEE_FETCH_CAP),
         supabase
           .from("handshakes")
           .select("sender_id,receiver_id")
@@ -74,13 +82,19 @@ export function useMissedConnections(eventId: string | undefined, profileId: str
         excluded.add(r.requester_id === profileId ? r.recipient_id : r.requester_id);
       });
 
-      return (allAttendees || [])
+      const items = (allAttendees || [])
         .filter((a: any) => !excluded.has(a.id))
         .map((r: any) => ({
           ...r,
           role_badge: r.roles?.badge ?? "👤",
           role_label: r.roles?.label ?? r.role,
         }));
+
+      // totalAttendeeCount includes the viewer themselves (neq wasn't
+      // applied to the count), so subtract 1 for an accurate comparison
+      // against whether the fetch cap actually cut anything off.
+      const realTotal = (totalAttendeeCount ?? 0) - 1;
+      return { items, truncated: realTotal > ATTENDEE_FETCH_CAP };
     },
   });
 }
@@ -97,10 +111,17 @@ export function useConnections(profileId: string | undefined, eventId?: string) 
     enabled: !!profileId,
     staleTime: 15_000,
     queryFn: async () => {
+      // Capped and ordered by most recent — without eventId this is an
+      // all-time cross-event view, which for a guest active across many
+      // events could otherwise be unbounded. 300 is generous headroom
+      // above any realistic single-event connection count while still
+      // protecting the all-time case.
       let handshakeQuery = supabase
         .from("handshakes")
         .select("id,sender_id,receiver_id,status,event_id")
-        .or(`sender_id.eq.${profileId},receiver_id.eq.${profileId}`);
+        .or(`sender_id.eq.${profileId},receiver_id.eq.${profileId}`)
+        .order("created_at", { ascending: false })
+        .limit(300);
       if (eventId) handshakeQuery = handshakeQuery.eq("event_id", eventId);
       const { data: handshakes } = await handshakeQuery;
 
