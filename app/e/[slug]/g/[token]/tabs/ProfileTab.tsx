@@ -159,12 +159,20 @@ export default function ProfileTab({ profile, masterProfile, event, onProfileUpd
     const column = visibilityColumns[key];
     if (!column) return;
     const current = Boolean(profile[column]);
-    const { data } = await supabase
+    const { data, error } = await supabase
       .from("guest_profiles")
       .update({ [column]: !current })
       .eq("id", profile.id)
       .select()
       .single();
+    if (error) {
+      // Previously silent — a missing/misnamed column (as happened with
+      // show_phone) would fail here with no feedback, so the toggle just
+      // never appeared to work with no way to tell why.
+      setNotification(`Couldn't update visibility — ${error.message}`);
+      setTimeout(() => setNotification(""), 4000);
+      return;
+    }
     if (data) {
       onProfileUpdate(data);
     }
@@ -293,9 +301,18 @@ export default function ProfileTab({ profile, masterProfile, event, onProfileUpd
                   <button
                     type="button"
                     onClick={() => toggleLinkVisibility(link.key)}
-                    style={{ padding: "6px 10px", borderRadius: "8px", border: "1px solid " + accentBorder, background: link.visible ? accentBg : "transparent", color: link.visible ? accent : "rgba(240,237,232,0.45)", fontSize: "11px", fontWeight: "600", cursor: "pointer", flexShrink: 0 }}
+                    aria-label={link.visible ? `Hide ${link.label}` : `Show ${link.label}`}
+                    style={{
+                      flexShrink: 0, width: "36px", height: "21px", borderRadius: "11px", border: "none",
+                      cursor: "pointer", position: "relative", transition: "background 0.2s",
+                      background: link.visible ? accent : "rgba(255,255,255,0.1)",
+                    }}
                   >
-                    {link.visible ? "Visible" : "Hidden"}
+                    <span style={{
+                      position: "absolute", top: "2.5px", left: link.visible ? "18px" : "2.5px",
+                      width: "16px", height: "16px", borderRadius: "50%", background: "#fff",
+                      transition: "left 0.2s",
+                    }} />
                   </button>
                 </div>
               );
