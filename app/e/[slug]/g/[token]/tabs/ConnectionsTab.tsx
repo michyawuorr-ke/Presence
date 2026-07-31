@@ -56,7 +56,22 @@ export default function ConnectionsTab({ profile, event, registration, isEnded }
       .eq("id", requestId);
     if (error) { showToast("❌ " + error.message, 5000); return; }
     if (approve) {
-      await supabase.from("handshakes").insert({ sender_id: requesterId, receiver_id: profile.id, event_id: event.id, status: "accepted" });
+      const { error: hsError } = await supabase.from("handshakes")
+        .insert({ sender_id: requesterId, receiver_id: profile.id, event_id: event.id, status: "accepted" });
+      if (hsError) {
+        // The request is now marked "approved" but the actual connection
+        // row failed to write — this used to be silently discarded, which
+        // meant the UI showed "Connected with X" and the request looked
+        // accepted, but no handshakes row existed. Roll the request status
+        // back to pending so it isn't left in an inconsistent state where
+        // it can never be retried (an "approved" request doesn't show up
+        // in the pending list anymore, so the guest would have no way to
+        // try accepting again).
+        await supabase.from("handshake_requests").update({ status: "pending" }).eq("id", requestId);
+        showToast("❌ Couldn't complete the connection — please try again", 5000);
+        invalidate.invalidatePending();
+        return;
+      }
       showToast(`Connected with ${getFirstName(name)}`);
     } else {
       showToast(`Declined ${getFirstName(name)}`);
