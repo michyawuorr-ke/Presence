@@ -1,11 +1,12 @@
 "use client";
-import { useEffect, useState, useRef, useCallback } from "react";
+import { useEffect, useState, useRef, useCallback, useMemo } from "react";
 import { supabase } from "@/lib/supabase/client";
 import { getFirstName, parseIntents, REASON_OPTIONS, PALETTE, INTENTS_BY_GROUP, INTENT_GROUPS, INTENT_MAP } from "./shared";
 import AttendeeCard from "./AttendeeCard";
 import PreEventDiscovery from "./PreEventDiscovery";
 import MatchRecommendations from "./MatchRecommendations";
 import MissedConnections from "./MissedConnections";
+import { List, type RowComponentProps } from "react-window";
 
 interface NetworkingTabProps {
   event: any;
@@ -13,6 +14,32 @@ interface NetworkingTabProps {
   isLive: boolean;
   isEnded: boolean;
   registration: any;
+}
+
+// Row height is fixed rather than measured. Guests are capped at 2 intent
+// pills (enforced elsewhere), so on typical phone widths the card never
+// wraps past what this height accounts for — a fixed height keeps
+// react-window's scroll math cheap, which matters more here than pixel-
+// perfect sizing for the rare edge case.
+const ROW_HEIGHT = 112;
+
+type NodeRowProps = {
+  filteredNodes: any[];
+  sentRequests: Set<string>;
+  onConnect: (node: any) => void;
+};
+
+// react-window's rowComponent must be a stable, named component — not
+// defined inline inside NetworkingTab's render — or it gets recreated
+// every render and react-window can't reuse row instances while scrolling.
+function NodeRow({ index, style, filteredNodes, sentRequests, onConnect }: RowComponentProps<NodeRowProps>) {
+  const node = filteredNodes[index];
+  if (!node) return null;
+  return (
+    <div style={{ ...style, paddingBottom: "8px", boxSizing: "border-box" }}>
+      <AttendeeCard attendee={node} sent={sentRequests.has(node.id)} onConnect={() => onConnect(node)} live />
+    </div>
+  );
 }
 
 export default function NetworkingTab({ event, profile, isLive, isEnded, registration }: NetworkingTabProps) {
@@ -264,6 +291,21 @@ export default function NetworkingTab({ event, profile, isLive, isEnded, registr
     );
   }
 
+  // Filtering was previously recomputed inline inside .filter().map() on
+  // every render (including on every keystroke in the search box). Memoizing
+  // it means typing in the search field doesn't re-run the filter+scan over
+  // every node on each character when nothing else about `nodes` changed.
+  const filteredNodes = useMemo(() => {
+    const q = liveSearch.trim().toLowerCase();
+    return nodes.filter((node: any) => {
+      // Never show people the current guest has already declined
+      if (declinedIds.has(node.id)) return false;
+      if (!q) return true;
+      return node.display_name?.toLowerCase().includes(q)
+        || node.role_title?.toLowerCase().includes(q)
+        || (node.networking_intents || []).some((i: string) => i.toLowerCase().includes(q));
+    });
+  }, [nodes, declinedIds, liveSearch]);
 
   return(
     <div style={{background:"linear-gradient(160deg,#0f0f13 0%,#12101a 100%)",minHeight:"calc(100vh - 100px)",position:"relative",padding:"16px"}}>
@@ -315,20 +357,25 @@ export default function NetworkingTab({ event, profile, isLive, isEnded, registr
               <button onClick={()=>setConfirmNode({...hostNode,is_host:true})} style={{fontSize:"11px",fontWeight:"600",color:PALETTE.gold,background:"transparent",border:`1px solid rgba(212,175,55,0.4)`,borderRadius:"8px",padding:"6px 12px",cursor:"pointer"}}>Connect</button>
             </div>
           )}
-          {networkingActive&&nodes.length===0&&(
-            <p style={{color:"#555",fontSize:"14px",textAlign:"center",padding:"60px 0"}}>No one else is networking right now.</p>
-          )}
-          {networkingActive&&nodes.filter((node:any)=>{
-            // Never show people the current guest has already declined
-            if(declinedIds.has(node.id))return false;
-            const q=liveSearch.trim().toLowerCase();
-            if(!q)return true;
-            return node.display_name?.toLowerCase().includes(q)
-              ||node.role_title?.toLowerCase().includes(q)
-              ||(node.networking_intents||[]).some((i:string)=>i.toLowerCase().includes(q));
-          }).map((node:any)=>(
-            <AttendeeCard key={node.id} attendee={node} sent={sentRequests.has(node.id)} onConnect={()=>setConfirmNode(node)} live/>
-          ))}
+        </div>
+      )}
+
+      {auraLoaded&&networkingActive&&filteredNodes.length===0&&(
+        <p style={{color:"#555",fontSize:"14px",textAlign:"center",padding:"60px 0"}}>No one else is networking right now.</p>
+      )}
+
+      {/* Virtualized — only mounts the rows actually visible in the
+          viewport, instead of every AttendeeCard for every guest at once.
+          Without this, 200 live guests means 200 mounted DOM subtrees,
+          which visibly stutters on lower-end Android devices. */}
+      {auraLoaded&&networkingActive&&filteredNodes.length>0&&(
+        <div style={{height:"calc(100vh - 320px)",minHeight:"300px"}}>
+          <List<NodeRowProps>
+            rowComponent={NodeRow}
+            rowCount={filteredNodes.length}
+            rowHeight={ROW_HEIGHT}
+            rowProps={{ filteredNodes, sentRequests, onConnect: setConfirmNode }}
+          />
         </div>
       )}
 

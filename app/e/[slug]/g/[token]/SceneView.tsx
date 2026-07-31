@@ -93,7 +93,12 @@ export default function SceneView({ event, registration, profile, masterProfile,
           seconds: Math.floor((diff % 60000) / 1000),
         });
       }
-      if (e2.getTime() - n.getTime() < 300000) setFiveMin(true);
+      // Was previously `< 300000` with no lower bound — once end_time passed,
+      // the diff went negative and stayed under 300000 forever, so this
+      // banner never turned itself off after an event ended. Bounding it to
+      // (0, 300000) means it's only true in the actual final 5 minutes.
+      const msToEnd = e2.getTime() - n.getTime();
+      setFiveMin(msToEnd > 0 && msToEnd < 300000);
     }, 1000);
     return () => { clearInterval(tick); supabase.removeChannel(evCh); };
   }, [event]);

@@ -200,3 +200,58 @@ export function rankMatches(
     .sort((a, b) => b.score - a.score)
     .slice(0, topN);
 }
+
+// requestIdleCallback isn't available in Safari/WebKit (including iOS), so
+// this falls back to setTimeout there. setTimeout doesn't wait for actual
+// browser idle time the way requestIdleCallback does — it just yields one
+// tick — so the responsiveness gain on Safari is smaller, but it's still a
+// real yield back to the main thread between chunks rather than one long
+// synchronous block.
+function yieldToMain(): Promise<void> {
+  return new Promise(resolve => {
+    if (typeof (window as any).requestIdleCallback === "function") {
+      (window as any).requestIdleCallback(() => resolve(), { timeout: 50 });
+    } else {
+      setTimeout(resolve, 0);
+    }
+  });
+}
+
+// ── Chunked ranking — same result as rankMatches, but processes attendees
+// in batches and yields to the main thread between them. At small attendee
+// counts this is barely distinguishable from the synchronous version; the
+// point is events with 300+ attendees, where scoring everyone in one
+// unbroken pass visibly blocks the UI on lower-end Android devices.
+// Total work done is the same — this trades a longer wall-clock time for
+// the browser staying responsive to touch/scroll while it runs.
+export async function rankMatchesChunked(
+  me: AttendeeProfile,
+  others: AttendeeProfile[],
+  interactions: InteractionMap,
+  topN: number = 10,
+  chunkSize: number = 40,
+): Promise<MatchResult[]> {
+  const myOrg = me.organisation?.toLowerCase().trim();
+  const candidates = others.filter(p =>
+    p.id !== me.id &&
+    !interactions.blockedIds.has(p.id) &&
+    !interactions.connectedIds.has(p.id)
+  );
+
+  const results: MatchResult[] = [];
+  for (let i = 0; i < candidates.length; i += chunkSize) {
+    const chunk = candidates.slice(i, i + chunkSize);
+    for (const p of chunk) {
+      const sameOrg = !!(myOrg && p.organisation?.toLowerCase().trim() === myOrg);
+      results.push(scoreMatch(me, p, interactions, sameOrg));
+    }
+    // Yield after every chunk except when we've just processed the last one
+    // — no point yielding right before returning.
+    if (i + chunkSize < candidates.length) await yieldToMain();
+  }
+
+  return results
+    .filter(r => r.score > 20)
+    .sort((a, b) => b.score - a.score)
+    .slice(0, topN);
+}

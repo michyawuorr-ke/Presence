@@ -86,7 +86,6 @@ export default function OverviewTab({
   const [attendeeCount, setAttendeeCount] = useState(0);
   const [topConnector, setTopConnector] = useState<{ name: string; count: number } | null>(null);
   const [scanRate, setScanRate] = useState(0);
-  const [hourlyBuckets, setHourlyBuckets] = useState<{ label: string; count: number }[]>([]);
 
   useEffect(() => {
     if (!isEnded || !event?.id) return;
@@ -124,27 +123,6 @@ export default function OverviewTab({
       const totalHandshakes = hs?.length || 0;
       setScanRate(totalHandshakes > 0 ? Math.round((scannedHandshakeIds.size / totalHandshakes) * 100) : 0);
 
-      // Hourly activity — bucket connections by the hour they were made,
-      // relative to event start, so the chart reads as "hour 1, hour 2..."
-      // regardless of what time of day the event actually started.
-      if (hs && hs.length > 0 && event.start_time) {
-        const startMs = new Date(event.start_time).getTime();
-        const buckets = new Map<number, number>();
-        hs.forEach((h: any) => {
-          if (!h.created_at) return;
-          const hoursSinceStart = Math.max(0, Math.floor((new Date(h.created_at).getTime() - startMs) / 3600000));
-          buckets.set(hoursSinceStart, (buckets.get(hoursSinceStart) || 0) + 1);
-        });
-        const maxHour = Math.max(...Array.from(buckets.keys()), 0);
-        const filled = Array.from({ length: maxHour + 1 }, (_, i) => ({
-          label: `Hr ${i + 1}`,
-          count: buckets.get(i) || 0,
-        }));
-        setHourlyBuckets(filled);
-      } else {
-        setHourlyBuckets([]);
-      }
-
       setReportLoading(false);
     }
     loadReport();
@@ -156,9 +134,10 @@ export default function OverviewTab({
   // against the attendee count fetched above.
   const density = attendeeCount > 0 ? (stats.handshakes / attendeeCount).toFixed(1) : "0";
 
-  // Narrative summary — describes what happened, no "good/bad" judgment.
-  // There's no benchmark data yet (new product), so this states facts in
-  // plain language rather than grading them against a target.
+  // Narrative summary — describes what happened, stays descriptive.
+  // "Good/bad" judgment now lives separately in buildTakeaways() below,
+  // so the two don't get tangled: this says what happened, that says what
+  // it might mean for next time.
   function buildNarrative(): string {
     if (attendeeCount === 0) return "No attendance data was recorded for this event.";
     const parts: string[] = [];
@@ -170,14 +149,38 @@ export default function OverviewTab({
       if (topConnector) {
         parts.push(`${topConnector.name} connected with the most people, at ${topConnector.count}.`);
       }
-      if (hourlyBuckets.length > 1) {
-        const peak = hourlyBuckets.reduce((a, b) => (b.count > a.count ? b : a), hourlyBuckets[0]);
-        if (peak.count > 0) parts.push(`Networking activity peaked during ${peak.label.toLowerCase()} of the event.`);
-      }
     }
     return parts.join(" ");
   }
   const narrative = buildNarrative();
+
+  // Actionable takeaways — unlike the narrative above, these DO use
+  // judgment thresholds, deliberately. There's no real cross-event
+  // benchmark yet (new product), so these are placeholder targets grounded
+  // in general event-networking conventions, not Oreeti-specific data:
+  //   - density: ~0.3 connections/attendee is a rough floor for "most
+  //     people connected with someone" at a well-run networking event
+  //   - scan rate: 50% used as a neutral midpoint, since there's no
+  //     external benchmark for this Oreeti-specific mechanic at all
+  // Revisit both once there's enough real event data to replace them with
+  // actual medians instead of estimates.
+  function buildTakeaways(): string[] {
+    if (attendeeCount === 0 || stats.handshakes === 0) return [];
+    const out: string[] = [];
+    const densityNum = attendeeCount > 0 ? stats.handshakes / attendeeCount : 0;
+
+    if (densityNum < 0.3) {
+      out.push("Connections per attendee was below typical for a networking-focused event — consider a structured icebreaker or longer networking window next time.");
+    }
+    if (scanRate < 50 && stats.handshakes >= 3) {
+      out.push("Fewer than half of connections were confirmed with an in-person scan — clearer signage or a designated networking area may help guests find each other on the floor.");
+    }
+    if (topConnector && densityNum > 0 && topConnector.count > densityNum * 4) {
+      out.push(`Networking activity was concentrated in a few people — ${topConnector.name} connected far more than average, which may mean most guests need more encouragement or structure to start conversations.`);
+    }
+    return out;
+  }
+  const takeaways = buildTakeaways();
 
   // Stat cards — Ember accent on the two live-energy stats. "Networking"
   // (live visibility count) is dropped once ended since it's a frozen,
@@ -259,6 +262,21 @@ export default function OverviewTab({
                 <p style={{ fontSize: "13px", color: IVORY, lineHeight: "1.6", margin: 0 }}>{narrative}</p>
               </div>
 
+              {/* Actionable takeaways — separate from the narrative above on
+                  purpose: that describes what happened, this suggests what
+                  to consider for next time. Only shows when there's
+                  something worth flagging. */}
+              {takeaways.length > 0 && (
+                <div style={{ background: "rgba(226,109,52,0.04)", border: "1px solid rgba(226,109,52,0.15)", borderRadius: "14px", padding: "16px" }}>
+                  <p style={{ fontSize: "9px", fontWeight: "700", letterSpacing: "0.12em", color: "#E26D34", textTransform: "uppercase", margin: "0 0 10px" }}>For Your Next Event</p>
+                  <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
+                    {takeaways.map((t, i) => (
+                      <p key={i} style={{ fontSize: "12.5px", color: "rgba(240,237,232,0.75)", lineHeight: "1.55", margin: 0 }}>• {t}</p>
+                    ))}
+                  </div>
+                </div>
+              )}
+
               {/* Metric cards with interpretive lines */}
               <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "8px" }}>
                 <div style={{ background: FAINT, border: "1px solid rgba(255,255,255,0.04)", borderRadius: "12px", padding: "14px" }}>
@@ -287,32 +305,6 @@ export default function OverviewTab({
                   <p style={{ fontSize: "13px", color: "#555", margin: 0 }}>No connections were made at this event.</p>
                 )}
               </div>
-
-              {/* Activity timeline — connections per hour since event start */}
-              {hourlyBuckets.length > 1 && (
-                <div style={{ background: FAINT, border: "1px solid rgba(255,255,255,0.04)", borderRadius: "12px", padding: "14px 16px 12px" }}>
-                  <p style={{ fontSize: "9px", fontWeight: "700", letterSpacing: "0.12em", color: DIM, textTransform: "uppercase", margin: "0 0 12px" }}>Networking Activity</p>
-                  <div style={{ display: "flex", alignItems: "flex-end", gap: "6px", height: "64px" }}>
-                    {(() => {
-                      const maxCount = Math.max(...hourlyBuckets.map(b => b.count), 1);
-                      return hourlyBuckets.map(b => (
-                        <div key={b.label} style={{ flex: 1, display: "flex", flexDirection: "column", alignItems: "center", gap: "4px", height: "100%", justifyContent: "flex-end" }}>
-                          <div style={{
-                            width: "100%", borderRadius: "3px 3px 0 0",
-                            height: `${Math.max((b.count / maxCount) * 100, b.count > 0 ? 6 : 2)}%`,
-                            background: b.count > 0 ? "rgba(226,109,52,0.5)" : "rgba(255,255,255,0.04)",
-                          }} />
-                        </div>
-                      ));
-                    })()}
-                  </div>
-                  <div style={{ display: "flex", gap: "6px", marginTop: "6px" }}>
-                    {hourlyBuckets.map(b => (
-                      <p key={b.label} style={{ flex: 1, fontSize: "8px", color: "#444", textAlign: "center", margin: 0 }}>{b.label}</p>
-                    ))}
-                  </div>
-                </div>
-              )}
             </div>
           )}
         </div>

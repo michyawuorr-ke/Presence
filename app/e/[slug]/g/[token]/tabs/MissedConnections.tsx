@@ -94,7 +94,7 @@ export default function MissedConnections({ event, profile }: MissedConnectionsP
 
       {missed.length === 0 ? (
         <p style={{ color: "#555", fontSize: "14px", textAlign: "center", padding: "60px 0" }}>
-          You connected with everyone you crossed paths with. Nice work.
+          You've either connected with, or already reached out to, everyone from this event.
         </p>
       ) : (
         <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>

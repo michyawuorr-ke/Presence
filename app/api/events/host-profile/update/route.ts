@@ -8,12 +8,12 @@ const supabase = createClient(
 
 export async function POST(req: NextRequest) {
   try {
-    const { guest_profile_id, display_name, role_title, organisation, bio, linkedin_url, website_url, portfolio_url } = await req.json();
+    const { guest_profile_id, display_name, role_title, organisation, bio, linkedin_url, website_url, portfolio_url, phone_number } = await req.json();
     if (!guest_profile_id) return NextResponse.json({ error: 'Missing guest_profile_id' }, { status: 400 });
 
     const { data: profiles, error } = await supabase
       .from('guest_profiles')
-      .update({ display_name, role_title, organisation, bio, linkedin_url, website_url, portfolio_url })
+      .update({ display_name, role_title, organisation, bio, linkedin_url, website_url, portfolio_url, phone_number })
       .eq('id', guest_profile_id)
       .select();
 

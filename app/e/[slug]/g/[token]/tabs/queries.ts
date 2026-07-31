@@ -56,6 +56,7 @@ export function useMissedConnections(eventId: string | undefined, profileId: str
         supabase
           .from("handshakes")
           .select("sender_id,receiver_id")
+          .eq("event_id", eventId!)
           .or(`sender_id.eq.${profileId},receiver_id.eq.${profileId}`),
         supabase
           .from("handshake_requests")

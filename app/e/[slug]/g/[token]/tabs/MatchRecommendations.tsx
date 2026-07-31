@@ -1,7 +1,7 @@
 "use client";
 import { useState, useEffect, useCallback } from "react";
 import { supabase } from "@/lib/supabase/client";
-import { rankMatches, type AttendeeProfile, type InteractionMap } from "@/lib/matching/score";
+import { rankMatches, rankMatchesChunked, type AttendeeProfile, type InteractionMap } from "@/lib/matching/score";
 import { bestIntentPair } from "@/lib/matching/intents";
 import { parseIntents, getFirstName, INTENT_MAP } from "./shared";
 
@@ -59,7 +59,11 @@ export default function MatchRecommendations({ profile, event, sentRequests, onR
     // Top 3 curated picks from ALL networking_visible attendees.
     // These may also appear in the live list — that's intentional.
     // "For You" is a curated lens, the live list is the full room.
-    const ranked = rankMatches(
+    // Chunked rather than synchronous: at 300+ attendees, scoring everyone
+    // in one unbroken pass visibly blocks the UI on lower-end Android
+    // devices. Chunking yields to the main thread between batches so the
+    // screen stays responsive while this runs.
+    const ranked = await rankMatchesChunked(
       profile as AttendeeProfile,
       (attendees || []) as AttendeeProfile[],
       interactions,
