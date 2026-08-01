@@ -33,6 +33,21 @@ export async function checkIsHost(email: string): Promise<boolean> {
   return !!data;
 }
 
+/** Event ids this person has archived from their own /home view — doesn't
+ * affect the event itself or anyone else's view of it. */
+export async function loadArchivedEventIds(email: string): Promise<Set<string>> {
+  const { data } = await supabase.from("home_archived_events").select("event_id").eq("email", email);
+  return new Set((data || []).map((r: any) => r.event_id));
+}
+
+export async function archiveEvent(email: string, eventId: string): Promise<void> {
+  await supabase.from("home_archived_events").insert({ email, event_id: eventId });
+}
+
+export async function unarchiveEvent(email: string, eventId: string): Promise<void> {
+  await supabase.from("home_archived_events").delete().eq("email", email).eq("event_id", eventId);
+}
+
 export async function loadMyEvents(email: string): Promise<MyEvent[]> {
   const [{ data: guestRegs }, { data: hostRow }] = await Promise.all([
     supabase
