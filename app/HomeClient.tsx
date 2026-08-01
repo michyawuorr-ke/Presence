@@ -11,6 +11,7 @@ import useReveal from "@/components/home/useReveal";
 import Problem from "@/components/home/Problem";
 import Solution from "@/components/home/Solution";
 import ForWho from "@/components/home/ForWho";
+import UpcomingEvents from "@/components/home/UpcomingEvents";
 export default function HomeClient() {
   useReveal();
 
@@ -40,6 +41,8 @@ export default function HomeClient() {
 
       {/* ── HERO ─────────────────────────────────────────────── */}
       <Hero />
+      {/* ── UPCOMING EVENTS ──────────────────────────────────────── */}
+      <UpcomingEvents />
 <Stats />
       {/* ── PROBLEM ──────────────────────────────────────────────── */}
 <Problem />
