@@ -1,11 +1,46 @@
 "use client";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { supabase } from "@/lib/supabase/client";
 import OreetiLogo from "@/components/OreetiLogo";
 
 type Mode = "landing" | "signup" | "login" | "sent";
 
+function useReveal() {
+  useEffect(() => {
+    const els = document.querySelectorAll("[data-reveal]");
+    const io = new IntersectionObserver(
+      entries => {
+        entries.forEach(e => {
+          if (e.isIntersecting) {
+            const el = e.target as HTMLElement;
+            el.style.animationDelay = (el.dataset.delay || "0") + "ms";
+            el.classList.add("reveal");
+            io.unobserve(el);
+          }
+        });
+      },
+      { threshold: 0.1 }
+    );
+    els.forEach(el => io.observe(el));
+    return () => io.disconnect();
+  }, []);
+}
+
+// Same gradient depth treatment used across the marketing site — a soft
+// radial glow rather than flat black, so the page has the same layered
+// feel as /features, /about, etc instead of standing apart from them.
+const PAGE_BG: React.CSSProperties = {
+  minHeight: "100vh",
+  background: "radial-gradient(ellipse 900px 500px at 50% -10%, rgba(226,109,52,0.08), transparent), var(--base)",
+  display: "flex",
+  flexDirection: "column",
+  alignItems: "center",
+  justifyContent: "center",
+  padding: "32px 24px",
+};
+
 export default function LoginPage() {
+  useReveal();
   const [mode, setMode] = useState<Mode>("landing");
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
@@ -15,16 +50,16 @@ export default function LoginPage() {
 
   const inp = {
     width: "100%",
-    padding: "12px 0",
+    padding: "13px 0",
     background: "transparent",
     border: "none",
-    borderBottom: "1px solid rgba(255,255,255,0.08)",
-    color: "#fff",
-    fontSize: "14px",
+    borderBottom: "1px solid rgba(234,230,223,0.12)",
+    color: "var(--ivory)",
+    fontSize: "14.5px",
     outline: "none",
     borderRadius: 0,
     boxSizing: "border-box" as const,
-    fontFamily: "-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif",
+    fontFamily: "var(--font-body)",
     letterSpacing: "0.01em",
   };
 
@@ -32,10 +67,10 @@ export default function LoginPage() {
     if (!name.trim()) { setError("Please enter your name"); return; }
     if (!email.trim()) { setError("Please enter your email"); return; }
     if (!phone.trim()) { setError("Please enter your M-Pesa phone number"); return; }
-    
+
     const digits = phone.replace(/\D/g, "");
     if (digits.length < 9) { setError("Please enter a valid phone number"); return; }
-    
+
     setLoading(true);
     setError("");
 
@@ -55,10 +90,10 @@ export default function LoginPage() {
 
   async function handleLogin() {
     if (!email.trim()) { setError("Please enter your email"); return; }
-    
+
     setLoading(true);
     setError("");
-    
+
     const { error: err } = await supabase.auth.signInWithOtp({
       email,
       options: {
@@ -73,18 +108,24 @@ export default function LoginPage() {
 
   if (mode === "landing") {
     return (
-      <main style={{ minHeight: "100vh", background: "#000", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", padding: "32px 24px" }}>
-        <div style={{ marginBottom: "56px", textAlign: "center", display: "flex", flexDirection: "column", alignItems: "center", gap: "16px" }}>
+      <main style={PAGE_BG}>
+        <div data-reveal style={{ marginBottom: "56px", textAlign: "center", display: "flex", flexDirection: "column", alignItems: "center", gap: "18px" }}>
           <OreetiLogo size="xs" />
-          <p style={{ fontSize: "11px", letterSpacing: "0.2em", color: "#D4AF37", textTransform: "uppercase", fontWeight: "500", opacity: 0.9 }}>
-            The room activated
-          </p>
+          <p className="eyebrow">The room activated</p>
         </div>
-        <div style={{ width: "100%", maxWidth: "300px", display: "flex", flexDirection: "column", gap: "16px" }}>
-          <button onClick={() => { setMode("signup"); setError(""); }} style={{ width: "100%", padding: "14px", borderRadius: "6px", background: "transparent", color: "#D4AF37", border: "1px solid rgba(212,175,55,0.45)", fontSize: "12px", fontWeight: "500", letterSpacing: "0.06em", textTransform: "uppercase", cursor: "pointer" }}>
+        <div data-reveal data-delay="100" style={{ width: "100%", maxWidth: "300px", display: "flex", flexDirection: "column", gap: "14px" }}>
+          <button onClick={() => { setMode("signup"); setError(""); }}
+            style={{
+              width: "100%", padding: "15px", borderRadius: "12px",
+              background: "linear-gradient(135deg, var(--ember), #c9591f)",
+              color: "#fff", border: "none", fontSize: "12.5px", fontWeight: "600",
+              letterSpacing: "0.08em", textTransform: "uppercase", cursor: "pointer",
+              boxShadow: "0 8px 24px rgba(226,109,52,0.25)",
+            }}>
             Create an Account
           </button>
-          <button onClick={() => { setMode("login"); setError(""); }} style={{ width: "100%", padding: "12px", background: "transparent", color: "rgba(255,255,255,0.4)", border: "none", fontSize: "12px", fontWeight: "500", letterSpacing: "0.06em", textTransform: "uppercase", cursor: "pointer" }}>
+          <button onClick={() => { setMode("login"); setError(""); }}
+            style={{ width: "100%", padding: "13px", background: "transparent", color: "var(--ivory-soft)", border: "1px solid rgba(234,230,223,0.1)", borderRadius: "12px", fontSize: "12.5px", fontWeight: "500", letterSpacing: "0.06em", textTransform: "uppercase", cursor: "pointer" }}>
             Sign In
           </button>
         </div>
@@ -94,12 +135,15 @@ export default function LoginPage() {
 
   if (mode === "sent") {
     return (
-      <main style={{ minHeight: "100vh", background: "#000", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", padding: "32px 24px" }}>
-        <div style={{ fontSize: "24px", color: "#D4AF37", marginBottom: "24px", opacity: 0.85 }}>✉</div>
-        <h2 style={{ fontSize: "14px", fontWeight: "600", color: "#fff", textAlign: "center", marginBottom: "8px", letterSpacing: "0.1em", textTransform: "uppercase" }}>Check your email</h2>
-        <p style={{ color: "rgba(255,255,255,0.4)", textAlign: "center", marginBottom: "4px", fontSize: "13px" }}>We sent an access verification link to</p>
-        <p style={{ color: "#D4AF37", textAlign: "center", marginBottom: "32px", fontSize: "14px", fontWeight: "500" }}>{email}</p>
-        <button onClick={() => { setMode("landing"); setEmail(""); setName(""); setPhone(""); }} style={{ background: "transparent", border: "none", color: "rgba(255,255,255,0.3)", fontSize: "11px", letterSpacing: "0.06em", textTransform: "uppercase", cursor: "pointer" }}>
+      <main style={PAGE_BG}>
+        <div data-reveal style={{ fontSize: "26px", color: "var(--ember)", marginBottom: "20px" }}>✉</div>
+        <h2 data-reveal className="display" style={{ fontSize: "20px", fontWeight: 500, color: "var(--ivory)", textAlign: "center", marginBottom: "10px", letterSpacing: "-0.01em" }}>
+          Check your email
+        </h2>
+        <p data-reveal style={{ color: "var(--ivory-muted)", textAlign: "center", marginBottom: "4px", fontSize: "13.5px" }}>We sent an access verification link to</p>
+        <p data-reveal style={{ color: "var(--ember)", textAlign: "center", marginBottom: "36px", fontSize: "14.5px", fontWeight: "500" }}>{email}</p>
+        <button onClick={() => { setMode("landing"); setEmail(""); setName(""); setPhone(""); }}
+          style={{ background: "transparent", border: "none", color: "var(--ivory-muted)", fontSize: "11px", letterSpacing: "0.06em", textTransform: "uppercase", cursor: "pointer" }}>
           ← Return
         </button>
       </main>
@@ -107,23 +151,22 @@ export default function LoginPage() {
   }
 
   return (
-    <main style={{ minHeight: "100vh", background: "#000", display: "flex", flexDirection: "column", padding: "40px 24px", maxWidth: "420px", margin: "0 auto", justifyContent: "space-between" }}>
+    <main style={{ minHeight: "100vh", background: "radial-gradient(ellipse 900px 500px at 50% -10%, rgba(226,109,52,0.08), transparent), var(--base)", display: "flex", flexDirection: "column", padding: "40px 24px", maxWidth: "420px", margin: "0 auto", justifyContent: "space-between" }}>
       <div>
-        <button onClick={() => { setMode("landing"); setError(""); }} style={{ background: "none", border: "none", color: "rgba(255,255,255,0.3)", fontSize: "11px", letterSpacing: "0.06em", textTransform: "uppercase", cursor: "pointer", marginBottom: "48px", padding: "0" }}>
+        <button onClick={() => { setMode("landing"); setError(""); }}
+          style={{ background: "none", border: "none", color: "var(--ivory-muted)", fontSize: "11px", letterSpacing: "0.06em", textTransform: "uppercase", cursor: "pointer", marginBottom: "48px", padding: "0" }}>
           ← Cancel
         </button>
-        
-        <div style={{ marginBottom: "40px", textAlign: "center", display: "flex", flexDirection: "column", alignItems: "center", gap: "16px" }}>
+
+        <div data-reveal style={{ marginBottom: "40px", textAlign: "center", display: "flex", flexDirection: "column", alignItems: "center", gap: "16px" }}>
           <OreetiLogo size="xs" />
-          <p style={{ fontSize: "11px", letterSpacing: "0.2em", color: "#D4AF37", textTransform: "uppercase", fontWeight: "500", opacity: 0.9 }}>
-            The room activated
-          </p>
-          <h1 style={{ fontSize: "18px", fontWeight: "600", color: "#fff", letterSpacing: "0.08em", textTransform: "uppercase", marginTop: "16px", marginBottom: "6px" }}>
+          <p className="eyebrow">The room activated</p>
+          <h1 className="display" style={{ fontSize: "22px", fontWeight: 500, color: "var(--ivory)", letterSpacing: "-0.01em", marginTop: "12px", marginBottom: "0" }}>
             {mode === "signup" ? "Create Account" : "Sign In"}
           </h1>
         </div>
 
-        <div style={{ display: "flex", flexDirection: "column", gap: "20px", marginBottom: "32px" }}>
+        <div data-reveal data-delay="80" style={{ display: "flex", flexDirection: "column", gap: "22px", marginBottom: "32px" }}>
           {mode === "signup" && (
             <input value={name} onChange={e => setName(e.target.value)} placeholder="Jane Doe" type="text" style={inp} />
           )}
@@ -136,33 +179,34 @@ export default function LoginPage() {
 
       <div style={{ width: "100%" }}>
         {error && <p style={{ color: "#ef4444", fontSize: "12px", marginBottom: "16px", textAlign: "center" }}>{error}</p>}
-        
+
         <button
           onClick={mode === "signup" ? handleSignup : handleLogin}
           disabled={loading}
           style={{
             width: "100%",
-            padding: "14px",
-            borderRadius: "6px",
-            background: loading ? "rgba(255,255,255,0.15)" : "#fff",
-            color: loading ? "rgba(255,255,255,0.3)" : "#000",
+            padding: "15px",
+            borderRadius: "12px",
+            background: loading ? "rgba(234,230,223,0.1)" : "linear-gradient(135deg, var(--ember), #c9591f)",
+            color: loading ? "var(--ivory-muted)" : "#fff",
             border: "none",
-            fontSize: "12px",
+            fontSize: "12.5px",
             fontWeight: "600",
             letterSpacing: "0.06em",
             textTransform: "uppercase",
-            cursor: loading ? "not-allowed" : "pointer"
+            cursor: loading ? "not-allowed" : "pointer",
+            boxShadow: loading ? "none" : "0 8px 24px rgba(226,109,52,0.25)",
           }}
         >
           {loading ? "Processing..." : "Continue →"}
         </button>
 
         <div style={{ marginTop: "24px", textAlign: "center", padding: "0 16px" }}>
-          <p style={{ color: "rgba(255,255,255,0.3)", fontSize: "11px", lineHeight: "1.6", letterSpacing: "0.03em", margin: 0 }}>
+          <p style={{ color: "var(--ivory-muted)", fontSize: "11px", lineHeight: "1.6", letterSpacing: "0.03em", margin: 0 }}>
             By continuing above, you explicitly agree to be bound by Oreeti’s premium{" "}
-            <a href="/terms" target="_blank" style={{ color: "#D4AF37", textDecoration: "none", borderBottom: "1px solid rgba(212,175,55,0.4)", fontWeight: "600" }}>Terms of Service</a>
+            <a href="/terms" target="_blank" style={{ color: "var(--ember)", textDecoration: "none", borderBottom: "1px solid rgba(226,109,52,0.35)", fontWeight: "600" }}>Terms of Service</a>
             {" "}and dynamic{" "}
-            <a href="/privacy" target="_blank" style={{ color: "#D4AF37", textDecoration: "none", borderBottom: "1px solid rgba(212,175,55,0.4)", fontWeight: "600" }}>Privacy Policy</a>.
+            <a href="/privacy" target="_blank" style={{ color: "var(--ember)", textDecoration: "none", borderBottom: "1px solid rgba(226,109,52,0.35)", fontWeight: "600" }}>Privacy Policy</a>.
           </p>
         </div>
       </div>

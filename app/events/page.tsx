@@ -15,7 +15,29 @@ interface DirectoryEvent {
   banner_url: string | null;
 }
 
+function useReveal() {
+  useEffect(() => {
+    const els = document.querySelectorAll("[data-reveal]");
+    const io = new IntersectionObserver(
+      entries => {
+        entries.forEach(e => {
+          if (e.isIntersecting) {
+            const el = e.target as HTMLElement;
+            el.style.animationDelay = (el.dataset.delay || "0") + "ms";
+            el.classList.add("reveal");
+            io.unobserve(el);
+          }
+        });
+      },
+      { threshold: 0.1 }
+    );
+    els.forEach(el => io.observe(el));
+    return () => io.disconnect();
+  }, []);
+}
+
 export default function EventsDirectoryPage() {
+  useReveal();
   const [events, setEvents] = useState<DirectoryEvent[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
