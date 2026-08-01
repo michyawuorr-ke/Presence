@@ -10,6 +10,7 @@ interface SceneTabProps {
   connectionsCount: number;
   attendeeCount: number;
   qrScanCount: number;
+  masterProfile: any;
   onGoNetworking: () => void;
   onViewConnections: () => void;
 }
@@ -17,7 +18,7 @@ interface SceneTabProps {
 export default function SceneTab({
   event, isLive, isEnded, countdown,
   networkingCount, connectionsCount,
-  attendeeCount, qrScanCount,
+  attendeeCount, qrScanCount, masterProfile,
   onGoNetworking, onViewConnections,
 }: SceneTabProps) {
   return (
@@ -63,10 +64,31 @@ export default function SceneTab({
                 <b style={{ fontWeight: 700, color: PALETTE.orange }}>{qrScanCount}</b> QR scans
               </span>
             </div>
-            <p style={{ color: "#666", fontSize: "14px", margin: "16px 0 20px" }}>Your connections from this event are saved</p>
+            <p style={{ color: "#666", fontSize: "14px", margin: "16px 0 20px" }}>
+              {masterProfile?.auth_user_id
+                ? "Saved to your Oreeti account"
+                : "Your connections from this event are saved to this link"}
+            </p>
             <button onClick={onViewConnections} style={{ padding: "12px 24px", borderRadius: "14px", background: "#fff", color: "#000", border: "none", fontSize: "14px", cursor: "pointer", fontWeight: "500" }}>
               Explore your connections →
             </button>
+
+            {/* Only shown if this identity hasn't been claimed by a real
+                login yet — someone who's already signed in (this event or
+                a prior one) doesn't need to be asked again. */}
+            {masterProfile?.email && !masterProfile?.auth_user_id && (
+              <div style={{ marginTop: "20px", paddingTop: "20px", borderTop: "1px solid rgba(255,255,255,0.06)" }}>
+                <p style={{ color: "rgba(240,237,232,0.5)", fontSize: "12.5px", margin: "0 0 12px", lineHeight: "1.5" }}>
+                  This link is the only way back in right now. Create an account to keep your event history and connections in one place, across every Oreeti event.
+                </p>
+                <a
+                  href={`/login?mode=login&email=${encodeURIComponent(masterProfile.email)}`}
+                  style={{ display: "inline-block", padding: "10px 20px", borderRadius: "12px", background: "rgba(226,109,52,0.1)", border: "1px solid rgba(226,109,52,0.3)", color: PALETTE.orange, fontSize: "13px", fontWeight: "600", cursor: "pointer", textDecoration: "none" }}
+                >
+                  Save my history →
+                </a>
+              </div>
+            )}
           </div>
         ) : isLive ? (
           <>

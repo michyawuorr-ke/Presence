@@ -1,11 +1,13 @@
 "use client";
 import OreetiLogo from "@/components/OreetiLogo";
 import React, { useEffect, useRef, useState } from "react";
+import { useRouter } from "next/navigation";
 import Link from "next/link";
 import Nav from "@/components/marketing/Nav";
 import Footer from "@/components/marketing/Footer";
 import Stats from "@/components/home/Stats";
 import Hero from "@/components/home/Hero";
+import { supabase } from "@/lib/supabase/client";
 
 import useReveal from "@/components/home/useReveal";
 import Problem from "@/components/home/Problem";
@@ -13,6 +15,27 @@ import Solution from "@/components/home/Solution";
 import ForWho from "@/components/home/ForWho";
 export default function HomeClient() {
   useReveal();
+  const router = useRouter();
+  // Checking session state before deciding what to render — a logged-in
+  // visitor gets sent straight to /home, matching how Facebook/most mature
+  // apps never show a returning logged-in user their own marketing pitch
+  // again. checkingSession gates rendering so the marketing page never
+  // flashes on screen for a split second before the redirect fires.
+  const [checkingSession, setCheckingSession] = useState(true);
+
+  useEffect(() => {
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      if (session) {
+        router.push("/home");
+      } else {
+        setCheckingSession(false);
+      }
+    });
+  }, [router]);
+
+  if (checkingSession) {
+    return <div style={{ background: "var(--base)", minHeight: "100vh" }} />;
+  }
 
   return (
     <div style={{ background: "var(--base)", minHeight: "100vh" }} className="marketing">

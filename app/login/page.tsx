@@ -1,5 +1,6 @@
 "use client";
-import { useEffect, useState } from "react";
+import { useEffect, useState, Suspense } from "react";
+import { useSearchParams } from "next/navigation";
 import { supabase } from "@/lib/supabase/client";
 import OreetiLogo from "@/components/OreetiLogo";
 
@@ -39,11 +40,18 @@ const PAGE_BG: React.CSSProperties = {
   padding: "32px 24px",
 };
 
-export default function LoginPage() {
+function LoginForm() {
   useReveal();
-  const [mode, setMode] = useState<Mode>("landing");
+  const searchParams = useSearchParams();
+  // Lets other parts of the app (e.g. the post-event "save your history"
+  // prompt) link straight into Sign In with the guest's known email
+  // pre-filled, instead of dropping them on the landing choice screen to
+  // retype something the app already has.
+  const prefilledEmail = searchParams.get("email") || "";
+  const initialMode = (searchParams.get("mode") as Mode) || "landing";
+  const [mode, setMode] = useState<Mode>(initialMode);
   const [name, setName] = useState("");
-  const [email, setEmail] = useState("");
+  const [email, setEmail] = useState(prefilledEmail);
   const [phone, setPhone] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
@@ -211,5 +219,15 @@ export default function LoginPage() {
         </div>
       </div>
     </main>
+  );
+}
+
+// useSearchParams requires a Suspense boundary in the App Router — without
+// this wrapper, the build fails outright (not just a runtime warning).
+export default function LoginPage() {
+  return (
+    <Suspense fallback={null}>
+      <LoginForm />
+    </Suspense>
   );
 }

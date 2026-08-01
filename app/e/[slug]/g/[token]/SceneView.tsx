@@ -155,6 +155,7 @@ export default function SceneView({ event, registration, profile, masterProfile,
           connectionsCount={connectionsCount}
           attendeeCount={attendeeCount}
           qrScanCount={qrScanCount}
+          masterProfile={masterProfile}
           onGoNetworking={() => setTab("networking")}
           onViewConnections={() => setTab("connections")}
         />
