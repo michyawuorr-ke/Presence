@@ -3,7 +3,7 @@ import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { supabase } from "@/lib/supabase/client";
 import OreetiLogo from "@/components/OreetiLogo";
-import { loadMyEvents, loadMyConnections, type MyEvent, type MyConnection } from "./homeData";
+import { loadMyEvents, loadMyConnections, checkIsHost, type MyEvent, type MyConnection } from "./homeData";
 
 type Tab = "events" | "connections";
 
@@ -15,6 +15,7 @@ export default function HomePage() {
   const [events, setEvents] = useState<MyEvent[]>([]);
   const [connections, setConnections] = useState<MyConnection[]>([]);
   const [dataLoading, setDataLoading] = useState(true);
+  const [isHost, setIsHost] = useState(false);
 
   useEffect(() => {
     async function init() {
@@ -27,12 +28,14 @@ export default function HomePage() {
       setEmail(userEmail);
       setLoading(false);
 
-      const [ev, conn] = await Promise.all([
+      const [ev, conn, hostStatus] = await Promise.all([
         loadMyEvents(userEmail),
         loadMyConnections(userEmail),
+        checkIsHost(userEmail),
       ]);
       setEvents(ev);
       setConnections(conn);
+      setIsHost(hostStatus);
       setDataLoading(false);
     }
     init();
@@ -71,6 +74,27 @@ export default function HomePage() {
           Your rooms, your people.
         </h1>
         <p style={{ color: "var(--dusk)", fontSize: 13.5, margin: "0 0 32px" }}>{email}</p>
+
+        {/* Only shown for people who already have a hosts row — per
+            decision, this isn't an invitation to become a host, just a
+            way back into the dashboard for people who already run events. */}
+        {isHost && (
+          <div style={{
+            display: "flex", justifyContent: "space-between", alignItems: "center",
+            padding: "14px 18px", borderRadius: 14, marginBottom: 32,
+            background: "rgba(212,175,55,0.06)", border: "1px solid rgba(212,175,55,0.2)",
+          }}>
+            <p style={{ fontSize: 12.5, color: "var(--gold)", fontWeight: 600, margin: 0 }}>You host events on Oreeti</p>
+            <div style={{ display: "flex", gap: 10 }}>
+              <a href="/dashboard/events" style={{ fontSize: 12, fontWeight: 600, color: "var(--gold)", textDecoration: "none", padding: "7px 12px", borderRadius: 9, border: "1px solid rgba(212,175,55,0.3)" }}>
+                Dashboard
+              </a>
+              <a href="/dashboard/events/create" style={{ fontSize: 12, fontWeight: 600, color: "#0a0a0b", textDecoration: "none", padding: "7px 12px", borderRadius: 9, background: "var(--gold)" }}>
+                + New Event
+              </a>
+            </div>
+          </div>
+        )}
 
         {/* Tabs */}
         <div style={{ display: "flex", gap: 4, marginBottom: 28, borderBottom: "1px solid rgba(234,230,223,0.08)" }}>

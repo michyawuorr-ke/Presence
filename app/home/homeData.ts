@@ -25,6 +25,14 @@ export interface MyConnection {
  * matched by email) or as a host (via the hosts table matched by email).
  * Both surface in the same list; is_host distinguishes them for display,
  * not for filtering — the whole point is one unified "My Events" view. */
+/** Cheap standalone check for whether this email has a hosts row at all —
+ * used to decide whether to show a host-dashboard entry point on /home,
+ * without needing the full loadMyEvents fetch. */
+export async function checkIsHost(email: string): Promise<boolean> {
+  const { data } = await supabase.from("hosts").select("id").eq("email", email).maybeSingle();
+  return !!data;
+}
+
 export async function loadMyEvents(email: string): Promise<MyEvent[]> {
   const [{ data: guestRegs }, { data: hostRow }] = await Promise.all([
     supabase
