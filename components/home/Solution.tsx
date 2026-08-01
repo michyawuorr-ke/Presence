@@ -1,6 +1,8 @@
+import UpcomingEvents from "./UpcomingEvents";
+
 export default function Solution() {
-	  return (
-		      <>
+  return (
+    <>
 
       <section style={{
         padding: "100px 32px",
@@ -31,6 +33,8 @@ export default function Solution() {
           </p>
         </div>
       </section>
+
+      <UpcomingEvents />
 
       {/* ── HOW IT WORKS ─────────────────────────────────────────── */}
       <section style={{ padding: "100px 32px", maxWidth: 1100, margin: "0 auto" }}>

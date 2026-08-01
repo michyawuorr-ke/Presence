@@ -39,9 +39,7 @@ export default function UpcomingEvents() {
 
   return (
     <section style={{
-      padding: "64px 32px 56px",
-      borderTop: "1px solid rgba(138,115,85,0.12)",
-      borderBottom: "1px solid rgba(138,115,85,0.12)",
+      padding: "48px 32px",
     }}>
       <div style={{ maxWidth: 1100, margin: "0 auto" }} data-reveal data-delay="0">
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-end", gap: 20, marginBottom: 28, flexWrap: "wrap" }}>

@@ -24,13 +24,6 @@ export default function Hero() {
         }} />
 
         <div style={{ position: "relative", zIndex: 1, maxWidth: 760 }}>
-          <p className="eyebrow" style={{
-            marginBottom: 32,
-            opacity: 0,
-            animation: "heroFade 0.6s ease forwards 0.1s",
-          }}>
-          </p>
-
           <h1 style={{
             fontFamily: "var(--font-display)",
             fontSize: "clamp(38px,6.5vw,82px)",
