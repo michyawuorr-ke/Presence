@@ -88,11 +88,29 @@ export default function HomeProfilePage() {
     async function load() {
       const { data: { session } } = await supabase.auth.getSession();
       if (!session?.user?.email) { router.push("/login"); return; }
-      const { data } = await supabase
+      const email = session.user.email.toLowerCase();
+      const { data, error } = await supabase
         .from("master_profiles")
         .select("*")
-        .eq("email", session.user.email.toLowerCase())
+        .eq("email", email)
         .maybeSingle();
+
+      if (error) {
+        console.error("Failed to load master_profiles:", error);
+        setNotification("Couldn't load your profile — " + error.message);
+        setLoading(false);
+        return;
+      }
+
+      if (!data) {
+        // Shouldn't happen — the auth callback creates/claims this row on
+        // every login — but if it does, surface it instead of leaving the
+        // page in a state where Save silently does nothing.
+        console.error("No master_profiles row found for", email);
+        setNotification("We couldn't find your profile. Try signing out and back in.");
+        setLoading(false);
+        return;
+      }
 
       if (data) {
         setProfile(data);
@@ -136,7 +154,16 @@ export default function HomeProfilePage() {
   }, [profile?.slug]);
 
   async function handleSave() {
-    if (!profile?.id) return;
+    if (!profile?.id) {
+      // Was silently doing nothing here before — no error, no feedback,
+      // which is exactly how "Save isn't saving" goes unnoticed. If this
+      // fires, the guest's master_profiles row didn't load correctly on
+      // page load (should always exist by the time someone reaches this
+      // page, since the auth callback creates/claims it on login).
+      setNotification("Couldn't save — your profile didn't load correctly. Try refreshing the page.");
+      setTimeout(() => setNotification(""), 5000);
+      return;
+    }
     setSaving(true);
 
     let slug = profile.slug;
