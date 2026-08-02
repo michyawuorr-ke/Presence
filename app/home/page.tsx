@@ -139,6 +139,15 @@ export default function HomePage() {
               {t === "events" ? "My Events" : "Connects"}
             </button>
           ))}
+          <a href="/home/profile"
+            style={{
+              padding: "10px 4px", background: "none", border: "none",
+              borderBottom: "2px solid transparent",
+              color: "var(--ivory-muted)", textDecoration: "none",
+              fontSize: 13, fontWeight: 600, letterSpacing: "0.02em", cursor: "pointer",
+            }}>
+            Profile
+          </a>
         </div>
 
         {/* Search */}
