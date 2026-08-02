@@ -2,7 +2,8 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { supabase } from "@/lib/supabase/client";
-import { generateUniqueSlug } from "./slug";
+import { generateUniqueSlug } from "../slug";
+import QRCode from "qrcode";
 
 const inp = { width: "100%", padding: "12px", borderRadius: "12px", border: "1px solid rgba(255,255,255,0.06)", background: "rgba(255,255,255,0.02)", color: "var(--ivory)", fontSize: "14px", outline: "none", marginBottom: "12px", boxSizing: "border-box" as const, fontFamily: "var(--font-body)" };
 const label = { fontSize: "10px", fontWeight: 700, letterSpacing: "0.1em", textTransform: "uppercase" as const, color: "rgba(138,115,85,0.7)", margin: "0 0 10px" };
@@ -25,6 +26,7 @@ export default function HomeProfilePage() {
   const [saving, setSaving] = useState(false);
   const [notification, setNotification] = useState("");
   const [profile, setProfile] = useState<any>(null);
+  const [qrDataUrl, setQrDataUrl] = useState<string | null>(null);
 
   // Identity
   const [displayName, setDisplayName] = useState("");
@@ -94,6 +96,19 @@ export default function HomeProfilePage() {
     }
     load();
   }, [router]);
+
+  useEffect(() => {
+    if (!profile?.slug) { setQrDataUrl(null); return; }
+    let cancelled = false;
+    const url = `https://oreeti.com/u/${profile.slug}`;
+    // Same settings as the existing event QR generation in SceneView.tsx —
+    // errorCorrectionLevel H tolerates real-world scan conditions (angle,
+    // partial obstruction, screen glare) better than the lower levels.
+    QRCode.toDataURL(url, { errorCorrectionLevel: "H", margin: 2, width: 256 })
+      .then(d => { if (!cancelled) setQrDataUrl(d); })
+      .catch(console.error);
+    return () => { cancelled = true; };
+  }, [profile?.slug]);
 
   async function handleSave() {
     if (!profile?.id) return;
@@ -217,9 +232,18 @@ export default function HomeProfilePage() {
         </button>
 
         {profile?.slug && (
-          <p style={{ marginTop: "16px", textAlign: "center", fontSize: 12, color: "var(--dusk)" }}>
-            Your public profile: <span style={{ color: "var(--ember)" }}>oreeti.com/u/{profile.slug}</span>
-          </p>
+          <div style={{ marginTop: "28px", textAlign: "center", padding: "24px", borderRadius: 18, background: "rgba(255,255,255,0.02)", border: "1px solid rgba(255,255,255,0.06)" }}>
+            <p style={{ fontSize: 10, fontWeight: 700, letterSpacing: "0.1em", textTransform: "uppercase", color: "rgba(138,115,85,0.7)", margin: "0 0 16px" }}>Your Universal QR</p>
+            {qrDataUrl ? (
+              <img src={qrDataUrl} alt="Your Oreeti QR code" style={{ width: 180, height: 180, borderRadius: 12, background: "#fff", padding: 10, margin: "0 auto 16px" }} />
+            ) : (
+              <div style={{ width: 180, height: 180, borderRadius: 12, background: "rgba(255,255,255,0.03)", margin: "0 auto 16px" }} />
+            )}
+            <p style={{ fontSize: 12, color: "var(--dusk)", margin: "0 0 4px" }}>
+              Works anywhere — any camera, any scanner.
+            </p>
+            <p style={{ fontSize: 13, color: "var(--ember)", margin: 0, wordBreak: "break-all" }}>oreeti.com/u/{profile.slug}</p>
+          </div>
         )}
       </div>
     </div>
