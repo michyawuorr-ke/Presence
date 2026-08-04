@@ -5,44 +5,29 @@ import { supabase } from "@/lib/supabase/client";
 import { generateUniqueSlug } from "../slug";
 import QRCode from "qrcode";
 import TagInput from "./TagInput";
+import MultiSelectChips from "./MultiSelectChips";
+import { OPEN_TO_OPTIONS, AVAILABILITY_OPTIONS } from "./profileOptions";
 
 const inp = { width: "100%", padding: "13px 14px", borderRadius: "12px", border: "1px solid rgba(255,255,255,0.07)", background: "rgba(255,255,255,0.02)", color: "var(--ivory)", fontSize: "14px", outline: "none", marginBottom: "12px", boxSizing: "border-box" as const, fontFamily: "var(--font-body)" };
 const sectionLabel = { fontSize: "10px", fontWeight: 700, letterSpacing: "0.12em", textTransform: "uppercase" as const, color: "var(--ember)", margin: "0 0 4px" };
 const sectionSub = { fontSize: "11.5px", color: "rgba(240,237,232,0.35)", margin: "0 0 18px", lineHeight: 1.5 };
+const tagLabel = { fontSize: "10.5px", color: "rgba(240,237,232,0.3)", margin: "0 0 6px" };
 
+// Real card elevation — shadow + subtle gradient border rather than a
+// flat rectangle, so consecutive sections read as distinct cards rather
+// than one continuous form. Fewer, denser sections (4, not 6+) so the
+// page reads as a profile with real content groupings, not a settings list.
 function Section({ title, sub, children }: { title: string; sub?: string; children: React.ReactNode }) {
   return (
     <div style={{
-      background: "rgba(255,255,255,0.015)", border: "1px solid rgba(255,255,255,0.05)",
-      borderRadius: 18, padding: "22px 20px", marginBottom: 16,
+      background: "linear-gradient(165deg, rgba(255,255,255,0.025), rgba(255,255,255,0.008))",
+      border: "1px solid rgba(255,255,255,0.06)",
+      borderRadius: 20, padding: "24px 22px", marginBottom: 18,
+      boxShadow: "0 16px 32px -20px rgba(0,0,0,0.5)",
     }}>
       <p style={sectionLabel}>{title}</p>
       {sub && <p style={sectionSub}>{sub}</p>}
       {children}
-    </div>
-  );
-}
-
-function Toggle({ on, onClick }: { on: boolean; onClick: () => void }) {
-  return (
-    <button type="button" onClick={onClick} style={{
-      flexShrink: 0, width: "34px", height: "20px", borderRadius: "10px", border: "none",
-      cursor: "pointer", position: "relative", transition: "background 0.2s",
-      background: on ? "var(--ember)" : "rgba(255,255,255,0.1)",
-    }}>
-      <span style={{ position: "absolute", top: "2.5px", left: on ? "16.5px" : "2.5px", width: "15px", height: "15px", borderRadius: "50%", background: "#fff", transition: "left 0.2s" }} />
-    </button>
-  );
-}
-
-function PrivacyRow({ l, on, set }: { l: string; on: boolean; set: (v: boolean) => void }) {
-  return (
-    <div style={{
-      display: "flex", justifyContent: "space-between", alignItems: "center",
-      padding: "10px 12px", borderRadius: 10, background: "rgba(255,255,255,0.015)",
-    }}>
-      <span style={{ fontSize: 12.5, color: "rgba(240,237,232,0.8)" }}>{l}</span>
-      <Toggle on={on} onClick={() => set(!on)} />
     </div>
   );
 }
@@ -62,21 +47,38 @@ export default function HomeProfilePage() {
   const [bio, setBio] = useState("");
   const [organisation, setOrganisation] = useState("");
   const [roleTitle, setRoleTitle] = useState("");
-  // Professional presence
+  const [knownFor, setKnownFor] = useState("");
+  // What you do
+  const [whatIDo, setWhatIDo] = useState("");
+  const [featuredWork, setFeaturedWork] = useState("");
   const [industry, setIndustry] = useState("");
+  const [location, setLocation] = useState("");
   const [skills, setSkills] = useState<string[]>([]);
+  // Connect
+  const [openTo, setOpenTo] = useState<string[]>([]);
+  const [availability, setAvailability] = useState<string[]>([]);
   const [interests, setInterests] = useState<string[]>([]);
+  const [causes, setCauses] = useState<string[]>([]);
+  const [languages, setLanguages] = useState<string[]>([]);
   const [portfolio, setPortfolio] = useState("");
   const [website, setWebsite] = useState("");
   const [linkedin, setLinkedin] = useState("");
-  // Contact
-  const [phone, setPhone] = useState("");
   const [instagram, setInstagram] = useState("");
+  const [phone, setPhone] = useState("");
+
   // Privacy toggles
   const [showBio, setShowBio] = useState(true);
   const [showHeadline, setShowHeadline] = useState(true);
+  const [showKnownFor, setShowKnownFor] = useState(true);
+  const [showWhatIDo, setShowWhatIDo] = useState(true);
+  const [showFeaturedWork, setShowFeaturedWork] = useState(true);
+  const [showLocation, setShowLocation] = useState(true);
   const [showSkills, setShowSkills] = useState(true);
+  const [showOpenTo, setShowOpenTo] = useState(true);
+  const [showAvailability, setShowAvailability] = useState(true);
   const [showInterests, setShowInterests] = useState(true);
+  const [showCauses, setShowCauses] = useState(true);
+  const [showLanguages, setShowLanguages] = useState(true);
   const [showLinkedin, setShowLinkedin] = useState(true);
   const [showWebsite, setShowWebsite] = useState(true);
   const [showPortfolio, setShowPortfolio] = useState(true);
@@ -101,43 +103,53 @@ export default function HomeProfilePage() {
         setLoading(false);
         return;
       }
-
       if (!data) {
-        // Shouldn't happen — the auth callback creates/claims this row on
-        // every login — but if it does, surface it instead of leaving the
-        // page in a state where Save silently does nothing.
         console.error("No master_profiles row found for", email);
         setNotification("We couldn't find your profile. Try signing out and back in.");
         setLoading(false);
         return;
       }
 
-      if (data) {
-        setProfile(data);
-        setDisplayName(data.display_name ?? "");
-        setHeadline(data.headline ?? "");
-        setBio(data.bio ?? "");
-        setOrganisation(data.organisation ?? "");
-        setRoleTitle(data.role_title ?? "");
-        setIndustry(data.industry ?? "");
-        setSkills(data.skills ?? []);
-        setInterests(data.interests ?? []);
-        setPortfolio(data.portfolio_url ?? "");
-        setWebsite(data.website_url ?? "");
-        setLinkedin(data.linkedin_url ?? "");
-        setPhone(data.phone_number ?? "");
-        setInstagram(data.instagram_url ?? "");
-        setShowBio(data.show_bio ?? true);
-        setShowHeadline(data.show_headline ?? true);
-        setShowSkills(data.show_skills ?? true);
-        setShowInterests(data.show_interests ?? true);
-        setShowLinkedin(data.show_linkedin ?? true);
-        setShowWebsite(data.show_website ?? true);
-        setShowPortfolio(data.show_portfolio ?? true);
-        setShowInstagram(data.show_instagram ?? true);
-        setShowPhone(data.show_phone ?? false);
-        setShowEmail(data.show_email ?? false);
-      }
+      setProfile(data);
+      setDisplayName(data.display_name ?? "");
+      setHeadline(data.headline ?? "");
+      setBio(data.bio ?? "");
+      setOrganisation(data.organisation ?? "");
+      setRoleTitle(data.role_title ?? "");
+      setKnownFor(data.known_for ?? "");
+      setWhatIDo(data.what_i_do ?? "");
+      setFeaturedWork(data.featured_work ?? "");
+      setIndustry(data.industry ?? "");
+      setLocation(data.location ?? "");
+      setSkills(data.skills ?? []);
+      setOpenTo(data.open_to ?? []);
+      setAvailability(data.availability ?? []);
+      setInterests(data.interests ?? []);
+      setCauses(data.causes ?? []);
+      setLanguages(data.languages ?? []);
+      setPortfolio(data.portfolio_url ?? "");
+      setWebsite(data.website_url ?? "");
+      setLinkedin(data.linkedin_url ?? "");
+      setInstagram(data.instagram_url ?? "");
+      setPhone(data.phone_number ?? "");
+      setShowBio(data.show_bio ?? true);
+      setShowHeadline(data.show_headline ?? true);
+      setShowKnownFor(data.show_known_for ?? true);
+      setShowWhatIDo(data.show_what_i_do ?? true);
+      setShowFeaturedWork(data.show_featured_work ?? true);
+      setShowLocation(data.show_location ?? true);
+      setShowSkills(data.show_skills ?? true);
+      setShowOpenTo(data.show_open_to ?? true);
+      setShowAvailability(data.show_availability ?? true);
+      setShowInterests(data.show_interests ?? true);
+      setShowCauses(data.show_causes ?? true);
+      setShowLanguages(data.show_languages ?? true);
+      setShowLinkedin(data.show_linkedin ?? true);
+      setShowWebsite(data.show_website ?? true);
+      setShowPortfolio(data.show_portfolio ?? true);
+      setShowInstagram(data.show_instagram ?? true);
+      setShowPhone(data.show_phone ?? false);
+      setShowEmail(data.show_email ?? false);
       setLoading(false);
     }
     load();
@@ -155,11 +167,6 @@ export default function HomeProfilePage() {
 
   async function handleSave() {
     if (!profile?.id) {
-      // Was silently doing nothing here before — no error, no feedback,
-      // which is exactly how "Save isn't saving" goes unnoticed. If this
-      // fires, the guest's master_profiles row didn't load correctly on
-      // page load (should always exist by the time someone reaches this
-      // page, since the auth callback creates/claims it on login).
       setNotification("Couldn't save — your profile didn't load correctly. Try refreshing the page.");
       setTimeout(() => setNotification(""), 5000);
       return;
@@ -174,14 +181,18 @@ export default function HomeProfilePage() {
     const { data, error } = await supabase
       .from("master_profiles")
       .update({
-        display_name: displayName, headline, bio, organisation, role_title: roleTitle,
-        industry, skills, interests,
+        display_name: displayName, headline, bio, organisation, role_title: roleTitle, known_for: knownFor,
+        what_i_do: whatIDo, featured_work: featuredWork, industry, location, skills,
+        open_to: openTo, availability, interests, causes, languages,
         portfolio_url: portfolio, website_url: website, linkedin_url: linkedin,
         phone_number: phone, instagram_url: instagram,
         slug,
-        show_bio: showBio, show_headline: showHeadline, show_skills: showSkills, show_interests: showInterests,
-        show_linkedin: showLinkedin, show_website: showWebsite, show_portfolio: showPortfolio, show_instagram: showInstagram,
-        show_phone: showPhone, show_email: showEmail,
+        show_bio: showBio, show_headline: showHeadline, show_known_for: showKnownFor,
+        show_what_i_do: showWhatIDo, show_featured_work: showFeaturedWork, show_location: showLocation,
+        show_skills: showSkills, show_open_to: showOpenTo, show_availability: showAvailability,
+        show_interests: showInterests, show_causes: showCauses, show_languages: showLanguages,
+        show_linkedin: showLinkedin, show_website: showWebsite, show_portfolio: showPortfolio,
+        show_instagram: showInstagram, show_phone: showPhone, show_email: showEmail,
       })
       .eq("id", profile.id)
       .select()
@@ -225,8 +236,6 @@ export default function HomeProfilePage() {
       <div style={{ maxWidth: 560, margin: "0 auto", padding: "40px 24px 100px" }}>
         <a href="/home" style={{ display: "inline-block", marginBottom: 28, color: "var(--ivory-muted)", fontSize: 11.5, textDecoration: "none" }}>← Back</a>
 
-        {/* ── QR hero — the actual point of this page, deserves top billing
-            rather than being a footnote after ten form fields. ── */}
         <div style={{
           position: "relative", textAlign: "center", padding: "40px 28px 32px", marginBottom: 28,
           borderRadius: 28, overflow: "hidden",
@@ -285,45 +294,60 @@ export default function HomeProfilePage() {
             <input value={roleTitle} onChange={e => setRoleTitle(e.target.value)} placeholder="Role" style={{ ...inp, marginBottom: 0 }} />
             <input value={organisation} onChange={e => setOrganisation(e.target.value)} placeholder="Organisation" style={{ ...inp, marginBottom: 0 }} />
           </div>
-          <textarea value={bio} onChange={e => setBio(e.target.value)} placeholder="Short bio" style={{ ...inp, minHeight: "72px", resize: "vertical" as const, marginTop: 12, marginBottom: 0 }} />
+          <textarea value={bio} onChange={e => setBio(e.target.value)} placeholder="Short bio" style={{ ...inp, minHeight: "72px", resize: "vertical" as const, marginTop: 12 }} />
+          <input value={knownFor} onChange={e => setKnownFor(e.target.value)} placeholder="Known for — e.g. Building communities through technology" style={{ ...inp, marginBottom: 0 }} />
         </Section>
 
-        <Section title="Professional Presence">
+        <Section title="What You Do" sub="Titles rarely explain what someone actually does — this does.">
+          <textarea value={whatIDo} onChange={e => setWhatIDo(e.target.value)} placeholder="What you do — e.g. Building networking products for live experiences." style={{ ...inp, minHeight: "56px", resize: "vertical" as const }} />
+          <input value={featuredWork} onChange={e => setFeaturedWork(e.target.value)} placeholder="Featured work — one thing you're proud of" style={inp} />
           <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10, marginBottom: 14 }}>
             <input value={industry} onChange={e => setIndustry(e.target.value)} placeholder="Industry" style={{ ...inp, marginBottom: 0 }} />
-            <input value={instagram} onChange={e => setInstagram(e.target.value)} placeholder="Instagram URL" style={{ ...inp, marginBottom: 0 }} />
+            <input value={location} onChange={e => setLocation(e.target.value)} placeholder="Location" style={{ ...inp, marginBottom: 0 }} />
           </div>
-          <p style={{ fontSize: 10.5, color: "rgba(240,237,232,0.3)", margin: "0 0 6px" }}>Skills</p>
-          <div style={{ marginBottom: 14 }}>
-            <TagInput tags={skills} onChange={setSkills} placeholder="Type a skill, press Enter" />
+          <p style={tagLabel}>Skills</p>
+          <TagInput tags={skills} onChange={setSkills} placeholder="Type a skill, press Enter" />
+        </Section>
+
+        <Section title="Connect" sub="How and why people should reach out.">
+          <p style={tagLabel}>Open To</p>
+          <div style={{ marginBottom: 16 }}>
+            <MultiSelectChips options={OPEN_TO_OPTIONS} selected={openTo} onChange={setOpenTo} />
           </div>
-          <p style={{ fontSize: 10.5, color: "rgba(240,237,232,0.3)", margin: "0 0 6px" }}>Interested In</p>
+          <p style={tagLabel}>Available For — At Events</p>
+          <div style={{ marginBottom: 16 }}>
+            <MultiSelectChips options={AVAILABILITY_OPTIONS} selected={availability} onChange={setAvailability} />
+          </div>
+          <p style={tagLabel}>Interested In</p>
           <div style={{ marginBottom: 14 }}>
             <TagInput tags={interests} onChange={setInterests} placeholder="Type an interest, press Enter" />
           </div>
+          <p style={tagLabel}>Causes</p>
+          <div style={{ marginBottom: 14 }}>
+            <TagInput tags={causes} onChange={setCauses} placeholder="A cause you care about, press Enter" />
+          </div>
+          <p style={tagLabel}>Languages</p>
+          <div style={{ marginBottom: 16 }}>
+            <TagInput tags={languages} onChange={setLanguages} placeholder="A language you speak, press Enter" />
+          </div>
           <input value={website} onChange={e => setWebsite(e.target.value)} placeholder="Website URL" style={inp} />
           <input value={linkedin} onChange={e => setLinkedin(e.target.value)} placeholder="LinkedIn URL" style={inp} />
-          <input value={portfolio} onChange={e => setPortfolio(e.target.value)} placeholder="Portfolio URL" style={{ ...inp, marginBottom: 0 }} />
-        </Section>
-
-        <Section title="Contact">
+          <input value={portfolio} onChange={e => setPortfolio(e.target.value)} placeholder="Portfolio URL" style={inp} />
+          <input value={instagram} onChange={e => setInstagram(e.target.value)} placeholder="Instagram URL" style={inp} />
           <input value={phone} onChange={e => setPhone(e.target.value)} placeholder="Phone number" type="tel" style={{ ...inp, marginBottom: 0 }} />
         </Section>
 
-        <Section title="Who Can See This" sub="Your name, headline, and role are always visible when someone views your profile.">
-          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8 }}>
-            <PrivacyRow l="Bio" on={showBio} set={setShowBio} />
-            <PrivacyRow l="Headline" on={showHeadline} set={setShowHeadline} />
-            <PrivacyRow l="Skills" on={showSkills} set={setShowSkills} />
-            <PrivacyRow l="Interests" on={showInterests} set={setShowInterests} />
-            <PrivacyRow l="LinkedIn" on={showLinkedin} set={setShowLinkedin} />
-            <PrivacyRow l="Website" on={showWebsite} set={setShowWebsite} />
-            <PrivacyRow l="Portfolio" on={showPortfolio} set={setShowPortfolio} />
-            <PrivacyRow l="Instagram" on={showInstagram} set={setShowInstagram} />
-            <PrivacyRow l="Phone" on={showPhone} set={setShowPhone} />
-            <PrivacyRow l="Email" on={showEmail} set={setShowEmail} />
+        <a href="/home/profile/settings" style={{
+          display: "flex", alignItems: "center", justifyContent: "space-between",
+          padding: "16px 20px", borderRadius: 16, marginBottom: 18, textDecoration: "none",
+          background: "rgba(255,255,255,0.015)", border: "1px solid rgba(255,255,255,0.05)",
+        }}>
+          <div>
+            <p style={{ fontSize: 13, fontWeight: 600, color: "var(--ivory)", margin: "0 0 2px" }}>Privacy & Account</p>
+            <p style={{ fontSize: 11.5, color: "rgba(240,237,232,0.35)", margin: 0 }}>Control what's visible, manage your account</p>
           </div>
-        </Section>
+          <span style={{ color: "var(--ember)", fontSize: 16 }}>→</span>
+        </a>
 
         {notification && (
           <div style={{ marginBottom: "16px", padding: "10px 14px", borderRadius: "12px", background: "rgba(226,109,52,0.08)", border: "1px solid rgba(226,109,52,0.2)" }}>
