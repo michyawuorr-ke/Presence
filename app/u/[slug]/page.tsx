@@ -1,18 +1,21 @@
 "use client";
 import { useEffect, useState } from "react";
-import { useParams, useRouter } from "next/navigation";
+import { useParams } from "next/navigation";
 import { supabase } from "@/lib/supabase/client";
+import QRCode from "qrcode";
+import { Phone, Mail, MapPin, Globe, Linkedin, Instagram, MessageCircle } from "lucide-react";
+import OreetiMark from "@/components/OreetiMark";
 
 interface PublicProfile {
   id: string;
+  slug: string;
   display_name: string;
   headline: string | null;
   bio: string | null;
   organisation: string | null;
   role_title: string | null;
-  industry: string | null;
-  skills: string[] | null;
-  interests: string[] | null;
+  location: string | null;
+  avatar_url: string | null;
   linkedin_url: string | null;
   website_url: string | null;
   portfolio_url: string | null;
@@ -21,8 +24,7 @@ interface PublicProfile {
   email: string | null;
   show_bio: boolean;
   show_headline: boolean;
-  show_skills: boolean;
-  show_interests: boolean;
+  show_location: boolean;
   show_linkedin: boolean;
   show_website: boolean;
   show_portfolio: boolean;
@@ -36,14 +38,63 @@ function toHref(url: string) {
   return /^https?:\/\//i.test(url) ? url : `https://${url}`;
 }
 
+// Tap-to-action rows: each one fires the native handler directly —
+// tel: opens the dialer, mailto: opens mail, maps opens directions,
+// no intermediate "are you sure" step. This is the whole point of a
+// digital card over a printed one.
+function ActionRow({ icon, label, href }: { icon: React.ReactNode; label: string; href: string }) {
+  return (
+    <a
+      href={href}
+      target={href.startsWith("http") ? "_blank" : undefined}
+      rel={href.startsWith("http") ? "noopener noreferrer" : undefined}
+      style={{
+        display: "flex", alignItems: "center", gap: 12,
+        padding: "13px 16px", borderRadius: 14,
+        background: "rgba(255,255,255,0.02)", border: "1px solid rgba(255,255,255,0.06)",
+        color: "var(--ivory)", textDecoration: "none", fontSize: 13.5,
+      }}
+    >
+      <span style={{
+        width: 30, height: 30, borderRadius: 9, flexShrink: 0,
+        display: "flex", alignItems: "center", justifyContent: "center",
+        background: "rgba(226,109,52,0.1)", color: "var(--ember)",
+      }}>
+        {icon}
+      </span>
+      <span style={{ overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{label}</span>
+    </a>
+  );
+}
+
+// Social icons — tap opens that exact account directly, icon-only,
+// no raw URL text anywhere on the card.
+function SocialIcon({ href, label, icon }: { href: string; label: string; icon: React.ReactNode }) {
+  return (
+    <a
+      href={href}
+      target="_blank"
+      rel="noopener noreferrer"
+      aria-label={label}
+      style={{
+        width: 42, height: 42, borderRadius: "50%",
+        display: "flex", alignItems: "center", justifyContent: "center",
+        background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.08)",
+        color: "var(--ivory)",
+      }}
+    >
+      {icon}
+    </a>
+  );
+}
+
 export default function PublicProfilePage() {
   const params = useParams();
-  const router = useRouter();
   const slug = params.slug as string;
 
   const [loading, setLoading] = useState(true);
   const [profile, setProfile] = useState<PublicProfile | null>(null);
-  const [viewerEmail, setViewerEmail] = useState<string | null>(null);
+  const [qrDataUrl, setQrDataUrl] = useState<string | null>(null);
   const [viewerMasterProfileId, setViewerMasterProfileId] = useState<string | null>(null);
   const [connectState, setConnectState] = useState<"idle" | "connecting" | "connected" | "self" | "error">("idle");
 
@@ -57,9 +108,12 @@ export default function PublicProfilePage() {
       if (!prof) { setLoading(false); return; }
       setProfile(prof);
 
+      QRCode.toDataURL(`https://oreeti.com/u/${prof.slug}`, { errorCorrectionLevel: "H", margin: 1, width: 400 })
+        .then(setQrDataUrl)
+        .catch(() => {});
+
       if (session?.user?.email) {
         const email = session.user.email.toLowerCase();
-        setViewerEmail(email);
         const { data: viewerProf } = await supabase
           .from("master_profiles")
           .select("id")
@@ -69,7 +123,6 @@ export default function PublicProfilePage() {
           setViewerMasterProfileId(viewerProf.id);
           if (viewerProf.id === prof.id) setConnectState("self");
           else {
-            // Check if already connected — don't show "Connect" if so.
             const { data: existing } = await supabase
               .from("profile_connections")
               .select("id")
@@ -87,9 +140,6 @@ export default function PublicProfilePage() {
   async function handleConnect() {
     if (!viewerMasterProfileId || !profile) return;
     setConnectState("connecting");
-    // Instant, not request-based — opening someone's personal profile link
-    // and tapping Connect is itself the consent, same principle as an
-    // in-person QR scan being instant rather than request-then-accept.
     const { error } = await supabase.from("profile_connections").insert({
       sender_id: viewerMasterProfileId,
       receiver_id: profile.id,
@@ -114,25 +164,59 @@ export default function PublicProfilePage() {
     );
   }
 
-  const links = [
-    { label: "LinkedIn", url: profile.linkedin_url, show: profile.show_linkedin },
-    { label: "Website", url: profile.website_url, show: profile.show_website },
-    { label: "Portfolio", url: profile.portfolio_url, show: profile.show_portfolio },
-    { label: "Instagram", url: profile.instagram_url, show: profile.show_instagram },
-  ].filter(l => l.url && l.show);
+  // Direct-action contact rows — only the ones the person has both
+  // filled in AND chosen to show.
+  const actions = [
+    profile.show_phone && profile.phone_number && {
+      key: "phone", icon: <Phone size={15} />, label: profile.phone_number, href: `tel:${profile.phone_number}`,
+    },
+    profile.show_email && profile.email && {
+      key: "email", icon: <Mail size={15} />, label: profile.email, href: `mailto:${profile.email}`,
+    },
+    profile.show_location && profile.location && {
+      key: "location", icon: <MapPin size={15} />, label: profile.location,
+      href: `https://maps.google.com/?q=${encodeURIComponent(profile.location)}`,
+    },
+    profile.show_website && profile.website_url && {
+      key: "website", icon: <Globe size={15} />, label: profile.website_url.replace(/^https?:\/\/(www\.)?/, "").replace(/\/$/, ""),
+      href: toHref(profile.website_url),
+    },
+  ].filter(Boolean) as { key: string; icon: React.ReactNode; label: string; href: string }[];
+
+  // Social icons — direct link to the exact account/profile, icon only.
+  const socials = [
+    profile.show_linkedin && profile.linkedin_url && { key: "linkedin", label: "LinkedIn", icon: <Linkedin size={18} />, href: toHref(profile.linkedin_url) },
+    profile.show_instagram && profile.instagram_url && { key: "instagram", label: "Instagram", icon: <Instagram size={18} />, href: toHref(profile.instagram_url) },
+    profile.show_portfolio && profile.portfolio_url && { key: "portfolio", label: "Portfolio", icon: <Globe size={18} />, href: toHref(profile.portfolio_url) },
+    profile.show_phone && profile.phone_number && {
+      key: "whatsapp", label: "WhatsApp", icon: <MessageCircle size={18} />,
+      href: `https://wa.me/${profile.phone_number.replace(/[^\d]/g, "")}`,
+    },
+  ].filter(Boolean) as { key: string; label: string; icon: React.ReactNode; href: string }[];
 
   return (
     <div style={{ minHeight: "100vh", background: "radial-gradient(ellipse 900px 500px at 50% -10%, rgba(226,109,52,0.08), transparent), var(--base)" }}>
-      <div style={{ maxWidth: 480, margin: "0 auto", padding: "56px 24px 60px" }}>
-        <div style={{ textAlign: "center", marginBottom: 32 }}>
+      <div style={{ maxWidth: 440, margin: "0 auto", padding: "28px 20px 60px" }}>
+
+        <div style={{ display: "flex", justifyContent: "center", marginBottom: 20, opacity: 0.85 }}>
+          <OreetiMark size={22} />
+        </div>
+
+        {/* Identity */}
+        <div style={{ textAlign: "center", marginBottom: 26 }}>
           <div style={{
-            width: 84, height: 84, borderRadius: "50%", margin: "0 auto 20px",
+            width: 92, height: 92, borderRadius: "50%", margin: "0 auto 18px", overflow: "hidden",
             background: "linear-gradient(135deg, rgba(226,109,52,0.3), rgba(212,175,55,0.2))",
             display: "flex", alignItems: "center", justifyContent: "center",
+            border: "1px solid rgba(255,255,255,0.08)",
           }}>
-            <span style={{ fontFamily: "var(--font-display)", fontSize: 32, color: "rgba(255,255,255,0.5)" }}>
-              {profile.display_name?.charAt(0)?.toUpperCase() || "?"}
-            </span>
+            {profile.avatar_url ? (
+              <img src={profile.avatar_url} alt="" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+            ) : (
+              <span style={{ fontFamily: "var(--font-display)", fontSize: 34, color: "rgba(255,255,255,0.5)" }}>
+                {profile.display_name?.charAt(0)?.toUpperCase() || "?"}
+              </span>
+            )}
           </div>
           <h1 style={{ fontFamily: "var(--font-display)", fontSize: 24, fontWeight: 500, color: "var(--ivory)", margin: "0 0 4px", letterSpacing: "-0.01em" }}>
             {profile.display_name}
@@ -153,41 +237,30 @@ export default function PublicProfilePage() {
           </p>
         )}
 
-        {profile.show_skills && profile.skills && profile.skills.length > 0 && (
-          <div style={{ marginBottom: 20 }}>
-            <p style={{ fontSize: 9.5, fontWeight: 700, letterSpacing: "0.1em", textTransform: "uppercase", color: "rgba(138,115,85,0.6)", textAlign: "center", marginBottom: 8 }}>Skills</p>
-            <div style={{ display: "flex", flexWrap: "wrap", gap: 6, justifyContent: "center" }}>
-              {profile.skills.map(s => (
-                <span key={s} style={{ fontSize: 11.5, color: "var(--ivory)", background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.08)", padding: "5px 11px", borderRadius: 20 }}>{s}</span>
-              ))}
+        {/* Tap-to-action contact rows */}
+        {actions.length > 0 && (
+          <div style={{ display: "flex", flexDirection: "column", gap: 8, marginBottom: 22 }}>
+            {actions.map(a => <ActionRow key={a.key} icon={a.icon} label={a.label} href={a.href} />)}
+          </div>
+        )}
+
+        {/* Social icons */}
+        {socials.length > 0 && (
+          <div style={{ display: "flex", justifyContent: "center", gap: 12, marginBottom: 28 }}>
+            {socials.map(s => <SocialIcon key={s.key} href={s.href} label={s.label} icon={s.icon} />)}
+          </div>
+        )}
+
+        {/* QR code */}
+        {qrDataUrl && (
+          <div style={{ display: "flex", justifyContent: "center", marginBottom: 28 }}>
+            <div style={{ width: 132, height: 132, borderRadius: 16, background: "#fff", padding: 10, boxShadow: "0 12px 30px -10px rgba(0,0,0,0.5)" }}>
+              <img src={qrDataUrl} alt="Scan to open this profile" style={{ width: "100%", height: "100%", display: "block" }} />
             </div>
           </div>
         )}
 
-        {profile.show_interests && profile.interests && profile.interests.length > 0 && (
-          <div style={{ marginBottom: 28 }}>
-            <p style={{ fontSize: 9.5, fontWeight: 700, letterSpacing: "0.1em", textTransform: "uppercase", color: "rgba(138,115,85,0.6)", textAlign: "center", marginBottom: 8 }}>Interested In</p>
-            <div style={{ display: "flex", flexWrap: "wrap", gap: 6, justifyContent: "center" }}>
-              {profile.interests.map(s => (
-                <span key={s} style={{ fontSize: 11.5, color: "var(--ember)", background: "rgba(226,109,52,0.06)", border: "1px solid rgba(226,109,52,0.2)", padding: "5px 11px", borderRadius: 20 }}>{s}</span>
-              ))}
-            </div>
-          </div>
-        )}
-
-        {links.length > 0 && (
-          <div style={{ display: "flex", flexDirection: "column", gap: 8, marginBottom: 28 }}>
-            {links.map(l => (
-              <a key={l.label} href={toHref(l.url!)} target="_blank" rel="noopener noreferrer"
-                style={{ display: "block", padding: "12px 16px", borderRadius: 12, background: "rgba(255,255,255,0.02)", border: "1px solid rgba(255,255,255,0.06)", color: "var(--ivory)", fontSize: 13, textDecoration: "none", textAlign: "center" }}>
-                {l.label}
-              </a>
-            ))}
-          </div>
-        )}
-
-        {/* Connect action — branches on whether the viewer is a logged-in
-            Oreeti user or not, per the vision doc's two flows. */}
+        {/* Connect action */}
         {connectState === "self" ? (
           <p style={{ textAlign: "center", fontSize: 12.5, color: "var(--dusk)" }}>This is your own profile.</p>
         ) : connectState === "connected" ? (
@@ -202,10 +275,6 @@ export default function PublicProfilePage() {
             {connectState === "connecting" ? "Connecting..." : connectState === "error" ? "Try again" : "Connect"}
           </button>
         ) : (
-          // Viewer has no Oreeti account (or isn't logged in) — the
-          // web-fallback flow from the vision doc: they can view the
-          // profile fully, but creating an account is required to save
-          // the connection, which is the actual growth loop mechanism.
           <div style={{ textAlign: "center" }}>
             <p style={{ fontSize: 12.5, color: "var(--ivory-muted)", marginBottom: 14, lineHeight: 1.5 }}>
               Create a free Oreeti account to save this connection and get your own profile to share.
