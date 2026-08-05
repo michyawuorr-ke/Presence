@@ -9,18 +9,12 @@ import MultiSelectChips from "./MultiSelectChips";
 import { OPEN_TO_OPTIONS, AVAILABILITY_OPTIONS } from "./profileOptions";
 
 // ---------------------------------------------------------------------------
-// Ink palette for the card itself. Deliberately literal hex values rather
-// than the app's --base/--ivory dark-theme tokens: the card is a white,
-// premium, hand-it-to-someone artifact, not a themed app screen. Edit mode
-// (below) keeps the original dark theme tokens since it's a utility screen,
-// not the card.
+// The card reuses the app's existing dark theme tokens (var(--base),
+// var(--ivory), var(--ember), etc) and mirrors the visual language already
+// established by the public /u/[slug] card — gradient avatar circle, glass
+// rows, ember accent — rather than inventing a separate light theme, so it
+// reads as part of the same product instead of a bolted-on screen.
 // ---------------------------------------------------------------------------
-const ink = "#1B1A17";
-const inkSoft = "#4A463E";
-const inkFaint = "#8A8474";
-const hairline = "rgba(27,26,23,0.09)";
-const accent = "#C1571F"; // slightly deeper than the app's neon ember, for legibility on white
-
 const inp = { width: "100%", padding: "13px 14px", borderRadius: "12px", border: "1px solid rgba(255,255,255,0.07)", background: "rgba(255,255,255,0.02)", color: "var(--ivory)", fontSize: "14px", outline: "none", marginBottom: "12px", boxSizing: "border-box" as const, fontFamily: "var(--font-body)" };
 const sectionLabel = { fontSize: "10px", fontWeight: 700, letterSpacing: "0.12em", textTransform: "uppercase" as const, color: "var(--ember)", margin: "0 0 4px" };
 const sectionSub = { fontSize: "11.5px", color: "rgba(240,237,232,0.35)", margin: "0 0 18px", lineHeight: 1.5 };
@@ -56,18 +50,18 @@ function mapsHref(location: string) {
   return `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(location)}`;
 }
 
-/** No avatar_url column exists on master_profiles, and this task explicitly
- * disallows adding one — so identity is represented the same way the public
- * /u/[slug] card already does: a soft initials mark, not an uploaded photo. */
+/** No avatar_url column exists on master_profiles, and adding one is out of
+ * scope here — so identity uses the same gradient initials mark the public
+ * /u/[slug] card already uses, for visual consistency across the app. */
 function InitialsAvatar({ name, size = 96 }: { name: string; size?: number }) {
   const initial = name?.trim()?.charAt(0)?.toUpperCase() || "?";
   return (
     <div style={{
       width: size, height: size, borderRadius: "50%", flexShrink: 0,
-      background: "#F5F2EC", border: `1px solid ${hairline}`,
+      background: "linear-gradient(135deg, rgba(226,109,52,0.3), rgba(212,175,55,0.2))",
       display: "flex", alignItems: "center", justifyContent: "center",
     }}>
-      <span style={{ fontFamily: "var(--font-display)", fontSize: size * 0.38, fontWeight: 500, color: inkSoft }}>
+      <span style={{ fontFamily: "var(--font-display)", fontSize: size * 0.36, color: "rgba(255,255,255,0.55)" }}>
         {initial}
       </span>
     </div>
@@ -78,13 +72,14 @@ function ContactRow({ icon, label, value, href }: { icon: string; label: string;
   return (
     <a href={href} target={href.startsWith("tel:") || href.startsWith("mailto:") ? undefined : "_blank"} rel="noopener noreferrer"
       style={{
-        display: "flex", alignItems: "center", gap: 14, padding: "14px 4px",
-        textDecoration: "none", borderBottom: `1px solid ${hairline}`,
+        display: "flex", alignItems: "center", gap: 12, padding: "12px 14px", marginBottom: 8,
+        borderRadius: 12, background: "rgba(255,255,255,0.02)", border: "1px solid rgba(255,255,255,0.06)",
+        textDecoration: "none",
       }}>
-      <span style={{ fontSize: 17, width: 22, textAlign: "center", flexShrink: 0 }}>{icon}</span>
+      <span style={{ fontSize: 16, width: 20, textAlign: "center", flexShrink: 0 }}>{icon}</span>
       <div style={{ minWidth: 0, flex: 1 }}>
-        <p style={{ margin: 0, fontSize: 10, letterSpacing: "0.08em", textTransform: "uppercase", color: inkFaint }}>{label}</p>
-        <p style={{ margin: "2px 0 0", fontSize: 14, color: ink, fontWeight: 500, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{value}</p>
+        <p style={{ margin: 0, fontSize: 9.5, letterSpacing: "0.08em", textTransform: "uppercase", color: "rgba(240,237,232,0.35)" }}>{label}</p>
+        <p style={{ margin: "2px 0 0", fontSize: 13.5, color: "var(--ivory)", fontWeight: 500, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{value}</p>
       </div>
     </a>
   );
@@ -92,26 +87,26 @@ function ContactRow({ icon, label, value, href }: { icon: string; label: string;
 
 function LinkedInGlyph() {
   return (
-    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke={ink} strokeWidth="1.6">
+    <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="var(--ivory)" strokeWidth="1.6" opacity={0.75}>
       <rect x="2.5" y="2.5" width="19" height="19" rx="4" />
       <line x1="7.2" y1="10" x2="7.2" y2="17" />
-      <circle cx="7.2" cy="6.6" r="0.9" fill={ink} stroke="none" />
+      <circle cx="7.2" cy="6.6" r="0.9" fill="var(--ivory)" stroke="none" />
       <path d="M11.2 17v-4.2c0-1.6 1-2.6 2.4-2.6s2.2 1 2.2 2.6V17" />
     </svg>
   );
 }
 function InstagramGlyph() {
   return (
-    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke={ink} strokeWidth="1.6">
+    <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="var(--ivory)" strokeWidth="1.6" opacity={0.75}>
       <rect x="2.5" y="2.5" width="19" height="19" rx="6" />
       <circle cx="12" cy="12" r="4.6" />
-      <circle cx="17.3" cy="6.7" r="0.9" fill={ink} stroke="none" />
+      <circle cx="17.3" cy="6.7" r="0.9" fill="var(--ivory)" stroke="none" />
     </svg>
   );
 }
 function WebsiteGlyph() {
   return (
-    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke={ink} strokeWidth="1.6">
+    <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="var(--ivory)" strokeWidth="1.6" opacity={0.75}>
       <circle cx="12" cy="12" r="9.5" />
       <ellipse cx="12" cy="12" rx="4" ry="9.5" />
       <line x1="2.5" y1="12" x2="21.5" y2="12" />
@@ -137,6 +132,7 @@ export default function HomeProfilePage() {
   const [qrDataUrl, setQrDataUrl] = useState<string | null>(null);
   const [copied, setCopied] = useState(false);
   const [mode, setMode] = useState<"view" | "edit">("view");
+  const [showMore, setShowMore] = useState(false);
 
   // Identity
   const [displayName, setDisplayName] = useState("");
@@ -330,8 +326,12 @@ export default function HomeProfilePage() {
   }
 
   // -------------------------------------------------------------------
-  // EDIT MODE — the original form, unchanged in behaviour. Kept on the
-  // app's dark theme since it's a utility screen, not the card itself.
+  // EDIT MODE — only Identity + Contact & Links (the fields that
+  // actually appear on the card) are shown up front. Everything else
+  // (skills, interests, causes, languages, open to, availability, known
+  // for, what I do, featured work, industry) never shows on the card,
+  // so it's tucked behind "More details" instead of cluttering the
+  // primary edit flow. Still fully editable, still saved the same way.
   // -------------------------------------------------------------------
   if (mode === "edit") {
     return (
@@ -342,7 +342,7 @@ export default function HomeProfilePage() {
           <h1 style={{ fontFamily: "var(--font-display)", fontSize: "clamp(20px,4vw,24px)", fontWeight: 500, color: "var(--ivory)", letterSpacing: "-0.02em", margin: "0 0 4px" }}>
             Edit your identity.
           </h1>
-          <p style={{ color: "var(--dusk)", fontSize: 12.5, margin: "0 0 24px" }}>Not tied to any one event — this is who you are, everywhere.</p>
+          <p style={{ color: "var(--dusk)", fontSize: 12.5, margin: "0 0 24px" }}>These fields are what show up on your card.</p>
 
           <Section title="Identity">
             <input value={displayName} onChange={e => setDisplayName(e.target.value)} placeholder="Full name" style={inp} />
@@ -351,48 +351,62 @@ export default function HomeProfilePage() {
               <input value={roleTitle} onChange={e => setRoleTitle(e.target.value)} placeholder="Role" style={{ ...inp, marginBottom: 0 }} />
               <input value={organisation} onChange={e => setOrganisation(e.target.value)} placeholder="Organisation" style={{ ...inp, marginBottom: 0 }} />
             </div>
-            <textarea value={bio} onChange={e => setBio(e.target.value)} placeholder="Short bio" style={{ ...inp, minHeight: "72px", resize: "vertical" as const, marginTop: 12 }} />
-            <input value={knownFor} onChange={e => setKnownFor(e.target.value)} placeholder="Known for — e.g. Building communities through technology" style={{ ...inp, marginBottom: 0 }} />
+            <textarea value={bio} onChange={e => setBio(e.target.value)} placeholder="Short bio" style={{ ...inp, minHeight: "72px", resize: "vertical" as const, marginTop: 12, marginBottom: 0 }} />
           </Section>
 
-          <Section title="What You Do" sub="Titles rarely explain what someone actually does — this does.">
-            <textarea value={whatIDo} onChange={e => setWhatIDo(e.target.value)} placeholder="What you do — e.g. Building networking products for live experiences." style={{ ...inp, minHeight: "56px", resize: "vertical" as const }} />
-            <input value={featuredWork} onChange={e => setFeaturedWork(e.target.value)} placeholder="Featured work — one thing you're proud of" style={inp} />
-            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10, marginBottom: 14 }}>
-              <input value={industry} onChange={e => setIndustry(e.target.value)} placeholder="Industry" style={{ ...inp, marginBottom: 0 }} />
-              <input value={location} onChange={e => setLocation(e.target.value)} placeholder="Location" style={{ ...inp, marginBottom: 0 }} />
-            </div>
-            <p style={tagLabel}>Skills</p>
-            <TagInput tags={skills} onChange={setSkills} placeholder="Type a skill, press Enter" />
-          </Section>
-
-          <Section title="Connect" sub="How and why people should reach out.">
-            <p style={tagLabel}>Open To</p>
-            <div style={{ marginBottom: 16 }}>
-              <MultiSelectChips options={OPEN_TO_OPTIONS} selected={openTo} onChange={setOpenTo} />
-            </div>
-            <p style={tagLabel}>Available For — At Events</p>
-            <div style={{ marginBottom: 16 }}>
-              <MultiSelectChips options={AVAILABILITY_OPTIONS} selected={availability} onChange={setAvailability} />
-            </div>
-            <p style={tagLabel}>Interested In</p>
-            <div style={{ marginBottom: 14 }}>
-              <TagInput tags={interests} onChange={setInterests} placeholder="Type an interest, press Enter" />
-            </div>
-            <p style={tagLabel}>Causes</p>
-            <div style={{ marginBottom: 14 }}>
-              <TagInput tags={causes} onChange={setCauses} placeholder="A cause you care about, press Enter" />
-            </div>
-            <p style={tagLabel}>Languages</p>
-            <div style={{ marginBottom: 16 }}>
-              <TagInput tags={languages} onChange={setLanguages} placeholder="A language you speak, press Enter" />
-            </div>
+          <Section title="Contact & Links" sub="Shown on your card as tappable rows and icons.">
+            <input value={phone} onChange={e => setPhone(e.target.value)} placeholder="Phone number" type="tel" style={inp} />
+            <input value={location} onChange={e => setLocation(e.target.value)} placeholder="Location" style={inp} />
+            <input value={portfolio} onChange={e => setPortfolio(e.target.value)} placeholder="Portfolio URL" style={inp} />
             <input value={website} onChange={e => setWebsite(e.target.value)} placeholder="Website URL" style={inp} />
             <input value={linkedin} onChange={e => setLinkedin(e.target.value)} placeholder="LinkedIn URL" style={inp} />
-            <input value={portfolio} onChange={e => setPortfolio(e.target.value)} placeholder="Portfolio URL" style={inp} />
-            <input value={instagram} onChange={e => setInstagram(e.target.value)} placeholder="Instagram URL" style={inp} />
-            <input value={phone} onChange={e => setPhone(e.target.value)} placeholder="Phone number" type="tel" style={{ ...inp, marginBottom: 0 }} />
+            <input value={instagram} onChange={e => setInstagram(e.target.value)} placeholder="Instagram URL" style={{ ...inp, marginBottom: 0 }} />
           </Section>
+
+          <button onClick={() => setShowMore(s => !s)} style={{
+            display: "flex", alignItems: "center", justifyContent: "space-between", width: "100%",
+            background: "none", border: "1px solid rgba(255,255,255,0.06)", borderRadius: 16,
+            padding: "14px 18px", marginBottom: showMore ? 12 : 18, cursor: "pointer",
+          }}>
+            <span style={{ fontSize: 12.5, color: "var(--ivory-muted)" }}>More details <span style={{ color: "rgba(240,237,232,0.35)" }}>— not shown on your card</span></span>
+            <span style={{ color: "var(--ember)", fontSize: 13 }}>{showMore ? "Hide ▴" : "Show ▾"}</span>
+          </button>
+
+          {showMore && (
+            <>
+              <Section title="More About You" sub="Kept for future use — none of this appears on your card.">
+                <input value={knownFor} onChange={e => setKnownFor(e.target.value)} placeholder="Known for — e.g. Building communities through technology" style={inp} />
+                <textarea value={whatIDo} onChange={e => setWhatIDo(e.target.value)} placeholder="What you do" style={{ ...inp, minHeight: "56px", resize: "vertical" as const }} />
+                <input value={featuredWork} onChange={e => setFeaturedWork(e.target.value)} placeholder="Featured work" style={inp} />
+                <input value={industry} onChange={e => setIndustry(e.target.value)} placeholder="Industry" style={{ ...inp, marginBottom: 14 }} />
+                <p style={tagLabel}>Skills</p>
+                <TagInput tags={skills} onChange={setSkills} placeholder="Type a skill, press Enter" />
+              </Section>
+
+              <Section title="Connect Preferences" sub="Used elsewhere in Oreeti's networking features.">
+                <p style={tagLabel}>Open To</p>
+                <div style={{ marginBottom: 16 }}>
+                  <MultiSelectChips options={OPEN_TO_OPTIONS} selected={openTo} onChange={setOpenTo} />
+                </div>
+                <p style={tagLabel}>Available For — At Events</p>
+                <div style={{ marginBottom: 16 }}>
+                  <MultiSelectChips options={AVAILABILITY_OPTIONS} selected={availability} onChange={setAvailability} />
+                </div>
+                <p style={tagLabel}>Interested In</p>
+                <div style={{ marginBottom: 14 }}>
+                  <TagInput tags={interests} onChange={setInterests} placeholder="Type an interest, press Enter" />
+                </div>
+                <p style={tagLabel}>Causes</p>
+                <div style={{ marginBottom: 14 }}>
+                  <TagInput tags={causes} onChange={setCauses} placeholder="A cause you care about, press Enter" />
+                </div>
+                <p style={tagLabel}>Languages</p>
+                <div>
+                  <TagInput tags={languages} onChange={setLanguages} placeholder="A language you speak, press Enter" />
+                </div>
+              </Section>
+            </>
+          )}
 
           <a href="/home/profile/settings" style={{
             display: "flex", alignItems: "center", justifyContent: "space-between",
@@ -445,11 +459,11 @@ export default function HomeProfilePage() {
   ].filter(Boolean) as { label: string; href: string; glyph: React.ReactNode }[];
 
   return (
-    <div style={{ minHeight: "100vh", background: "#FFFFFF" }}>
+    <div style={{ minHeight: "100vh", background: "radial-gradient(ellipse 1000px 600px at 50% -15%, rgba(226,109,52,0.08), transparent 60%), var(--base)" }}>
       <div style={{ maxWidth: 420, margin: "0 auto", padding: "28px 24px 64px" }}>
-        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 20 }}>
-          <a href="/home" style={{ color: inkFaint, fontSize: 12, textDecoration: "none" }}>← Back</a>
-          <button onClick={() => setMode("edit")} style={{ background: "none", border: "none", color: inkFaint, fontSize: 12, cursor: "pointer", padding: 0 }}>
+        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 24 }}>
+          <a href="/home" style={{ color: "var(--dusk)", fontSize: 12, textDecoration: "none" }}>← Back</a>
+          <button onClick={() => setMode("edit")} style={{ background: "none", border: "none", color: "var(--ember)", fontSize: 12, fontWeight: 600, cursor: "pointer", padding: 0 }}>
             Edit
           </button>
         </div>
@@ -459,23 +473,23 @@ export default function HomeProfilePage() {
           <div style={{ display: "flex", justifyContent: "center", marginBottom: 18 }}>
             <InitialsAvatar name={displayName} />
           </div>
-          <h1 style={{ fontFamily: "var(--font-display)", fontSize: 26, fontWeight: 500, color: ink, letterSpacing: "-0.01em", margin: "0 0 6px" }}>
+          <h1 style={{ fontFamily: "var(--font-display)", fontSize: 25, fontWeight: 500, color: "var(--ivory)", letterSpacing: "-0.01em", margin: "0 0 6px" }}>
             {displayName || "Your name"}
           </h1>
           {showHeadline && headline && (
-            <p style={{ fontSize: 14, color: accent, margin: "0 0 4px", fontWeight: 500 }}>{headline}</p>
+            <p style={{ fontSize: 13.5, color: "var(--ember)", margin: "0 0 4px" }}>{headline}</p>
           )}
           {roleOrgLine && (
-            <p style={{ fontSize: 13, color: inkFaint, margin: 0 }}>{roleOrgLine}</p>
+            <p style={{ fontSize: 13, color: "var(--dusk)", margin: 0 }}>{roleOrgLine}</p>
           )}
           {showBio && bio && (
-            <p style={{ fontSize: 14, color: inkSoft, lineHeight: 1.65, margin: "16px 0 0" }}>{bio}</p>
+            <p style={{ fontSize: 13.5, color: "rgba(240,237,232,0.7)", lineHeight: 1.65, margin: "16px 0 0" }}>{bio}</p>
           )}
         </div>
 
         {/* Contact */}
         {contactRows.length > 0 && (
-          <div style={{ borderTop: `1px solid ${hairline}`, marginBottom: 8 }}>
+          <div style={{ marginBottom: 20 }}>
             {contactRows.map(row => <ContactRow key={row.label} {...row} />)}
           </div>
         )}
@@ -483,8 +497,8 @@ export default function HomeProfilePage() {
         {/* Social */}
         {socials.length > 0 && (
           <div style={{
-            display: "flex", justifyContent: "center", alignItems: "center", gap: 28,
-            padding: "22px 0", borderTop: `1px solid ${hairline}`,
+            display: "flex", justifyContent: "center", alignItems: "center", gap: 26,
+            padding: "8px 0 24px",
           }}>
             {socials.map(s => (
               <SocialIcon key={s.label} href={s.href} label={s.label}>{s.glyph}</SocialIcon>
@@ -492,29 +506,34 @@ export default function HomeProfilePage() {
           </div>
         )}
 
-        {/* QR */}
-        <div style={{ borderTop: `1px solid ${hairline}`, paddingTop: 28, textAlign: "center" }}>
+        {/* QR — white surface, since a QR needs a light background to scan reliably */}
+        <div style={{ textAlign: "center", paddingTop: 8, borderTop: "1px solid rgba(255,255,255,0.06)" }}>
           {profile?.slug && qrDataUrl ? (
             <>
-              <img src={qrDataUrl} alt="Your Oreeti QR code" style={{ width: 176, height: 176, display: "block", margin: "0 auto" }} />
-              <p style={{ fontSize: 11.5, color: inkFaint, margin: "14px 0 0" }}>oreeti.com/u/{profile.slug}</p>
-              <div style={{ display: "flex", justifyContent: "center", gap: 18, marginTop: 10 }}>
-                <button onClick={copyLink} style={{ background: "none", border: "none", color: inkFaint, fontSize: 11.5, cursor: "pointer", padding: 0, textDecoration: "underline" }}>
+              <div style={{
+                width: 176, height: 176, margin: "24px auto 14px", borderRadius: 18,
+                background: "#fff", padding: 12, boxShadow: "0 16px 40px -12px rgba(0,0,0,0.5)",
+              }}>
+                <img src={qrDataUrl} alt="Your Oreeti QR code" style={{ width: "100%", height: "100%", display: "block" }} />
+              </div>
+              <p style={{ fontSize: 11.5, color: "var(--dusk)", margin: "0 0 12px" }}>oreeti.com/u/{profile.slug}</p>
+              <div style={{ display: "flex", justifyContent: "center", gap: 18 }}>
+                <button onClick={copyLink} style={{ background: "none", border: "none", color: "var(--dusk)", fontSize: 11.5, cursor: "pointer", padding: 0, textDecoration: "underline" }}>
                   {copied ? "Copied ✓" : "Copy link"}
                 </button>
-                <button onClick={downloadQr} style={{ background: "none", border: "none", color: inkFaint, fontSize: 11.5, cursor: "pointer", padding: 0, textDecoration: "underline" }}>
+                <button onClick={downloadQr} style={{ background: "none", border: "none", color: "var(--dusk)", fontSize: 11.5, cursor: "pointer", padding: 0, textDecoration: "underline" }}>
                   Save QR
                 </button>
               </div>
             </>
           ) : (
-            <p style={{ fontSize: 12, color: inkFaint }}>Save your profile to generate your QR code.</p>
+            <p style={{ fontSize: 12, color: "var(--dusk)", padding: "24px 0" }}>Save your profile to generate your QR code.</p>
           )}
         </div>
 
         {notification && (
           <div style={{ marginTop: 24, textAlign: "center" }}>
-            <p style={{ color: accent, fontSize: 12, margin: 0 }}>{notification}</p>
+            <p style={{ color: "var(--ember)", fontSize: 12, margin: 0 }}>{notification}</p>
           </div>
         )}
       </div>
