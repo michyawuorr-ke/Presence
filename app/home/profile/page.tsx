@@ -355,7 +355,7 @@ export default function HomeProfilePage({ embedded = false }: { embedded?: boole
       setTimeout(() => setNotification(""), 4000);
     } else {
       setAvatarUrl(publicUrl + "?t=" + Date.now());
-      setProfile((p) => ({ ...p, avatar_url: publicUrl }));
+      setProfile((p: any) => ({ ...p, avatar_url: publicUrl }));
       setNotification("Photo updated");
       setTimeout(() => setNotification(""), 2500);
     }
