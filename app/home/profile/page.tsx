@@ -6,7 +6,7 @@ import { generateUniqueSlug } from "../slug";
 import QRCode from "qrcode";
 import TagInput from "./TagInput";
 import MultiSelectChips from "./MultiSelectChips";
-import { OPEN_TO_OPTIONS, AVAILABILITY_OPTIONS } from "./profileOptions";
+import { AVAILABILITY_OPTIONS } from "./profileOptions";
 
 // ---------------------------------------------------------------------------
 // The card reuses the app's existing dark theme tokens (var(--base),
@@ -375,8 +375,6 @@ export default function HomeProfilePage() {
           {showMore && (
             <>
               <Section title="More About You" sub="Kept for future use — none of this appears on your card.">
-                <input value={knownFor} onChange={e => setKnownFor(e.target.value)} placeholder="Known for — e.g. Building communities through technology" style={inp} />
-                <textarea value={whatIDo} onChange={e => setWhatIDo(e.target.value)} placeholder="What you do" style={{ ...inp, minHeight: "56px", resize: "vertical" as const }} />
                 <input value={featuredWork} onChange={e => setFeaturedWork(e.target.value)} placeholder="Featured work" style={inp} />
                 <input value={industry} onChange={e => setIndustry(e.target.value)} placeholder="Industry" style={{ ...inp, marginBottom: 14 }} />
                 <p style={tagLabel}>Skills</p>
@@ -384,17 +382,9 @@ export default function HomeProfilePage() {
               </Section>
 
               <Section title="Connect Preferences" sub="Used elsewhere in Oreeti's networking features.">
-                <p style={tagLabel}>Open To</p>
-                <div style={{ marginBottom: 16 }}>
-                  <MultiSelectChips options={OPEN_TO_OPTIONS} selected={openTo} onChange={setOpenTo} />
-                </div>
                 <p style={tagLabel}>Available For — At Events</p>
                 <div style={{ marginBottom: 16 }}>
                   <MultiSelectChips options={AVAILABILITY_OPTIONS} selected={availability} onChange={setAvailability} />
-                </div>
-                <p style={tagLabel}>Interested In</p>
-                <div style={{ marginBottom: 14 }}>
-                  <TagInput tags={interests} onChange={setInterests} placeholder="Type an interest, press Enter" />
                 </div>
                 <p style={tagLabel}>Causes</p>
                 <div style={{ marginBottom: 14 }}>

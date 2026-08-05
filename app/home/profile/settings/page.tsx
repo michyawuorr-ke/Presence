@@ -165,14 +165,10 @@ export default function ProfileSettingsPage() {
           <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
             <PrivacyRow l="Bio" on={showBio} set={setShowBio} />
             <PrivacyRow l="Headline" on={showHeadline} set={setShowHeadline} />
-            <PrivacyRow l="Known For" on={showKnownFor} set={setShowKnownFor} />
-            <PrivacyRow l="What You Do" on={showWhatIDo} set={setShowWhatIDo} />
             <PrivacyRow l="Featured Work" on={showFeaturedWork} set={setShowFeaturedWork} />
             <PrivacyRow l="Location" on={showLocation} set={setShowLocation} />
             <PrivacyRow l="Skills" on={showSkills} set={setShowSkills} />
-            <PrivacyRow l="Open To" on={showOpenTo} set={setShowOpenTo} />
             <PrivacyRow l="Availability" on={showAvailability} set={setShowAvailability} />
-            <PrivacyRow l="Interests" on={showInterests} set={setShowInterests} />
             <PrivacyRow l="Causes" on={showCauses} set={setShowCauses} />
             <PrivacyRow l="Languages" on={showLanguages} set={setShowLanguages} />
             <PrivacyRow l="LinkedIn" on={showLinkedin} set={setShowLinkedin} />
