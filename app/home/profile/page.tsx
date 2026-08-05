@@ -135,6 +135,8 @@ function SocialIcon({ href, label, children }: { href: string; label: string; ch
 export default function HomeProfilePage({ embedded = false }: { embedded?: boolean } = {}) {
   const router = useRouter();
   const [loading, setLoading] = useState(true);
+  const [avatarUrl, setAvatarUrl] = useState("");
+  const [avatarUploading, setAvatarUploading] = useState(false);
   const [saving, setSaving] = useState(false);
   const [notification, setNotification] = useState("");
   const [profile, setProfile] = useState<any>(null);
@@ -214,6 +216,7 @@ export default function HomeProfilePage({ embedded = false }: { embedded?: boole
       }
 
       setProfile(data);
+      setAvatarUrl(data.avatar_url ?? "");
       setDisplayName(data.display_name ?? "");
       setHeadline(data.headline ?? "");
       setBio(data.bio ?? "");
@@ -315,6 +318,49 @@ export default function HomeProfilePage({ embedded = false }: { embedded?: boole
       .catch(console.error);
     return () => { cancelled = true; };
   }, [profile?.slug]);
+
+
+  async function handleAvatarUpload(e) {
+    const file = e.target.files?.[0];
+    if (!file || !profile?.id) return;
+    if (file.size > 3 * 1024 * 1024) {
+      setNotification("Image must be under 3MB");
+      setTimeout(() => setNotification(""), 4000);
+      return;
+    }
+    if (!file.type.startsWith("image/")) {
+      setNotification("Please select an image file");
+      setTimeout(() => setNotification(""), 4000);
+      return;
+    }
+    setAvatarUploading(true);
+    const ext = file.name.split(".").pop() ?? "jpg";
+    const path = `${profile.id}/avatar.${ext}`;
+    const { error: uploadError } = await supabase.storage
+      .from("avatars")
+      .upload(path, file, { upsert: true, contentType: file.type });
+    if (uploadError) {
+      setNotification("Upload failed — " + uploadError.message);
+      setTimeout(() => setNotification(""), 4000);
+      setAvatarUploading(false);
+      return;
+    }
+    const { data: { publicUrl } } = supabase.storage.from("avatars").getPublicUrl(path);
+    const { error: saveError } = await supabase
+      .from("master_profiles")
+      .update({ avatar_url: publicUrl })
+      .eq("id", profile.id);
+    if (saveError) {
+      setNotification("Uploaded but couldn't save — " + saveError.message);
+      setTimeout(() => setNotification(""), 4000);
+    } else {
+      setAvatarUrl(publicUrl + "?t=" + Date.now());
+      setProfile((p) => ({ ...p, avatar_url: publicUrl }));
+      setNotification("Photo updated");
+      setTimeout(() => setNotification(""), 2500);
+    }
+    setAvatarUploading(false);
+  }
 
   async function handleSave() {
     if (!profile?.id) {
@@ -425,6 +471,18 @@ export default function HomeProfilePage({ embedded = false }: { embedded?: boole
           <p style={{ color: "var(--dusk)", fontSize: 12.5, margin: "0 0 24px" }}>These fields are what show up on your card.</p>
 
           <Section title="Identity">
+            <div style={{ display: "flex", alignItems: "center", gap: 16, marginBottom: 16 }}>
+              <div style={{ width: 64, height: 64, borderRadius: "50%", flexShrink: 0, overflow: "hidden", background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.08)", display: "flex", alignItems: "center", justifyContent: "center" }}>
+                {avatarUrl
+                  ? <img src={avatarUrl} alt="Avatar" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+                  : <span style={{ fontSize: 22, color: "rgba(240,237,232,0.2)" }}>👤</span>
+                }
+              </div>
+              <label style={{ display: "inline-block", padding: "9px 18px", borderRadius: 10, background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.08)", color: avatarUploading ? "rgba(240,237,232,0.3)" : "var(--ivory)", fontSize: 12, fontWeight: 500, cursor: avatarUploading ? "not-allowed" : "pointer" }}>
+                {avatarUploading ? "Uploading..." : avatarUrl ? "Change photo" : "Upload photo"}
+                <input type="file" accept="image/*" onChange={handleAvatarUpload} disabled={avatarUploading} style={{ display: "none" }} />
+              </label>
+            </div>
             <input value={displayName} onChange={e => setDisplayName(e.target.value)} placeholder="Full name" style={inp} />
             <input value={headline} onChange={e => setHeadline(e.target.value)} placeholder="Headline — e.g. Product Designer building things people love" style={inp} />
             <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10 }}>
@@ -545,7 +603,10 @@ export default function HomeProfilePage({ embedded = false }: { embedded?: boole
         {/* Identity */}
         <div style={{ textAlign: "center", marginBottom: 28 }}>
           <div style={{ display: "flex", justifyContent: "center", marginBottom: 18 }}>
-            <InitialsAvatar name={displayName} />
+            {avatarUrl
+              ? <img src={avatarUrl} alt="Avatar" style={{ width: 96, height: 96, borderRadius: "50%", objectFit: "cover", border: "2px solid rgba(226,109,52,0.3)" }} />
+              : <InitialsAvatar name={displayName} />
+            }
           </div>
           <h1 style={{ fontFamily: "var(--font-display)", fontSize: 25, fontWeight: 500, color: "var(--ivory)", letterSpacing: "-0.01em", margin: "0 0 6px" }}>
             {displayName || "Your name"}
