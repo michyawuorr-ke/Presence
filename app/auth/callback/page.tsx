@@ -1,19 +1,15 @@
 "use client";
-import { useEffect, useState } from "react";
+import { Suspense, useEffect, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { supabase } from "@/lib/supabase/client";
 
-export default function AuthCallback() {
+function CallbackHandler() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const [status, setStatus] = useState("Signing in...");
 
   useEffect(() => {
     async function handleCallback() {
-      // Supabase PKCE flow: the magic link lands here with ?code=...
-      // exchangeCodeForSession converts it into a real session + sets cookies.
-      // Without this, getSession() returns null because the token is only
-      // in the URL fragment which the server never sees.
       const code = searchParams.get("code");
 
       if (code) {
@@ -25,7 +21,6 @@ export default function AuthCallback() {
         }
       }
 
-      // Now session is established — read it
       const { data: { session } } = await supabase.auth.getSession();
       if (!session?.user) {
         router.push("/login");
@@ -65,6 +60,12 @@ export default function AuthCallback() {
   }, [router, searchParams]);
 
   return (
+    <p style={{ color: "var(--dusk)", fontSize: 13.5 }}>{status}</p>
+  );
+}
+
+export default function AuthCallback() {
+  return (
     <div style={{
       minHeight: "100vh",
       background: "radial-gradient(ellipse 900px 500px at 50% -10%, rgba(226,109,52,0.08), transparent), var(--base)",
@@ -72,7 +73,9 @@ export default function AuthCallback() {
       alignItems: "center",
       justifyContent: "center",
     }}>
-      <p style={{ color: "var(--dusk)", fontSize: 13.5 }}>{status}</p>
+      <Suspense fallback={<p style={{ color: "var(--dusk)", fontSize: 13.5 }}>Signing in...</p>}>
+        <CallbackHandler />
+      </Suspense>
     </div>
   );
 }
