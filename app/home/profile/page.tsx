@@ -50,6 +50,20 @@ function mapsHref(location: string) {
   return `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(location)}`;
 }
 
+/** wa.me needs the number in international format with no +, spaces, or
+ * leading zeros — just the digits (country code included). This strips
+ * everything else; it can't guess a missing country code, so numbers saved
+ * without one (e.g. a bare local "0712...") will need it added manually. */
+function waHref(phone: string) {
+  return `https://wa.me/${phone.replace(/[^\d]/g, "")}`;
+}
+
+/** Escapes the characters vCard (RFC 6350) treats as structural, so commas,
+ * semicolons, and newlines in a name/bio/org don't corrupt the file. */
+function vcardEscape(value: string) {
+  return value.replace(/\\/g, "\\\\").replace(/;/g, "\\;").replace(/,/g, "\\,").replace(/\n/g, "\\n");
+}
+
 /** No avatar_url column exists on master_profiles, and adding one is out of
  * scope here — so identity uses the same gradient initials mark the public
  * /u/[slug] card already uses, for visual consistency across the app. */
@@ -317,6 +331,35 @@ export default function HomeProfilePage() {
     a.click();
   }
 
+  /** Builds a real vCard 3.0 file from exactly the fields shown on the
+   * card — same source of truth, same privacy toggles — so "Save Contact"
+   * never leaks something the person chose to hide. */
+  function downloadVCard() {
+    if (!displayName) return;
+    const lines = ["BEGIN:VCARD", "VERSION:3.0"];
+    lines.push(`FN:${vcardEscape(displayName)}`);
+    lines.push(`N:${vcardEscape(displayName)};;;;`);
+    if (organisation) lines.push(`ORG:${vcardEscape(organisation)}`);
+    if (roleTitle) lines.push(`TITLE:${vcardEscape(roleTitle)}`);
+    if (showPhone && phone) lines.push(`TEL;TYPE=CELL:${phone.trim()}`);
+    if (showEmail && profile?.email) lines.push(`EMAIL:${profile.email}`);
+    if (showLocation && location) lines.push(`ADR;TYPE=WORK:;;${vcardEscape(location)};;;;`);
+    if (showPortfolio && portfolio) lines.push(`URL;TYPE=Portfolio:${toHref(portfolio)}`);
+    if (showWebsite && website) lines.push(`URL;TYPE=Website:${toHref(website)}`);
+    if (showLinkedin && linkedin) lines.push(`URL;TYPE=LinkedIn:${toHref(linkedin)}`);
+    if (showBio && bio) lines.push(`NOTE:${vcardEscape(bio)}`);
+    if (profile?.slug) lines.push(`URL;TYPE=Oreeti:https://oreeti.com/u/${profile.slug}`);
+    lines.push("END:VCARD");
+
+    const blob = new Blob([lines.join("\r\n")], { type: "text/vcard;charset=utf-8" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `${(displayName || "contact").trim().replace(/\s+/g, "-").toLowerCase()}.vcf`;
+    a.click();
+    URL.revokeObjectURL(url);
+  }
+
   if (loading) {
     return (
       <div style={{ minHeight: "100vh", background: "var(--base)", display: "flex", alignItems: "center", justifyContent: "center" }}>
@@ -437,6 +480,10 @@ export default function HomeProfilePage() {
 
   const contactRows = [
     showPhone && phone && { icon: "📞", label: "Phone", value: phone, href: telHref(phone) },
+    // Derived from the same phone number, not a separate field — no new
+    // column needed. Kept behind the same showPhone toggle as Phone itself,
+    // since hiding your number should hide this too.
+    showPhone && phone && { icon: "💬", label: "WhatsApp", value: phone, href: waHref(phone) },
     showEmail && profile?.email && { icon: "✉️", label: "Email", value: profile.email, href: `mailto:${profile.email}` },
     showLocation && location && { icon: "📍", label: "Location", value: location, href: mapsHref(location) },
     showPortfolio && portfolio && { icon: "🌐", label: "Portfolio", value: portfolio.replace(/^https?:\/\//i, ""), href: toHref(portfolio) },
@@ -507,12 +554,15 @@ export default function HomeProfilePage() {
                 <img src={qrDataUrl} alt="Your Oreeti QR code" style={{ width: "100%", height: "100%", display: "block" }} />
               </div>
               <p style={{ fontSize: 11.5, color: "var(--dusk)", margin: "0 0 12px" }}>oreeti.com/u/{profile.slug}</p>
-              <div style={{ display: "flex", justifyContent: "center", gap: 18 }}>
+              <div style={{ display: "flex", justifyContent: "center", gap: 18, flexWrap: "wrap" }}>
                 <button onClick={copyLink} style={{ background: "none", border: "none", color: "var(--dusk)", fontSize: 11.5, cursor: "pointer", padding: 0, textDecoration: "underline" }}>
                   {copied ? "Copied ✓" : "Copy link"}
                 </button>
                 <button onClick={downloadQr} style={{ background: "none", border: "none", color: "var(--dusk)", fontSize: 11.5, cursor: "pointer", padding: 0, textDecoration: "underline" }}>
                   Save QR
+                </button>
+                <button onClick={downloadVCard} style={{ background: "none", border: "none", color: "var(--dusk)", fontSize: 11.5, cursor: "pointer", padding: 0, textDecoration: "underline" }}>
+                  Save Contact
                 </button>
               </div>
             </>
