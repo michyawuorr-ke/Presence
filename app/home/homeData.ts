@@ -13,11 +13,24 @@ export interface MyEvent {
 }
 
 export interface MyConnection {
-  // Keyed by email — this is the "same person across events" identity,
-  // since handshakes/guest_profiles have no direct link to master_profiles.
-  email: string;
+  // Dedupe/React key. Event and card connections use the other person's
+  // email; "shared" entries (anonymous scanners with no account) have no
+  // email, so they key off the profile_contact_requests row id instead.
+  id: string;
+  // "event": met via a handshake at a live event — always mutual.
+  // "card": both people are Oreeti users who connected via the universal
+  //   identity card (/u/[slug]) — mutual, both see each other.
+  // "shared": someone scanned your card and sent their name+phone back
+  //   through the anonymous "Send Details Back" form, but has no Oreeti
+  //   account — one-way until (if ever) they create one and connect for
+  //   real, at which point that becomes a separate "card" entry.
+  source: "event" | "card" | "shared";
+  mutual: boolean;
   display_name: string;
   organisation: string | null;
+  phone?: string | null;
+  slug?: string | null;
+  created_at?: string | null;
   events_met_at: { event_id: string; event_title: string }[];
 }
 
@@ -108,8 +121,33 @@ export async function loadMyEvents(email: string): Promise<MyEvent[]> {
  * events, not just per-event handshakes. Joins handshakes → guest_profiles
  * → registrations (for email) since there's no direct FK from handshakes
  * to master_profiles. Grouped by email so "met at 2 events" is a real
- * count, not two separate unrelated connection rows. */
+ * count, not two separate unrelated connection rows.
+ *
+ * Also merges in the two universal-identity-card sources, which are
+ * intentionally NOT deduped against the event-based ones (or each other) —
+ * doing that well would mean matching across email/phone/name heuristically,
+ * which risks silently merging two different people. Someone you know from
+ * both an event and a card scan may appear twice; that's the safer failure
+ * mode. */
 export async function loadMyConnections(email: string): Promise<MyConnection[]> {
+  const eventConnections = await loadEventConnections(email);
+  const { data: myProfile } = await supabase
+    .from("master_profiles")
+    .select("id")
+    .eq("email", email)
+    .maybeSingle();
+
+  if (!myProfile?.id) return eventConnections;
+
+  const [cardConnections, sharedWithMe] = await Promise.all([
+    loadCardConnections(myProfile.id),
+    loadSharedWithMe(myProfile.id),
+  ]);
+
+  return [...sharedWithMe, ...cardConnections, ...eventConnections];
+}
+
+async function loadEventConnections(email: string): Promise<MyConnection[]> {
   // Step 1: find every guest_profiles.id that belongs to THIS person
   // across all their registrations (by email) — a person has one
   // guest_profiles row per event they've attended.
@@ -140,7 +178,6 @@ export async function loadMyConnections(email: string): Promise<MyConnection[]> 
 
   const myIdSet = new Set(myGuestProfileIds);
   const otherPartyIds = new Set<string>();
-  const eventByHandshake = new Map<string, string>(); // otherPartyId -> Set handled below
   const handshakesByOtherParty = new Map<string, string[]>(); // otherPartyId -> event_ids
 
   handshakes.forEach((h: any) => {
@@ -183,7 +220,9 @@ export async function loadMyConnections(email: string): Promise<MyConnection[]> 
       existing.events_met_at.push(...newMeetings);
     } else {
       byEmail.set(theirEmail, {
-        email: theirEmail,
+        id: theirEmail,
+        source: "event",
+        mutual: true,
         display_name: gp.display_name,
         organisation: gp.organisation,
         events_met_at: newMeetings,
@@ -194,4 +233,63 @@ export async function loadMyConnections(email: string): Promise<MyConnection[]> 
   return Array.from(byEmail.values()).sort(
     (a, b) => b.events_met_at.length - a.events_met_at.length
   );
+}
+
+/** Mutual connections made via the universal identity card (/u/[slug]) —
+ * both people are Oreeti users, so both sides of this same insert show up
+ * in each person's Connects list. */
+async function loadCardConnections(myMasterProfileId: string): Promise<MyConnection[]> {
+  const { data: rows } = await supabase
+    .from("profile_connections")
+    .select("sender_id,receiver_id,created_at")
+    .or(`sender_id.eq.${myMasterProfileId},receiver_id.eq.${myMasterProfileId}`);
+  if (!rows || rows.length === 0) return [];
+
+  const otherIds = Array.from(new Set(
+    rows.map((r: any) => (r.sender_id === myMasterProfileId ? r.receiver_id : r.sender_id))
+  ));
+  const { data: profiles } = await supabase
+    .from("master_profiles")
+    .select("id,display_name,organisation,email,slug")
+    .in("id", otherIds);
+
+  const createdAtByOtherId = new Map<string, string>();
+  rows.forEach((r: any) => {
+    const otherId = r.sender_id === myMasterProfileId ? r.receiver_id : r.sender_id;
+    createdAtByOtherId.set(otherId, r.created_at);
+  });
+
+  return (profiles || []).map((p: any) => ({
+    id: p.email || p.id,
+    source: "card" as const,
+    mutual: true,
+    display_name: p.display_name,
+    organisation: p.organisation,
+    slug: p.slug,
+    created_at: createdAtByOtherId.get(p.id) || null,
+    events_met_at: [],
+  }));
+}
+
+/** One-way: an anonymous scanner sent their name + phone back through the
+ * public card's "Send Details Back" form. They have no account, so there's
+ * nothing on their side to reciprocate yet. */
+async function loadSharedWithMe(myMasterProfileId: string): Promise<MyConnection[]> {
+  const { data: rows } = await supabase
+    .from("profile_contact_requests")
+    .select("id,name,phone,created_at")
+    .eq("master_profile_id", myMasterProfileId)
+    .order("created_at", { ascending: false });
+  if (!rows) return [];
+
+  return rows.map((r: any) => ({
+    id: r.id,
+    source: "shared" as const,
+    mutual: false,
+    display_name: r.name,
+    organisation: null,
+    phone: r.phone,
+    created_at: r.created_at,
+    events_met_at: [],
+  }));
 }

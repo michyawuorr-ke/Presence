@@ -300,23 +300,92 @@ function ConnectionsList({ connections, hadAnyMatch }: { connections: MyConnecti
   if (connections.length === 0) {
     return (
       <p style={{ color: "var(--dusk)", fontSize: 13.5, textAlign: "center", padding: "60px 0" }}>
-        {hadAnyMatch ? "No connects match." : "No connects yet — they'll show up here once you meet people at an event."}
+        {hadAnyMatch ? "No connects match." : "No connects yet — they'll show up here once you meet people at an event, connect via your Oreeti card, or someone scans your card and sends their details back."}
       </p>
     );
   }
+
+  const shared = connections.filter(c => c.source === "shared");
+  const mutual = connections.filter(c => c.source !== "shared");
+
   return (
-    <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
-      {connections.map(c => (
-        <div key={c.email} style={{ padding: "14px 16px", borderRadius: 14, background: "rgba(255,255,255,0.02)", border: "1px solid rgba(255,255,255,0.06)" }}>
-          <p style={{ fontSize: 13.5, fontWeight: 600, color: "var(--ivory)", margin: "0 0 2px" }}>{c.display_name}</p>
-          {c.organisation && <p style={{ fontSize: 11.5, color: "var(--dusk)", margin: "0 0 6px" }}>{c.organisation}</p>}
-          <p style={{ fontSize: 11, color: "var(--ember)", margin: 0 }}>
-            {c.events_met_at.length === 1
-              ? `Met at ${c.events_met_at[0].event_title}`
-              : `Met at ${c.events_met_at.length} events`}
+    <div style={{ display: "flex", flexDirection: "column", gap: 28 }}>
+      {shared.length > 0 && (
+        <div>
+          <p style={{ fontSize: 10, fontWeight: 700, letterSpacing: "0.1em", textTransform: "uppercase", color: "var(--gold)", margin: "0 0 12px" }}>
+            Shared With You
           </p>
+          <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+            {shared.map(c => <SharedRow key={c.id} connection={c} />)}
+          </div>
         </div>
-      ))}
+      )}
+      {mutual.length > 0 && (
+        <div>
+          {shared.length > 0 && (
+            <p style={{ fontSize: 10, fontWeight: 700, letterSpacing: "0.1em", textTransform: "uppercase", color: "rgba(138,115,85,0.6)", margin: "0 0 12px" }}>
+              Connects
+            </p>
+          )}
+          <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+            {mutual.map(c => <ConnectionRow key={c.id} connection={c} />)}
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
+function ConnectionRow({ connection: c }: { connection: MyConnection }) {
+  return (
+    <div style={{ padding: "14px 16px", borderRadius: 14, background: "rgba(255,255,255,0.02)", border: "1px solid rgba(255,255,255,0.06)" }}>
+      <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+        <p style={{ fontSize: 13.5, fontWeight: 600, color: "var(--ivory)", margin: "0 0 2px" }}>{c.display_name}</p>
+        {c.source === "card" && (
+          <span style={{ fontSize: 8.5, fontWeight: 700, color: "var(--gold)", background: "rgba(212,175,55,0.1)", padding: "2px 6px", borderRadius: 4, letterSpacing: "0.04em" }}>OREETI CARD</span>
+        )}
+      </div>
+      {c.organisation && <p style={{ fontSize: 11.5, color: "var(--dusk)", margin: "0 0 6px" }}>{c.organisation}</p>}
+      {c.source === "event" ? (
+        <p style={{ fontSize: 11, color: "var(--ember)", margin: 0 }}>
+          {c.events_met_at.length === 1
+            ? `Met at ${c.events_met_at[0].event_title}`
+            : `Met at ${c.events_met_at.length} events`}
+        </p>
+      ) : (
+        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+          <p style={{ fontSize: 11, color: "#22c55e", margin: 0 }}>✓ Connected</p>
+          {c.slug && (
+            <a href={`/u/${c.slug}`} style={{ fontSize: 11, color: "var(--gold)", textDecoration: "none", fontWeight: 600 }}>View card →</a>
+          )}
+        </div>
+      )}
+    </div>
+  );
+}
+
+/** A one-way "shared" entry — this person isn't an Oreeti user (yet), so
+ * there's no mutual connection to show, just what they chose to send back.
+ * Surfaces the phone directly since that's the whole point of the
+ * exchange, plus a nudge that this becomes a real connection if they ever
+ * create an account and connect through their own card. */
+function SharedRow({ connection: c }: { connection: MyConnection }) {
+  return (
+    <div style={{ padding: "14px 16px", borderRadius: 14, background: "rgba(212,175,55,0.04)", border: "1px solid rgba(212,175,55,0.15)" }}>
+      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+        <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+          <p style={{ fontSize: 13.5, fontWeight: 600, color: "var(--ivory)", margin: 0 }}>{c.display_name}</p>
+          <span style={{ fontSize: 8.5, fontWeight: 700, color: "var(--dusk)", background: "rgba(138,115,85,0.12)", padding: "2px 6px", borderRadius: 4, letterSpacing: "0.04em" }}>NOT YET ON OREETI</span>
+        </div>
+      </div>
+      {c.phone && (
+        <a href={`https://wa.me/${c.phone.replace(/[^\d]/g, "")}`} target="_blank" rel="noopener noreferrer" style={{ fontSize: 12, color: "var(--ivory-muted)", textDecoration: "none", margin: "4px 0 0", display: "block" }}>
+          💬 {c.phone}
+        </a>
+      )}
+      <p style={{ fontSize: 10.5, color: "rgba(240,237,232,0.35)", margin: "6px 0 0" }}>
+        Sent their details back after scanning your card — one-way until they create their own.
+      </p>
     </div>
   );
 }
