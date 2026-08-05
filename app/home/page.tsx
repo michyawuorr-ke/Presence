@@ -2,13 +2,14 @@
 import { useEffect, useState, useMemo } from "react";
 import { useRouter } from "next/navigation";
 import { supabase } from "@/lib/supabase/client";
+import IdentityCard from "./profile/page";
 import {
   loadMyEvents, loadMyConnections, checkIsHost,
   loadArchivedEventIds, archiveEvent, unarchiveEvent,
   type MyEvent, type MyConnection,
 } from "./homeData";
 
-type Tab = "events" | "connections";
+type Tab = "events" | "connections" | "profile";
 
 /** "Oreeti" wordmark, in place of the OreetiMark icon — the brand's
  * middle "ee" carries the ember accent, everything else stays ivory. */
@@ -134,7 +135,7 @@ export default function HomePage() {
             (instant, no page load) and Sign Out above stays visible on
             every tab instead of disappearing once you're "inside" Profile. */}
         <div style={{ display: "flex", gap: 4, marginBottom: 20, borderBottom: "1px solid rgba(234,230,223,0.08)" }}>
-          {(["events", "connections"] as Tab[]).map(t => (
+          {(["events", "connections", "profile"] as Tab[]).map(t => (
             <button key={t} onClick={() => setTab(t)}
               style={{
                 padding: "10px 4px", marginRight: 24, background: "none", border: "none",
@@ -142,22 +143,13 @@ export default function HomePage() {
                 color: tab === t ? "var(--ivory)" : "var(--ivory-muted)",
                 fontSize: 13, fontWeight: 600, letterSpacing: "0.02em", cursor: "pointer",
               }}>
-              {t === "events" ? "My Events" : "Connects"}
+              {t === "events" ? "My Events" : t === "connections" ? "Connects" : "Profile"}
             </button>
           ))}
-          <button onClick={() => router.push("/home/profile")}
-            style={{
-              padding: "10px 4px", marginRight: 24, background: "none", border: "none",
-              borderBottom: "2px solid transparent",
-              color: "var(--ivory-muted)",
-              fontSize: 13, fontWeight: 600, letterSpacing: "0.02em", cursor: "pointer",
-            }}>
-            Profile
-          </button>
         </div>
 
         {/* Search — only relevant to Events/Connects, not the Profile tab */}
-        {(
+        {tab !== "profile" && (
           <div style={{ display: "flex", gap: 8, marginBottom: 24 }}>
             <input
               value={search}
@@ -183,7 +175,9 @@ export default function HomePage() {
           </div>
         )}
 
-        {dataLoading ? (
+        {tab === "profile" ? (
+          <IdentityCard embedded />
+        ) : dataLoading ? (
           <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
             {[0, 1, 2].map(i => <div key={i} style={{ height: 84, borderRadius: 14, background: "rgba(255,255,255,0.02)" }} />)}
           </div>
