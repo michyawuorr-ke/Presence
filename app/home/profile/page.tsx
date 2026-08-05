@@ -140,6 +140,7 @@ export default function HomeProfilePage() {
   const [profile, setProfile] = useState<any>(null);
   const [qrDataUrl, setQrDataUrl] = useState<string | null>(null);
   const [copied, setCopied] = useState(false);
+  const [presenting, setPresenting] = useState(false);
   const [mode, setMode] = useState<"view" | "edit">("view");
   const [showMore, setShowMore] = useState(false);
 
@@ -582,12 +583,14 @@ export default function HomeProfilePage() {
         <div style={{ textAlign: "center", paddingTop: 8, borderTop: "1px solid rgba(255,255,255,0.06)" }}>
           {profile?.slug && qrDataUrl ? (
             <>
-              <div style={{
-                width: 176, height: 176, margin: "24px auto 14px", borderRadius: 18,
+              <button onClick={() => setPresenting(true)} aria-label="Present QR code full-screen" style={{
+                width: 176, height: 176, margin: "24px auto 8px", borderRadius: 18,
                 background: "#fff", padding: 12, boxShadow: "0 16px 40px -12px rgba(0,0,0,0.5)",
+                border: "none", cursor: "pointer", display: "block",
               }}>
                 <img src={qrDataUrl} alt="Your Oreeti QR code" style={{ width: "100%", height: "100%", display: "block" }} />
-              </div>
+              </button>
+              <p style={{ fontSize: 10.5, color: "rgba(240,237,232,0.3)", margin: "0 0 12px" }}>Tap to present — hides everything else on screen</p>
               <p style={{ fontSize: 11.5, color: "var(--dusk)", margin: "0 0 12px" }}>oreeti.com/u/{profile.slug}</p>
               <div style={{ display: "flex", justifyContent: "center", gap: 18, flexWrap: "wrap" }}>
                 <button onClick={copyLink} style={{ background: "none", border: "none", color: "var(--dusk)", fontSize: 11.5, cursor: "pointer", padding: 0, textDecoration: "underline" }}>
@@ -605,6 +608,30 @@ export default function HomeProfilePage() {
             <p style={{ fontSize: 12, color: "var(--dusk)", padding: "24px 0" }}>Save your profile to generate your QR code.</p>
           )}
         </div>
+
+        {/* Full-screen "Present" mode — the only thing on screen when
+            handing your phone to someone or holding it up to be scanned
+            is the QR itself and your name. Nothing else from the card
+            (bio, phone, links) is visible, so a bystander glancing at
+            the screen can't read anything they haven't earned by
+            actually scanning. */}
+        {presenting && qrDataUrl && (
+          <div onClick={() => setPresenting(false)} style={{
+            position: "fixed", inset: 0, background: "#fff", zIndex: 9999,
+            display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center",
+            padding: 24, cursor: "pointer",
+          }}>
+            <button onClick={() => setPresenting(false)} aria-label="Close" style={{
+              position: "absolute", top: 20, right: 20, width: 36, height: 36, borderRadius: "50%",
+              background: "rgba(27,26,23,0.06)", border: "none", color: "#1B1A17", fontSize: 16, cursor: "pointer",
+            }}>
+              ✕
+            </button>
+            <img src={qrDataUrl} alt="Your Oreeti QR code" style={{ width: "min(78vw, 340px)", height: "min(78vw, 340px)" }} />
+            <p style={{ fontFamily: "var(--font-display)", fontSize: 20, color: "#1B1A17", margin: "24px 0 4px" }}>{displayName}</p>
+            <p style={{ fontSize: 12.5, color: "#8A8474" }}>Scan to connect on Oreeti</p>
+          </div>
+        )}
 
         {notification && (
           <div style={{ marginTop: 24, textAlign: "center" }}>
