@@ -257,47 +257,57 @@ export default function HomeProfilePage() {
     load();
   }, [router]);
 
-  // Renders the QR onto a canvas rather than straight to a data URL so a
-  // small two-tone Oreeti mark can be drawn in the center afterward — at
-  // errorCorrectionLevel "H" the code tolerates up to ~30% obstruction, so
-  // a compact ~22%-wide mark still scans reliably while making the code
-  // recognizably ours before anyone even opens their camera.
+  // Renders the QR onto a canvas rather than straight to a data URL so the
+  // real Oreeti mark (same SVG as components/OreetiMark, rasterized) can be
+  // drawn in the center afterward — at errorCorrectionLevel "H" the code
+  // tolerates up to ~30% obstruction, so a compact mark still scans
+  // reliably while making the code recognizably ours before anyone even
+  // opens their camera.
   useEffect(() => {
     if (!profile?.slug) { setQrDataUrl(null); return; }
     let cancelled = false;
     const url = `https://oreeti.com/u/${profile.slug}`;
     const canvas = document.createElement("canvas");
-    QRCode.toCanvas(canvas, url, { errorCorrectionLevel: "H", margin: 1, width: 400 })
+
+    const markSvg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 108 140" fill="none">
+      <path stroke="#EAE6DF" stroke-width="10" stroke-linecap="round" d="M 52 14 C 22 14, 4 36, 4 62 C 4 88, 22 110, 52 110" />
+      <path stroke="#E26D34" stroke-width="10" stroke-linecap="round" d="M 56 6 C 86 6, 104 28, 104 54 C 104 80, 86 102, 56 102" />
+    </svg>`;
+    const markImg = new Image();
+    const markLoaded = new Promise<void>(resolve => {
+      markImg.onload = () => resolve();
+      markImg.onerror = () => resolve();
+    });
+    markImg.src = `data:image/svg+xml;base64,${btoa(markSvg)}`;
+
+    Promise.all([
+      QRCode.toCanvas(canvas, url, { errorCorrectionLevel: "H", margin: 1, width: 400 }),
+      markLoaded,
+    ])
       .then(() => {
         if (cancelled) return;
         const ctx = canvas.getContext("2d");
         if (ctx) {
           const size = canvas.width;
           const cx = size / 2, cy = size / 2;
-          const markSize = size * 0.22;
-          const pad = markSize * 0.22;
+          const markH = size * 0.2;
+          const markW = markH * (108 / 140);
+          const pad = markH * 0.28;
 
           ctx.fillStyle = "#ffffff";
-          const bx = cx - markSize / 2 - pad, by = cy - markSize / 2 - pad, bw = markSize + pad * 2, bh = markSize + pad * 2;
+          const bw = markW + pad * 2, bh = markH + pad * 2;
+          const bx = cx - bw / 2, by = cy - bh / 2;
           ctx.beginPath();
           if (typeof (ctx as any).roundRect === "function") {
-            (ctx as any).roundRect(bx, by, bw, bh, bw * 0.22);
+            (ctx as any).roundRect(bx, by, bw, bh, bh * 0.2);
           } else {
             ctx.rect(bx, by, bw, bh);
           }
           ctx.fill();
 
-          const r = markSize / 2 - markSize * 0.1;
-          ctx.lineWidth = markSize * 0.16;
-          ctx.lineCap = "round";
-          ctx.strokeStyle = "#D8D2C6";
-          ctx.beginPath();
-          ctx.arc(cx - markSize * 0.11, cy, r, Math.PI * 0.62, Math.PI * 1.72);
-          ctx.stroke();
-          ctx.strokeStyle = "#E26D34";
-          ctx.beginPath();
-          ctx.arc(cx + markSize * 0.11, cy, r, Math.PI * -0.38, Math.PI * 0.72);
-          ctx.stroke();
+          if (markImg.complete && markImg.naturalWidth > 0) {
+            ctx.drawImage(markImg, cx - markW / 2, cy - markH / 2, markW, markH);
+          }
         }
         setQrDataUrl(canvas.toDataURL());
       })

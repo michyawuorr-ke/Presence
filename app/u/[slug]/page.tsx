@@ -166,12 +166,17 @@ export default function PublicProfilePage() {
 
   function handleSaveContact() {
     if (!profile) return;
+    // This is the primary unlocked action — it's explicitly meant to hand
+    // over a real, usable phone number and email with zero friction, so it
+    // intentionally does NOT gate on show_phone/show_email the way the
+    // rest of this page's teaser content does. If you don't want a
+    // number reachable this way, leave phone_number blank on the profile.
     const vcard = buildVCard({
       name: profile.display_name,
       organisation: profile.organisation,
       role: profile.role_title,
-      phone: profile.show_phone ? profile.phone_number : null,
-      email: profile.show_email ? profile.email : null,
+      phone: profile.phone_number,
+      email: profile.email,
       location: profile.show_location ? profile.location : null,
       portfolio: profile.show_portfolio ? profile.portfolio_url : null,
       website: profile.show_website ? profile.website_url : null,
@@ -283,7 +288,7 @@ export default function PublicProfilePage() {
             {profile.show_interests && profile.interests && profile.interests.length > 0 && (
               <LockedCard title="Interested In" onTap={scrollToUnlock}>
                 <div style={{ display: "flex", flexWrap: "wrap", gap: 6 }}>
-                  {profile.interests.map(s => <span key={s} style={{ fontSize: 11.5, color: "var(--ember)", background: "rgba(226,109,52,0.06)", border: "1px solid rgba(226,109,52,0.2)", padding: "5px 11px", borderRadius: 20 }}>{s}</span>)}
+                  {profile.interests.map(s => <span key={s} style={{ fontSize: 11.5, color: "var(--gold)", background: "rgba(212,175,55,0.08)", border: "1px solid rgba(212,175,55,0.2)", padding: "5px 11px", borderRadius: 20 }}>{s}</span>)}
                 </div>
               </LockedCard>
             )}
@@ -296,8 +301,8 @@ export default function PublicProfilePage() {
             )}
             <button onClick={scrollToUnlock} style={{
               width: "100%", padding: "12px", borderRadius: 12, marginTop: 4,
-              background: "rgba(226,109,52,0.08)", border: "1px solid rgba(226,109,52,0.25)",
-              color: "var(--ember)", fontSize: 12.5, fontWeight: 600, cursor: "pointer",
+              background: "rgba(212,175,55,0.08)", border: "1px solid rgba(212,175,55,0.25)",
+              color: "var(--gold)", fontSize: 12.5, fontWeight: 600, cursor: "pointer",
             }}>
               🔒 Unlock Full Profile & Interactive Links
             </button>
@@ -320,7 +325,7 @@ export default function PublicProfilePage() {
               <div style={{ marginBottom: 24 }}>
                 <p style={{ fontSize: 9.5, fontWeight: 700, letterSpacing: "0.1em", textTransform: "uppercase", color: "rgba(138,115,85,0.6)", textAlign: "center", marginBottom: 8 }}>Interested In</p>
                 <div style={{ display: "flex", flexWrap: "wrap", gap: 6, justifyContent: "center" }}>
-                  {profile.interests.map(s => <span key={s} style={{ fontSize: 11.5, color: "var(--ember)", background: "rgba(226,109,52,0.06)", border: "1px solid rgba(226,109,52,0.2)", padding: "5px 11px", borderRadius: 20 }}>{s}</span>)}
+                  {profile.interests.map(s => <span key={s} style={{ fontSize: 11.5, color: "var(--gold)", background: "rgba(212,175,55,0.08)", border: "1px solid rgba(212,175,55,0.2)", padding: "5px 11px", borderRadius: 20 }}>{s}</span>)}
                 </div>
               </div>
             )}
@@ -350,7 +355,7 @@ export default function PublicProfilePage() {
             background: "linear-gradient(165deg, rgba(255,255,255,0.025), rgba(255,255,255,0.008))",
             border: "1px solid rgba(255,255,255,0.06)", borderRadius: 20, padding: "22px 20px", marginBottom: 20,
           }}>
-            <p style={{ fontSize: 10, fontWeight: 700, letterSpacing: "0.12em", textTransform: "uppercase", color: "var(--ember)", margin: "0 0 4px" }}>
+            <p style={{ fontSize: 10, fontWeight: 700, letterSpacing: "0.12em", textTransform: "uppercase", color: "var(--gold)", margin: "0 0 4px" }}>
               Send Your Details Back — 1-Tap
             </p>
             <p style={{ fontSize: 12, color: "rgba(240,237,232,0.5)", margin: "0 0 16px", lineHeight: 1.5 }}>
@@ -385,24 +390,22 @@ export default function PublicProfilePage() {
 
             <div style={{ textAlign: "center", fontSize: 11, color: "rgba(240,237,232,0.3)", margin: "12px 0" }}>or</div>
 
+            {/* Single combined CTA — this used to be three separate
+                messages pointing at the same /login destination (an
+                "unlock full profile" prompt, a "claim your card" prompt,
+                and a bottom banner). Consolidated into one. */}
             <p style={{ fontSize: 12, color: "rgba(240,237,232,0.55)", margin: "0 0 12px", lineHeight: 1.5, textAlign: "center" }}>
-              Create your free Oreeti Digital Card to automatically share your details back and stay connected.
+              Create a free account to get your custom Oreeti Digital Card — automatically share your details back, and view {profile.display_name.split(" ")[0]}'s skills, interests, and social channels.
             </p>
             <a href="/login?mode=landing" style={{
               display: "block", width: "100%", padding: 13, borderRadius: 12, boxSizing: "border-box",
-              background: "transparent", border: "1px solid rgba(226,109,52,0.35)",
-              color: "var(--ember)", fontSize: 12.5, fontWeight: 700, letterSpacing: "0.03em",
+              background: "transparent", border: "1px solid rgba(212,175,55,0.4)",
+              color: "var(--gold)", fontSize: 12.5, fontWeight: 700, letterSpacing: "0.03em",
               textTransform: "uppercase", textDecoration: "none", textAlign: "center",
             }}>
               Claim Your Free Oreeti Card
             </a>
           </div>
-        )}
-
-        {isAnonymous && hasTeaserContent && !isUnlocked && (
-          <p style={{ fontSize: 11.5, color: "rgba(240,237,232,0.4)", textAlign: "center", lineHeight: 1.6, marginBottom: 24 }}>
-            Create a free Oreeti account to view {profile.display_name.split(" ")[0]}'s skills, interests, and social channels.
-          </p>
         )}
 
         {/* Existing account → connect flow, unchanged for logged-in
@@ -421,21 +424,6 @@ export default function PublicProfilePage() {
             {connectState === "connecting" ? "Connecting..." : connectState === "error" ? "Try again" : "Connect"}
           </button>
         ) : null}
-
-        {/* -----------------------------------------------------------
-            BOTTOM BANNER
-        ----------------------------------------------------------- */}
-        {isAnonymous && (
-          <a href="/login?mode=landing" style={{
-            display: "block", textAlign: "center", marginTop: 32, padding: "14px 16px",
-            borderRadius: 14, background: "rgba(255,255,255,0.02)", border: "1px dashed rgba(255,255,255,0.1)",
-            textDecoration: "none",
-          }}>
-            <p style={{ fontSize: 12.5, color: "var(--ivory-muted)", margin: 0 }}>
-              Impressed? <span style={{ color: "var(--ember)", fontWeight: 600 }}>Create your own custom Oreeti card in 30 seconds.</span>
-            </p>
-          </a>
-        )}
       </div>
     </div>
   );
