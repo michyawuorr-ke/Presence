@@ -32,7 +32,7 @@ function Section({ title, sub, children }: { title: string; sub?: string; childr
   );
 }
 
-export default function HomeProfilePage() {
+export default function HomeProfilePage({ embedded }: { embedded?: boolean }) {
   const router = useRouter();
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
