@@ -2,29 +2,32 @@
 import { useEffect, useState } from "react";
 import { useParams } from "next/navigation";
 import { supabase } from "@/lib/supabase/client";
-import QRCode from "qrcode";
-import { Phone, Mail, MapPin, Globe, Linkedin, Instagram, MessageCircle } from "lucide-react";
+import { buildVCard, downloadVCardFile, toHref } from "@/lib/vcard";
 import OreetiMark from "@/components/OreetiMark";
 
 interface PublicProfile {
   id: string;
-  slug: string;
   display_name: string;
   headline: string | null;
   bio: string | null;
   organisation: string | null;
   role_title: string | null;
   location: string | null;
-  avatar_url: string | null;
+  industry: string | null;
+  skills: string[] | null;
+  interests: string[] | null;
   linkedin_url: string | null;
   website_url: string | null;
   portfolio_url: string | null;
   instagram_url: string | null;
   phone_number: string | null;
   email: string | null;
+  slug: string;
   show_bio: boolean;
   show_headline: boolean;
   show_location: boolean;
+  show_skills: boolean;
+  show_interests: boolean;
   show_linkedin: boolean;
   show_website: boolean;
   show_portfolio: boolean;
@@ -33,59 +36,48 @@ interface PublicProfile {
   show_email: boolean;
 }
 
-function toHref(url: string) {
-  if (!url) return "";
-  return /^https?:\/\//i.test(url) ? url : `https://${url}`;
-}
-
-// Tap-to-action rows: each one fires the native handler directly —
-// tel: opens the dialer, mailto: opens mail, maps opens directions,
-// no intermediate "are you sure" step. This is the whole point of a
-// digital card over a printed one.
-function ActionRow({ icon, label, href }: { icon: React.ReactNode; label: string; href: string }) {
+/** Soft initials mark — this app has no avatar photo storage for
+ * master_profiles, so every read-only card (this one and the owner-facing
+ * identity card) uses the same gradient initials treatment. */
+function Avatar({ name, size = 88 }: { name: string; size?: number }) {
+  const initial = name?.trim()?.charAt(0)?.toUpperCase() || "?";
   return (
-    <a
-      href={href}
-      target={href.startsWith("http") ? "_blank" : undefined}
-      rel={href.startsWith("http") ? "noopener noreferrer" : undefined}
-      style={{
-        display: "flex", alignItems: "center", gap: 12,
-        padding: "13px 16px", borderRadius: 14,
-        background: "rgba(255,255,255,0.02)", border: "1px solid rgba(255,255,255,0.06)",
-        color: "var(--ivory)", textDecoration: "none", fontSize: 13.5,
-      }}
-    >
-      <span style={{
-        width: 30, height: 30, borderRadius: 9, flexShrink: 0,
-        display: "flex", alignItems: "center", justifyContent: "center",
-        background: "rgba(226,109,52,0.1)", color: "var(--ember)",
-      }}>
-        {icon}
+    <div style={{
+      width: size, height: size, borderRadius: "50%", margin: "0 auto",
+      background: "linear-gradient(135deg, rgba(226,109,52,0.3), rgba(212,175,55,0.2))",
+      display: "flex", alignItems: "center", justifyContent: "center",
+    }}>
+      <span style={{ fontFamily: "var(--font-display)", fontSize: size * 0.36, color: "rgba(255,255,255,0.55)" }}>
+        {initial}
       </span>
-      <span style={{ overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{label}</span>
-    </a>
+    </div>
   );
 }
 
-// Social icons — tap opens that exact account directly, icon-only,
-// no raw URL text anywhere on the card.
-function SocialIcon({ href, label, icon }: { href: string; label: string; icon: React.ReactNode }) {
+/** A teaser card for content that's hidden from anonymous scanners — blurs
+ * the real content underneath (rather than omitting it) so there's
+ * something to be curious about, with a lock badge signaling why it's
+ * illegible and a tap target that opens the unlock CTA. */
+function LockedCard({ title, children, onTap }: { title: string; children: React.ReactNode; onTap: () => void }) {
   return (
-    <a
-      href={href}
-      target="_blank"
-      rel="noopener noreferrer"
-      aria-label={label}
-      style={{
-        width: 42, height: 42, borderRadius: "50%",
-        display: "flex", alignItems: "center", justifyContent: "center",
-        background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.08)",
-        color: "var(--ivory)",
-      }}
-    >
-      {icon}
-    </a>
+    <button onClick={onTap} style={{
+      display: "block", width: "100%", textAlign: "left", cursor: "pointer",
+      background: "rgba(255,255,255,0.02)", border: "1px solid rgba(255,255,255,0.06)",
+      borderRadius: 16, padding: "16px 18px", marginBottom: 10, position: "relative",
+    }}>
+      <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 10 }}>
+        <span style={{ fontSize: 9.5, fontWeight: 700, letterSpacing: "0.1em", textTransform: "uppercase", color: "rgba(240,237,232,0.35)" }}>{title}</span>
+        <span style={{ fontSize: 11, opacity: 0.5 }}>🔒</span>
+      </div>
+      <div style={{ filter: "blur(5px)", userSelect: "none", pointerEvents: "none" }} aria-hidden="true">
+        {children}
+      </div>
+    </button>
   );
+}
+
+function toWaHref(phone: string) {
+  return `https://wa.me/${phone.replace(/[^\d]/g, "")}`;
 }
 
 export default function PublicProfilePage() {
@@ -94,9 +86,18 @@ export default function PublicProfilePage() {
 
   const [loading, setLoading] = useState(true);
   const [profile, setProfile] = useState<PublicProfile | null>(null);
-  const [qrDataUrl, setQrDataUrl] = useState<string | null>(null);
+  const [viewerEmail, setViewerEmail] = useState<string | null>(null);
   const [viewerMasterProfileId, setViewerMasterProfileId] = useState<string | null>(null);
   const [connectState, setConnectState] = useState<"idle" | "connecting" | "connected" | "self" | "error">("idle");
+
+  // Reciprocal "Send Details Back" quick-contact form — the anonymous-
+  // scanner path that doesn't require creating an account.
+  const [quickFormOpen, setQuickFormOpen] = useState(false);
+  const [qcName, setQcName] = useState("");
+  const [qcPhone, setQcPhone] = useState("");
+  const [qcSubmitting, setQcSubmitting] = useState(false);
+  const [qcDone, setQcDone] = useState(false);
+  const [qcError, setQcError] = useState("");
 
   useEffect(() => {
     async function load() {
@@ -108,12 +109,9 @@ export default function PublicProfilePage() {
       if (!prof) { setLoading(false); return; }
       setProfile(prof);
 
-      QRCode.toDataURL(`https://oreeti.com/u/${prof.slug}`, { errorCorrectionLevel: "H", margin: 1, width: 400 })
-        .then(setQrDataUrl)
-        .catch(() => {});
-
       if (session?.user?.email) {
         const email = session.user.email.toLowerCase();
+        setViewerEmail(email);
         const { data: viewerProf } = await supabase
           .from("master_profiles")
           .select("id")
@@ -147,6 +145,43 @@ export default function PublicProfilePage() {
     setConnectState(error ? "error" : "connected");
   }
 
+  async function submitQuickContact() {
+    if (!profile || !qcName.trim() || !qcPhone.trim()) return;
+    setQcSubmitting(true);
+    setQcError("");
+    try {
+      const res = await fetch("/api/connect/quick-contact", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ master_profile_id: profile.id, name: qcName.trim(), phone: qcPhone.trim() }),
+      });
+      const json = await res.json();
+      if (!res.ok) { setQcError(json.error || "Couldn't send your details. Please try again."); setQcSubmitting(false); return; }
+      setQcDone(true);
+    } catch {
+      setQcError("Couldn't send your details. Please try again.");
+    }
+    setQcSubmitting(false);
+  }
+
+  function handleSaveContact() {
+    if (!profile) return;
+    const vcard = buildVCard({
+      name: profile.display_name,
+      organisation: profile.organisation,
+      role: profile.role_title,
+      phone: profile.show_phone ? profile.phone_number : null,
+      email: profile.show_email ? profile.email : null,
+      location: profile.show_location ? profile.location : null,
+      portfolio: profile.show_portfolio ? profile.portfolio_url : null,
+      website: profile.show_website ? profile.website_url : null,
+      linkedin: profile.show_linkedin ? profile.linkedin_url : null,
+      note: profile.show_bio ? profile.bio : null,
+      oreetiUrl: `https://oreeti.com/u/${profile.slug}`,
+    });
+    downloadVCardFile(vcard, `${profile.display_name.trim().replace(/\s+/g, "-").toLowerCase()}.vcf`);
+  }
+
   if (loading) {
     return (
       <div style={{ minHeight: "100vh", background: "var(--base)", display: "flex", alignItems: "center", justifyContent: "center" }}>
@@ -164,103 +199,214 @@ export default function PublicProfilePage() {
     );
   }
 
-  // Direct-action contact rows — only the ones the person has both
-  // filled in AND chosen to show.
-  const actions = [
-    profile.show_phone && profile.phone_number && {
-      key: "phone", icon: <Phone size={15} />, label: profile.phone_number, href: `tel:${profile.phone_number}`,
-    },
-    profile.show_email && profile.email && {
-      key: "email", icon: <Mail size={15} />, label: profile.email, href: `mailto:${profile.email}`,
-    },
-    profile.show_location && profile.location && {
-      key: "location", icon: <MapPin size={15} />, label: profile.location,
-      href: `https://maps.google.com/?q=${encodeURIComponent(profile.location)}`,
-    },
-    profile.show_website && profile.website_url && {
-      key: "website", icon: <Globe size={15} />, label: profile.website_url.replace(/^https?:\/\/(www\.)?/, "").replace(/\/$/, ""),
-      href: toHref(profile.website_url),
-    },
-  ].filter(Boolean) as { key: string; icon: React.ReactNode; label: string; href: string }[];
+  // Anyone with an established relationship to this profile — the owner
+  // themselves, or a viewer who's already connected — sees everything in
+  // full. Everyone else (an anonymous scanner, or a logged-in viewer who
+  // hasn't connected yet) sees the gated experience.
+  const isUnlocked = connectState === "self" || connectState === "connected";
+  const isAnonymous = !viewerMasterProfileId;
 
-  // Social icons — direct link to the exact account/profile, icon only.
-  const socials = [
-    profile.show_linkedin && profile.linkedin_url && { key: "linkedin", label: "LinkedIn", icon: <Linkedin size={18} />, href: toHref(profile.linkedin_url) },
-    profile.show_instagram && profile.instagram_url && { key: "instagram", label: "Instagram", icon: <Instagram size={18} />, href: toHref(profile.instagram_url) },
-    profile.show_portfolio && profile.portfolio_url && { key: "portfolio", label: "Portfolio", icon: <Globe size={18} />, href: toHref(profile.portfolio_url) },
-    profile.show_phone && profile.phone_number && {
-      key: "whatsapp", label: "WhatsApp", icon: <MessageCircle size={18} />,
-      href: `https://wa.me/${profile.phone_number.replace(/[^\d]/g, "")}`,
-    },
-  ].filter(Boolean) as { key: string; label: string; icon: React.ReactNode; href: string }[];
+  const roleOrgLine = [profile.role_title, profile.organisation].filter(Boolean).join(" · ");
+  const hasTeaserContent = Boolean(
+    (profile.show_skills && profile.skills?.length) ||
+    (profile.show_interests && profile.interests?.length) ||
+    (profile.show_linkedin && profile.linkedin_url) ||
+    (profile.show_website && profile.website_url) ||
+    (profile.show_portfolio && profile.portfolio_url) ||
+    (profile.show_instagram && profile.instagram_url)
+  );
+
+  const links = [
+    { label: "LinkedIn", url: profile.linkedin_url, show: profile.show_linkedin },
+    { label: "Website", url: profile.website_url, show: profile.show_website },
+    { label: "Portfolio", url: profile.portfolio_url, show: profile.show_portfolio },
+    { label: "Instagram", url: profile.instagram_url, show: profile.show_instagram },
+  ].filter(l => l.url && l.show);
+
+  function scrollToUnlock() {
+    document.getElementById("oreeti-unlock-cta")?.scrollIntoView({ behavior: "smooth", block: "start" });
+  }
 
   return (
     <div style={{ minHeight: "100vh", background: "radial-gradient(ellipse 900px 500px at 50% -10%, rgba(226,109,52,0.08), transparent), var(--base)" }}>
-      <div style={{ maxWidth: 440, margin: "0 auto", padding: "28px 20px 60px" }}>
+      <div style={{ maxWidth: 480, margin: "0 auto", padding: "28px 24px 60px" }}>
 
-        <div style={{ display: "flex", justifyContent: "center", marginBottom: 20, opacity: 0.85 }}>
-          <OreetiMark size={22} />
+        {/* Brand mark — so it's evident this is an Oreeti card even before
+            anyone reads a word of it. */}
+        <div style={{ display: "flex", justifyContent: "center", marginBottom: 24, opacity: 0.9 }}>
+          <OreetiMark size={26} />
         </div>
 
-        {/* Identity */}
-        <div style={{ textAlign: "center", marginBottom: 26 }}>
-          <div style={{
-            width: 92, height: 92, borderRadius: "50%", margin: "0 auto 18px", overflow: "hidden",
-            background: "linear-gradient(135deg, rgba(226,109,52,0.3), rgba(212,175,55,0.2))",
-            display: "flex", alignItems: "center", justifyContent: "center",
-            border: "1px solid rgba(255,255,255,0.08)",
-          }}>
-            {profile.avatar_url ? (
-              <img src={profile.avatar_url} alt="" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
-            ) : (
-              <span style={{ fontFamily: "var(--font-display)", fontSize: 34, color: "rgba(255,255,255,0.5)" }}>
-                {profile.display_name?.charAt(0)?.toUpperCase() || "?"}
-              </span>
-            )}
-          </div>
-          <h1 style={{ fontFamily: "var(--font-display)", fontSize: 24, fontWeight: 500, color: "var(--ivory)", margin: "0 0 4px", letterSpacing: "-0.01em" }}>
+        {/* ---------------------------------------------------------------
+            A. PUBLIC HERO — always unlocked, regardless of viewer state.
+        --------------------------------------------------------------- */}
+        <div style={{ textAlign: "center", marginBottom: 20 }}>
+          <Avatar name={profile.display_name} />
+          <h1 style={{ fontFamily: "var(--font-display)", fontSize: 24, fontWeight: 500, color: "var(--ivory)", margin: "18px 0 4px", letterSpacing: "-0.01em" }}>
             {profile.display_name}
           </h1>
           {profile.show_headline && profile.headline && (
             <p style={{ fontSize: 13.5, color: "var(--ember)", margin: "0 0 4px" }}>{profile.headline}</p>
           )}
-          {(profile.role_title || profile.organisation) && (
-            <p style={{ fontSize: 13, color: "var(--dusk)", margin: 0 }}>
-              {profile.role_title}{profile.role_title && profile.organisation ? " · " : ""}{profile.organisation}
-            </p>
+          {roleOrgLine && (
+            <p style={{ fontSize: 13, color: "var(--dusk)", margin: 0 }}>{roleOrgLine}</p>
+          )}
+          {isUnlocked && profile.show_bio && profile.bio && (
+            <p style={{ fontSize: 14, color: "rgba(240,237,232,0.75)", lineHeight: 1.65, margin: "16px 0 0" }}>{profile.bio}</p>
           )}
         </div>
 
-        {profile.show_bio && profile.bio && (
-          <p style={{ fontSize: 14, color: "rgba(240,237,232,0.75)", lineHeight: 1.65, textAlign: "center", marginBottom: 24 }}>
-            {profile.bio}
+        {/* Primary quick action — works with no account and no app. */}
+        <button onClick={handleSaveContact} style={{
+          width: "100%", padding: 15, borderRadius: 14, marginBottom: isUnlocked ? 28 : 22,
+          background: "linear-gradient(135deg, var(--ember), #c9591f)", color: "#fff", border: "none",
+          fontSize: 13, fontWeight: 700, letterSpacing: "0.04em", textTransform: "uppercase", cursor: "pointer",
+          boxShadow: "0 12px 28px -8px rgba(226,109,52,0.4)",
+        }}>
+          Save Contact
+        </button>
+
+        {/* -----------------------------------------------------------
+            B. TEASER / LOCKED CONTENT — only for anonymous scanners
+            without an established connection. Connected viewers and
+            the owner see this content unblurred instead, below.
+        ----------------------------------------------------------- */}
+        {!isUnlocked && hasTeaserContent && (
+          <div style={{ marginBottom: 22 }}>
+            {profile.show_skills && profile.skills && profile.skills.length > 0 && (
+              <LockedCard title="Skills" onTap={scrollToUnlock}>
+                <div style={{ display: "flex", flexWrap: "wrap", gap: 6 }}>
+                  {profile.skills.map(s => <span key={s} style={{ fontSize: 11.5, color: "var(--ivory)", background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.08)", padding: "5px 11px", borderRadius: 20 }}>{s}</span>)}
+                </div>
+              </LockedCard>
+            )}
+            {profile.show_interests && profile.interests && profile.interests.length > 0 && (
+              <LockedCard title="Interested In" onTap={scrollToUnlock}>
+                <div style={{ display: "flex", flexWrap: "wrap", gap: 6 }}>
+                  {profile.interests.map(s => <span key={s} style={{ fontSize: 11.5, color: "var(--ember)", background: "rgba(226,109,52,0.06)", border: "1px solid rgba(226,109,52,0.2)", padding: "5px 11px", borderRadius: 20 }}>{s}</span>)}
+                </div>
+              </LockedCard>
+            )}
+            {links.length > 0 && (
+              <LockedCard title="Social Links & Portfolio" onTap={scrollToUnlock}>
+                <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
+                  {links.map(l => <div key={l.label} style={{ fontSize: 13, color: "var(--ivory)" }}>{l.label} — oreeti.com/••••••</div>)}
+                </div>
+              </LockedCard>
+            )}
+            <button onClick={scrollToUnlock} style={{
+              width: "100%", padding: "12px", borderRadius: 12, marginTop: 4,
+              background: "rgba(226,109,52,0.08)", border: "1px solid rgba(226,109,52,0.25)",
+              color: "var(--ember)", fontSize: 12.5, fontWeight: 600, cursor: "pointer",
+            }}>
+              🔒 Unlock Full Profile & Interactive Links
+            </button>
+          </div>
+        )}
+
+        {/* Unlocked view — connected viewers and the owner see full bio
+            (rendered above) plus real, tappable links and tags. */}
+        {isUnlocked && (
+          <>
+            {profile.show_skills && profile.skills && profile.skills.length > 0 && (
+              <div style={{ marginBottom: 20 }}>
+                <p style={{ fontSize: 9.5, fontWeight: 700, letterSpacing: "0.1em", textTransform: "uppercase", color: "rgba(138,115,85,0.6)", textAlign: "center", marginBottom: 8 }}>Skills</p>
+                <div style={{ display: "flex", flexWrap: "wrap", gap: 6, justifyContent: "center" }}>
+                  {profile.skills.map(s => <span key={s} style={{ fontSize: 11.5, color: "var(--ivory)", background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.08)", padding: "5px 11px", borderRadius: 20 }}>{s}</span>)}
+                </div>
+              </div>
+            )}
+            {profile.show_interests && profile.interests && profile.interests.length > 0 && (
+              <div style={{ marginBottom: 24 }}>
+                <p style={{ fontSize: 9.5, fontWeight: 700, letterSpacing: "0.1em", textTransform: "uppercase", color: "rgba(138,115,85,0.6)", textAlign: "center", marginBottom: 8 }}>Interested In</p>
+                <div style={{ display: "flex", flexWrap: "wrap", gap: 6, justifyContent: "center" }}>
+                  {profile.interests.map(s => <span key={s} style={{ fontSize: 11.5, color: "var(--ember)", background: "rgba(226,109,52,0.06)", border: "1px solid rgba(226,109,52,0.2)", padding: "5px 11px", borderRadius: 20 }}>{s}</span>)}
+                </div>
+              </div>
+            )}
+            {profile.show_phone && profile.phone_number && (
+              <a href={toWaHref(profile.phone_number)} target="_blank" rel="noopener noreferrer" style={{ display: "block", padding: "12px 16px", borderRadius: 12, background: "rgba(255,255,255,0.02)", border: "1px solid rgba(255,255,255,0.06)", color: "var(--ivory)", fontSize: 13, textDecoration: "none", textAlign: "center", marginBottom: 8 }}>
+                💬 WhatsApp
+              </a>
+            )}
+            {links.length > 0 && (
+              <div style={{ display: "flex", flexDirection: "column", gap: 8, marginBottom: 28 }}>
+                {links.map(l => (
+                  <a key={l.label} href={toHref(l.url!)} target="_blank" rel="noopener noreferrer"
+                    style={{ display: "block", padding: "12px 16px", borderRadius: 12, background: "rgba(255,255,255,0.02)", border: "1px solid rgba(255,255,255,0.06)", color: "var(--ivory)", fontSize: 13, textDecoration: "none", textAlign: "center" }}>
+                    {l.label}
+                  </a>
+                ))}
+              </div>
+            )}
+          </>
+        )}
+
+        {/* -----------------------------------------------------------
+            REGISTRATION AS A TWO-WAY VALUE EXCHANGE
+        ----------------------------------------------------------- */}
+        {isAnonymous && (
+          <div id="oreeti-unlock-cta" style={{
+            background: "linear-gradient(165deg, rgba(255,255,255,0.025), rgba(255,255,255,0.008))",
+            border: "1px solid rgba(255,255,255,0.06)", borderRadius: 20, padding: "22px 20px", marginBottom: 20,
+          }}>
+            <p style={{ fontSize: 10, fontWeight: 700, letterSpacing: "0.12em", textTransform: "uppercase", color: "var(--ember)", margin: "0 0 4px" }}>
+              Send Your Details Back — 1-Tap
+            </p>
+            <p style={{ fontSize: 12, color: "rgba(240,237,232,0.5)", margin: "0 0 16px", lineHeight: 1.5 }}>
+              Reciprocate connection with {profile.display_name.split(" ")[0]} — a scan shouldn't be one-sided.
+            </p>
+
+            {!quickFormOpen ? (
+              <button onClick={() => setQuickFormOpen(true)} style={{
+                width: "100%", padding: 13, borderRadius: 12, marginBottom: 10,
+                background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.1)",
+                color: "var(--ivory)", fontSize: 12.5, fontWeight: 600, cursor: "pointer",
+              }}>
+                Send my name & number back
+              </button>
+            ) : qcDone ? (
+              <p style={{ fontSize: 13, color: "#22c55e", textAlign: "center", margin: "0 0 10px" }}>✓ Sent — {profile.display_name.split(" ")[0]} will see your details.</p>
+            ) : (
+              <div style={{ marginBottom: 10 }}>
+                <input value={qcName} onChange={e => setQcName(e.target.value)} placeholder="Your name" style={{ width: "100%", padding: "12px 14px", borderRadius: 12, border: "1px solid rgba(255,255,255,0.07)", background: "rgba(255,255,255,0.02)", color: "var(--ivory)", fontSize: 14, outline: "none", marginBottom: 10, boxSizing: "border-box" }} />
+                <input value={qcPhone} onChange={e => setQcPhone(e.target.value)} placeholder="Your phone number" type="tel" style={{ width: "100%", padding: "12px 14px", borderRadius: 12, border: "1px solid rgba(255,255,255,0.07)", background: "rgba(255,255,255,0.02)", color: "var(--ivory)", fontSize: 14, outline: "none", marginBottom: 10, boxSizing: "border-box" }} />
+                {qcError && <p style={{ fontSize: 12, color: "#ef4444", margin: "0 0 10px" }}>{qcError}</p>}
+                <button onClick={submitQuickContact} disabled={qcSubmitting || !qcName.trim() || !qcPhone.trim()} style={{
+                  width: "100%", padding: 13, borderRadius: 12,
+                  background: qcSubmitting ? "rgba(255,255,255,0.06)" : "linear-gradient(135deg, var(--ember), #c9591f)",
+                  color: "#fff", border: "none", fontSize: 12.5, fontWeight: 700, letterSpacing: "0.03em",
+                  textTransform: "uppercase", cursor: qcSubmitting ? "default" : "pointer",
+                }}>
+                  {qcSubmitting ? "Sending..." : "Send my details"}
+                </button>
+              </div>
+            )}
+
+            <div style={{ textAlign: "center", fontSize: 11, color: "rgba(240,237,232,0.3)", margin: "12px 0" }}>or</div>
+
+            <p style={{ fontSize: 12, color: "rgba(240,237,232,0.55)", margin: "0 0 12px", lineHeight: 1.5, textAlign: "center" }}>
+              Create your free Oreeti Digital Card to automatically share your details back and stay connected.
+            </p>
+            <a href="/login?mode=landing" style={{
+              display: "block", width: "100%", padding: 13, borderRadius: 12, boxSizing: "border-box",
+              background: "transparent", border: "1px solid rgba(226,109,52,0.35)",
+              color: "var(--ember)", fontSize: 12.5, fontWeight: 700, letterSpacing: "0.03em",
+              textTransform: "uppercase", textDecoration: "none", textAlign: "center",
+            }}>
+              Claim Your Free Oreeti Card
+            </a>
+          </div>
+        )}
+
+        {isAnonymous && hasTeaserContent && !isUnlocked && (
+          <p style={{ fontSize: 11.5, color: "rgba(240,237,232,0.4)", textAlign: "center", lineHeight: 1.6, marginBottom: 24 }}>
+            Create a free Oreeti account to view {profile.display_name.split(" ")[0]}'s skills, interests, and social channels.
           </p>
         )}
 
-        {/* Tap-to-action contact rows */}
-        {actions.length > 0 && (
-          <div style={{ display: "flex", flexDirection: "column", gap: 8, marginBottom: 22 }}>
-            {actions.map(a => <ActionRow key={a.key} icon={a.icon} label={a.label} href={a.href} />)}
-          </div>
-        )}
-
-        {/* Social icons */}
-        {socials.length > 0 && (
-          <div style={{ display: "flex", justifyContent: "center", gap: 12, marginBottom: 28 }}>
-            {socials.map(s => <SocialIcon key={s.key} href={s.href} label={s.label} icon={s.icon} />)}
-          </div>
-        )}
-
-        {/* QR code */}
-        {qrDataUrl && (
-          <div style={{ display: "flex", justifyContent: "center", marginBottom: 28 }}>
-            <div style={{ width: 132, height: 132, borderRadius: 16, background: "#fff", padding: 10, boxShadow: "0 12px 30px -10px rgba(0,0,0,0.5)" }}>
-              <img src={qrDataUrl} alt="Scan to open this profile" style={{ width: "100%", height: "100%", display: "block" }} />
-            </div>
-          </div>
-        )}
-
-        {/* Connect action */}
+        {/* Existing account → connect flow, unchanged for logged-in
+            viewers who already have their own Oreeti profile. */}
         {connectState === "self" ? (
           <p style={{ textAlign: "center", fontSize: 12.5, color: "var(--dusk)" }}>This is your own profile.</p>
         ) : connectState === "connected" ? (
@@ -274,20 +420,21 @@ export default function PublicProfilePage() {
           }}>
             {connectState === "connecting" ? "Connecting..." : connectState === "error" ? "Try again" : "Connect"}
           </button>
-        ) : (
-          <div style={{ textAlign: "center" }}>
-            <p style={{ fontSize: 12.5, color: "var(--ivory-muted)", marginBottom: 14, lineHeight: 1.5 }}>
-              Create a free Oreeti account to save this connection and get your own profile to share.
+        ) : null}
+
+        {/* -----------------------------------------------------------
+            BOTTOM BANNER
+        ----------------------------------------------------------- */}
+        {isAnonymous && (
+          <a href="/login?mode=landing" style={{
+            display: "block", textAlign: "center", marginTop: 32, padding: "14px 16px",
+            borderRadius: 14, background: "rgba(255,255,255,0.02)", border: "1px dashed rgba(255,255,255,0.1)",
+            textDecoration: "none",
+          }}>
+            <p style={{ fontSize: 12.5, color: "var(--ivory-muted)", margin: 0 }}>
+              Impressed? <span style={{ color: "var(--ember)", fontWeight: 600 }}>Create your own custom Oreeti card in 30 seconds.</span>
             </p>
-            <a href={`/login?mode=landing`} style={{
-              display: "block", width: "100%", padding: 14, borderRadius: 14, boxSizing: "border-box",
-              background: "linear-gradient(135deg, var(--ember), #c9591f)",
-              color: "#fff", fontSize: 13, fontWeight: 700, letterSpacing: "0.04em",
-              textTransform: "uppercase", textDecoration: "none",
-            }}>
-              Create Free Account
-            </a>
-          </div>
+          </a>
         )}
       </div>
     </div>

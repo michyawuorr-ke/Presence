@@ -7,6 +7,7 @@ import QRCode from "qrcode";
 import TagInput from "./TagInput";
 import MultiSelectChips from "./MultiSelectChips";
 import { AVAILABILITY_OPTIONS } from "./profileOptions";
+import { buildVCard, downloadVCardFile } from "@/lib/vcard";
 
 // ---------------------------------------------------------------------------
 // The card reuses the app's existing dark theme tokens (var(--base),
@@ -56,12 +57,6 @@ function mapsHref(location: string) {
  * without one (e.g. a bare local "0712...") will need it added manually. */
 function waHref(phone: string) {
   return `https://wa.me/${phone.replace(/[^\d]/g, "")}`;
-}
-
-/** Escapes the characters vCard (RFC 6350) treats as structural, so commas,
- * semicolons, and newlines in a name/bio/org don't corrupt the file. */
-function vcardEscape(value: string) {
-  return value.replace(/\\/g, "\\\\").replace(/;/g, "\\;").replace(/,/g, "\\,").replace(/\n/g, "\\n");
 }
 
 /** No avatar_url column exists on master_profiles, and adding one is out of
@@ -262,12 +257,50 @@ export default function HomeProfilePage() {
     load();
   }, [router]);
 
+  // Renders the QR onto a canvas rather than straight to a data URL so a
+  // small two-tone Oreeti mark can be drawn in the center afterward — at
+  // errorCorrectionLevel "H" the code tolerates up to ~30% obstruction, so
+  // a compact ~22%-wide mark still scans reliably while making the code
+  // recognizably ours before anyone even opens their camera.
   useEffect(() => {
     if (!profile?.slug) { setQrDataUrl(null); return; }
     let cancelled = false;
     const url = `https://oreeti.com/u/${profile.slug}`;
-    QRCode.toDataURL(url, { errorCorrectionLevel: "H", margin: 1, width: 400 })
-      .then(d => { if (!cancelled) setQrDataUrl(d); })
+    const canvas = document.createElement("canvas");
+    QRCode.toCanvas(canvas, url, { errorCorrectionLevel: "H", margin: 1, width: 400 })
+      .then(() => {
+        if (cancelled) return;
+        const ctx = canvas.getContext("2d");
+        if (ctx) {
+          const size = canvas.width;
+          const cx = size / 2, cy = size / 2;
+          const markSize = size * 0.22;
+          const pad = markSize * 0.22;
+
+          ctx.fillStyle = "#ffffff";
+          const bx = cx - markSize / 2 - pad, by = cy - markSize / 2 - pad, bw = markSize + pad * 2, bh = markSize + pad * 2;
+          ctx.beginPath();
+          if (typeof (ctx as any).roundRect === "function") {
+            (ctx as any).roundRect(bx, by, bw, bh, bw * 0.22);
+          } else {
+            ctx.rect(bx, by, bw, bh);
+          }
+          ctx.fill();
+
+          const r = markSize / 2 - markSize * 0.1;
+          ctx.lineWidth = markSize * 0.16;
+          ctx.lineCap = "round";
+          ctx.strokeStyle = "#D8D2C6";
+          ctx.beginPath();
+          ctx.arc(cx - markSize * 0.11, cy, r, Math.PI * 0.62, Math.PI * 1.72);
+          ctx.stroke();
+          ctx.strokeStyle = "#E26D34";
+          ctx.beginPath();
+          ctx.arc(cx + markSize * 0.11, cy, r, Math.PI * -0.38, Math.PI * 0.72);
+          ctx.stroke();
+        }
+        setQrDataUrl(canvas.toDataURL());
+      })
       .catch(console.error);
     return () => { cancelled = true; };
   }, [profile?.slug]);
@@ -336,28 +369,20 @@ export default function HomeProfilePage() {
    * never leaks something the person chose to hide. */
   function downloadVCard() {
     if (!displayName) return;
-    const lines = ["BEGIN:VCARD", "VERSION:3.0"];
-    lines.push(`FN:${vcardEscape(displayName)}`);
-    lines.push(`N:${vcardEscape(displayName)};;;;`);
-    if (organisation) lines.push(`ORG:${vcardEscape(organisation)}`);
-    if (roleTitle) lines.push(`TITLE:${vcardEscape(roleTitle)}`);
-    if (showPhone && phone) lines.push(`TEL;TYPE=CELL:${phone.trim()}`);
-    if (showEmail && profile?.email) lines.push(`EMAIL:${profile.email}`);
-    if (showLocation && location) lines.push(`ADR;TYPE=WORK:;;${vcardEscape(location)};;;;`);
-    if (showPortfolio && portfolio) lines.push(`URL;TYPE=Portfolio:${toHref(portfolio)}`);
-    if (showWebsite && website) lines.push(`URL;TYPE=Website:${toHref(website)}`);
-    if (showLinkedin && linkedin) lines.push(`URL;TYPE=LinkedIn:${toHref(linkedin)}`);
-    if (showBio && bio) lines.push(`NOTE:${vcardEscape(bio)}`);
-    if (profile?.slug) lines.push(`URL;TYPE=Oreeti:https://oreeti.com/u/${profile.slug}`);
-    lines.push("END:VCARD");
-
-    const blob = new Blob([lines.join("\r\n")], { type: "text/vcard;charset=utf-8" });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement("a");
-    a.href = url;
-    a.download = `${(displayName || "contact").trim().replace(/\s+/g, "-").toLowerCase()}.vcf`;
-    a.click();
-    URL.revokeObjectURL(url);
+    const vcard = buildVCard({
+      name: displayName,
+      organisation: organisation || null,
+      role: roleTitle || null,
+      phone: showPhone && phone ? phone : null,
+      email: showEmail && profile?.email ? profile.email : null,
+      location: showLocation && location ? location : null,
+      portfolio: showPortfolio && portfolio ? portfolio : null,
+      website: showWebsite && website ? website : null,
+      linkedin: showLinkedin && linkedin ? linkedin : null,
+      note: showBio && bio ? bio : null,
+      oreetiUrl: profile?.slug ? `https://oreeti.com/u/${profile.slug}` : null,
+    });
+    downloadVCardFile(vcard, `${displayName.trim().replace(/\s+/g, "-").toLowerCase()}.vcf`);
   }
 
   if (loading) {
@@ -516,11 +541,11 @@ export default function HomeProfilePage() {
           {showHeadline && headline && (
             <p style={{ fontSize: 13.5, color: "var(--ember)", margin: "0 0 4px" }}>{headline}</p>
           )}
-          {roleOrgLine && (
-            <p style={{ fontSize: 13, color: "var(--dusk)", margin: 0 }}>{roleOrgLine}</p>
-          )}
           {showBio && bio && (
-            <p style={{ fontSize: 13.5, color: "rgba(240,237,232,0.7)", lineHeight: 1.65, margin: "16px 0 0" }}>{bio}</p>
+            <p style={{ fontSize: 13.5, color: "rgba(240,237,232,0.7)", lineHeight: 1.65, margin: "10px 0" }}>{bio}</p>
+          )}
+          {roleOrgLine && (
+            <p style={{ fontSize: 13, color: "var(--dusk)", margin: "6px 0 0" }}>{roleOrgLine}</p>
           )}
         </div>
 
