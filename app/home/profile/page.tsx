@@ -320,7 +320,7 @@ export default function HomeProfilePage({ embedded = false }: { embedded?: boole
   }, [profile?.slug]);
 
 
-  async function handleAvatarUpload(e) {
+  async function handleAvatarUpload(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0];
     if (!file || !profile?.id) return;
     if (file.size > 3 * 1024 * 1024) {
