@@ -2,14 +2,26 @@
 import { useEffect, useState, useMemo } from "react";
 import { useRouter } from "next/navigation";
 import { supabase } from "@/lib/supabase/client";
-import OreetiMark from "@/components/OreetiMark";
+import IdentityCard from "./profile/page";
 import {
   loadMyEvents, loadMyConnections, checkIsHost,
   loadArchivedEventIds, archiveEvent, unarchiveEvent,
   type MyEvent, type MyConnection,
 } from "./homeData";
 
-type Tab = "events" | "connections";
+type Tab = "events" | "connections" | "profile";
+
+/** "Oreeti" wordmark, in place of the OreetiMark icon — the brand's
+ * middle "ee" carries the ember accent, everything else stays ivory. */
+function Wordmark() {
+  return (
+    <span style={{ fontFamily: "var(--font-display)", fontSize: 21, fontWeight: 500, letterSpacing: "-0.01em" }}>
+      <span style={{ color: "var(--ivory)" }}>Or</span>
+      <span style={{ color: "var(--ember)" }}>ee</span>
+      <span style={{ color: "var(--ivory)" }}>ti</span>
+    </span>
+  );
+}
 
 export default function HomePage() {
   const router = useRouter();
@@ -92,26 +104,18 @@ export default function HomePage() {
 
   return (
     <div style={{ minHeight: "100vh", background: "radial-gradient(ellipse 900px 500px at 50% -10%, rgba(226,109,52,0.06), transparent), var(--base)" }}>
-      <div style={{ maxWidth: 720, margin: "0 auto", padding: "48px 24px 100px" }}>
-        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 40 }}>
-          <OreetiMark size={30} />
+      <div style={{ maxWidth: 720, margin: "0 auto", padding: "24px 24px 100px" }}>
+        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 20 }}>
+          <Wordmark />
           <button onClick={handleSignOut} style={{ background: "none", border: "none", color: "var(--ivory-muted)", fontSize: 11.5, letterSpacing: "0.04em", cursor: "pointer" }}>
             Sign Out
           </button>
         </div>
 
-        <h1 style={{
-          fontFamily: "var(--font-display)", fontSize: "clamp(24px,4vw,32px)", fontWeight: 500,
-          color: "var(--ivory)", letterSpacing: "-0.02em", margin: "0 0 4px",
-        }}>
-          Your rooms, your people.
-        </h1>
-        <p style={{ color: "var(--dusk)", fontSize: 13.5, margin: "0 0 32px" }}>{email}</p>
-
         {isHost && (
           <div style={{
             display: "flex", justifyContent: "space-between", alignItems: "center",
-            padding: "14px 18px", borderRadius: 14, marginBottom: 32,
+            padding: "14px 18px", borderRadius: 14, marginBottom: 20,
             background: "rgba(212,175,55,0.06)", border: "1px solid rgba(212,175,55,0.2)",
           }}>
             <p style={{ fontSize: 12.5, color: "var(--gold)", fontWeight: 600, margin: 0 }}>You host events on Oreeti</p>
@@ -126,9 +130,12 @@ export default function HomePage() {
           </div>
         )}
 
-        {/* Tabs */}
+        {/* Tabs — Profile is a real tab now, not a link to a separate
+            route, so switching to it behaves exactly like Events/Connects
+            (instant, no page load) and Sign Out above stays visible on
+            every tab instead of disappearing once you're "inside" Profile. */}
         <div style={{ display: "flex", gap: 4, marginBottom: 20, borderBottom: "1px solid rgba(234,230,223,0.08)" }}>
-          {(["events", "connections"] as Tab[]).map(t => (
+          {(["events", "connections", "profile"] as Tab[]).map(t => (
             <button key={t} onClick={() => setTab(t)}
               style={{
                 padding: "10px 4px", marginRight: 24, background: "none", border: "none",
@@ -136,46 +143,41 @@ export default function HomePage() {
                 color: tab === t ? "var(--ivory)" : "var(--ivory-muted)",
                 fontSize: 13, fontWeight: 600, letterSpacing: "0.02em", cursor: "pointer",
               }}>
-              {t === "events" ? "My Events" : "Connects"}
+              {t === "events" ? "My Events" : t === "connections" ? "Connects" : "Profile"}
             </button>
           ))}
-          <a href="/home/profile"
-            style={{
-              padding: "10px 4px", background: "none", border: "none",
-              borderBottom: "2px solid transparent",
-              color: "var(--ivory-muted)", textDecoration: "none",
-              fontSize: 13, fontWeight: 600, letterSpacing: "0.02em", cursor: "pointer",
-            }}>
-            Profile
-          </a>
         </div>
 
-        {/* Search */}
-        <div style={{ display: "flex", gap: 8, marginBottom: 24 }}>
-          <input
-            value={search}
-            onChange={e => setSearch(e.target.value)}
-            placeholder={tab === "events" ? "Search your events" : "Search your connects"}
-            style={{
-              flex: 1, padding: "11px 14px", borderRadius: 12,
-              background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.08)",
-              color: "var(--ivory)", fontSize: 13.5, outline: "none", boxSizing: "border-box",
-            }}
-          />
-          {tab === "events" && archivedCount > 0 && (
-            <button onClick={() => setShowArchived(s => !s)}
+        {/* Search — only relevant to Events/Connects, not the Profile tab */}
+        {tab !== "profile" && (
+          <div style={{ display: "flex", gap: 8, marginBottom: 24 }}>
+            <input
+              value={search}
+              onChange={e => setSearch(e.target.value)}
+              placeholder={tab === "events" ? "Search your events" : "Search your connects"}
               style={{
-                flexShrink: 0, padding: "0 14px", borderRadius: 12, fontSize: 12, fontWeight: 600,
-                background: showArchived ? "rgba(226,109,52,0.1)" : "rgba(255,255,255,0.03)",
-                border: showArchived ? "1px solid rgba(226,109,52,0.3)" : "1px solid rgba(255,255,255,0.08)",
-                color: showArchived ? "var(--ember)" : "var(--ivory-muted)", cursor: "pointer",
-              }}>
-              {showArchived ? "Hide archived" : `Archived (${archivedCount})`}
-            </button>
-          )}
-        </div>
+                flex: 1, padding: "11px 14px", borderRadius: 12,
+                background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.08)",
+                color: "var(--ivory)", fontSize: 13.5, outline: "none", boxSizing: "border-box",
+              }}
+            />
+            {tab === "events" && archivedCount > 0 && (
+              <button onClick={() => setShowArchived(s => !s)}
+                style={{
+                  flexShrink: 0, padding: "0 14px", borderRadius: 12, fontSize: 12, fontWeight: 600,
+                  background: showArchived ? "rgba(226,109,52,0.1)" : "rgba(255,255,255,0.03)",
+                  border: showArchived ? "1px solid rgba(226,109,52,0.3)" : "1px solid rgba(255,255,255,0.08)",
+                  color: showArchived ? "var(--ember)" : "var(--ivory-muted)", cursor: "pointer",
+                }}>
+                {showArchived ? "Hide archived" : `Archived (${archivedCount})`}
+              </button>
+            )}
+          </div>
+        )}
 
-        {dataLoading ? (
+        {tab === "profile" ? (
+          <IdentityCard embedded />
+        ) : dataLoading ? (
           <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
             {[0, 1, 2].map(i => <div key={i} style={{ height: 84, borderRadius: 14, background: "rgba(255,255,255,0.02)" }} />)}
           </div>

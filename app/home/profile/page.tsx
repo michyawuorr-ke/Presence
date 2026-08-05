@@ -132,7 +132,7 @@ function SocialIcon({ href, label, children }: { href: string; label: string; ch
   );
 }
 
-export default function HomeProfilePage() {
+export default function HomeProfilePage({ embedded = false }: { embedded?: boolean } = {}) {
   const router = useRouter();
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -398,7 +398,7 @@ export default function HomeProfilePage() {
 
   if (loading) {
     return (
-      <div style={{ minHeight: "100vh", background: "var(--base)", display: "flex", alignItems: "center", justifyContent: "center" }}>
+      <div style={{ minHeight: embedded ? "40vh" : "100vh", background: embedded ? "transparent" : "var(--base)", display: "flex", alignItems: "center", justifyContent: "center" }}>
         <p style={{ color: "var(--dusk)", fontSize: 13.5 }}>Loading...</p>
       </div>
     );
@@ -414,9 +414,10 @@ export default function HomeProfilePage() {
   // -------------------------------------------------------------------
   if (mode === "edit") {
     return (
-      <div style={{ minHeight: "100vh", background: "radial-gradient(ellipse 1000px 600px at 50% -15%, rgba(226,109,52,0.1), transparent 60%), var(--base)" }}>
-        <div style={{ maxWidth: 560, margin: "0 auto", padding: "40px 24px 100px" }}>
+      <div style={{ minHeight: embedded ? "auto" : "100vh", background: embedded ? "transparent" : "radial-gradient(ellipse 1000px 600px at 50% -15%, rgba(226,109,52,0.1), transparent 60%), var(--base)" }}>
+        <div style={{ maxWidth: 560, margin: "0 auto", padding: embedded ? "0 0 60px" : "40px 24px 100px" }}>
           <button onClick={() => setMode("view")} style={{ display: "inline-block", marginBottom: 28, color: "var(--ivory-muted)", fontSize: 11.5, background: "none", border: "none", cursor: "pointer", padding: 0 }}>← Back to card</button>
+
 
           <h1 style={{ fontFamily: "var(--font-display)", fontSize: "clamp(20px,4vw,24px)", fontWeight: 500, color: "var(--ivory)", letterSpacing: "-0.02em", margin: "0 0 4px" }}>
             Edit your identity.
@@ -532,10 +533,10 @@ export default function HomeProfilePage() {
   ].filter(Boolean) as { label: string; href: string; glyph: React.ReactNode }[];
 
   return (
-    <div style={{ minHeight: "100vh", background: "radial-gradient(ellipse 1000px 600px at 50% -15%, rgba(226,109,52,0.08), transparent 60%), var(--base)" }}>
-      <div style={{ maxWidth: 420, margin: "0 auto", padding: "28px 24px 64px" }}>
-        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 24 }}>
-          <a href="/home" style={{ color: "var(--dusk)", fontSize: 12, textDecoration: "none" }}>← Back</a>
+    <div style={{ minHeight: embedded ? "auto" : "100vh", background: embedded ? "transparent" : "radial-gradient(ellipse 1000px 600px at 50% -15%, rgba(226,109,52,0.08), transparent 60%), var(--base)" }}>
+      <div style={{ maxWidth: 420, margin: "0 auto", padding: embedded ? "0 0 40px" : "28px 24px 64px" }}>
+        <div style={{ display: "flex", alignItems: "center", justifyContent: embedded ? "flex-end" : "space-between", marginBottom: 24 }}>
+          {!embedded && <a href="/home" style={{ color: "var(--dusk)", fontSize: 12, textDecoration: "none" }}>← Back</a>}
           <button onClick={() => setMode("edit")} style={{ background: "none", border: "none", color: "var(--ember)", fontSize: 12, fontWeight: 600, cursor: "pointer", padding: 0 }}>
             Edit
           </button>
