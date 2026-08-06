@@ -205,13 +205,18 @@ export default function NetworkingTab({ event, profile, isLive, isEnded, registr
           fetchNodes();
         }
       })
-      .subscribe();
+      .subscribe((status)=>{
+        if(status==="CHANNEL_ERROR"||status==="TIMED_OUT"){
+          setTimeout(()=>{ try{ ch.subscribe(); fetchNodes(); }catch(_){} },3000);
+        }
+      });
     channelRef.current=ch;
 
     // When the host upgrades a guest's role (e.g. attendee → VIP), the
     // guest_profiles row is updated. Re-fetch nodes so the new role badge
     // and permission (bypass_visibility etc.) take effect immediately —
     // without the upgraded guest needing to refresh their screen.
+    let roleRetryTimer: ReturnType<typeof setTimeout>|null=null;
     const roleChangeCh=supabase.channel("role-change:"+event.id)
       .on("postgres_changes",{event:"UPDATE",schema:"public",table:"guest_profiles",filter:"event_id=eq."+event.id},(payload:any)=>{
         // Update the node in-place if it's already visible, or re-fetch

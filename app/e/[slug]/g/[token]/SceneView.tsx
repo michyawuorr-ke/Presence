@@ -79,7 +79,11 @@ export default function SceneView({ event, registration, profile, masterProfile,
     supabase.from("events").select("status").eq("id", event.id).single().then(({ data }) => { if (data) setEventStatus(data.status); });
     const evCh = supabase.channel("event-status:" + event.id)
       .on("postgres_changes", { event: "UPDATE", schema: "public", table: "events", filter: "id=eq." + event.id }, (p) => { setEventStatus(p.new.status); })
-      .subscribe();
+      .subscribe((status) => {
+      if (status === "CHANNEL_ERROR" || status === "TIMED_OUT") {
+        setTimeout(() => { try { evCh.subscribe(); } catch(_) {} }, 3000);
+      }
+    });
     const tick = setInterval(() => {
       const n = new Date();
       const s = new Date(event.start_time);
@@ -123,13 +127,19 @@ export default function SceneView({ event, registration, profile, masterProfile,
     }
     fetchCounts();
     const interval = setInterval(fetchCounts, 15000);
+    let hsRetryTimer: ReturnType<typeof setTimeout> | null = null;
     const hsCh = supabase.channel("handshakes-count:" + event.id)
       .on("postgres_changes", { event: "INSERT", schema: "public", table: "handshakes" }, () => fetchCounts())
       .on("postgres_changes", { event: "INSERT", schema: "public", table: "guest_profiles", filter: "event_id=eq." + event.id }, () => fetchCounts())
       .on("postgres_changes", { event: "UPDATE", schema: "public", table: "guest_profiles", filter: "event_id=eq." + event.id }, () => fetchCounts())
       .on("postgres_changes", { event: "INSERT", schema: "public", table: "profile_unlocks", filter: "event_id=eq." + event.id }, () => fetchCounts())
-      .subscribe();
-    return () => { clearInterval(interval); supabase.removeChannel(hsCh); };
+      .subscribe((status) => {
+      if (status === "CHANNEL_ERROR" || status === "TIMED_OUT") {
+        if (hsRetryTimer) clearTimeout(hsRetryTimer);
+        hsRetryTimer = setTimeout(() => { try { hsCh.subscribe(); fetchCounts(); } catch(_) {} }, 3000);
+      }
+    });
+    return () => { clearInterval(interval); if (hsRetryTimer) clearTimeout(hsRetryTimer); supabase.removeChannel(hsCh); };
   }, [event]);
 
   return (
