@@ -660,7 +660,7 @@ export default function HomeProfilePage({ embedded = false }: { embedded?: boole
                 </div>
               </div>
             </div>
-          </div>>
+          </div>
           <h1 style={{ fontFamily: "var(--font-display)", fontSize: 26, fontWeight: 500, color: "var(--ivory)", letterSpacing: "-0.02em", margin: "0 0 4px" }}>
             {displayName || "Your name"}
           </h1>
