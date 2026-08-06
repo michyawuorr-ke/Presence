@@ -34,6 +34,50 @@ export default function SceneView({ event, registration, profile, masterProfile,
   const [networkingQR, setNetworkingQR] = useState("");
   const [qrError, setQrError] = useState(false);
 
+  // ── PWA install / open-app CTA ──
+  // The only way into app/home (the real app: My Events, My Connections,
+  // Profile) used to be typing the URL manually. This restores a CTA that
+  // sends people there — installing the PWA first if it isn't already.
+  const [installPrompt, setInstallPrompt] = useState<any>(null);
+  const [isStandalone, setIsStandalone] = useState(false);
+  const [showIOSHelp, setShowIOSHelp] = useState(false);
+
+  useEffect(() => {
+    const standalone =
+      window.matchMedia?.("(display-mode: standalone)").matches ||
+      (window.navigator as any).standalone === true;
+    setIsStandalone(standalone);
+
+    const onBeforeInstall = (e: Event) => {
+      e.preventDefault();
+      setInstallPrompt(e);
+    };
+    window.addEventListener("beforeinstallprompt", onBeforeInstall);
+    return () => window.removeEventListener("beforeinstallprompt", onBeforeInstall);
+  }, []);
+
+  async function handleOpenApp() {
+    if (isStandalone) {
+      window.location.href = "/home";
+      return;
+    }
+    if (installPrompt) {
+      installPrompt.prompt();
+      await installPrompt.userChoice.catch(() => {});
+      setInstallPrompt(null);
+      window.location.href = "/home";
+      return;
+    }
+    const isIOS = /iPad|iPhone|iPod/.test(window.navigator.userAgent) && !(window as any).MSStream;
+    if (isIOS) {
+      setShowIOSHelp(true);
+      return;
+    }
+    // No install prompt available (already installed via another route, or
+    // a browser that doesn't support it) — just go.
+    window.location.href = "/home";
+  }
+
   // Cached pending count for nav badge — no manual effect needed
   const { data: pendingCount = 0 } = usePendingCount(profile?.id, event?.id);
   const { data: introductions = [] } = useIntroductions(profile?.id, event?.id);
@@ -79,11 +123,7 @@ export default function SceneView({ event, registration, profile, masterProfile,
     supabase.from("events").select("status").eq("id", event.id).single().then(({ data }) => { if (data) setEventStatus(data.status); });
     const evCh = supabase.channel("event-status:" + event.id)
       .on("postgres_changes", { event: "UPDATE", schema: "public", table: "events", filter: "id=eq." + event.id }, (p) => { setEventStatus(p.new.status); })
-      .subscribe((status) => {
-      if (status === "CHANNEL_ERROR" || status === "TIMED_OUT") {
-        setTimeout(() => { try { evCh.subscribe(); } catch(_) {} }, 3000);
-      }
-    });
+      .subscribe();
     const tick = setInterval(() => {
       const n = new Date();
       const s = new Date(event.start_time);
@@ -127,19 +167,13 @@ export default function SceneView({ event, registration, profile, masterProfile,
     }
     fetchCounts();
     const interval = setInterval(fetchCounts, 15000);
-    let hsRetryTimer: ReturnType<typeof setTimeout> | null = null;
     const hsCh = supabase.channel("handshakes-count:" + event.id)
       .on("postgres_changes", { event: "INSERT", schema: "public", table: "handshakes" }, () => fetchCounts())
       .on("postgres_changes", { event: "INSERT", schema: "public", table: "guest_profiles", filter: "event_id=eq." + event.id }, () => fetchCounts())
       .on("postgres_changes", { event: "UPDATE", schema: "public", table: "guest_profiles", filter: "event_id=eq." + event.id }, () => fetchCounts())
       .on("postgres_changes", { event: "INSERT", schema: "public", table: "profile_unlocks", filter: "event_id=eq." + event.id }, () => fetchCounts())
-      .subscribe((status) => {
-      if (status === "CHANNEL_ERROR" || status === "TIMED_OUT") {
-        if (hsRetryTimer) clearTimeout(hsRetryTimer);
-        hsRetryTimer = setTimeout(() => { try { hsCh.subscribe(); fetchCounts(); } catch(_) {} }, 3000);
-      }
-    });
-    return () => { clearInterval(interval); if (hsRetryTimer) clearTimeout(hsRetryTimer); supabase.removeChannel(hsCh); };
+      .subscribe();
+    return () => { clearInterval(interval); supabase.removeChannel(hsCh); };
   }, [event]);
 
   return (
@@ -168,6 +202,7 @@ export default function SceneView({ event, registration, profile, masterProfile,
           masterProfile={masterProfile}
           onGoNetworking={() => setTab("networking")}
           onViewConnections={() => setTab("connections")}
+          onOpenApp={handleOpenApp}
         />
       )}
 
@@ -213,6 +248,31 @@ export default function SceneView({ event, registration, profile, masterProfile,
           isEnded={isEnded}
           registration={registration}
         />
+      )}
+
+      {showIOSHelp && (
+        <div
+          onClick={() => setShowIOSHelp(false)}
+          style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.7)", zIndex: 60, display: "flex", alignItems: "flex-end" }}
+        >
+          <div
+            onClick={(e) => e.stopPropagation()}
+            style={{ width: "100%", background: "#0f0d14", borderTop: "1px solid rgba(255,255,255,0.08)", borderRadius: "20px 20px 0 0", padding: "24px 20px calc(24px + env(safe-area-inset-bottom))" }}
+          >
+            <p style={{ color: "#f0ede8", fontSize: "16px", fontWeight: 600, marginBottom: "10px" }}>Add Oreeti to your Home Screen</p>
+            <p style={{ color: "rgba(240,237,232,0.6)", fontSize: "13.5px", lineHeight: 1.6, marginBottom: "18px" }}>
+              Tap the Share icon <span style={{ fontWeight: 700 }}>⬆︎</span> in Safari's toolbar, then choose <span style={{ fontWeight: 700 }}>"Add to Home Screen"</span>. Once it's installed, open it from there for the full app.
+            </p>
+            <div style={{ display: "flex", gap: "10px" }}>
+              <button onClick={() => setShowIOSHelp(false)} style={{ flex: 1, padding: "12px", borderRadius: "12px", background: "rgba(255,255,255,0.06)", color: "#f0ede8", border: "none", fontSize: "13.5px", cursor: "pointer" }}>
+                Got it
+              </button>
+              <button onClick={() => { setShowIOSHelp(false); window.location.href = "/home"; }} style={{ flex: 1, padding: "12px", borderRadius: "12px", background: "transparent", color: "rgba(240,237,232,0.5)", border: "1px solid rgba(255,255,255,0.12)", fontSize: "13.5px", cursor: "pointer" }}>
+                Continue in browser
+              </button>
+            </div>
+          </div>
+        </div>
       )}
 
       {/* ── Bottom Navigation ── */}

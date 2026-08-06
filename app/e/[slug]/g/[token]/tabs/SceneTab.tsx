@@ -13,23 +13,33 @@ interface SceneTabProps {
   masterProfile: any;
   onGoNetworking: () => void;
   onViewConnections: () => void;
+  onOpenApp: () => void;
 }
 
 export default function SceneTab({
   event, isLive, isEnded, countdown,
   networkingCount, connectionsCount,
   attendeeCount, qrScanCount, masterProfile,
-  onGoNetworking, onViewConnections,
+  onGoNetworking, onViewConnections, onOpenApp,
 }: SceneTabProps) {
   return (
     <div>
-      <div style={{ padding: "20px 20px 0" }}>
+      <div style={{ padding: "20px 20px 0", display: "flex", alignItems: "center", justifyContent: "space-between" }}>
         {/* OREETI wordmark — matches host dashboard: Or(white) ee(gold) ti(white) */}
         <p style={{ fontSize: "19px", fontWeight: "700", letterSpacing: "-0.03em", fontFamily: "'Helvetica Neue',Arial,sans-serif", margin: "0 0 0" }}>
           <span style={{ color: "#ffffff" }}>Or</span>
           <span style={{ color: "#E26D34" }}>ee</span>
           <span style={{ color: "#ffffff" }}>ti</span>
         </p>
+
+        {/* Only place that leads to app/home (My Events, My Connections,
+            Profile) — installs the PWA first if it isn't already there. */}
+        <button
+          onClick={onOpenApp}
+          style={{ display: "flex", alignItems: "center", gap: "5px", padding: "6px 12px", borderRadius: "20px", background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.1)", color: "rgba(240,237,232,0.8)", fontSize: "11.5px", fontWeight: "500", cursor: "pointer" }}
+        >
+          Open App ↗
+        </button>
       </div>
 
       {/* Banner sits below the wordmark */}
@@ -76,16 +86,16 @@ export default function SceneTab({
             {/* Only shown if this identity hasn't been claimed by a real
                 login yet — someone who's already signed in (this event or
                 a prior one) doesn't need to be asked again. */}
-            {masterProfile?.email && (
+            {masterProfile?.email && !masterProfile?.auth_user_id && (
               <div style={{ marginTop: "20px", paddingTop: "20px", borderTop: "1px solid rgba(255,255,255,0.06)" }}>
                 <p style={{ color: "rgba(240,237,232,0.5)", fontSize: "12.5px", margin: "0 0 12px", lineHeight: "1.5" }}>
-                  {masterProfile?.auth_user_id ? "Complete your profile to unlock your digital business card and keep your connections in one place." : "Create an account to get your digital business card, keep your event history and connections in one place."}
+                  This link is the only way back in right now. Create an account to keep your event history and connections in one place, across every Oreeti event.
                 </p>
                 <a
                   href={`/login?mode=login&email=${encodeURIComponent(masterProfile.email)}`}
                   style={{ display: "inline-block", padding: "10px 20px", borderRadius: "12px", background: "rgba(226,109,52,0.1)", border: "1px solid rgba(226,109,52,0.3)", color: PALETTE.orange, fontSize: "13px", fontWeight: "600", cursor: "pointer", textDecoration: "none" }}
                 >
-                  {masterProfile?.auth_user_id ? "Get your digital card →" : "Get my digital card →"}
+                  Save my history →
                 </a>
               </div>
             )}

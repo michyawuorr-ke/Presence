@@ -1,5 +1,4 @@
 import{NextRequest,NextResponse}from'next/server';
-import { rateLimit } from '@/lib/rateLimit';
 import{createClient}from'@supabase/supabase-js';
 
 const supabase=createClient(
@@ -9,14 +8,22 @@ const supabase=createClient(
 
 export async function POST(req:NextRequest){
   try{
-    const ip = req.headers.get('x-forwarded-for')?.split(',')[0]?.trim() || 'unknown';
-    if (!rateLimit('go-live:' + ip, 10, 3600000)) {
-      return NextResponse.json({ error: 'Too many requests.' }, { status: 429 });
-    }
-
     const{event_id,host_email}=await req.json();
     if(!event_id||!host_email){
       return NextResponse.json({error:'Missing fields'},{status:400});
+    }
+
+    // Require the caller's own session and confirm it's actually them —
+    // otherwise anyone who knows an event_id and a host's email could flip
+    // any event live and mint themselves a host registration for it.
+    const authHeader=req.headers.get('authorization')||'';
+    const token=authHeader.startsWith('Bearer ')?authHeader.slice(7):'';
+    if(!token){
+      return NextResponse.json({error:'Missing session'},{status:401});
+    }
+    const{data:{user},error:sessionError}=await supabase.auth.getUser(token);
+    if(sessionError||!user||user.email?.toLowerCase()!==host_email.toLowerCase()){
+      return NextResponse.json({error:'Not authorized for this host account'},{status:401});
     }
 
     // Verify event exists and belongs to this host

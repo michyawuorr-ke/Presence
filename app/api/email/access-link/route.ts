@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
-import { rateLimit } from '@/lib/rateLimit';
 import { Resend } from "resend";
 import { createClient } from "@supabase/supabase-js";
+import { rateLimit } from "@/lib/rateLimit";
 
 const resend = new Resend(process.env.RESEND_API_KEY);
 const supabase = createClient(
@@ -11,11 +11,14 @@ const supabase = createClient(
 
 export async function POST(req: NextRequest) {
   try {
-    const ip = req.headers.get('x-forwarded-for')?.split(',')[0]?.trim() || 'unknown';
-    if (!rateLimit('email-access:' + ip, 5, 300000)) {
-      return NextResponse.json({ error: 'Too many requests.' }, { status: 429 });
+    const ip = req.headers.get("x-forwarded-for")?.split(",")[0]?.trim() || "unknown";
+    // This route always emails the address already on file for the
+    // registration, not one the caller supplies, so it can't leak a link
+    // to a stranger — but with no limit, anyone with a registration_id and
+    // event_id could bomb a guest's inbox by calling it on repeat.
+    if (!rateLimit("access-link:" + ip, 5, 60000)) {
+      return NextResponse.json({ error: "Too many requests." }, { status: 429 });
     }
-
     const { registration_id, event_id } = await req.json();
     if (!registration_id || !event_id) {
       return NextResponse.json({ error: "Missing fields" }, { status: 400 });

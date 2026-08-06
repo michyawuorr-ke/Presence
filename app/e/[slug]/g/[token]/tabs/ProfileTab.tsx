@@ -13,7 +13,7 @@ interface ProfileTabProps {
   registration: any;
 }
 
-function EditProfile({ profile, masterProfile, onSave, onSaveError }: any) {
+function EditProfile({ profile, masterProfile, registration, onSave, onSaveError }: any) {
   // Master profile is the canonical, cross-event identity record.
   // guest_profiles is a secondary, per-event overlay — fall back to
   // it only when the master profile doesn't have a value yet.
@@ -44,6 +44,7 @@ function EditProfile({ profile, masterProfile, onSave, onSaveError }: any) {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           guest_profile_id: profile.id,
+          access_token: registration?.access_token,
           display_name: displayName,
           role_title: role,
           organisation,
@@ -336,6 +337,7 @@ export default function ProfileTab({ profile, masterProfile, event, onProfileUpd
         <EditProfile
           profile={profile}
           masterProfile={masterProfile}
+          registration={registration}
           onSave={(updatedMaster: any, updatedGuest: any) => {
             onMasterProfileUpdate(updatedMaster);
             if (updatedGuest) onProfileUpdate(updatedGuest);

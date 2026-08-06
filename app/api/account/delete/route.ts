@@ -1,5 +1,4 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { rateLimit } from '@/lib/rateLimit';
 import { createClient } from '@supabase/supabase-js';
 
 const supabase = createClient(
@@ -16,13 +15,22 @@ const supabase = createClient(
 // (fixed from CASCADE specifically for this) so the other party's record
 // of the connection survives, just with this side nulled out.
 export async function POST(req: NextRequest) {
-  const ip = req.headers.get('x-forwarded-for')?.split(',')[0]?.trim() || 'unknown';
-  if (!rateLimit('account-delete:' + ip, 3, 3600000)) {
-    return NextResponse.json({ error: 'Too many requests.' }, { status: 429 });
-  }
   const { authUserId } = await req.json();
   if (!authUserId) {
     return NextResponse.json({ error: 'Missing authUserId' }, { status: 400 });
+  }
+
+  // Require the caller's own session — otherwise anyone who captures a
+  // master_profiles auth_user_id (visible in any browser devtools network
+  // tab) could delete a stranger's account by POSTing it here directly.
+  const authHeader = req.headers.get('authorization') || '';
+  const token = authHeader.startsWith('Bearer ') ? authHeader.slice(7) : '';
+  if (!token) {
+    return NextResponse.json({ error: 'Missing session' }, { status: 401 });
+  }
+  const { data: { user }, error: sessionError } = await supabase.auth.getUser(token);
+  if (sessionError || !user || user.id !== authUserId) {
+    return NextResponse.json({ error: 'Not authorized to delete this account' }, { status: 401 });
   }
 
   // Delete the master_profiles row first — if this fails, we haven't
