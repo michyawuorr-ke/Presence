@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { rateLimit } from '@/lib/rateLimit';
 import { createClient } from '@supabase/supabase-js';
 
 const supabase = createClient(
@@ -15,6 +16,10 @@ const supabase = createClient(
 // (fixed from CASCADE specifically for this) so the other party's record
 // of the connection survives, just with this side nulled out.
 export async function POST(req: NextRequest) {
+  const ip = req.headers.get('x-forwarded-for')?.split(',')[0]?.trim() || 'unknown';
+  if (!rateLimit('account-delete:' + ip, 3, 3600000)) {
+    return NextResponse.json({ error: 'Too many requests.' }, { status: 429 });
+  }
   const { authUserId } = await req.json();
   if (!authUserId) {
     return NextResponse.json({ error: 'Missing authUserId' }, { status: 400 });

@@ -1,4 +1,5 @@
 import{NextRequest,NextResponse}from'next/server';
+import { rateLimit } from '@/lib/rateLimit';
 import{createClient}from'@supabase/supabase-js';
 
 const supabase=createClient(
@@ -57,6 +58,11 @@ export async function GET(req:NextRequest){
 // (bypasses RLS which blocks anon inserts). Called from bootstrapIdentity.
 export async function POST(req:NextRequest){
   try{
+    const ip = req.headers.get('x-forwarded-for')?.split(',')[0]?.trim() || 'unknown';
+    if (!rateLimit('host-profile:' + ip, 20, 60000)) {
+      return NextResponse.json({ error: 'Too many requests.' }, { status: 429 });
+    }
+
     const{registration_id,event_id,display_name,role_title,organisation,bio,linkedin_url,website_url,portfolio_url}=await req.json();
     if(!registration_id||!event_id)return NextResponse.json({error:'Missing fields'},{status:400});
 

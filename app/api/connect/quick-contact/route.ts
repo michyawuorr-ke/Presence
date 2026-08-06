@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { rateLimit } from '@/lib/rateLimit';
 import { createClient } from "@supabase/supabase-js";
 
 const supabase = createClient(
@@ -12,6 +13,11 @@ const supabase = createClient(
 // from people who aren't authenticated master_profiles users.
 export async function POST(req: NextRequest) {
   try {
+    const ip = req.headers.get('x-forwarded-for')?.split(',')[0]?.trim() || 'unknown';
+    if (!rateLimit('quick-contact:' + ip, 10, 60000)) {
+      return NextResponse.json({ error: 'Too many requests.' }, { status: 429 });
+    }
+
     const { master_profile_id, name, phone } = await req.json();
 
     const cleanName = typeof name === "string" ? name.trim().slice(0, 120) : "";
