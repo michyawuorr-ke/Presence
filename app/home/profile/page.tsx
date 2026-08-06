@@ -100,11 +100,12 @@ function ContactRow({ icon, label, value, href }: { icon: React.ReactNode; label
         borderRadius: 12, background: "rgba(255,255,255,0.02)", border: "1px solid rgba(255,255,255,0.06)",
         textDecoration: "none",
       }}>
-      <span style={{ width: 20, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0, color: "var(--ivory)" }}>{icon}</span>
+      <span style={{ width: 34, height: 34, borderRadius: 10, background: "rgba(226,109,52,0.1)", border: "1px solid rgba(226,109,52,0.18)", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0, color: "var(--ember)" }}>{icon}</span>
       <div style={{ minWidth: 0, flex: 1 }}>
-        <p style={{ margin: 0, fontSize: 9.5, letterSpacing: "0.08em", textTransform: "uppercase", color: "rgba(240,237,232,0.35)" }}>{label}</p>
-        <p style={{ margin: "2px 0 0", fontSize: 13.5, color: "var(--ivory)", fontWeight: 500, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{value}</p>
+        <p style={{ margin: 0, fontSize: 9, letterSpacing: "0.1em", textTransform: "uppercase", color: "rgba(240,237,232,0.3)", fontWeight: 600 }}>{label}</p>
+        <p style={{ margin: "3px 0 0", fontSize: 13.5, color: "var(--ivory)", fontWeight: 500, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{value}</p>
       </div>
+      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" opacity={0.2} style={{ flexShrink: 0 }}><path d="M9 18l6-6-6-6"/></svg>
     </a>
   );
 }
@@ -646,32 +647,31 @@ export default function HomeProfilePage({ embedded = false }: { embedded?: boole
         </div>
 
         {/* Identity */}
-        <div style={{ textAlign: "center", marginBottom: 28 }}>
-          {/* Cover banner */}
-          <div style={{
-            height: 110, borderRadius: "18px 18px 0 0", marginBottom: 0,
-            background: "linear-gradient(135deg, rgba(226,109,52,0.55) 0%, rgba(212,175,55,0.25) 50%, rgba(30,20,10,0.6) 100%), linear-gradient(180deg, #1a0f05 0%, #2a1508 100%)",
-          }} />
-          {/* Avatar overlapping the banner */}
-          <div style={{ display: "flex", justifyContent: "center", marginTop: -48, marginBottom: 14 }}>
-            <div style={{ borderRadius: "50%", border: "3px solid var(--base)", background: "var(--base)", lineHeight: 0 }}>
-              {avatarUrl
-                ? <img src={avatarUrl} alt="Avatar" style={{ width: 96, height: 96, borderRadius: "50%", objectFit: "cover" }} />
-                : <InitialsAvatar name={displayName} />
-              }
+        <div style={{ textAlign: "center", marginBottom: 24 }}>
+          <div style={{ display: "flex", justifyContent: "center", marginBottom: 18, marginTop: 8 }}>
+            <div style={{ position: "relative" }}>
+              <div style={{ position: "absolute", inset: -8, borderRadius: "50%", background: "radial-gradient(circle, rgba(226,109,52,0.2) 0%, transparent 70%)", pointerEvents: "none" }} />
+              <div style={{ width: 100, height: 100, borderRadius: "50%", padding: 2, background: "linear-gradient(135deg, rgba(226,109,52,0.8), rgba(212,175,55,0.4) 50%, rgba(226,109,52,0.15))", lineHeight: 0 }}>
+                <div style={{ width: "100%", height: "100%", borderRadius: "50%", overflow: "hidden", background: "var(--base)" }}>
+                  {avatarUrl
+                    ? <img src={avatarUrl} alt="Avatar" style={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }} />
+                    : <InitialsAvatar name={displayName} size={96} />
+                  }
+                </div>
+              </div>
             </div>
-          </div>
-          <h1 style={{ fontFamily: "var(--font-display)", fontSize: 25, fontWeight: 500, color: "var(--ivory)", letterSpacing: "-0.01em", margin: "0 0 6px" }}>
+          </div>>
+          <h1 style={{ fontFamily: "var(--font-display)", fontSize: 26, fontWeight: 500, color: "var(--ivory)", letterSpacing: "-0.02em", margin: "0 0 4px" }}>
             {displayName || "Your name"}
           </h1>
+          {roleOrgLine && (
+            <p style={{ fontSize: 10.5, color: "rgba(212,175,55,0.75)", fontWeight: 700, letterSpacing: "0.1em", textTransform: "uppercase", margin: "0 0 10px" }}>{roleOrgLine}</p>
+          )}
           {showHeadline && headline && (
-            <p style={{ fontSize: 13.5, color: "var(--ember)", margin: "0 0 4px" }}>{headline}</p>
+            <p style={{ fontSize: 13.5, color: "rgba(240,237,232,0.55)", margin: "0 0 4px", lineHeight: 1.5 }}>{headline}</p>
           )}
           {showBio && bio && (
-            <p style={{ fontSize: 13.5, color: "rgba(240,237,232,0.7)", lineHeight: 1.65, margin: "10px 0" }}>{bio}</p>
-          )}
-          {roleOrgLine && (
-            <p style={{ fontSize: 13, color: "var(--dusk)", margin: "6px 0 0" }}>{roleOrgLine}</p>
+            <p style={{ fontSize: 13, color: "rgba(240,237,232,0.4)", lineHeight: 1.7, margin: "8px 16px 0" }}>{bio}</p>
           )}
         </div>
 
