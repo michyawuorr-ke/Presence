@@ -1,4 +1,15 @@
 import { supabase } from "@/lib/supabase/client";
+import { createClient } from "@supabase/supabase-js";
+
+// Service role client — needed to bypass RLS when creating the host
+// guest_profiles row. Only used server-side (bootstrapIdentity is called
+// from loadEntry which runs in a useEffect, never during SSR).
+function getServiceClient() {
+  return createClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.SUPABASE_SERVICE_ROLE_KEY!
+  );
+}
 
 // Resolves identity for HOST registrations only. Guests are never
 // authenticated via Supabase Auth (they only ever hold a registration
@@ -47,24 +58,29 @@ export async function bootstrapIdentity(reg: any) {
 
   if (!guestProfile) {
     try {
-      const base = typeof window !== "undefined" ? window.location.origin : (process.env.NEXT_PUBLIC_APP_URL ?? "");
-      const res = await fetch(`${base}/api/events/host-profile`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
+      const svc = getServiceClient();
+      const { data: created, error: insertErr } = await svc
+        .from("guest_profiles")
+        .insert({
           registration_id: reg.id,
           event_id:        reg.event_id,
-          display_name:    hostProfile?.display_name ?? host.name,
+          display_name:    hostProfile?.display_name ?? host.name ?? "Host",
           role_title:      hostProfile?.role_title ?? "Event Host",
           organisation:    hostProfile?.organisation ?? "",
           bio:             hostProfile?.bio ?? "",
           linkedin_url:    hostProfile?.linkedin_url ?? null,
           website_url:     hostProfile?.website_url ?? null,
           portfolio_url:   hostProfile?.portfolio_url ?? null,
-        }),
-      });
-      const json = await res.json();
-      guestProfile = json.profile ?? null;
+          role:            "organizer",
+          networking_visible: true,
+          aura_active:     false,
+          show_linkedin:   true,
+          show_website:    true,
+          show_portfolio:  true,
+        })
+        .select()
+        .single();
+      if (!insertErr) guestProfile = created;
     } catch(e) {
       console.warn("Could not create host guest_profile:", e);
     }
