@@ -112,7 +112,7 @@ function ContactRow({ icon, label, value, href }: { icon: React.ReactNode; label
 
 function LinkedInGlyph() {
   return (
-    <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="var(--ivory)" strokeWidth="1.6" opacity={0.75}>
+    <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="#0A66C2" strokeWidth="1.6">
       <rect x="2.5" y="2.5" width="19" height="19" rx="4" />
       <line x1="7.2" y1="10" x2="7.2" y2="17" />
       <circle cx="7.2" cy="6.6" r="0.9" fill="var(--ivory)" stroke="none" />
@@ -136,10 +136,11 @@ function XGlyph() {
 }
 function InstagramGlyph() {
   return (
-    <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="var(--ivory)" strokeWidth="1.6" opacity={0.75}>
-      <rect x="2.5" y="2.5" width="19" height="19" rx="6" />
-      <circle cx="12" cy="12" r="4.6" />
-      <circle cx="17.3" cy="6.7" r="0.9" fill="var(--ivory)" stroke="none" />
+    <svg width="19" height="19" viewBox="0 0 24 24" fill="none" strokeWidth="1.6">
+      <defs><linearGradient id="ig" x1="0%" y1="100%" x2="100%" y2="0%"><stop offset="0%" stopColor="#f09433"/><stop offset="50%" stopColor="#dc2743"/><stop offset="100%" stopColor="#bc1888"/></linearGradient></defs>
+      <rect x="2.5" y="2.5" width="19" height="19" rx="6" stroke="url(#ig)"/>
+      <circle cx="12" cy="12" r="4.6" stroke="url(#ig)"/>
+      <circle cx="17.3" cy="6.7" r="0.9" fill="url(#ig)" stroke="none"/>
     </svg>
   );
 }
