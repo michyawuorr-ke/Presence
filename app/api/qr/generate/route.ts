@@ -18,18 +18,30 @@ export async function GET(req:NextRequest){
     }
 
     const regId=req.nextUrl.searchParams.get('reg_id');
+    const accessToken=req.nextUrl.searchParams.get('access_token');
     if(!regId){
       return NextResponse.json({error:'Missing reg_id'},{status:400});
     }
+    if(!accessToken){
+      return NextResponse.json({error:'Missing access_token'},{status:401});
+    }
 
+    // Without this, anyone who learns a registration id (a UUID that shows
+    // up in plenty of places — handshake target ids, this very endpoint's
+    // own URL) could mint someone else's entry QR and check in as them, or
+    // mint their rotating networking QR to impersonate an unlock. The
+    // access_token is the one thing only the real guest holds.
     const{data:registration}=await supabase
       .from('registrations')
-      .select('id')
+      .select('id,access_token')
       .eq('id',regId)
       .single();
 
     if(!registration){
       return NextResponse.json({error:'Registration not found'},{status:404});
+    }
+    if(registration.access_token!==accessToken){
+      return NextResponse.json({error:'Not authorized for this registration'},{status:401});
     }
 
     const windowId=Math.floor(Date.now()/WINDOW_MS);

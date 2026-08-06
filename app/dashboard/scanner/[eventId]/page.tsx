@@ -27,11 +27,11 @@ export default function ScannerPage() {
     offlineQueueRef.current = [];
     for (const entry of queue) {
       try {
-        await fetch("/api/checkin", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ qr_payload: entry.payload, event_id: eventId }) });
+        await fetch("/api/checkin", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ qr_payload: entry.payload, event_id: eventId, scanner_token: event?.scanner_token }) });
       } catch { offlineQueueRef.current.push(entry); }
     }
     setSyncing(false);
-  }, [eventId]);
+  }, [eventId, event]);
 
   useEffect(() => {
     const onOnline = () => { setOnline(true); flushQueue(); };
@@ -81,7 +81,7 @@ export default function ScannerPage() {
     setResult({ success: true, message: "Welcome", name: localReg.guest_name, time: checkinTime, offline: !online });
     if (online) {
       try {
-        const res = await fetch("/api/checkin", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ qr_payload: qrPayload, event_id: eventId }) });
+        const res = await fetch("/api/checkin", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ qr_payload: qrPayload, event_id: eventId, scanner_token: event?.scanner_token }) });
         const data = await res.json();
         if (!data.success && data.reason === "already_checked_in") {
           checkedInRef.current.delete(regId);

@@ -99,7 +99,7 @@ export default function SceneView({ event, registration, profile, masterProfile,
     if (!registration) return;
     let cancelled = false;
     async function genQRs() {
-      const res = await fetch("/api/qr/generate?reg_id=" + registration.id).catch(() => null);
+      const res = await fetch("/api/qr/generate?reg_id=" + registration.id + "&access_token=" + encodeURIComponent(registration.access_token)).catch(() => null);
       if (cancelled) return;
       if (res?.ok) {
         const { entryPayload, unlockPayload } = await res.json();

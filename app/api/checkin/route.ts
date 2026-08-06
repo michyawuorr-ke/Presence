@@ -14,10 +14,24 @@ export async function POST(req: NextRequest) {
     if (!rateLimit('checkin:' + ip, 60, 60000)) {
       return NextResponse.json({ error: 'Too many requests.' }, { status: 429 });
     }
-    const { qr_payload, event_id } = await req.json();
+    const { qr_payload, event_id, scanner_token } = await req.json();
     if (!qr_payload || !event_id) {
       return NextResponse.json({ error: 'Missing fields' }, { status: 400 });
     }
+
+    // The scanner page checks events.scanner_token client-side before
+    // letting someone start scanning, but that alone doesn't stop a direct
+    // POST here — anyone with an event_id and any captured qr_payload
+    // could check a stranger in remotely without ever holding the scanner
+    // link. Enforce the same check server-side.
+    if (!scanner_token) {
+      return NextResponse.json({ error: 'Missing scanner_token' }, { status: 401 });
+    }
+    const { data: scanEvent } = await supabase.from('events').select('scanner_token').eq('id', event_id).single();
+    if (!scanEvent || scanEvent.scanner_token !== scanner_token) {
+      return NextResponse.json({ error: 'Not authorized to scan for this event' }, { status: 401 });
+    }
+
     const regId = verifyQRPayload(qr_payload, 'presence:entry:');
     if (!regId) {
       return NextResponse.json({ success: false, reason: 'invalid', message: 'Invalid or tampered QR code' });

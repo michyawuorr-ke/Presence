@@ -45,13 +45,13 @@ export default function ForYouTab({ profile, event, registration }: ForYouTabPro
       { data: blocked },
     ] = await Promise.all([
       supabase.from("handshakes").select("sender_id,receiver_id")
-        .or(`sender_id.eq.${profile.id},receiver_id.eq.${profile.id}`),
+        .or(`sender_id.eq.${profile.id},receiver_id.eq.${profile.id}`).limit(1000),
       supabase.from("handshake_requests").select("recipient_id")
-        .eq("requester_id", profile.id),
+        .eq("requester_id", profile.id).limit(1000),
       supabase.from("handshake_requests").select("requester_id")
-        .eq("recipient_id", profile.id).eq("status", "declined"),
+        .eq("recipient_id", profile.id).eq("status", "declined").limit(1000),
       supabase.from("guest_blocks").select("blocked_id")
-        .eq("blocker_id", profile.id).eq("event_id", event.id),
+        .eq("blocker_id", profile.id).eq("event_id", event.id).limit(1000),
     ]);
 
     const interactions: InteractionMap = {
