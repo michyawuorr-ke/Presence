@@ -3,6 +3,7 @@ import "./globals.css";
 import { Inter } from "next/font/google";
 import { Analytics } from "@vercel/analytics/react";
 import QueryProvider from "./providers/QueryProvider";
+import RegisterSW from "./RegisterSW";
 
 const inter = Inter({ subsets: ["latin"], variable: "--font-inter" });
 
@@ -116,6 +117,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <noscript><iframe src="https://www.googletagmanager.com/ns.html?id=GTM-5H5ZQC9P" height="0" width="0" style={{ display: "none", visibility: "hidden" }}></iframe></noscript>
         {/* End Google Tag Manager (noscript) */}
         <QueryProvider>{children}</QueryProvider>
+        <RegisterSW />
         <Analytics />
       </body>
     </html>
