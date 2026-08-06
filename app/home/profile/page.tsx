@@ -104,6 +104,20 @@ function LinkedInGlyph() {
     </svg>
   );
 }
+function FacebookGlyph() {
+  return (
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+      <path d="M18 2h-3a5 5 0 0 0-5 5v3H7v4h3v8h4v-8h3l1-4h-4V7a1 1 0 0 1 1-1h3z"/>
+    </svg>
+  );
+}
+function XGlyph() {
+  return (
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+      <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-4.714-6.231-5.401 6.231H2.744l7.737-8.835L1.254 2.25H8.08l4.259 5.631 5.905-5.631zm-1.161 17.52h1.833L7.084 4.126H5.117z"/>
+    </svg>
+  );
+}
 function InstagramGlyph() {
   return (
     <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="var(--ivory)" strokeWidth="1.6" opacity={0.75}>
@@ -169,6 +183,8 @@ export default function HomeProfilePage({ embedded = false }: { embedded?: boole
   const [website, setWebsite] = useState("");
   const [linkedin, setLinkedin] = useState("");
   const [instagram, setInstagram] = useState("");
+  const [facebook, setFacebook] = useState("");
+  const [x, setX] = useState("");
   const [phone, setPhone] = useState("");
 
   // Privacy toggles
@@ -188,6 +204,8 @@ export default function HomeProfilePage({ embedded = false }: { embedded?: boole
   const [showWebsite, setShowWebsite] = useState(true);
   const [showPortfolio, setShowPortfolio] = useState(true);
   const [showInstagram, setShowInstagram] = useState(true);
+  const [showFacebook, setShowFacebook] = useState(true);
+  const [showX, setShowX] = useState(true);
   const [showPhone, setShowPhone] = useState(false);
   const [showEmail, setShowEmail] = useState(false);
 
@@ -237,6 +255,8 @@ export default function HomeProfilePage({ embedded = false }: { embedded?: boole
       setWebsite(data.website_url ?? "");
       setLinkedin(data.linkedin_url ?? "");
       setInstagram(data.instagram_url ?? "");
+      setFacebook(data.facebook_url ?? "");
+      setX(data.x_url ?? "");
       setPhone(data.phone_number ?? "");
       setShowBio(data.show_bio ?? true);
       setShowHeadline(data.show_headline ?? true);
@@ -254,6 +274,8 @@ export default function HomeProfilePage({ embedded = false }: { embedded?: boole
       setShowWebsite(data.show_website ?? true);
       setShowPortfolio(data.show_portfolio ?? true);
       setShowInstagram(data.show_instagram ?? true);
+      setShowFacebook(data.show_facebook ?? true);
+      setShowX(data.show_x ?? true);
       setShowPhone(data.show_phone ?? false);
       setShowEmail(data.show_email ?? false);
       setLoading(false);
@@ -389,7 +411,8 @@ export default function HomeProfilePage({ embedded = false }: { embedded?: boole
         show_skills: showSkills, show_open_to: showOpenTo, show_availability: showAvailability,
         show_interests: showInterests, show_causes: showCauses, show_languages: showLanguages,
         show_linkedin: showLinkedin, show_website: showWebsite, show_portfolio: showPortfolio,
-        show_instagram: showInstagram, show_phone: showPhone, show_email: showEmail,
+        show_instagram: showInstagram, show_facebook: showFacebook, show_x: showX,
+        show_phone: showPhone, show_email: showEmail,
       })
       .eq("id", profile.id)
       .select()
@@ -499,6 +522,8 @@ export default function HomeProfilePage({ embedded = false }: { embedded?: boole
             <input value={website} onChange={e => setWebsite(e.target.value)} placeholder="Website URL" style={inp} />
             <input value={linkedin} onChange={e => setLinkedin(e.target.value)} placeholder="LinkedIn URL" style={inp} />
             <input value={instagram} onChange={e => setInstagram(e.target.value)} placeholder="Instagram URL" style={{ ...inp, marginBottom: 0 }} />
+            <input value={facebook} onChange={e => setFacebook(e.target.value)} placeholder="Facebook URL" style={{ ...inp, marginBottom: 0 }} />
+            <input value={x} onChange={e => setX(e.target.value)} placeholder="X (Twitter) URL" style={{ ...inp, marginBottom: 0 }} />
           </Section>
 
           <button onClick={() => setShowMore(s => !s)} style={{
@@ -587,6 +612,8 @@ export default function HomeProfilePage({ embedded = false }: { embedded?: boole
   const socials = [
     showLinkedin && linkedin && { label: "LinkedIn", href: toHref(linkedin), glyph: <LinkedInGlyph /> },
     showInstagram && instagram && { label: "Instagram", href: toHref(instagram), glyph: <InstagramGlyph /> },
+    showFacebook && facebook && { label: "Facebook", href: toHref(facebook), glyph: <FacebookGlyph /> },
+    showX && x && { label: "X", href: toHref(x), glyph: <XGlyph /> },
     showWebsite && website && { label: "Website", href: toHref(website), glyph: <WebsiteGlyph /> },
   ].filter(Boolean) as { label: string; href: string; glyph: React.ReactNode }[];
 
