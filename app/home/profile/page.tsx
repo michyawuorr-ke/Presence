@@ -534,7 +534,28 @@ export default function HomeProfilePage({ embedded = false }: { embedded?: boole
           <Section title="Contact & Links" sub="Shown on your card as tappable rows and icons.">
             <div style={{ display: "flex", gap: 8 }}>
               <span style={{ ...inp, width: "auto", paddingLeft: 12, paddingRight: 12, color: "var(--dusk)", flexShrink: 0, display: "flex", alignItems: "center", marginBottom: 0, borderRadius: 10 }}>+254</span>
-              <input value={phone.replace(/^\+?254/, "")} onChange={e => setPhone("+254" + e.target.value.replace(/[^\d]/g, ""))} placeholder="7XX XXX XXX" type="tel" style={{ ...inp, marginBottom: 0, flex: 1 }} />
+              <input
+                value={phone.replace(/^\+?254/, "")}
+                onChange={e => {
+                  const raw = e.target.value.replace(/[^\d]/g, "");
+                  // Strip leading 0 — user typed 07XX or 01XX
+                  const stripped = raw.startsWith("0") ? raw.slice(1) : raw;
+                  setPhone("+254" + stripped);
+                }}
+                onBlur={e => {
+                  const digits = phone.replace(/[^\d]/g, "").replace(/^254/, "");
+                  if (digits.length > 0 && !/^[71]/.test(digits)) {
+                    setNotification("Enter number starting with 7 or 1 — e.g. 712 345 678");
+                    setTimeout(() => setNotification(""), 4000);
+                  } else if (digits.length > 0 && digits.length !== 9) {
+                    setNotification("Phone number must be 9 digits after +254");
+                    setTimeout(() => setNotification(""), 4000);
+                  }
+                }}
+                placeholder="7XX XXX XXX"
+                type="tel"
+                style={{ ...inp, marginBottom: 0, flex: 1 }}
+              />
             </div>
             <input value={location} onChange={e => setLocation(e.target.value)} placeholder="Location" style={inp} />
             <input value={portfolio} onChange={e => setPortfolio(e.target.value)} placeholder="Portfolio URL" style={inp} />
