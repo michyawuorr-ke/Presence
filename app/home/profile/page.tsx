@@ -735,8 +735,17 @@ export default function HomeProfilePage({ embedded = false }: { embedded?: boole
                 <button onClick={downloadQr} style={{ background: "none", border: "none", color: "var(--dusk)", fontSize: 11.5, cursor: "pointer", padding: 0, textDecoration: "underline" }}>
                   Save QR
                 </button>
-                <button onClick={downloadVCard} style={{ background: "none", border: "none", color: "var(--dusk)", fontSize: 11.5, cursor: "pointer", padding: 0, textDecoration: "underline" }}>
-                  Save Contact
+                <button onClick={() => {
+                  const url = `https://oreeti.com/u/${profile.slug}`;
+                  if (navigator.share) {
+                    navigator.share({ title: displayName, text: `Connect with ${displayName} on Oreeti`, url });
+                  } else {
+                    navigator.clipboard?.writeText(url);
+                    setNotification("Link copied");
+                    setTimeout(() => setNotification(""), 2500);
+                  }
+                }} style={{ background: "none", border: "none", color: "var(--dusk)", fontSize: 11.5, cursor: "pointer", padding: 0, textDecoration: "underline" }}>
+                  Share
                 </button>
               </div>
             </>
