@@ -602,11 +602,19 @@ export default function HomeProfilePage({ embedded = false }: { embedded?: boole
 
         {/* Identity */}
         <div style={{ textAlign: "center", marginBottom: 28 }}>
-          <div style={{ display: "flex", justifyContent: "center", marginBottom: 18 }}>
-            {avatarUrl
-              ? <img src={avatarUrl} alt="Avatar" style={{ width: 96, height: 96, borderRadius: "50%", objectFit: "cover", border: "2px solid rgba(226,109,52,0.3)" }} />
-              : <InitialsAvatar name={displayName} />
-            }
+          {/* Cover banner */}
+          <div style={{
+            height: 110, borderRadius: "18px 18px 0 0", marginBottom: 0,
+            background: "linear-gradient(135deg, rgba(226,109,52,0.55) 0%, rgba(212,175,55,0.25) 50%, rgba(30,20,10,0.6) 100%), linear-gradient(180deg, #1a0f05 0%, #2a1508 100%)",
+          }} />
+          {/* Avatar overlapping the banner */}
+          <div style={{ display: "flex", justifyContent: "center", marginTop: -48, marginBottom: 14 }}>
+            <div style={{ borderRadius: "50%", border: "3px solid var(--base)", background: "var(--base)", lineHeight: 0 }}>
+              {avatarUrl
+                ? <img src={avatarUrl} alt="Avatar" style={{ width: 96, height: 96, borderRadius: "50%", objectFit: "cover" }} />
+                : <InitialsAvatar name={displayName} />
+              }
+            </div>
           </div>
           <h1 style={{ fontFamily: "var(--font-display)", fontSize: 25, fontWeight: 500, color: "var(--ivory)", letterSpacing: "-0.01em", margin: "0 0 6px" }}>
             {displayName || "Your name"}
