@@ -76,16 +76,16 @@ export default function SceneTab({
             {/* Only shown if this identity hasn't been claimed by a real
                 login yet — someone who's already signed in (this event or
                 a prior one) doesn't need to be asked again. */}
-            {masterProfile?.email && !masterProfile?.auth_user_id && (
+            {masterProfile?.email && (
               <div style={{ marginTop: "20px", paddingTop: "20px", borderTop: "1px solid rgba(255,255,255,0.06)" }}>
                 <p style={{ color: "rgba(240,237,232,0.5)", fontSize: "12.5px", margin: "0 0 12px", lineHeight: "1.5" }}>
-                  Create an account to keep your event history and connections in one place, across every Oreeti event.
+                  {masterProfile?.auth_user_id ? "Complete your profile to unlock your digital business card and keep your connections in one place." : "Create an account to get your digital business card, keep your event history and connections in one place."}
                 </p>
                 <a
                   href={`/login?mode=login&email=${encodeURIComponent(masterProfile.email)}`}
                   style={{ display: "inline-block", padding: "10px 20px", borderRadius: "12px", background: "rgba(226,109,52,0.1)", border: "1px solid rgba(226,109,52,0.3)", color: PALETTE.orange, fontSize: "13px", fontWeight: "600", cursor: "pointer", textDecoration: "none" }}
                 >
-                  Save my history →
+                  {masterProfile?.auth_user_id ? "Get your digital card →" : "Get my digital card →"}
                 </a>
               </div>
             )}
