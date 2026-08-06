@@ -81,7 +81,7 @@ export default function NetworkingTab({ event, profile, isLive, isEnded, registr
   const fetchNodes=useCallback(async()=>{
     if(!profile||!event)return;
     // Hosts are always considered active in the networking view
-    const{data:approved}=await supabase.from("handshakes").select("sender_id,receiver_id").or("sender_id.eq."+profile.id+",receiver_id.eq."+profile.id);
+    const{data:approved}=await supabase.from("handshakes").select("sender_id,receiver_id").eq("event_id",event.id).or("sender_id.eq."+profile.id+",receiver_id.eq."+profile.id).limit(500);
     const approvedSet=new Set<string>();
     (approved||[]).forEach((h:any)=>{
       if(h.sender_id!==profile.id)approvedSet.add(h.sender_id);

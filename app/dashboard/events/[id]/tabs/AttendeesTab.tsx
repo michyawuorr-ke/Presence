@@ -67,7 +67,7 @@ export default function AttendeesTab({ eventId, isLive }: AttendeesTabProps) {
   function buildQuery() {
     let q = supabase
       .from("registrations")
-      .select("*, ticket_types(name, price), guest_profiles(id, display_name, role)")
+      .select("*, ticket_types(name, price), guest_profiles(id, display_name, role)").limit(500)
       .eq("event_id", eventId)
       .neq("status", "host");
     if (debouncedSearch) {

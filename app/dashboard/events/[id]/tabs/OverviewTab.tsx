@@ -92,9 +92,9 @@ export default function OverviewTab({
     let cancelled = false;
     async function loadReport() {
       const [{ data: guests }, { data: hs }, { data: unlocks }] = await Promise.all([
-        supabase.from("guest_profiles").select("id,display_name,role").eq("event_id", event.id),
-        supabase.from("handshakes").select("id,sender_id,receiver_id,created_at").eq("event_id", event.id),
-        supabase.from("profile_unlocks").select("handshake_id").eq("event_id", event.id),
+        supabase.from("guest_profiles").select("id,display_name,role").eq("event_id", event.id).limit(1000),
+        supabase.from("handshakes").select("id,sender_id,receiver_id,created_at").eq("event_id", event.id).limit(1000),
+        supabase.from("profile_unlocks").select("handshake_id").eq("event_id", event.id).limit(1000),
       ]);
       if (cancelled) return;
 
