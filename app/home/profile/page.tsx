@@ -420,7 +420,7 @@ export default function HomeProfilePage({ embedded = false }: { embedded?: boole
         what_i_do: whatIDo, featured_work: featuredWork, industry, location, skills,
         open_to: openTo, availability, interests, causes, languages,
         portfolio_url: portfolio, website_url: website, linkedin_url: linkedin,
-        phone_number: phone, instagram_url: instagram,
+        phone_number: phone, instagram_url: instagram, facebook_url: facebook, x_url: x,
         slug,
         show_bio: showBio, show_headline: showHeadline, show_known_for: showKnownFor,
         show_what_i_do: showWhatIDo, show_featured_work: showFeaturedWork, show_location: showLocation,
