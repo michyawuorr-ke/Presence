@@ -77,7 +77,22 @@ function InitialsAvatar({ name, size = 96 }: { name: string; size?: number }) {
   );
 }
 
-function ContactRow({ icon, label, value, href }: { icon: string; label: string; value: string; href: string }) {
+function PhoneGlyph() {
+  return (<svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" opacity={0.75}><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07A19.5 19.5 0 0 1 4.69 12a19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 3.6 1.27h3a2 2 0 0 1 2 1.72c.127.96.361 1.903.7 2.81a2 2 0 0 1-.45 2.11L7.91 8.91a16 16 0 0 0 6.06 6.06l.92-.92a2 2 0 0 1 2.11-.45c.907.339 1.85.573 2.81.7a2 2 0 0 1 1.72 2.02z"/></svg>);
+}
+function WhatsAppGlyph() {
+  return (<svg width="17" height="17" viewBox="0 0 32 32" fill="currentColor" opacity={0.75}><path d="M16 0C7.163 0 0 7.163 0 16c0 2.833.737 5.49 2.027 7.8L0 32l8.418-2.004A15.95 15.95 0 0 0 16 32c8.837 0 16-7.163 16-16S24.837 0 16 0zm8.093 22.188c-.337.944-1.67 1.728-2.337 1.838-.6.1-1.362.142-2.194-.138-.506-.17-1.155-.395-1.986-.773-3.488-1.506-5.768-5.012-5.944-5.244-.173-.232-1.41-1.874-1.41-3.574s.893-2.538 1.21-2.882c.317-.344.692-.43.923-.43l.663.012c.213.01.498-.081.779.594.29.694 1.006 2.432 1.093 2.607.087.175.144.379.028.614-.116.234-.173.38-.346.585-.173.206-.364.46-.52.618-.173.173-.353.362-.152.71.202.347.896 1.478 1.922 2.393 1.32 1.177 2.433 1.54 2.78 1.713.347.173.549.144.75-.087.202-.23.866-1.012 1.097-1.36.231-.346.462-.289.779-.173.317.116 2.01.948 2.356 1.12.347.173.578.26.664.404.087.144.087.838-.25 1.782z"/></svg>);
+}
+function EmailGlyph() {
+  return (<svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" opacity={0.75}><rect x="2" y="4" width="20" height="16" rx="2"/><path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7"/></svg>);
+}
+function LocationGlyph() {
+  return (<svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" opacity={0.75}><path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0z"/><circle cx="12" cy="10" r="3"/></svg>);
+}
+function PortfolioGlyph() {
+  return (<svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" opacity={0.75}><circle cx="12" cy="12" r="10"/><path d="M2 12h20M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>);
+}
+function ContactRow({ icon, label, value, href }: { icon: React.ReactNode; label: string; value: string; href: string }) {
   return (
     <a href={href} target={href.startsWith("tel:") || href.startsWith("mailto:") ? undefined : "_blank"} rel="noopener noreferrer"
       style={{
@@ -85,7 +100,7 @@ function ContactRow({ icon, label, value, href }: { icon: string; label: string;
         borderRadius: 12, background: "rgba(255,255,255,0.02)", border: "1px solid rgba(255,255,255,0.06)",
         textDecoration: "none",
       }}>
-      <span style={{ fontSize: 16, width: 20, textAlign: "center", flexShrink: 0 }}>{icon}</span>
+      <span style={{ width: 20, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0, color: "var(--ivory)" }}>{icon}</span>
       <div style={{ minWidth: 0, flex: 1 }}>
         <p style={{ margin: 0, fontSize: 9.5, letterSpacing: "0.08em", textTransform: "uppercase", color: "rgba(240,237,232,0.35)" }}>{label}</p>
         <p style={{ margin: "2px 0 0", fontSize: 13.5, color: "var(--ivory)", fontWeight: 500, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{value}</p>
@@ -516,7 +531,10 @@ export default function HomeProfilePage({ embedded = false }: { embedded?: boole
           </Section>
 
           <Section title="Contact & Links" sub="Shown on your card as tappable rows and icons.">
-            <input value={phone} onChange={e => setPhone(e.target.value)} placeholder="Phone number" type="tel" style={inp} />
+            <div style={{ display: "flex", gap: 8 }}>
+              <span style={{ ...inp, width: "auto", paddingLeft: 12, paddingRight: 12, color: "var(--dusk)", flexShrink: 0, display: "flex", alignItems: "center", marginBottom: 0, borderRadius: 10 }}>+254</span>
+              <input value={phone.replace(/^\+?254/, "")} onChange={e => setPhone("+254" + e.target.value.replace(/[^\d]/g, ""))} placeholder="7XX XXX XXX" type="tel" style={{ ...inp, marginBottom: 0, flex: 1 }} />
+            </div>
             <input value={location} onChange={e => setLocation(e.target.value)} placeholder="Location" style={inp} />
             <input value={portfolio} onChange={e => setPortfolio(e.target.value)} placeholder="Portfolio URL" style={inp} />
             <input value={website} onChange={e => setWebsite(e.target.value)} placeholder="Website URL" style={inp} />
@@ -599,15 +617,15 @@ export default function HomeProfilePage({ embedded = false }: { embedded?: boole
   const roleOrgLine = [roleTitle, organisation].filter(Boolean).join(" · ");
 
   const contactRows = [
-    showPhone && phone && { icon: "📞", label: "Phone", value: phone, href: telHref(phone) },
+    showPhone && phone && { icon: <PhoneGlyph />, label: "Phone", value: phone, href: telHref(phone) },
     // Derived from the same phone number, not a separate field — no new
     // column needed. Kept behind the same showPhone toggle as Phone itself,
     // since hiding your number should hide this too.
-    showPhone && phone && { icon: "💬", label: "WhatsApp", value: phone, href: waHref(phone) },
-    showEmail && profile?.email && { icon: "✉️", label: "Email", value: profile.email, href: `mailto:${profile.email}` },
-    showLocation && location && { icon: "📍", label: "Location", value: location, href: mapsHref(location) },
-    showPortfolio && portfolio && { icon: "🌐", label: "Portfolio", value: portfolio.replace(/^https?:\/\//i, ""), href: toHref(portfolio) },
-  ].filter(Boolean) as { icon: string; label: string; value: string; href: string }[];
+    showPhone && phone && { icon: <WhatsAppGlyph />, label: "WhatsApp", value: phone, href: waHref(phone) },
+    showEmail && profile?.email && { icon: <EmailGlyph />, label: "Email", value: profile.email, href: `mailto:${profile.email}` },
+    showLocation && location && { icon: <LocationGlyph />, label: "Location", value: location, href: mapsHref(location) },
+    showPortfolio && portfolio && { icon: <PortfolioGlyph />, label: "Portfolio", value: portfolio.replace(/^https?:\/\//i, ""), href: toHref(portfolio) },
+  ].filter(Boolean) as { icon: React.ReactNode; label: string; value: string; href: string }[];
 
   const socials = [
     showLinkedin && linkedin && { label: "LinkedIn", href: toHref(linkedin), glyph: <LinkedInGlyph /> },
