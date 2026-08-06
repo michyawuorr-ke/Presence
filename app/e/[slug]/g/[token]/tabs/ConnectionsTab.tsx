@@ -131,7 +131,7 @@ export default function ConnectionsTab({ profile, event, registration, isEnded }
           const res = await fetch("/api/handshakes/unlock", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ scanner_registration_id: registration.id, target_registration_id: decoded }),
+            body: JSON.stringify({ scanner_registration_id: registration.id, scanner_access_token: registration.access_token, target_registration_id: decoded }),
           });
           const body = await res.json().catch(() => ({}));
           if (res.ok) {

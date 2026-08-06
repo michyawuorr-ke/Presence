@@ -20,6 +20,7 @@ export async function POST(req:NextRequest){
     // Parse and sanitize inputs
     const body=await req.json();
     const scanner_registration_id=sanitizeString(body.scanner_registration_id,36);
+    const scanner_access_token=sanitizeString(body.scanner_access_token||'',200);
     const raw_target=sanitizeString(body.target_registration_id||'',200);
 
     // Verify HMAC if signed payload provided
@@ -46,14 +47,14 @@ export async function POST(req:NextRequest){
       target_registration_id=regIdPart;
     }
 
-    if(!scanner_registration_id||!target_registration_id){
+    if(!scanner_registration_id||!target_registration_id||!scanner_access_token){
       return NextResponse.json({error:'Missing fields'},{status:400});
     }
 
     // Validate both registrations exist and are for the SAME event
     const{data:scannerReg}=await supabase
       .from('registrations')
-      .select('id,event_id,status,paid')
+      .select('id,event_id,status,paid,access_token')
       .eq('id',scanner_registration_id)
       .single();
 
@@ -65,6 +66,10 @@ export async function POST(req:NextRequest){
 
     if(!scannerReg||!targetReg){
       return NextResponse.json({error:'Registration not found'},{status:404});
+    }
+    // Verify scanner owns this registration — prevents impersonation
+    if(scannerReg.access_token!==scanner_access_token){
+      return NextResponse.json({error:'Unauthorized'},{status:403});
     }
 
     // Prevent cross-event scanning
