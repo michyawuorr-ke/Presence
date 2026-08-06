@@ -100,7 +100,7 @@ function ContactRow({ icon, label, value, href }: { icon: React.ReactNode; label
         borderRadius: 12, background: "rgba(255,255,255,0.02)", border: "1px solid rgba(255,255,255,0.06)",
         textDecoration: "none",
       }}>
-      <span style={{ width: 34, height: 34, borderRadius: 10, background: "rgba(226,109,52,0.1)", border: "1px solid rgba(226,109,52,0.18)", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0, color: "var(--ember)" }}>{icon}</span>
+      <span style={{ width: 34, height: 34, borderRadius: 10, background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.08)", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0, color: "rgba(240,237,232,0.6)" }}>{icon}</span>
       <div style={{ minWidth: 0, flex: 1 }}>
         <p style={{ margin: 0, fontSize: 9, letterSpacing: "0.1em", textTransform: "uppercase", color: "rgba(240,237,232,0.3)", fontWeight: 600 }}>{label}</p>
         <p style={{ margin: "3px 0 0", fontSize: 13.5, color: "var(--ivory)", fontWeight: 500, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{value}</p>
