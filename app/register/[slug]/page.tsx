@@ -84,36 +84,26 @@ export default function RegisterPage() {
     setSubmitting(true);
     setError("");
     try {
-      const randomBytes = Array.from(crypto.getRandomValues(new Uint8Array(16))).map(b => b.toString(16).padStart(2,"0")).join("");
-      const accessToken = Date.now().toString(16) + "-" + randomBytes;
-      const guestUrl = window.location.origin + "/e/" + event?.slug + "/g/" + accessToken;
-      setConfirmedToken(accessToken);
-      const isFreeEvent = !selectedTicket || Number(selectedTicket.price) <= 0;
-      if (isFreeEvent) {
-        const { error: freeError } = await supabase.from("registrations").insert({
-          event_id: event?.id, ticket_type_id: selectedTicket?.id || null,
-          guest_name: name, guest_email: email, guest_phone: phone,
+      const res = await fetch("/api/register", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          name, email, phone,
+          event_id: event?.id,
+          ticket_type_id: selectedTicket?.id || null,
           role: selectedRole || "attendee",
-          status: "confirmed", amount: 0, paid: true,
-          access_token: accessToken, guest_access_link: guestUrl,
-        });
-        if (freeError) throw new Error(freeError.message);
-        // Fetch the newly created registration id for email sending
-        const { data: newReg } = await supabase.from("registrations").select("id").eq("access_token", accessToken).maybeSingle();
-        setConfirmedRegId(newReg?.id ?? null);
+          quantity,
+        }),
+      });
+      const json = await res.json();
+      if (!res.ok) { throw new Error(json.error || "Registration failed"); }
+      setConfirmedToken(json.access_token);
+      setConfirmedRegId(json.registration_id);
+      if (json.is_free) {
         setIsFreeRegistration(true);
         setSuccess(true); setSubmitting(false); isSubmittingRef.current = false; return;
       }
-      const totalAmount = Number(selectedTicket?.price ?? 0) * quantity;
-      const { data: reg, error: regError } = await supabase.from("registrations").insert({
-        event_id: event?.id, ticket_type_id: selectedTicket?.id,
-        guest_name: name, guest_email: email, guest_phone: phone,
-        role: selectedRole || "attendee",
-        status: "pending", amount: totalAmount, paid: false,
-        access_token: accessToken, guest_access_link: guestUrl,
-      }).select().single();
-      if (regError) throw new Error(regError.message);
-      setCurrentRegId(reg.id);
+      setCurrentRegId(json.registration_id);
       setPaymentState("waiting");
     } catch (err) {
       setError((err as any).message || "Registration failed. Please try again.");
