@@ -79,7 +79,7 @@ export default function SceneTab({
             {masterProfile?.email && !masterProfile?.auth_user_id && (
               <div style={{ marginTop: "20px", paddingTop: "20px", borderTop: "1px solid rgba(255,255,255,0.06)" }}>
                 <p style={{ color: "rgba(240,237,232,0.5)", fontSize: "12.5px", margin: "0 0 12px", lineHeight: "1.5" }}>
-                  This link is the only way back in right now. Create an account to keep your event history and connections in one place, across every Oreeti event.
+                  Create an account to keep your event history and connections in one place, across every Oreeti event.
                 </p>
                 <a
                   href={`/login?mode=login&email=${encodeURIComponent(masterProfile.email)}`}
