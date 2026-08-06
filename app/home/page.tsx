@@ -2,7 +2,7 @@
 import { useEffect, useState, useMemo } from "react";
 import { useRouter } from "next/navigation";
 import { supabase } from "@/lib/supabase/client";
-import IdentityCard from "./profile/page";
+import HomeProfilePage from "./profile/page";
 import {
   loadMyEvents, loadMyConnections, checkIsHost,
   loadArchivedEventIds, archiveEvent, unarchiveEvent,
@@ -176,7 +176,7 @@ export default function HomePage() {
         )}
 
         {tab === "profile" ? (
-          <IdentityCard embedded />
+          <HomeProfilePage embedded />
         ) : dataLoading ? (
           <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
             {[0, 1, 2].map(i => <div key={i} style={{ height: 84, borderRadius: 14, background: "rgba(255,255,255,0.02)" }} />)}
