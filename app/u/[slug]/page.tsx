@@ -14,6 +14,7 @@ interface PublicProfile {
   role_title: string | null;
   location: string | null;
   industry: string | null;
+  avatar_url: string | null;
   skills: string[] | null;
   interests: string[] | null;
   linkedin_url: string | null;
@@ -36,11 +37,20 @@ interface PublicProfile {
   show_email: boolean;
 }
 
-/** Soft initials mark — this app has no avatar photo storage for
- * master_profiles, so every read-only card (this one and the owner-facing
- * identity card) uses the same gradient initials treatment. */
-function Avatar({ name, size = 88 }: { name: string; size?: number }) {
+/** Real photo when the profile has one; the gradient initials mark is
+ * the fallback for profiles without a photo, not the default anymore. */
+function Avatar({ name, avatarUrl, size = 88 }: { name: string; avatarUrl?: string | null; size?: number }) {
   const initial = name?.trim()?.charAt(0)?.toUpperCase() || "?";
+  if (avatarUrl) {
+    return (
+      <div style={{
+        width: size, height: size, borderRadius: "50%", margin: "0 auto", overflow: "hidden",
+        border: "1px solid rgba(255,255,255,0.1)",
+      }}>
+        <img src={avatarUrl} alt="" style={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }} />
+      </div>
+    );
+  }
   return (
     <div style={{
       width: size, height: size, borderRadius: "50%", margin: "0 auto",
@@ -54,25 +64,45 @@ function Avatar({ name, size = 88 }: { name: string; size?: number }) {
   );
 }
 
-/** A teaser card for content that's hidden from anonymous scanners — blurs
- * the real content underneath (rather than omitting it) so there's
- * something to be curious about, with a lock badge signaling why it's
- * illegible and a tap target that opens the unlock CTA. */
+/** True glassmorphism: the real content renders underneath at full
+ * clarity, then a frosted glass pane (backdrop-filter blur, not a CSS
+ * filter on the content itself) sits on top. That's the difference
+ * between "premium and intentional" and "cheaply pixelated" — blurring
+ * the actual text looks like a broken image; blurring what's *behind*
+ * glass looks like glass. */
 function LockedCard({ title, children, onTap }: { title: string; children: React.ReactNode; onTap: () => void }) {
   return (
     <button onClick={onTap} style={{
       display: "block", width: "100%", textAlign: "left", cursor: "pointer",
-      background: "rgba(255,255,255,0.02)", border: "1px solid rgba(255,255,255,0.06)",
-      borderRadius: 16, padding: "16px 18px", marginBottom: 10, position: "relative",
+      background: "linear-gradient(165deg, rgba(255,255,255,0.035), rgba(255,255,255,0.01))",
+      border: "1px solid rgba(212,175,55,0.18)",
+      borderRadius: 18, padding: "18px 20px", marginBottom: 10, position: "relative", overflow: "hidden",
     }}>
-      <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 10 }}>
-        <span style={{ fontSize: 9.5, fontWeight: 700, letterSpacing: "0.1em", textTransform: "uppercase", color: "rgba(240,237,232,0.35)" }}>{title}</span>
-        <span style={{ fontSize: 11, opacity: 0.5 }}>🔒</span>
+      <div style={{ display: "flex", alignItems: "center", gap: 7, marginBottom: 12, position: "relative", zIndex: 2 }}>
+        <span style={{ fontSize: 9.5, fontWeight: 700, letterSpacing: "0.12em", textTransform: "uppercase", color: "rgba(212,175,55,0.7)" }}>{title}</span>
       </div>
-      <div style={{ filter: "blur(5px)", userSelect: "none", pointerEvents: "none" }} aria-hidden="true">
-        {children}
+      <div style={{ position: "relative" }}>
+        <div aria-hidden="true">{children}</div>
+        {/* The glass pane */}
+        <div style={{
+          position: "absolute", inset: "-4px -6px",
+          background: "linear-gradient(135deg, rgba(255,255,255,0.06), rgba(212,175,55,0.03))",
+          backdropFilter: "blur(9px)", WebkitBackdropFilter: "blur(9px)",
+          display: "flex", alignItems: "center", justifyContent: "center",
+        }}>
+          <LockGlyph />
+        </div>
       </div>
     </button>
+  );
+}
+
+function LockGlyph() {
+  return (
+    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="var(--gold)" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" opacity={0.75}>
+      <rect x="4" y="10" width="16" height="10" rx="2.5" />
+      <path d="M8 10V7a4 4 0 0 1 8 0v3" />
+    </svg>
   );
 }
 
@@ -166,11 +196,6 @@ export default function PublicProfilePage() {
 
   function handleSaveContact() {
     if (!profile) return;
-    // This is the primary unlocked action — it's explicitly meant to hand
-    // over a real, usable phone number and email with zero friction, so it
-    // intentionally does NOT gate on show_phone/show_email the way the
-    // rest of this page's teaser content does. If you don't want a
-    // number reachable this way, leave phone_number blank on the profile.
     // Deliberately just name + phone — no email, bio, links, or org.
     // The point is a clean, instant contact-list entry, not a full
     // profile dump landing in someone's phone.
@@ -240,7 +265,7 @@ export default function PublicProfilePage() {
             A. PUBLIC HERO — always unlocked, regardless of viewer state.
         --------------------------------------------------------------- */}
         <div style={{ textAlign: "center", marginBottom: 20 }}>
-          <Avatar name={profile.display_name} />
+          <Avatar name={profile.display_name} avatarUrl={profile.avatar_url} />
           <h1 style={{ fontFamily: "var(--font-display)", fontSize: 24, fontWeight: 500, color: "var(--ivory)", margin: "18px 0 4px", letterSpacing: "-0.01em" }}>
             {profile.display_name}
           </h1>
@@ -255,15 +280,17 @@ export default function PublicProfilePage() {
           )}
         </div>
 
-        {/* Primary quick action — works with no account and no app.
-            Only shown when there's a real number to save; a vCard with
-            just a name isn't worth the button. */}
+        {/* Primary quick action — deliberately quiet. A business card
+            shouldn't shout; the gold hairline and soft glow carry the
+            weight instead of a loud block color and all-caps. Only
+            shown when there's a real number to save. */}
         {profile.phone_number && (
           <button onClick={handleSaveContact} style={{
-            width: "100%", padding: 15, borderRadius: 14, marginBottom: isUnlocked ? 28 : 22,
-            background: "linear-gradient(135deg, var(--ember), #c9591f)", color: "#fff", border: "none",
-            fontSize: 13, fontWeight: 700, letterSpacing: "0.04em", textTransform: "uppercase", cursor: "pointer",
-            boxShadow: "0 12px 28px -8px rgba(226,109,52,0.4)",
+            width: "100%", padding: "15px 20px", borderRadius: 14, marginBottom: isUnlocked ? 28 : 22,
+            background: "linear-gradient(165deg, rgba(226,109,52,0.14), rgba(212,175,55,0.07))",
+            border: "1px solid rgba(212,175,55,0.35)", color: "var(--ivory)",
+            fontSize: 13.5, fontWeight: 500, letterSpacing: "0.02em", cursor: "pointer",
+            boxShadow: "0 12px 32px -14px rgba(226,109,52,0.35)",
           }}>
             Save Contact
           </button>
@@ -298,11 +325,14 @@ export default function PublicProfilePage() {
               </LockedCard>
             )}
             <button onClick={scrollToUnlock} style={{
-              width: "100%", padding: "12px", borderRadius: 12, marginTop: 4,
-              background: "rgba(212,175,55,0.08)", border: "1px solid rgba(212,175,55,0.25)",
-              color: "var(--gold)", fontSize: 12.5, fontWeight: 600, cursor: "pointer",
+              width: "100%", padding: "13px", borderRadius: 12, marginTop: 4,
+              display: "flex", alignItems: "center", justifyContent: "center", gap: 8,
+              background: "linear-gradient(165deg, rgba(212,175,55,0.09), rgba(212,175,55,0.03))",
+              border: "1px solid rgba(212,175,55,0.28)",
+              color: "var(--gold)", fontSize: 12.5, fontWeight: 600, letterSpacing: "0.01em", cursor: "pointer",
             }}>
-              🔒 Unlock Full Profile & Interactive Links
+              <LockGlyph />
+              Unlock Full Profile
             </button>
           </div>
         )}
@@ -388,20 +418,16 @@ export default function PublicProfilePage() {
 
             <div style={{ textAlign: "center", fontSize: 11, color: "rgba(240,237,232,0.3)", margin: "12px 0" }}>or</div>
 
-            {/* Single combined CTA — this used to be three separate
-                messages pointing at the same /login destination (an
-                "unlock full profile" prompt, a "claim your card" prompt,
-                and a bottom banner). Consolidated into one. */}
-            <p style={{ fontSize: 12, color: "rgba(240,237,232,0.55)", margin: "0 0 12px", lineHeight: 1.5, textAlign: "center" }}>
-              Create a free account to get your custom Oreeti Digital Card — automatically share your details back, and view {profile.display_name.split(" ")[0]}'s skills, interests, and social channels.
+            <p style={{ fontSize: 12, color: "rgba(240,237,232,0.5)", margin: "0 0 12px", lineHeight: 1.5, textAlign: "center" }}>
+              Or create a free Oreeti account to see {profile.display_name.split(" ")[0]}'s full profile and share yours back.
             </p>
             <a href="/login?mode=landing" style={{
               display: "block", width: "100%", padding: 13, borderRadius: 12, boxSizing: "border-box",
-              background: "transparent", border: "1px solid rgba(212,175,55,0.4)",
-              color: "var(--gold)", fontSize: 12.5, fontWeight: 700, letterSpacing: "0.03em",
-              textTransform: "uppercase", textDecoration: "none", textAlign: "center",
+              background: "transparent", border: "1px solid rgba(212,175,55,0.35)",
+              color: "var(--gold)", fontSize: 12.5, fontWeight: 500, letterSpacing: "0.01em",
+              textDecoration: "none", textAlign: "center",
             }}>
-              Claim Your Free Oreeti Card
+              Create Your Free Oreeti Card
             </a>
           </div>
         )}
