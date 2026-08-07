@@ -17,6 +17,13 @@ export interface VCardInput {
   oreetiUrl?: string | null;
 }
 
+/** Turns a raw value into a real href, adding https:// only when the value
+ * looks like a bare domain rather than an already-complete URL. */
+export function toHref(url: string): string {
+  if (!url) return "";
+  return /^https?:\/\//i.test(url) ? url : `https://${url}`;
+}
+
 function escapeVCardValue(value: string): string {
   return value
     .replace(/\\/g, "\\\\")
