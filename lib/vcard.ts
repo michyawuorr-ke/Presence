@@ -1,17 +1,9 @@
-// Shared vCard 3.0 (RFC 6350) helpers used by both the owner-facing identity
-// card (home/profile) and the public /u/[slug] page, so "Save Contact"
-// behaves identically everywhere it appears.
-
-export function vcardEscape(value: string) {
-  return value.replace(/\\/g, "\\\\").replace(/;/g, "\\;").replace(/,/g, "\\,").replace(/\n/g, "\\n");
-}
-
-export function toHref(url: string) {
-  if (!url) return "";
-  return /^https?:\/\//i.test(url) ? url : `https://${url}`;
-}
-
-export interface VCardFields {
+/**
+ * Minimal vCard 3.0 builder. Only includes fields that were actually
+ * passed in (respecting the same show/hide toggles as the card itself),
+ * so "Save Contact" never leaks something the person chose to hide.
+ */
+export interface VCardInput {
   name: string;
   organisation?: string | null;
   role?: string | null;
@@ -25,21 +17,35 @@ export interface VCardFields {
   oreetiUrl?: string | null;
 }
 
-export function buildVCard(fields: VCardFields): string {
-  const lines = ["BEGIN:VCARD", "VERSION:3.0"];
-  lines.push(`FN:${vcardEscape(fields.name)}`);
-  lines.push(`N:${vcardEscape(fields.name)};;;;`);
-  if (fields.organisation) lines.push(`ORG:${vcardEscape(fields.organisation)}`);
-  if (fields.role) lines.push(`TITLE:${vcardEscape(fields.role)}`);
-  if (fields.phone) lines.push(`TEL;TYPE=CELL:${fields.phone.trim()}`);
-  if (fields.email) lines.push(`EMAIL:${fields.email}`);
-  if (fields.location) lines.push(`ADR;TYPE=WORK:;;${vcardEscape(fields.location)};;;;`);
-  if (fields.portfolio) lines.push(`URL;TYPE=Portfolio:${toHref(fields.portfolio)}`);
-  if (fields.website) lines.push(`URL;TYPE=Website:${toHref(fields.website)}`);
-  if (fields.linkedin) lines.push(`URL;TYPE=LinkedIn:${toHref(fields.linkedin)}`);
-  if (fields.note) lines.push(`NOTE:${vcardEscape(fields.note)}`);
-  if (fields.oreetiUrl) lines.push(`URL;TYPE=Oreeti:${fields.oreetiUrl}`);
+function escapeVCardValue(value: string): string {
+  return value
+    .replace(/\\/g, "\\\\")
+    .replace(/;/g, "\\;")
+    .replace(/,/g, "\\,")
+    .replace(/\n/g, "\\n");
+}
+
+export function buildVCard(input: VCardInput): string {
+  const lines: string[] = ["BEGIN:VCARD", "VERSION:3.0"];
+
+  lines.push(`FN:${escapeVCardValue(input.name)}`);
+  // N: Family;Given;Middle;Prefix;Suffix — we only have a full name, so
+  // put it all in "Given" rather than guessing at a split.
+  lines.push(`N:;${escapeVCardValue(input.name)};;;`);
+
+  if (input.organisation) lines.push(`ORG:${escapeVCardValue(input.organisation)}`);
+  if (input.role) lines.push(`TITLE:${escapeVCardValue(input.role)}`);
+  if (input.phone) lines.push(`TEL;TYPE=CELL:${escapeVCardValue(input.phone)}`);
+  if (input.email) lines.push(`EMAIL:${escapeVCardValue(input.email)}`);
+  if (input.location) lines.push(`ADR;TYPE=WORK:;;${escapeVCardValue(input.location)};;;;`);
+  if (input.website) lines.push(`URL;TYPE=Website:${escapeVCardValue(input.website)}`);
+  if (input.portfolio) lines.push(`URL;TYPE=Portfolio:${escapeVCardValue(input.portfolio)}`);
+  if (input.linkedin) lines.push(`URL;TYPE=LinkedIn:${escapeVCardValue(input.linkedin)}`);
+  if (input.oreetiUrl) lines.push(`URL;TYPE=Oreeti:${escapeVCardValue(input.oreetiUrl)}`);
+  if (input.note) lines.push(`NOTE:${escapeVCardValue(input.note)}`);
+
   lines.push("END:VCARD");
+  // vCard spec requires CRLF line endings.
   return lines.join("\r\n");
 }
 

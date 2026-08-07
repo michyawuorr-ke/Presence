@@ -6,17 +6,21 @@ import { generateUniqueSlug } from "../slug";
 import QRCode from "qrcode";
 import TagInput from "./TagInput";
 import MultiSelectChips from "./MultiSelectChips";
-import { OPEN_TO_OPTIONS, AVAILABILITY_OPTIONS } from "./profileOptions";
+import { AVAILABILITY_OPTIONS } from "./profileOptions";
+import { buildVCard, downloadVCardFile } from "@/lib/vcard";
 
+// ---------------------------------------------------------------------------
+// The card reuses the app's existing dark theme tokens (var(--base),
+// var(--ivory), var(--ember), etc) and mirrors the visual language already
+// established by the public /u/[slug] card — gradient avatar circle, glass
+// rows, ember accent — rather than inventing a separate light theme, so it
+// reads as part of the same product instead of a bolted-on screen.
+// ---------------------------------------------------------------------------
 const inp = { width: "100%", padding: "13px 14px", borderRadius: "12px", border: "1px solid rgba(255,255,255,0.07)", background: "rgba(255,255,255,0.02)", color: "var(--ivory)", fontSize: "14px", outline: "none", marginBottom: "12px", boxSizing: "border-box" as const, fontFamily: "var(--font-body)" };
 const sectionLabel = { fontSize: "10px", fontWeight: 700, letterSpacing: "0.12em", textTransform: "uppercase" as const, color: "var(--ember)", margin: "0 0 4px" };
 const sectionSub = { fontSize: "11.5px", color: "rgba(240,237,232,0.35)", margin: "0 0 18px", lineHeight: 1.5 };
 const tagLabel = { fontSize: "10.5px", color: "rgba(240,237,232,0.3)", margin: "0 0 6px" };
 
-// Real card elevation — shadow + subtle gradient border rather than a
-// flat rectangle, so consecutive sections read as distinct cards rather
-// than one continuous form. Fewer, denser sections (4, not 6+) so the
-// page reads as a profile with real content groupings, not a settings list.
 function Section({ title, sub, children }: { title: string; sub?: string; children: React.ReactNode }) {
   return (
     <div style={{
@@ -32,19 +36,148 @@ function Section({ title, sub, children }: { title: string; sub?: string; childr
   );
 }
 
-export default function HomeProfilePage({ embedded = false }: { embedded?: boolean }) {
+/** Turns a raw value into a real href, adding https:// only when the value
+ * looks like a bare domain rather than an already-complete URL. */
+function toHref(url: string) {
+  if (!url) return "";
+  return /^https?:\/\//i.test(url) ? url : `https://${url}`;
+}
+
+function telHref(phone: string) {
+  return `tel:${phone.replace(/[^\d+]/g, "")}`;
+}
+
+function mapsHref(location: string) {
+  return `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(location)}`;
+}
+
+/** wa.me needs the number in international format with no +, spaces, or
+ * leading zeros — just the digits (country code included). This strips
+ * everything else; it can't guess a missing country code, so numbers saved
+ * without one (e.g. a bare local "0712...") will need it added manually. */
+function waHref(phone: string) {
+  return `https://wa.me/${phone.replace(/[^\d]/g, "")}`;
+}
+
+/** No avatar_url column exists on master_profiles, and adding one is out of
+ * scope here — so identity uses the same gradient initials mark the public
+ * /u/[slug] card already uses, for visual consistency across the app. */
+function InitialsAvatar({ name, size = 96 }: { name: string; size?: number }) {
+  const initial = name?.trim()?.charAt(0)?.toUpperCase() || "?";
+  return (
+    <div style={{
+      width: size, height: size, borderRadius: "50%", flexShrink: 0,
+      background: "linear-gradient(135deg, rgba(226,109,52,0.3), rgba(212,175,55,0.2))",
+      display: "flex", alignItems: "center", justifyContent: "center",
+    }}>
+      <span style={{ fontFamily: "var(--font-display)", fontSize: size * 0.36, color: "rgba(255,255,255,0.55)" }}>
+        {initial}
+      </span>
+    </div>
+  );
+}
+
+function PhoneGlyph() {
+  return (<svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" opacity={0.75}><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07A19.5 19.5 0 0 1 4.69 12a19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 3.6 1.27h3a2 2 0 0 1 2 1.72c.127.96.361 1.903.7 2.81a2 2 0 0 1-.45 2.11L7.91 8.91a16 16 0 0 0 6.06 6.06l.92-.92a2 2 0 0 1 2.11-.45c.907.339 1.85.573 2.81.7a2 2 0 0 1 1.72 2.02z"/></svg>);
+}
+function WhatsAppGlyph() {
+  return (<svg width="17" height="17" viewBox="0 0 32 32" fill="#25D366"><path d="M16 0C7.163 0 0 7.163 0 16c0 2.833.737 5.49 2.027 7.8L0 32l8.418-2.004A15.95 15.95 0 0 0 16 32c8.837 0 16-7.163 16-16S24.837 0 16 0zm8.093 22.188c-.337.944-1.67 1.728-2.337 1.838-.6.1-1.362.142-2.194-.138-.506-.17-1.155-.395-1.986-.773-3.488-1.506-5.768-5.012-5.944-5.244-.173-.232-1.41-1.874-1.41-3.574s.893-2.538 1.21-2.882c.317-.344.692-.43.923-.43l.663.012c.213.01.498-.081.779.594.29.694 1.006 2.432 1.093 2.607.087.175.144.379.028.614-.116.234-.173.38-.346.585-.173.206-.364.46-.52.618-.173.173-.353.362-.152.71.202.347.896 1.478 1.922 2.393 1.32 1.177 2.433 1.54 2.78 1.713.347.173.549.144.75-.087.202-.23.866-1.012 1.097-1.36.231-.346.462-.289.779-.173.317.116 2.01.948 2.356 1.12.347.173.578.26.664.404.087.144.087.838-.25 1.782z"/></svg>);
+}
+function EmailGlyph() {
+  return (<svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" opacity={0.75}><rect x="2" y="4" width="20" height="16" rx="2"/><path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7"/></svg>);
+}
+function LocationGlyph() {
+  return (<svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" opacity={0.75}><path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0z"/><circle cx="12" cy="10" r="3"/></svg>);
+}
+function PortfolioGlyph() {
+  return (<svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" opacity={0.75}><circle cx="12" cy="12" r="10"/><path d="M2 12h20M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>);
+}
+function ContactRow({ icon, label, value, href }: { icon: React.ReactNode; label: string; value: string; href: string }) {
+  return (
+    <a href={href} target={href.startsWith("tel:") || href.startsWith("mailto:") ? undefined : "_blank"} rel="noopener noreferrer"
+      style={{
+        display: "flex", alignItems: "center", gap: 12, padding: "12px 14px", marginBottom: 8,
+        borderRadius: 12, background: "rgba(255,255,255,0.02)", border: "1px solid rgba(255,255,255,0.06)",
+        textDecoration: "none",
+      }}>
+      <span style={{ width: 34, height: 34, borderRadius: 10, background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.08)", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0, color: "rgba(240,237,232,0.6)" }}>{icon}</span>
+      <div style={{ minWidth: 0, flex: 1 }}>
+        <p style={{ margin: 0, fontSize: 9, letterSpacing: "0.1em", textTransform: "uppercase", color: "rgba(240,237,232,0.3)", fontWeight: 600 }}>{label}</p>
+        <p style={{ margin: "3px 0 0", fontSize: 13.5, color: "var(--ivory)", fontWeight: 500, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{value}</p>
+      </div>
+      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" opacity={0.2} style={{ flexShrink: 0 }}><path d="M9 18l6-6-6-6"/></svg>
+    </a>
+  );
+}
+
+function LinkedInGlyph() {
+  return (
+    <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="#0A66C2" strokeWidth="1.6">
+      <rect x="2.5" y="2.5" width="19" height="19" rx="4" />
+      <line x1="7.2" y1="10" x2="7.2" y2="17" />
+      <circle cx="7.2" cy="6.6" r="0.9" fill="var(--ivory)" stroke="none" />
+      <path d="M11.2 17v-4.2c0-1.6 1-2.6 2.4-2.6s2.2 1 2.2 2.6V17" />
+    </svg>
+  );
+}
+function FacebookGlyph() {
+  return (
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="#1877F2">
+      <path d="M18 2h-3a5 5 0 0 0-5 5v3H7v4h3v8h4v-8h3l1-4h-4V7a1 1 0 0 1 1-1h3z"/>
+    </svg>
+  );
+}
+function XGlyph() {
+  return (
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="#e7e7e7">
+      <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-4.714-6.231-5.401 6.231H2.744l7.737-8.835L1.254 2.25H8.08l4.259 5.631 5.905-5.631zm-1.161 17.52h1.833L7.084 4.126H5.117z"/>
+    </svg>
+  );
+}
+function InstagramGlyph() {
+  return (
+    <svg width="19" height="19" viewBox="0 0 24 24" fill="none" strokeWidth="1.6">
+      <defs><linearGradient id="ig" x1="0%" y1="100%" x2="100%" y2="0%"><stop offset="0%" stopColor="#f09433"/><stop offset="50%" stopColor="#dc2743"/><stop offset="100%" stopColor="#bc1888"/></linearGradient></defs>
+      <rect x="2.5" y="2.5" width="19" height="19" rx="6" stroke="url(#ig)"/>
+      <circle cx="12" cy="12" r="4.6" stroke="url(#ig)"/>
+      <circle cx="17.3" cy="6.7" r="0.9" fill="url(#ig)" stroke="none"/>
+    </svg>
+  );
+}
+function WebsiteGlyph() {
+  return (
+    <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="var(--ivory)" strokeWidth="1.6" opacity={0.75}>
+      <circle cx="12" cy="12" r="9.5" />
+      <ellipse cx="12" cy="12" rx="4" ry="9.5" />
+      <line x1="2.5" y1="12" x2="21.5" y2="12" />
+    </svg>
+  );
+}
+
+function SocialIcon({ href, label, children }: { href: string; label: string; children: React.ReactNode }) {
+  return (
+    <a href={href} target="_blank" rel="noopener noreferrer" aria-label={label}
+      style={{ width: 44, height: 44, display: "flex", alignItems: "center", justifyContent: "center", textDecoration: "none" }}>
+      {children}
+    </a>
+  );
+}
+
+export default function HomeProfilePage({ embedded = false }: { embedded?: boolean } = {}) {
   const router = useRouter();
   const [loading, setLoading] = useState(true);
+  const [avatarUrl, setAvatarUrl] = useState("");
+  const [avatarUploading, setAvatarUploading] = useState(false);
   const [saving, setSaving] = useState(false);
   const [notification, setNotification] = useState("");
   const [profile, setProfile] = useState<any>(null);
-  const [userId, setUserId] = useState<string | null>(null);
-  const [avatarUploading, setAvatarUploading] = useState(false);
   const [qrDataUrl, setQrDataUrl] = useState<string | null>(null);
   const [copied, setCopied] = useState(false);
+  const [presenting, setPresenting] = useState(false);
+  const [mode, setMode] = useState<"view" | "edit">("view");
+  const [showMore, setShowMore] = useState(false);
 
   // Identity
-  const [avatarUrl, setAvatarUrl] = useState("");
   const [displayName, setDisplayName] = useState("");
   const [headline, setHeadline] = useState("");
   const [bio, setBio] = useState("");
@@ -67,6 +200,8 @@ export default function HomeProfilePage({ embedded = false }: { embedded?: boole
   const [website, setWebsite] = useState("");
   const [linkedin, setLinkedin] = useState("");
   const [instagram, setInstagram] = useState("");
+  const [facebook, setFacebook] = useState("");
+  const [x, setX] = useState("");
   const [phone, setPhone] = useState("");
 
   // Privacy toggles
@@ -86,6 +221,8 @@ export default function HomeProfilePage({ embedded = false }: { embedded?: boole
   const [showWebsite, setShowWebsite] = useState(true);
   const [showPortfolio, setShowPortfolio] = useState(true);
   const [showInstagram, setShowInstagram] = useState(true);
+  const [showFacebook, setShowFacebook] = useState(true);
+  const [showX, setShowX] = useState(true);
   const [showPhone, setShowPhone] = useState(false);
   const [showEmail, setShowEmail] = useState(false);
 
@@ -93,7 +230,6 @@ export default function HomeProfilePage({ embedded = false }: { embedded?: boole
     async function load() {
       const { data: { session } } = await supabase.auth.getSession();
       if (!session?.user?.email) { router.push("/login"); return; }
-      setUserId(session.user.id);
       const email = session.user.email.toLowerCase();
       const { data, error } = await supabase
         .from("master_profiles")
@@ -136,6 +272,8 @@ export default function HomeProfilePage({ embedded = false }: { embedded?: boole
       setWebsite(data.website_url ?? "");
       setLinkedin(data.linkedin_url ?? "");
       setInstagram(data.instagram_url ?? "");
+      setFacebook(data.facebook_url ?? "");
+      setX(data.x_url ?? "");
       setPhone(data.phone_number ?? "");
       setShowBio(data.show_bio ?? true);
       setShowHeadline(data.show_headline ?? true);
@@ -153,6 +291,8 @@ export default function HomeProfilePage({ embedded = false }: { embedded?: boole
       setShowWebsite(data.show_website ?? true);
       setShowPortfolio(data.show_portfolio ?? true);
       setShowInstagram(data.show_instagram ?? true);
+      setShowFacebook(data.show_facebook ?? true);
+      setShowX(data.show_x ?? true);
       setShowPhone(data.show_phone ?? false);
       setShowEmail(data.show_email ?? false);
       setLoading(false);
@@ -160,67 +300,104 @@ export default function HomeProfilePage({ embedded = false }: { embedded?: boole
     load();
   }, [router]);
 
+  // Renders the QR onto a canvas rather than straight to a data URL so the
+  // real Oreeti mark (same SVG as components/OreetiMark, rasterized) can be
+  // drawn in the center afterward — at errorCorrectionLevel "H" the code
+  // tolerates up to ~30% obstruction, so a compact mark still scans
+  // reliably while making the code recognizably ours before anyone even
+  // opens their camera.
   useEffect(() => {
     if (!profile?.slug) { setQrDataUrl(null); return; }
     let cancelled = false;
     const url = `https://oreeti.com/u/${profile.slug}`;
-    QRCode.toDataURL(url, { errorCorrectionLevel: "H", margin: 1, width: 400 })
-      .then(d => { if (!cancelled) setQrDataUrl(d); })
+    const canvas = document.createElement("canvas");
+
+    const markSvg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 108 140" fill="none">
+      <path stroke="#EAE6DF" stroke-width="10" stroke-linecap="round" d="M 52 14 C 22 14, 4 36, 4 62 C 4 88, 22 110, 52 110" />
+      <path stroke="#E26D34" stroke-width="10" stroke-linecap="round" d="M 56 6 C 86 6, 104 28, 104 54 C 104 80, 86 102, 56 102" />
+    </svg>`;
+    const markImg = new Image();
+    const markLoaded = new Promise<void>(resolve => {
+      markImg.onload = () => resolve();
+      markImg.onerror = () => resolve();
+    });
+    markImg.src = `data:image/svg+xml;base64,${btoa(markSvg)}`;
+
+    Promise.all([
+      QRCode.toCanvas(canvas, url, { errorCorrectionLevel: "H", margin: 1, width: 400 }),
+      markLoaded,
+    ])
+      .then(() => {
+        if (cancelled) return;
+        const ctx = canvas.getContext("2d");
+        if (ctx) {
+          const size = canvas.width;
+          const cx = size / 2, cy = size / 2;
+          const markH = size * 0.2;
+          const markW = markH * (108 / 140);
+          const pad = markH * 0.28;
+
+          ctx.fillStyle = "#ffffff";
+          const bw = markW + pad * 2, bh = markH + pad * 2;
+          const bx = cx - bw / 2, by = cy - bh / 2;
+          ctx.beginPath();
+          if (typeof (ctx as any).roundRect === "function") {
+            (ctx as any).roundRect(bx, by, bw, bh, bh * 0.2);
+          } else {
+            ctx.rect(bx, by, bw, bh);
+          }
+          ctx.fill();
+
+          if (markImg.complete && markImg.naturalWidth > 0) {
+            ctx.drawImage(markImg, cx - markW / 2, cy - markH / 2, markW, markH);
+          }
+        }
+        setQrDataUrl(canvas.toDataURL());
+      })
       .catch(console.error);
     return () => { cancelled = true; };
   }, [profile?.slug]);
 
+
   async function handleAvatarUpload(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0];
-    if (!file || !userId || !profile?.id) return;
-
+    if (!file || !profile?.id) return;
     if (file.size > 3 * 1024 * 1024) {
       setNotification("Image must be under 3MB");
       setTimeout(() => setNotification(""), 4000);
       return;
     }
-
     if (!file.type.startsWith("image/")) {
       setNotification("Please select an image file");
       setTimeout(() => setNotification(""), 4000);
       return;
     }
-
     setAvatarUploading(true);
     const ext = file.name.split(".").pop() ?? "jpg";
-    const path = `${userId}/avatar.${ext}`;
-
+    const path = `${profile.id}/avatar.${ext}`;
     const { error: uploadError } = await supabase.storage
       .from("avatars")
       .upload(path, file, { upsert: true, contentType: file.type });
-
     if (uploadError) {
       setNotification("Upload failed — " + uploadError.message);
       setTimeout(() => setNotification(""), 4000);
       setAvatarUploading(false);
       return;
     }
-
     const { data: { publicUrl } } = supabase.storage.from("avatars").getPublicUrl(path);
-
-    // Bust cache so the browser doesn't show the old image
-    const urlWithBust = `${publicUrl}?t=${Date.now()}`;
-
     const { error: saveError } = await supabase
       .from("master_profiles")
       .update({ avatar_url: publicUrl })
       .eq("id", profile.id);
-
     if (saveError) {
       setNotification("Uploaded but couldn't save — " + saveError.message);
       setTimeout(() => setNotification(""), 4000);
     } else {
-      setAvatarUrl(urlWithBust);
+      setAvatarUrl(publicUrl + "?t=" + Date.now());
       setProfile((p: any) => ({ ...p, avatar_url: publicUrl }));
       setNotification("Photo updated");
       setTimeout(() => setNotification(""), 2500);
     }
-
     setAvatarUploading(false);
   }
 
@@ -240,19 +417,19 @@ export default function HomeProfilePage({ embedded = false }: { embedded?: boole
     const { data, error } = await supabase
       .from("master_profiles")
       .update({
-        avatar_url: avatarUrl,
         display_name: displayName, headline, bio, organisation, role_title: roleTitle, known_for: knownFor,
         what_i_do: whatIDo, featured_work: featuredWork, industry, location, skills,
         open_to: openTo, availability, interests, causes, languages,
         portfolio_url: portfolio, website_url: website, linkedin_url: linkedin,
-        phone_number: phone, instagram_url: instagram,
+        phone_number: phone, instagram_url: instagram, facebook_url: facebook, x_url: x,
         slug,
         show_bio: showBio, show_headline: showHeadline, show_known_for: showKnownFor,
         show_what_i_do: showWhatIDo, show_featured_work: showFeaturedWork, show_location: showLocation,
         show_skills: showSkills, show_open_to: showOpenTo, show_availability: showAvailability,
         show_interests: showInterests, show_causes: showCauses, show_languages: showLanguages,
         show_linkedin: showLinkedin, show_website: showWebsite, show_portfolio: showPortfolio,
-        show_instagram: showInstagram, show_phone: showPhone, show_email: showEmail,
+        show_instagram: showInstagram, show_facebook: showFacebook, show_x: showX,
+        show_phone: showPhone, show_email: showEmail,
       })
       .eq("id", profile.id)
       .select()
@@ -264,6 +441,7 @@ export default function HomeProfilePage({ embedded = false }: { embedded?: boole
     } else {
       setProfile(data);
       setNotification("Saved");
+      setMode("view");
     }
     setTimeout(() => setNotification(""), 3000);
   }
@@ -283,188 +461,329 @@ export default function HomeProfilePage({ embedded = false }: { embedded?: boole
     a.click();
   }
 
+  /** Builds a real vCard 3.0 file from exactly the fields shown on the
+   * card — same source of truth, same privacy toggles — so "Save Contact"
+   * never leaks something the person chose to hide. */
+  function downloadVCard() {
+    if (!displayName) return;
+    const vcard = buildVCard({
+      name: displayName,
+      organisation: organisation || null,
+      role: roleTitle || null,
+      phone: showPhone && phone ? phone : null,
+      email: showEmail && profile?.email ? profile.email : null,
+      location: showLocation && location ? location : null,
+      portfolio: showPortfolio && portfolio ? portfolio : null,
+      website: showWebsite && website ? website : null,
+      linkedin: showLinkedin && linkedin ? linkedin : null,
+      note: showBio && bio ? bio : null,
+      oreetiUrl: profile?.slug ? `https://oreeti.com/u/${profile.slug}` : null,
+    });
+    downloadVCardFile(vcard, `${displayName.trim().replace(/\s+/g, "-").toLowerCase()}.vcf`);
+  }
+
   if (loading) {
     return (
-      <div style={embedded ? { padding: "60px 0", display: "flex", alignItems: "center", justifyContent: "center" } : { minHeight: "100vh", background: "var(--base)", display: "flex", alignItems: "center", justifyContent: "center" }}>
+      <div style={{ minHeight: embedded ? "40vh" : "100vh", background: embedded ? "transparent" : "var(--base)", display: "flex", alignItems: "center", justifyContent: "center" }}>
         <p style={{ color: "var(--dusk)", fontSize: 13.5 }}>Loading...</p>
       </div>
     );
   }
 
-  // Embedded (rendered inside app/home's Profile tab) skips the full-page
-  // background, max-width wrapper, and "← Back" link — the parent tab
-  // already provides its own chrome (Wordmark, Sign Out, tab nav), so
-  // repeating them here doubled up the header and background.
-  const Wrapper = embedded ? "div" : "div";
+  // -------------------------------------------------------------------
+  // EDIT MODE — only Identity + Contact & Links (the fields that
+  // actually appear on the card) are shown up front. Everything else
+  // (skills, interests, causes, languages, open to, availability, known
+  // for, what I do, featured work, industry) never shows on the card,
+  // so it's tucked behind "More details" instead of cluttering the
+  // primary edit flow. Still fully editable, still saved the same way.
+  // -------------------------------------------------------------------
+  if (mode === "edit") {
+    return (
+      <div style={{ minHeight: embedded ? "auto" : "100vh", background: embedded ? "transparent" : "radial-gradient(ellipse 1000px 600px at 50% -15%, rgba(226,109,52,0.1), transparent 60%), var(--base)" }}>
+        <div style={{ maxWidth: 560, margin: "0 auto", padding: embedded ? "0 0 60px" : "40px 24px 100px" }}>
+          <button onClick={() => setMode("view")} style={{ display: "inline-block", marginBottom: 28, color: "var(--ivory-muted)", fontSize: 11.5, background: "none", border: "none", cursor: "pointer", padding: 0 }}>← Back to card</button>
 
-  return (
-    <div style={embedded ? {} : { minHeight: "100vh", background: "radial-gradient(ellipse 1000px 600px at 50% -15%, rgba(226,109,52,0.1), transparent 60%), var(--base)" }}>
-      <div style={embedded ? {} : { maxWidth: 560, margin: "0 auto", padding: "40px 24px 100px" }}>
-        {!embedded && (
-          <a href="/home" style={{ display: "inline-block", marginBottom: 28, color: "var(--ivory-muted)", fontSize: 11.5, textDecoration: "none" }}>← Back</a>
-        )}
 
-        <div style={{
-          position: "relative", textAlign: "center", padding: "40px 28px 32px", marginBottom: 28,
-          borderRadius: 28, overflow: "hidden",
-          background: "linear-gradient(165deg, rgba(226,109,52,0.1), rgba(212,175,55,0.04) 60%, transparent)",
-          border: "1px solid rgba(226,109,52,0.18)",
-          boxShadow: "0 24px 60px -20px rgba(226,109,52,0.25)",
-        }}>
-          <p style={{ fontSize: 10, fontWeight: 700, letterSpacing: "0.16em", textTransform: "uppercase", color: "rgba(212,175,55,0.85)", margin: "0 0 22px" }}>
-            Your Universal Identity
-          </p>
+          <h1 style={{ fontFamily: "var(--font-display)", fontSize: "clamp(20px,4vw,24px)", fontWeight: 500, color: "var(--ivory)", letterSpacing: "-0.02em", margin: "0 0 4px" }}>
+            Edit your identity.
+          </h1>
+          <p style={{ color: "var(--dusk)", fontSize: 12.5, margin: "0 0 24px" }}>These fields are what show up on your card.</p>
 
-          {profile?.slug && qrDataUrl ? (
-            <div style={{
-              width: 208, height: 208, margin: "0 auto 22px", borderRadius: 22,
-              background: "#fff", padding: 14, boxShadow: "0 16px 40px -12px rgba(0,0,0,0.5)",
-            }}>
-              <img src={qrDataUrl} alt="Your Oreeti QR code" style={{ width: "100%", height: "100%", display: "block" }} />
+          <Section title="Identity">
+            <div style={{ display: "flex", alignItems: "center", gap: 16, marginBottom: 16 }}>
+              <div style={{ width: 64, height: 64, borderRadius: "50%", flexShrink: 0, overflow: "hidden", background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.08)", display: "flex", alignItems: "center", justifyContent: "center" }}>
+                {avatarUrl
+                  ? <img src={avatarUrl} alt="Avatar" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+                  : <span style={{ fontSize: 22, color: "rgba(240,237,232,0.2)" }}>👤</span>
+                }
+              </div>
+              <label style={{ display: "inline-block", padding: "9px 18px", borderRadius: 10, background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.08)", color: avatarUploading ? "rgba(240,237,232,0.3)" : "var(--ivory)", fontSize: 12, fontWeight: 500, cursor: avatarUploading ? "not-allowed" : "pointer" }}>
+                {avatarUploading ? "Uploading..." : avatarUrl ? "Change photo" : "Upload photo"}
+                <input type="file" accept="image/*" onChange={handleAvatarUpload} disabled={avatarUploading} style={{ display: "none" }} />
+              </label>
             </div>
-          ) : (
-            <div style={{ width: 208, height: 208, margin: "0 auto 22px", borderRadius: 22, background: "rgba(255,255,255,0.04)", display: "flex", alignItems: "center", justifyContent: "center" }}>
-              <p style={{ fontSize: 11.5, color: "var(--dusk)", padding: "0 20px", textAlign: "center" }}>Save your profile below to generate your QR</p>
+            <input value={displayName} onChange={e => setDisplayName(e.target.value)} placeholder="Full name" style={inp} />
+            <input value={headline} onChange={e => setHeadline(e.target.value)} placeholder="Headline — e.g. Product Designer building things people love" style={inp} />
+            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10 }}>
+              <input value={roleTitle} onChange={e => setRoleTitle(e.target.value)} placeholder="Role" style={{ ...inp, marginBottom: 0 }} />
+              <input value={organisation} onChange={e => setOrganisation(e.target.value)} placeholder="Organisation" style={{ ...inp, marginBottom: 0 }} />
+            </div>
+            <textarea value={bio} onChange={e => setBio(e.target.value)} placeholder="Short bio" style={{ ...inp, minHeight: "72px", resize: "vertical" as const, marginTop: 12, marginBottom: 0 }} />
+          </Section>
+
+          <Section title="Contact & Links" sub="Shown on your card as tappable rows and icons.">
+            <div style={{ display: "flex", gap: 8 }}>
+              <span style={{ ...inp, width: "auto", paddingLeft: 12, paddingRight: 12, color: "var(--dusk)", flexShrink: 0, display: "flex", alignItems: "center", marginBottom: 0, borderRadius: 10 }}>+254</span>
+              <input
+                value={phone.replace(/^\+?254/, "")}
+                onChange={e => {
+                  const raw = e.target.value.replace(/[^\d]/g, "");
+                  // Strip leading 0 — user typed 07XX or 01XX
+                  const stripped = raw.startsWith("0") ? raw.slice(1) : raw;
+                  setPhone("+254" + stripped);
+                }}
+                onBlur={e => {
+                  const digits = phone.replace(/[^\d]/g, "").replace(/^254/, "");
+                  if (digits.length > 0 && !/^[71]/.test(digits)) {
+                    setNotification("Enter number starting with 7 or 1 — e.g. 712 345 678");
+                    setTimeout(() => setNotification(""), 4000);
+                  } else if (digits.length > 0 && digits.length !== 9) {
+                    setNotification("Phone number must be 9 digits after +254");
+                    setTimeout(() => setNotification(""), 4000);
+                  }
+                }}
+                placeholder="7XX XXX XXX"
+                type="tel"
+                style={{ ...inp, marginBottom: 0, flex: 1 }}
+              />
+            </div>
+            <input value={location} onChange={e => setLocation(e.target.value)} placeholder="Location" style={inp} />
+            <input value={portfolio} onChange={e => setPortfolio(e.target.value)} placeholder="Portfolio URL" style={inp} />
+            <input value={website} onChange={e => setWebsite(e.target.value)} placeholder="Website URL" style={inp} />
+            <input value={linkedin} onChange={e => setLinkedin(e.target.value)} placeholder="LinkedIn URL" style={inp} />
+            <input value={instagram} onChange={e => setInstagram(e.target.value)} placeholder="Instagram URL" style={{ ...inp, marginBottom: 0 }} />
+            <input value={facebook} onChange={e => setFacebook(e.target.value)} placeholder="Facebook URL" style={{ ...inp, marginBottom: 0 }} />
+            <input value={x} onChange={e => setX(e.target.value)} placeholder="X (Twitter) URL" style={{ ...inp, marginBottom: 0 }} />
+          </Section>
+
+          <button onClick={() => setShowMore(s => !s)} style={{
+            display: "flex", alignItems: "center", justifyContent: "space-between", width: "100%",
+            background: "none", border: "1px solid rgba(255,255,255,0.06)", borderRadius: 16,
+            padding: "14px 18px", marginBottom: showMore ? 12 : 18, cursor: "pointer",
+          }}>
+            <span style={{ fontSize: 12.5, color: "var(--ivory-muted)" }}>More details <span style={{ color: "rgba(240,237,232,0.35)" }}>— not shown on your card</span></span>
+            <span style={{ color: "var(--ember)", fontSize: 13 }}>{showMore ? "Hide ▴" : "Show ▾"}</span>
+          </button>
+
+          {showMore && (
+            <>
+              <Section title="More About You" sub="Kept for future use — none of this appears on your card.">
+                <input value={featuredWork} onChange={e => setFeaturedWork(e.target.value)} placeholder="Featured work" style={inp} />
+                <input value={industry} onChange={e => setIndustry(e.target.value)} placeholder="Industry" style={{ ...inp, marginBottom: 14 }} />
+                <p style={tagLabel}>Skills</p>
+                <TagInput tags={skills} onChange={setSkills} placeholder="Type a skill, press Enter" />
+              </Section>
+
+              <Section title="Connect Preferences" sub="Used elsewhere in Oreeti's networking features.">
+                <p style={tagLabel}>Available For — At Events</p>
+                <div style={{ marginBottom: 16 }}>
+                  <MultiSelectChips options={AVAILABILITY_OPTIONS} selected={availability} onChange={setAvailability} />
+                </div>
+                <p style={tagLabel}>Causes</p>
+                <div style={{ marginBottom: 14 }}>
+                  <TagInput tags={causes} onChange={setCauses} placeholder="A cause you care about, press Enter" />
+                </div>
+                <p style={tagLabel}>Languages</p>
+                <div>
+                  <TagInput tags={languages} onChange={setLanguages} placeholder="A language you speak, press Enter" />
+                </div>
+              </Section>
+            </>
+          )}
+
+          <a href="/home/profile/settings" style={{
+            display: "flex", alignItems: "center", justifyContent: "space-between",
+            padding: "16px 20px", borderRadius: 16, marginBottom: 18, textDecoration: "none",
+            background: "rgba(255,255,255,0.015)", border: "1px solid rgba(255,255,255,0.05)",
+          }}>
+            <div>
+              <p style={{ fontSize: 13, fontWeight: 600, color: "var(--ivory)", margin: "0 0 2px" }}>Privacy & Account</p>
+              <p style={{ fontSize: 11.5, color: "rgba(240,237,232,0.35)", margin: 0 }}>Control what's visible, manage your account</p>
+            </div>
+            <span style={{ color: "var(--ember)", fontSize: 16 }}>→</span>
+          </a>
+
+          {notification && (
+            <div style={{ marginBottom: "16px", padding: "10px 14px", borderRadius: "12px", background: "rgba(226,109,52,0.08)", border: "1px solid rgba(226,109,52,0.2)" }}>
+              <p style={{ color: "var(--ember)", fontSize: "12px", margin: 0, textAlign: "center" }}>{notification}</p>
             </div>
           )}
 
-          {profile?.slug && (
-            <>
-              <p style={{ fontSize: 13.5, color: "var(--ivory)", fontWeight: 600, margin: "0 0 3px" }}>oreeti.com/u/{profile.slug}</p>
-              <p style={{ fontSize: 12, color: "var(--dusk)", margin: "0 0 20px" }}>Any camera. Any scanner. Anywhere.</p>
-              <div style={{ display: "flex", gap: 10, justifyContent: "center" }}>
-                <button onClick={copyLink} style={{
-                  padding: "9px 18px", borderRadius: 11, fontSize: 12, fontWeight: 600, cursor: "pointer",
-                  background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.1)", color: "var(--ivory)",
-                }}>
-                  {copied ? "Copied ✓" : "Copy Link"}
-                </button>
-                <button onClick={downloadQr} style={{
-                  padding: "9px 18px", borderRadius: 11, fontSize: 12, fontWeight: 600, cursor: "pointer",
-                  background: "rgba(226,109,52,0.12)", border: "1px solid rgba(226,109,52,0.3)", color: "var(--ember)",
-                }}>
-                  Download QR
-                </button>
+          <button onClick={handleSave} disabled={saving} style={{
+            width: "100%", padding: "15px", borderRadius: "14px",
+            background: saving ? "rgba(255,255,255,0.06)" : "linear-gradient(135deg, var(--ember), #c9591f)",
+            color: "#fff", border: "none", fontSize: "13px", fontWeight: 700, letterSpacing: "0.04em",
+            textTransform: "uppercase" as const, cursor: saving ? "default" : "pointer",
+            boxShadow: saving ? "none" : "0 12px 28px -8px rgba(226,109,52,0.4)",
+          }}>
+            {saving ? "Saving..." : "Save Profile"}
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  // -------------------------------------------------------------------
+  // VIEW MODE — the identity card.
+  // -------------------------------------------------------------------
+  const roleOrgLine = [roleTitle, organisation].filter(Boolean).join(" · ");
+
+  const contactRows = [
+    showPhone && phone && { icon: <PhoneGlyph />, label: "Phone", value: phone, href: telHref(phone) },
+    // Derived from the same phone number, not a separate field — no new
+    // column needed. Kept behind the same showPhone toggle as Phone itself,
+    // since hiding your number should hide this too.
+    showPhone && phone && { icon: <WhatsAppGlyph />, label: "WhatsApp", value: phone, href: waHref(phone) },
+    showEmail && profile?.email && { icon: <EmailGlyph />, label: "Email", value: profile.email, href: `mailto:${profile.email}` },
+    showLocation && location && { icon: <LocationGlyph />, label: "Location", value: location, href: mapsHref(location) },
+    showPortfolio && portfolio && { icon: <PortfolioGlyph />, label: "Portfolio", value: portfolio.replace(/^https?:\/\//i, ""), href: toHref(portfolio) },
+  ].filter(Boolean) as { icon: React.ReactNode; label: string; value: string; href: string }[];
+
+  const socials = [
+    showLinkedin && linkedin && { label: "LinkedIn", href: toHref(linkedin), glyph: <LinkedInGlyph /> },
+    showInstagram && instagram && { label: "Instagram", href: toHref(instagram), glyph: <InstagramGlyph /> },
+    showFacebook && facebook && { label: "Facebook", href: toHref(facebook), glyph: <FacebookGlyph /> },
+    showX && x && { label: "X", href: toHref(x), glyph: <XGlyph /> },
+    showWebsite && website && { label: "Website", href: toHref(website), glyph: <WebsiteGlyph /> },
+  ].filter(Boolean) as { label: string; href: string; glyph: React.ReactNode }[];
+
+  return (
+    <div style={{ minHeight: embedded ? "auto" : "100vh", background: embedded ? "transparent" : "radial-gradient(ellipse 1000px 600px at 50% -15%, rgba(226,109,52,0.08), transparent 60%), var(--base)" }}>
+      <div style={{ maxWidth: 420, margin: "0 auto", padding: embedded ? "0 0 40px" : "28px 24px 64px" }}>
+        <div style={{ display: "flex", alignItems: "center", justifyContent: embedded ? "flex-end" : "space-between", marginBottom: 24 }}>
+          {!embedded && <a href="/home" style={{ color: "var(--dusk)", fontSize: 12, textDecoration: "none" }}>← Back</a>}
+          <button onClick={() => setMode("edit")} style={{ background: "none", border: "none", color: "var(--ember)", fontSize: 12, fontWeight: 600, cursor: "pointer", padding: 0 }}>
+            Edit
+          </button>
+        </div>
+
+        {/* Identity */}
+        <div style={{ textAlign: "center", marginBottom: 24 }}>
+          <div style={{ display: "flex", justifyContent: "center", marginBottom: 18, marginTop: 8 }}>
+            <div style={{ position: "relative" }}>
+              <div style={{ position: "absolute", inset: -8, borderRadius: "50%", background: "radial-gradient(circle, rgba(226,109,52,0.2) 0%, transparent 70%)", pointerEvents: "none" }} />
+              <div style={{ width: 100, height: 100, borderRadius: "50%", padding: 2, background: "linear-gradient(135deg, rgba(226,109,52,0.8), rgba(212,175,55,0.4) 50%, rgba(226,109,52,0.15))", lineHeight: 0 }}>
+                <div style={{ width: "100%", height: "100%", borderRadius: "50%", overflow: "hidden", background: "var(--base)" }}>
+                  {avatarUrl
+                    ? <img src={avatarUrl} alt="Avatar" style={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }} />
+                    : <InitialsAvatar name={displayName} size={96} />
+                  }
+                </div>
               </div>
-            </>
+            </div>
+          </div>
+          <h1 style={{ fontFamily: "var(--font-display)", fontSize: 26, fontWeight: 500, color: "var(--ivory)", letterSpacing: "-0.02em", margin: "0 0 4px" }}>
+            {displayName || "Your name"}
+          </h1>
+          {roleOrgLine && (
+            <p style={{ fontSize: 10.5, color: "rgba(212,175,55,0.75)", fontWeight: 700, letterSpacing: "0.1em", textTransform: "uppercase", margin: "0 0 10px" }}>{roleOrgLine}</p>
+          )}
+          {showHeadline && headline && (
+            <p style={{ fontSize: 13.5, color: "rgba(240,237,232,0.55)", margin: "0 0 4px", lineHeight: 1.5 }}>{headline}</p>
+          )}
+          {showBio && bio && (
+            <p style={{ fontSize: 13, color: "rgba(240,237,232,0.4)", lineHeight: 1.7, margin: "8px 16px 0" }}>{bio}</p>
           )}
         </div>
 
-        <h1 style={{ fontFamily: "var(--font-display)", fontSize: "clamp(20px,4vw,24px)", fontWeight: 500, color: "var(--ivory)", letterSpacing: "-0.02em", margin: "0 0 4px" }}>
-          Your professional identity.
-        </h1>
-        <p style={{ color: "var(--dusk)", fontSize: 12.5, margin: "0 0 24px" }}>Not tied to any one event — this is who you are, everywhere.</p>
-
-        <Section title="Identity">
-          {/* Avatar upload */}
-          <div style={{ display: "flex", alignItems: "center", gap: 16, marginBottom: 18 }}>
-            <div style={{
-              width: 72, height: 72, borderRadius: "50%", flexShrink: 0, overflow: "hidden",
-              background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.08)",
-              display: "flex", alignItems: "center", justifyContent: "center",
-            }}>
-              {avatarUrl
-                ? <img src={avatarUrl} alt="Avatar" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
-                : <span style={{ fontSize: 26, color: "rgba(240,237,232,0.2)" }}>👤</span>
-              }
-            </div>
-            <div style={{ flex: 1, minWidth: 0 }}>
-              <p style={{ fontSize: 11, color: "rgba(240,237,232,0.4)", margin: "0 0 8px" }}>
-                Profile photo · max 3MB
-              </p>
-              <label style={{
-                display: "inline-block", padding: "9px 18px", borderRadius: 10,
-                background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.08)",
-                color: avatarUploading ? "rgba(240,237,232,0.3)" : "var(--ivory)",
-                fontSize: 12, fontWeight: 500, cursor: avatarUploading ? "not-allowed" : "pointer",
-              }}>
-                {avatarUploading ? "Uploading..." : avatarUrl ? "Change photo" : "Upload photo"}
-                <input
-                  type="file"
-                  accept="image/*"
-                  onChange={handleAvatarUpload}
-                  disabled={avatarUploading}
-                  style={{ display: "none" }}
-                />
-              </label>
-            </div>
-          </div>
-          <input value={displayName} onChange={e => setDisplayName(e.target.value)} placeholder="Full name" style={inp} />
-          <input value={headline} onChange={e => setHeadline(e.target.value)} placeholder="Headline — e.g. Product Designer building things people love" style={inp} />
-          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10 }}>
-            <input value={roleTitle} onChange={e => setRoleTitle(e.target.value)} placeholder="Role" style={{ ...inp, marginBottom: 0 }} />
-            <input value={organisation} onChange={e => setOrganisation(e.target.value)} placeholder="Organisation" style={{ ...inp, marginBottom: 0 }} />
-          </div>
-          <textarea value={bio} onChange={e => setBio(e.target.value)} placeholder="Short bio" style={{ ...inp, minHeight: "72px", resize: "vertical" as const, marginTop: 12 }} />
-          <input value={knownFor} onChange={e => setKnownFor(e.target.value)} placeholder="Known for — e.g. Building communities through technology" style={{ ...inp, marginBottom: 0 }} />
-        </Section>
-
-        <Section title="What You Do" sub="Titles rarely explain what someone actually does — this does.">
-          <textarea value={whatIDo} onChange={e => setWhatIDo(e.target.value)} placeholder="What you do — e.g. Building networking products for live experiences." style={{ ...inp, minHeight: "56px", resize: "vertical" as const }} />
-          <input value={featuredWork} onChange={e => setFeaturedWork(e.target.value)} placeholder="Featured work — one thing you're proud of" style={inp} />
-          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10, marginBottom: 14 }}>
-            <input value={industry} onChange={e => setIndustry(e.target.value)} placeholder="Industry" style={{ ...inp, marginBottom: 0 }} />
-            <input value={location} onChange={e => setLocation(e.target.value)} placeholder="Location" style={{ ...inp, marginBottom: 0 }} />
-          </div>
-          <p style={tagLabel}>Skills</p>
-          <TagInput tags={skills} onChange={setSkills} placeholder="Type a skill, press Enter" />
-        </Section>
-
-        <Section title="Connect" sub="How and why people should reach out.">
-          <p style={tagLabel}>Open To</p>
-          <div style={{ marginBottom: 16 }}>
-            <MultiSelectChips options={OPEN_TO_OPTIONS} selected={openTo} onChange={setOpenTo} />
-          </div>
-          <p style={tagLabel}>Available For — At Events</p>
-          <div style={{ marginBottom: 16 }}>
-            <MultiSelectChips options={AVAILABILITY_OPTIONS} selected={availability} onChange={setAvailability} />
-          </div>
-          <p style={tagLabel}>Interested In</p>
-          <div style={{ marginBottom: 14 }}>
-            <TagInput tags={interests} onChange={setInterests} placeholder="Type an interest, press Enter" />
-          </div>
-          <p style={tagLabel}>Causes</p>
-          <div style={{ marginBottom: 14 }}>
-            <TagInput tags={causes} onChange={setCauses} placeholder="A cause you care about, press Enter" />
-          </div>
-          <p style={tagLabel}>Languages</p>
-          <div style={{ marginBottom: 16 }}>
-            <TagInput tags={languages} onChange={setLanguages} placeholder="A language you speak, press Enter" />
-          </div>
-          <input value={website} onChange={e => setWebsite(e.target.value)} placeholder="Website URL" style={inp} />
-          <input value={linkedin} onChange={e => setLinkedin(e.target.value)} placeholder="LinkedIn URL" style={inp} />
-          <input value={portfolio} onChange={e => setPortfolio(e.target.value)} placeholder="Portfolio URL" style={inp} />
-          <input value={instagram} onChange={e => setInstagram(e.target.value)} placeholder="Instagram URL" style={inp} />
-          <input value={phone} onChange={e => setPhone(e.target.value)} placeholder="Phone number" type="tel" style={{ ...inp, marginBottom: 0 }} />
-        </Section>
-
-        <a href="/home/profile/settings" style={{
-          display: "flex", alignItems: "center", justifyContent: "space-between",
-          padding: "16px 20px", borderRadius: 16, marginBottom: 18, textDecoration: "none",
-          background: "rgba(255,255,255,0.015)", border: "1px solid rgba(255,255,255,0.05)",
-        }}>
-          <div>
-            <p style={{ fontSize: 13, fontWeight: 600, color: "var(--ivory)", margin: "0 0 2px" }}>Privacy & Account</p>
-            <p style={{ fontSize: 11.5, color: "rgba(240,237,232,0.35)", margin: 0 }}>Control what's visible, manage your account</p>
-          </div>
-          <span style={{ color: "var(--ember)", fontSize: 16 }}>→</span>
-        </a>
-
-        {notification && (
-          <div style={{ marginBottom: "16px", padding: "10px 14px", borderRadius: "12px", background: "rgba(226,109,52,0.08)", border: "1px solid rgba(226,109,52,0.2)" }}>
-            <p style={{ color: "var(--ember)", fontSize: "12px", margin: 0, textAlign: "center" }}>{notification}</p>
+        {/* Contact */}
+        {contactRows.length > 0 && (
+          <div style={{ marginBottom: 20 }}>
+            {contactRows.map(row => <ContactRow key={row.label} {...row} />)}
           </div>
         )}
 
-        <button onClick={handleSave} disabled={saving} style={{
-          width: "100%", padding: "15px", borderRadius: "14px",
-          background: saving ? "rgba(255,255,255,0.06)" : "linear-gradient(135deg, var(--ember), #c9591f)",
-          color: "#fff", border: "none", fontSize: "13px", fontWeight: 700, letterSpacing: "0.04em",
-          textTransform: "uppercase" as const, cursor: saving ? "default" : "pointer",
-          boxShadow: saving ? "none" : "0 12px 28px -8px rgba(226,109,52,0.4)",
-        }}>
-          {saving ? "Saving..." : "Save Profile"}
-        </button>
+        {/* Social */}
+        {socials.length > 0 && (
+          <div style={{
+            display: "flex", justifyContent: "center", alignItems: "center", gap: 26,
+            padding: "8px 0 24px",
+          }}>
+            {socials.map(s => (
+              <SocialIcon key={s.label} href={s.href} label={s.label}>{s.glyph}</SocialIcon>
+            ))}
+          </div>
+        )}
+
+        {/* QR — white surface, since a QR needs a light background to scan reliably */}
+        <div style={{ textAlign: "center", paddingTop: 8, borderTop: "1px solid rgba(255,255,255,0.06)" }}>
+          {profile?.slug && qrDataUrl ? (
+            <>
+              <button onClick={() => setPresenting(true)} aria-label="Present QR code full-screen" style={{
+                width: 176, height: 176, margin: "24px auto 8px", borderRadius: 18,
+                background: "#fff", padding: 12, boxShadow: "0 16px 40px -12px rgba(0,0,0,0.5)",
+                border: "none", cursor: "pointer", display: "block",
+              }}>
+                <img src={qrDataUrl} alt="Your Oreeti QR code" style={{ width: "100%", height: "100%", display: "block" }} />
+              </button>
+              <p style={{ fontSize: 10.5, color: "rgba(240,237,232,0.3)", margin: "0 0 12px" }}>Tap to present — hides everything else on screen</p>
+              <p style={{ fontSize: 11.5, color: "var(--dusk)", margin: "0 0 12px" }}>oreeti.com/u/{profile.slug}</p>
+              <div style={{ display: "flex", justifyContent: "center", gap: 18, flexWrap: "wrap" }}>
+                <button onClick={copyLink} style={{ background: "none", border: "none", color: "var(--dusk)", fontSize: 11.5, cursor: "pointer", padding: 0, textDecoration: "underline" }}>
+                  {copied ? "Copied ✓" : "Copy link"}
+                </button>
+                <button onClick={downloadQr} style={{ background: "none", border: "none", color: "var(--dusk)", fontSize: 11.5, cursor: "pointer", padding: 0, textDecoration: "underline" }}>
+                  Save QR
+                </button>
+                <button onClick={() => {
+                  const url = `https://oreeti.com/u/${profile.slug}`;
+                  if (navigator.share) {
+                    navigator.share({ title: displayName, text: `Connect with ${displayName} on Oreeti`, url });
+                  } else {
+                    navigator.clipboard?.writeText(url);
+                    setNotification("Link copied");
+                    setTimeout(() => setNotification(""), 2500);
+                  }
+                }} style={{ background: "none", border: "none", color: "var(--dusk)", fontSize: 11.5, cursor: "pointer", padding: 0, textDecoration: "underline" }}>
+                  Share
+                </button>
+              </div>
+            </>
+          ) : (
+            <p style={{ fontSize: 12, color: "var(--dusk)", padding: "24px 0" }}>Save your profile to generate your QR code.</p>
+          )}
+        </div>
+
+        {/* Full-screen "Present" mode — the only thing on screen when
+            handing your phone to someone or holding it up to be scanned
+            is the QR itself and your name. Nothing else from the card
+            (bio, phone, links) is visible, so a bystander glancing at
+            the screen can't read anything they haven't earned by
+            actually scanning. */}
+        {presenting && qrDataUrl && (
+          <div onClick={() => setPresenting(false)} style={{
+            position: "fixed", inset: 0, background: "#fff", zIndex: 9999,
+            display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center",
+            padding: 24, cursor: "pointer",
+          }}>
+            <button onClick={() => setPresenting(false)} aria-label="Close" style={{
+              position: "absolute", top: 20, right: 20, width: 36, height: 36, borderRadius: "50%",
+              background: "rgba(27,26,23,0.06)", border: "none", color: "#1B1A17", fontSize: 16, cursor: "pointer",
+            }}>
+              ✕
+            </button>
+            <img src={qrDataUrl} alt="Your Oreeti QR code" style={{ width: "min(78vw, 340px)", height: "min(78vw, 340px)" }} />
+            <p style={{ fontFamily: "var(--font-display)", fontSize: 20, color: "#1B1A17", margin: "24px 0 4px" }}>{displayName}</p>
+            <p style={{ fontSize: 12.5, color: "#8A8474" }}>Scan to connect on Oreeti</p>
+          </div>
+        )}
+
+        {notification && (
+          <div style={{ marginTop: 24, textAlign: "center" }}>
+            <p style={{ color: "var(--ember)", fontSize: 12, margin: 0 }}>{notification}</p>
+          </div>
+        )}
       </div>
     </div>
   );
