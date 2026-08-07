@@ -59,11 +59,34 @@ export async function bootstrapIdentity(reg: any) {
   if (!guestProfile) {
     try {
       const svc = getServiceClient();
+
+      // Same master_profiles link as go-live's insert path — this fallback
+      // exists for host registrations created before that path started
+      // linking them, so it needs the same lookup-or-create step.
+      let masterProfileId: string | null = null;
+      if (host.email) {
+        const { data: existingMaster } = await svc
+          .from("master_profiles")
+          .select("id")
+          .eq("email", host.email)
+          .maybeSingle();
+        masterProfileId = existingMaster?.id ?? null;
+        if (!masterProfileId) {
+          const { data: newMaster } = await svc
+            .from("master_profiles")
+            .insert({ email: host.email, display_name: hostProfile?.display_name ?? host.name })
+            .select("id")
+            .single();
+          masterProfileId = newMaster?.id ?? null;
+        }
+      }
+
       const { data: created, error: insertErr } = await svc
         .from("guest_profiles")
         .insert({
           registration_id: reg.id,
           event_id:        reg.event_id,
+          master_profile_id: masterProfileId,
           display_name:    hostProfile?.display_name ?? host.name ?? "Host",
           role_title:      hostProfile?.role_title ?? "Event Host",
           organisation:    hostProfile?.organisation ?? "",

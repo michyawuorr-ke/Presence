@@ -13,9 +13,11 @@ export interface MyEvent {
 }
 
 export interface MyConnection {
-  // Dedupe/React key. Event and card connections use the other person's
-  // email; "shared" entries (anonymous scanners with no account) have no
-  // email, so they key off the profile_contact_requests row id instead.
+  // Dedupe/React key. "event" connections key off the other person's
+  // master_profile_id now (was email — see loadEventConnections); "card"
+  // connections already used master_profile_id via profile_connections.
+  // "shared" entries (anonymous scanners with no account) have neither,
+  // so they key off the profile_contact_requests row id instead.
   id: string;
   // "event": met via a handshake at a live event — always mutual.
   // "card": both people are Oreeti users who connected via the universal
@@ -130,16 +132,16 @@ export async function loadMyEvents(email: string): Promise<MyEvent[]> {
  * both an event and a card scan may appear twice; that's the safer failure
  * mode. */
 export async function loadMyConnections(email: string): Promise<MyConnection[]> {
-  const eventConnections = await loadEventConnections(email);
   const { data: myProfile } = await supabase
     .from("master_profiles")
     .select("id")
     .eq("email", email)
     .maybeSingle();
 
-  if (!myProfile?.id) return eventConnections;
+  if (!myProfile?.id) return [];
 
-  const [cardConnections, sharedWithMe] = await Promise.all([
+  const [eventConnections, cardConnections, sharedWithMe] = await Promise.all([
+    loadEventConnections(myProfile.id),
     loadCardConnections(myProfile.id),
     loadSharedWithMe(myProfile.id),
   ]);
@@ -147,21 +149,14 @@ export async function loadMyConnections(email: string): Promise<MyConnection[]> 
   return [...sharedWithMe, ...cardConnections, ...eventConnections];
 }
 
-async function loadEventConnections(email: string): Promise<MyConnection[]> {
-  // Step 1: find every guest_profiles.id that belongs to THIS person
-  // across all their registrations (by email) — a person has one
-  // guest_profiles row per event they've attended.
-  const { data: myRegs } = await supabase
-    .from("registrations")
-    .select("id")
-    .eq("guest_email", email);
-  const myRegIds = (myRegs || []).map((r: any) => r.id);
-  if (myRegIds.length === 0) return [];
-
+async function loadEventConnections(myMasterProfileId: string): Promise<MyConnection[]> {
+  // Step 1: every guest_profiles.id that belongs to this person across all
+  // their registrations — linked directly via master_profile_id now,
+  // instead of joining through registrations.guest_email.
   const { data: myGuestProfiles } = await supabase
     .from("guest_profiles")
-    .select("id,event_id")
-    .in("registration_id", myRegIds);
+    .select("id")
+    .eq("master_profile_id", myMasterProfileId);
   const myGuestProfileIds = (myGuestProfiles || []).map((g: any) => g.id);
   if (myGuestProfileIds.length === 0) return [];
 
@@ -188,39 +183,33 @@ async function loadEventConnections(email: string): Promise<MyConnection[]> {
     handshakesByOtherParty.set(otherId, list);
   });
 
-  // Step 3: resolve each connected guest_profiles.id back to a person —
-  // via their registration's email — so two different guest_profiles rows
-  // for the same person (met at two different events) collapse into one
-  // MyConnection entry instead of two.
+  // Step 3: resolve each connected guest_profiles.id back to a person via
+  // master_profile_id directly — two guest_profiles rows for the same
+  // person (met at two different events) now collapse into one
+  // MyConnection entry via that shared id, with no email round-trip and
+  // no risk of a case/typo mismatch silently splitting them into two.
+  // Guests who never created an Oreeti account (master_profile_id still
+  // null) can't be identified across events and are skipped here — the
+  // same limitation the email version had, just no longer silent about it.
   const { data: theirGuestProfiles } = await supabase
     .from("guest_profiles")
-    .select("id,display_name,organisation,registration_id")
+    .select("id,display_name,organisation,master_profile_id")
     .in("id", Array.from(otherPartyIds));
-
-  const theirRegIds = (theirGuestProfiles || []).map((g: any) => g.registration_id).filter(Boolean);
-  const { data: theirRegs } = await supabase
-    .from("registrations")
-    .select("id,guest_email")
-    .in("id", theirRegIds);
-  const emailByRegId = new Map<string, string>(
-    (theirRegs || []).map((r: any) => [r.id, (r.guest_email || "").toLowerCase()])
-  );
 
   const { data: events } = await supabase.from("events").select("id,title");
   const titleByEventId = new Map<string, string>((events || []).map((e: any) => [e.id, e.title]));
 
-  const byEmail = new Map<string, MyConnection>();
+  const byMasterProfile = new Map<string, MyConnection>();
   (theirGuestProfiles || []).forEach((gp: any) => {
-    const theirEmail = emailByRegId.get(gp.registration_id);
-    if (!theirEmail || theirEmail === email) return; // skip self-matches
+    if (!gp.master_profile_id || gp.master_profile_id === myMasterProfileId) return; // unlinked or self
     const eventIds = handshakesByOtherParty.get(gp.id) || [];
-    const existing = byEmail.get(theirEmail);
+    const existing = byMasterProfile.get(gp.master_profile_id);
     const newMeetings = eventIds.map(eid => ({ event_id: eid, event_title: titleByEventId.get(eid) || "an event" }));
     if (existing) {
       existing.events_met_at.push(...newMeetings);
     } else {
-      byEmail.set(theirEmail, {
-        id: theirEmail,
+      byMasterProfile.set(gp.master_profile_id, {
+        id: gp.master_profile_id,
         source: "event",
         mutual: true,
         display_name: gp.display_name,
@@ -230,7 +219,7 @@ async function loadEventConnections(email: string): Promise<MyConnection[]> {
     }
   });
 
-  return Array.from(byEmail.values()).sort(
+  return Array.from(byMasterProfile.values()).sort(
     (a, b) => b.events_met_at.length - a.events_met_at.length
   );
 }

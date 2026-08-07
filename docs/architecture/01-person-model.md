@@ -43,3 +43,44 @@ without a 30-minute explanation.
 
 **Cost:** full schema migration, data backfills, FK changes, RLS rewrites, every
 query touching these four tables. Requires dark window or dual-write transition.
+
+## Stage 1 — Done (2026-08-07)
+
+Added the one missing piece that made everything above harder than it needed
+to be: `guest_profiles` had no durable FK back to `master_profiles`, so
+cross-event identity was reconstructed at read time by matching
+`registrations.guest_email` against `master_profiles.email` — fragile (case
+differences, a guest using a different email at a later event silently broke
+the merge) and an extra join on every dashboard load.
+
+- `supabase/migrations/20260807_add_guest_profiles_master_profile_id.sql` —
+  adds `guest_profiles.master_profile_id`, indexes it, backfills existing rows
+  by case-insensitive email match. Additive only — nothing existing changes
+  shape. **Not yet applied to the database** — run this migration before or
+  alongside deploying the code below, since the code now writes to and reads
+  from a column that has to exist first.
+- `features/entry/submitGuestOnboarding.ts` — sets `master_profile_id` on
+  every new guest_profiles row at onboarding time (the master_profiles row is
+  already resolved right before this insert, so no extra lookup needed).
+- `app/api/events/go-live/route.ts` and `features/entry/bootstrapIdentity.ts`
+  — the two places that synthesize a host's guest_profiles row now also
+  find-or-create a master_profiles row by the host's email and link it, so a
+  host who also attends other events collapses into one person instead of a
+  disconnected row per event.
+- `app/home/homeData.ts` — `loadEventConnections` rewritten to join on
+  `master_profile_id` directly instead of the email round-trip through
+  `registrations`. Guests who've never created an account still can't be
+  deduplicated across events (same limitation as before), but now that's the
+  only reason a connection would be missed — not silent email mismatches too.
+
+**What Stage 1 doesn't touch:** `hosts`/`host_profiles` still exists as its
+own table (linking it into `people` is the bigger Stage-2+ work below);
+`handshakes`/`handshake_requests` are still two tables; `profile_connections`
+is still separate from event-based connections. All of that is still parked
+under the trigger condition above — Stage 1 only removes the fragile
+email-matching, it doesn't collapse the table count.
+
+**Found but out of scope for Stage 1:** `features/entry/loadEntry.ts` does its
+own separate email-match against `master_profiles` for "returning visitor"
+recognition when a guest loads their link. Same category of fragility, not
+touched here — worth a look next time this area comes up.

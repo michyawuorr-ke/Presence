@@ -97,6 +97,7 @@ export async function submitGuestOnboarding(params: SubmitGuestOnboardingParams)
     .insert({
       registration_id: params.registrationId,
       event_id: params.eventId,
+      master_profile_id: masterProfile?.id ?? null,
       display_name: params.displayName,
       role_title: params.roleTitle,
       organisation: params.organisation,

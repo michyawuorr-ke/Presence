@@ -91,12 +91,33 @@ export async function POST(req:NextRequest){
 
       registration=newReg;
 
+      // Link this synthetic guest_profiles row to a real master_profiles
+      // row too — same as regular guest onboarding — so a host who also
+      // attends other events (as guest or host) shows up as one person in
+      // My Connections instead of a disconnected row per event.
+      const{data:existingMaster}=await supabase
+        .from('master_profiles')
+        .select('id')
+        .eq('email',host_email)
+        .maybeSingle();
+
+      let masterProfileId=existingMaster?.id||null;
+      if(!masterProfileId){
+        const{data:newMaster}=await supabase
+          .from('master_profiles')
+          .insert({email:host_email,display_name:hostProfile?.display_name||host.name})
+          .select('id')
+          .single();
+        masterProfileId=newMaster?.id||null;
+      }
+
       // Create host guest_profiles immediately when registration is first made
       // so they can enter the app and use networking before the event goes live.
       if(newReg){
         await supabase.from('guest_profiles').insert({
           registration_id:    newReg.id,
           event_id,
+          master_profile_id:  masterProfileId,
           display_name:       hostProfile?.display_name||host.name,
           role_title:         hostProfile?.role_title||'Event Host',
           organisation:       hostProfile?.organisation||'',
