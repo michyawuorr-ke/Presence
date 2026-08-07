@@ -84,3 +84,27 @@ email-matching, it doesn't collapse the table count.
 own separate email-match against `master_profiles` for "returning visitor"
 recognition when a guest loads their link. Same category of fragility, not
 touched here — worth a look next time this area comes up.
+
+## Follow-up — Done (2026-08-07)
+
+Fixed the `loadEntry.ts` case flagged above, partially. It actually had two
+separate email-matches with different fixability:
+
+- **Guest already onboarded for this event** — their `guest_profiles` row
+  exists and now carries `master_profile_id` (Stage 1), so re-deriving it via
+  email was the same avoidable redundancy fixed in `homeData.ts`. Now
+  resolves by id directly, with an email-match fallback only for rows
+  created before the column existed and never got backfilled.
+- **Guest not yet onboarded for this event** — there's no `guest_profiles`
+  row yet, so there's no FK to follow. This one is a genuine first-touch
+  identity lookup with nothing else to key on (prefilling from a past
+  event's master profile) — left as email matching on purpose, not the
+  same bug.
+
+**Next up, in order:** link `hosts` itself to `master_profiles` (Stage 1 only
+linked the synthetic guest_profiles row a host gets, not the host identity
+row itself — same email-only bridge problem, one layer up), then look at
+role/status being encoded three ways (`registrations.status`,
+`guest_profiles.role`, `hosts` membership) before touching the
+connections-table merge, since that merge would otherwise build against a
+person-graph that's still half-linked.

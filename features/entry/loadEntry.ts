@@ -12,9 +12,11 @@ type LoadEntryResult = {
   // (name, role, bio, links). `profile` above is the per-event
   // overlay (guest_profiles) and is secondary.
   //
-  // Guests never sign in — the registration they filled out for THIS
-  // event (name/email/phone, captured at /register) is what we match
-  // against master_profiles.email to recognise a returning guest.
+  // Guests never sign in. If they've already onboarded for this event,
+  // this resolves via guest_profiles.master_profile_id directly. If not,
+  // there's no FK yet to follow, so it falls back to matching the
+  // registration's email against master_profiles.email to recognise a
+  // returning guest from a previous event.
   masterProfile: any | null;
 };
 
@@ -24,6 +26,16 @@ async function findMasterProfileByEmail(email: string | null | undefined) {
     .from("master_profiles")
     .select("*")
     .eq("email", email.trim().toLowerCase())
+    .maybeSingle();
+  return data ?? null;
+}
+
+async function findMasterProfileById(id: string | null | undefined) {
+  if (!id) return null;
+  const { data } = await supabase
+    .from("master_profiles")
+    .select("*")
+    .eq("id", id)
     .maybeSingle();
   return data ?? null;
 }
@@ -98,7 +110,14 @@ export async function loadEntry(token: string): Promise<LoadEntryResult> {
     .single();
 
   if (profile) {
-    const masterProfile = await findMasterProfileByEmail(registration.guest_email);
+    // guest_profiles now carries master_profile_id directly (person-model
+    // Stage 1), so resolve by id instead of re-deriving via email — no
+    // risk of a case/typo mismatch, and one less join. Falls back to the
+    // email match only for rows created before that column existed and
+    // never got backfilled.
+    const masterProfile = profile.master_profile_id
+      ? await findMasterProfileById(profile.master_profile_id)
+      : await findMasterProfileByEmail(registration.guest_email);
     return {
       status: "scene",
       registration,
@@ -109,9 +128,12 @@ export async function loadEntry(token: string): Promise<LoadEntryResult> {
     };
   }
 
-  // Not yet onboarded for this event. Check whether this email has
-  // been to a previous Oreeti event — if so, prefill from their
-  // master profile so they only need to fill in event-specific bits.
+  // Not yet onboarded for this event — there's no guest_profiles row yet,
+  // so there's no master_profile_id to follow. Unlike the case above, this
+  // one is a genuine first-touch identity lookup with nothing else to key
+  // on, not the same avoidable email round-trip: if this email has been to
+  // a previous Oreeti event, prefill from their master profile so they
+  // only need to fill in event-specific bits.
   const masterProfile = await findMasterProfileByEmail(registration.guest_email);
 
   return {
