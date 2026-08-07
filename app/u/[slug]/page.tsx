@@ -171,18 +171,12 @@ export default function PublicProfilePage() {
     // intentionally does NOT gate on show_phone/show_email the way the
     // rest of this page's teaser content does. If you don't want a
     // number reachable this way, leave phone_number blank on the profile.
+    // Deliberately just name + phone — no email, bio, links, or org.
+    // The point is a clean, instant contact-list entry, not a full
+    // profile dump landing in someone's phone.
     const vcard = buildVCard({
       name: profile.display_name,
-      organisation: profile.organisation,
-      role: profile.role_title,
       phone: profile.phone_number,
-      email: profile.email,
-      location: profile.show_location ? profile.location : null,
-      portfolio: profile.show_portfolio ? profile.portfolio_url : null,
-      website: profile.show_website ? profile.website_url : null,
-      linkedin: profile.show_linkedin ? profile.linkedin_url : null,
-      note: profile.show_bio ? profile.bio : null,
-      oreetiUrl: `https://oreeti.com/u/${profile.slug}`,
     });
     downloadVCardFile(vcard, `${profile.display_name.trim().replace(/\s+/g, "-").toLowerCase()}.vcf`);
   }
@@ -261,15 +255,19 @@ export default function PublicProfilePage() {
           )}
         </div>
 
-        {/* Primary quick action — works with no account and no app. */}
-        <button onClick={handleSaveContact} style={{
-          width: "100%", padding: 15, borderRadius: 14, marginBottom: isUnlocked ? 28 : 22,
-          background: "linear-gradient(135deg, var(--ember), #c9591f)", color: "#fff", border: "none",
-          fontSize: 13, fontWeight: 700, letterSpacing: "0.04em", textTransform: "uppercase", cursor: "pointer",
-          boxShadow: "0 12px 28px -8px rgba(226,109,52,0.4)",
-        }}>
-          Save Contact
-        </button>
+        {/* Primary quick action — works with no account and no app.
+            Only shown when there's a real number to save; a vCard with
+            just a name isn't worth the button. */}
+        {profile.phone_number && (
+          <button onClick={handleSaveContact} style={{
+            width: "100%", padding: 15, borderRadius: 14, marginBottom: isUnlocked ? 28 : 22,
+            background: "linear-gradient(135deg, var(--ember), #c9591f)", color: "#fff", border: "none",
+            fontSize: 13, fontWeight: 700, letterSpacing: "0.04em", textTransform: "uppercase", cursor: "pointer",
+            boxShadow: "0 12px 28px -8px rgba(226,109,52,0.4)",
+          }}>
+            Save Contact
+          </button>
+        )}
 
         {/* -----------------------------------------------------------
             B. TEASER / LOCKED CONTENT — only for anonymous scanners
