@@ -1,5 +1,6 @@
 "use client";
 import { useEffect, useState, useMemo } from "react";
+import Wordmark from "@/components/Wordmark";
 import { useRouter } from "next/navigation";
 import { supabase } from "@/lib/supabase/client";
 import HomeProfilePage from "./profile/page";
@@ -10,18 +11,6 @@ import {
 } from "./homeData";
 
 type Tab = "events" | "connections" | "profile";
-
-/** "Oreeti" wordmark, in place of the OreetiMark icon — the brand's
- * middle "ee" carries the ember accent, everything else stays ivory. */
-function Wordmark() {
-  return (
-    <span style={{ fontFamily: "var(--font-display)", fontSize: 21, fontWeight: 500, letterSpacing: "-0.01em" }}>
-      <span style={{ color: "var(--ivory)" }}>Or</span>
-      <span style={{ color: "var(--ember)" }}>ee</span>
-      <span style={{ color: "var(--ivory)" }}>ti</span>
-    </span>
-  );
-}
 
 export default function HomePage() {
   const router = useRouter();

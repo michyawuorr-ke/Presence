@@ -1,4 +1,5 @@
 "use client";
+import Wordmark from "@/components/Wordmark";
 
 // Catches errors thrown by the root layout itself (not just page content),
 // which app/error.tsx can't do — Next.js requires this file to render its

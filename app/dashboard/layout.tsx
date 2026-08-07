@@ -1,4 +1,5 @@
 "use client";
+import Wordmark from "@/components/Wordmark";
 import { usePathname, useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { supabase } from "@/lib/supabase/client";
@@ -36,7 +37,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
       }}>
         <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", height: "52px" }}>
           <p style={{ fontSize: "19px", fontWeight: "700", letterSpacing: "-0.03em", fontFamily: "'Helvetica Neue',Arial,sans-serif", margin: 0 }}>
-            <span style={{ color: "#ffffff" }}>Or</span><span style={{ color: "#E26D34" }}>ee</span><span style={{ color: "#ffffff" }}>ti</span>
+            <Wordmark />
           </p>
 
           {/* Avatar button — opens profile menu */}

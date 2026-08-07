@@ -1,4 +1,5 @@
 "use client";
+import Wordmark from "@/components/Wordmark";
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { supabase } from "@/lib/supabase/client";
@@ -229,7 +230,7 @@ export default function EventsPage() {
       {/* Header */}
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "28px" }}>
         <div>
-          <p style={{ fontSize: "19px", fontWeight: "700", letterSpacing: "-0.03em", fontFamily: "'Helvetica Neue',Arial,sans-serif", margin: "0 0 4px" }}><span style={{ color: "#ffffff" }}>Or</span><span style={{ color: "#E26D34" }}>ee</span><span style={{ color: "#ffffff" }}>ti</span></p>
+          <p style={{ fontSize: "19px", fontWeight: "700", letterSpacing: "-0.03em", fontFamily: "'Helvetica Neue',Arial,sans-serif", margin: "0 0 4px" }}><Wordmark /></p>
           <h1 style={{ fontSize: "22px", fontWeight: "700", color: "#f0ede8", margin: 0, letterSpacing: "-0.02em" }}>Your Events</h1>
         </div>
         <button

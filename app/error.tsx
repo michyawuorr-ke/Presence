@@ -1,4 +1,5 @@
 "use client";
+import Wordmark from "@/components/Wordmark";
 
 export default function RootError({ error, reset }: { error: Error & { digest?: string }; reset: () => void }) {
   return (

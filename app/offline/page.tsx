@@ -1,4 +1,5 @@
 "use client";
+import Wordmark from "@/components/Wordmark";
 
 export default function OfflinePage() {
   return (

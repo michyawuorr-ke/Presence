@@ -1,4 +1,5 @@
 "use client";
+import Wordmark from "@/components/Wordmark";
 import { PALETTE } from "./shared";
 
 interface SceneTabProps {
