@@ -3,6 +3,7 @@ import { useEffect, useState } from "react";
 import { useParams } from "next/navigation";
 import { supabase } from "@/lib/supabase/client";
 import { buildVCard, downloadVCardFile, toHref } from "@/lib/vcard";
+import { COUNTRY_CODES, DEFAULT_COUNTRY, formatPhoneWithCountry, validatePhoneForCountry, CountryCode } from "@/lib/countryCodes";
 
 interface PublicProfile {
   id: string;
@@ -124,6 +125,7 @@ export default function PublicProfilePage() {
   const [quickFormOpen, setQuickFormOpen] = useState(false);
   const [qcName, setQcName] = useState("");
   const [qcPhone, setQcPhone] = useState("");
+  const [qcCountry, setQcCountry] = useState<CountryCode>(DEFAULT_COUNTRY);
   const [qcSubmitting, setQcSubmitting] = useState(false);
   const [qcDone, setQcDone] = useState(false);
   const [qcError, setQcError] = useState("");
@@ -410,7 +412,35 @@ export default function PublicProfilePage() {
             ) : (
               <div style={{ marginBottom: 10 }}>
                 <input value={qcName} onChange={e => setQcName(e.target.value)} placeholder="Your name" style={{ width: "100%", padding: "12px 14px", borderRadius: 12, border: "1px solid rgba(255,255,255,0.07)", background: "rgba(255,255,255,0.02)", color: "var(--ivory)", fontSize: 14, outline: "none", marginBottom: 10, boxSizing: "border-box" }} />
-                <input value={qcPhone} onChange={e => setQcPhone(e.target.value)} placeholder="Your phone number" type="tel" style={{ width: "100%", padding: "12px 14px", borderRadius: 12, border: "1px solid rgba(255,255,255,0.07)", background: "rgba(255,255,255,0.02)", color: "var(--ivory)", fontSize: 14, outline: "none", marginBottom: 10, boxSizing: "border-box" }} />
+                <div style={{ display: "flex", gap: 8, marginBottom: 10 }}>
+                  <select
+                    value={qcCountry.iso}
+                    onChange={e => {
+                      const next = COUNTRY_CODES.find(c => c.iso === e.target.value) || DEFAULT_COUNTRY;
+                      setQcCountry(next);
+                      const digits = qcPhone.replace(/^\+?\d*/, "").replace(/[^\d]/g, "");
+                      setQcPhone(formatPhoneWithCountry(digits, next));
+                    }}
+                    style={{
+                      padding: "12px 8px", borderRadius: 12, border: "1px solid rgba(255,255,255,0.07)",
+                      background: "rgba(255,255,255,0.02)", color: "var(--dusk)", fontSize: 13.5, outline: "none", flexShrink: 0,
+                    }}
+                  >
+                    {COUNTRY_CODES.map(c => (
+                      <option key={c.iso} value={c.iso} style={{ background: "var(--base)" }}>+{c.dialCode} {c.iso}</option>
+                    ))}
+                  </select>
+                  <input
+                    value={qcPhone.replace(new RegExp(`^\\+?${qcCountry.dialCode}`), "")}
+                    onChange={e => setQcPhone(formatPhoneWithCountry(e.target.value, qcCountry))}
+                    onBlur={() => {
+                      const err = validatePhoneForCountry(qcPhone, qcCountry);
+                      if (err) setQcError(err);
+                    }}
+                    placeholder="7XX XXX XXX" type="tel"
+                    style={{ flex: 1, padding: "12px 14px", borderRadius: 12, border: "1px solid rgba(255,255,255,0.07)", background: "rgba(255,255,255,0.02)", color: "var(--ivory)", fontSize: 14, outline: "none", boxSizing: "border-box" }}
+                  />
+                </div>
                 {qcError && <p style={{ fontSize: 12, color: "#ef4444", margin: "0 0 10px" }}>{qcError}</p>}
                 <button onClick={submitQuickContact} disabled={qcSubmitting || !qcName.trim() || !qcPhone.trim()} style={{
                   width: "100%", padding: "13px 20px", borderRadius: 12,

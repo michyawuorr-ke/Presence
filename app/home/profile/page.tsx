@@ -8,6 +8,7 @@ import TagInput from "./TagInput";
 import MultiSelectChips from "./MultiSelectChips";
 import { AVAILABILITY_OPTIONS } from "./profileOptions";
 import { buildVCard, downloadVCardFile } from "@/lib/vcard";
+import { COUNTRY_CODES, DEFAULT_COUNTRY, formatPhoneWithCountry, validatePhoneForCountry, CountryCode } from "@/lib/countryCodes";
 
 // ---------------------------------------------------------------------------
 // The card reuses the app's existing dark theme tokens (var(--base),
@@ -203,6 +204,7 @@ export default function HomeProfilePage({ embedded = false }: { embedded?: boole
   const [facebook, setFacebook] = useState("");
   const [x, setX] = useState("");
   const [phone, setPhone] = useState("");
+  const [phoneCountry, setPhoneCountry] = useState<CountryCode>(DEFAULT_COUNTRY);
 
   // Privacy toggles
   const [showBio, setShowBio] = useState(true);
@@ -293,8 +295,8 @@ export default function HomeProfilePage({ embedded = false }: { embedded?: boole
       setShowInstagram(data.show_instagram ?? true);
       setShowFacebook(data.show_facebook ?? true);
       setShowX(data.show_x ?? true);
-      setShowPhone(data.show_phone ?? false);
-      setShowEmail(data.show_email ?? false);
+      setShowPhone(data.show_phone ?? true);
+      setShowEmail(data.show_email ?? true);
       setLoading(false);
     }
     load();
@@ -534,22 +536,28 @@ export default function HomeProfilePage({ embedded = false }: { embedded?: boole
 
           <Section title="Contact & Links" sub="Shown on your card as tappable rows and icons.">
             <div style={{ display: "flex", gap: 8 }}>
-              <span style={{ ...inp, width: "auto", paddingLeft: 12, paddingRight: 12, color: "var(--dusk)", flexShrink: 0, display: "flex", alignItems: "center", marginBottom: 0, borderRadius: 10 }}>+254</span>
-              <input
-                value={phone.replace(/^\+?254/, "")}
+              <select
+                value={phoneCountry.iso}
                 onChange={e => {
-                  const raw = e.target.value.replace(/[^\d]/g, "");
-                  // Strip leading 0 — user typed 07XX or 01XX
-                  const stripped = raw.startsWith("0") ? raw.slice(1) : raw;
-                  setPhone("+254" + stripped);
+                  const next = COUNTRY_CODES.find(c => c.iso === e.target.value) || DEFAULT_COUNTRY;
+                  setPhoneCountry(next);
+                  // Re-prefix whatever digits are already typed with the newly chosen dial code.
+                  const digits = phone.replace(/^\+?\d*/, "").replace(/[^\d]/g, "");
+                  setPhone(formatPhoneWithCountry(digits, next));
                 }}
-                onBlur={e => {
-                  const digits = phone.replace(/[^\d]/g, "").replace(/^254/, "");
-                  if (digits.length > 0 && !/^[71]/.test(digits)) {
-                    setNotification("Enter number starting with 7 or 1 — e.g. 712 345 678");
-                    setTimeout(() => setNotification(""), 4000);
-                  } else if (digits.length > 0 && digits.length !== 9) {
-                    setNotification("Phone number must be 9 digits after +254");
+                style={{ ...inp, width: "auto", paddingLeft: 10, paddingRight: 8, color: "var(--dusk)", flexShrink: 0, marginBottom: 0, borderRadius: 10 }}
+              >
+                {COUNTRY_CODES.map(c => (
+                  <option key={c.iso} value={c.iso} style={{ background: "var(--base)" }}>+{c.dialCode} {c.iso}</option>
+                ))}
+              </select>
+              <input
+                value={phone.replace(new RegExp(`^\\+?${phoneCountry.dialCode}`), "")}
+                onChange={e => setPhone(formatPhoneWithCountry(e.target.value, phoneCountry))}
+                onBlur={() => {
+                  const err = validatePhoneForCountry(phone, phoneCountry);
+                  if (err) {
+                    setNotification(err);
                     setTimeout(() => setNotification(""), 4000);
                   }
                 }}
