@@ -287,6 +287,16 @@ function EventRow({ event, isArchived, onToggleArchive }: { event: MyEvent; isAr
   );
 }
 
+// Same brand glyphs used on the profile card and public /u/[slug] page —
+// reused here rather than redrawn, so a phone/WhatsApp icon looks the same
+// wherever it appears in the app.
+function PhoneGlyph() {
+  return (<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" opacity={0.75}><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07A19.5 19.5 0 0 1 4.69 12a19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 3.6 1.27h3a2 2 0 0 1 2 1.72c.127.96.361 1.903.7 2.81a2 2 0 0 1-.45 2.11L7.91 8.91a16 16 0 0 0 6.06 6.06l.92-.92a2 2 0 0 1 2.11-.45c.907.339 1.85.573 2.81.7a2 2 0 0 1 1.72 2.02z"/></svg>);
+}
+function WhatsAppGlyph() {
+  return (<svg width="14" height="14" viewBox="0 0 32 32" fill="#25D366"><path d="M16 0C7.163 0 0 7.163 0 16c0 2.833.737 5.49 2.027 7.8L0 32l8.418-2.004A15.95 15.95 0 0 0 16 32c8.837 0 16-7.163 16-16S24.837 0 16 0zm8.093 22.188c-.337.944-1.67 1.728-2.337 1.838-.6.1-1.362.142-2.194-.138-.506-.17-1.155-.395-1.986-.773-3.488-1.506-5.768-5.012-5.944-5.244-.173-.232-1.41-1.874-1.41-3.574s.893-2.538 1.21-2.882c.317-.344.692-.43.923-.43l.663.012c.213.01.498-.081.779.594.29.694 1.006 2.432 1.093 2.607.087.175.144.379.028.614-.116.234-.173.38-.346.585-.173.206-.364.46-.52.618-.173.173-.353.362-.152.71.202.347.896 1.478 1.922 2.393 1.32 1.177 2.433 1.54 2.78 1.713.347.173.549.144.75-.087.202-.23.866-1.012 1.097-1.36.231-.346.462-.289.779-.173.317.116 2.01.948 2.356 1.12.347.173.578.26.664.404.087.144.087.838-.25 1.782z"/></svg>);
+}
+
 function ConnectionsList({ connections, hadAnyMatch }: { connections: MyConnection[]; hadAnyMatch: boolean }) {
   if (connections.length === 0) {
     return (
@@ -370,9 +380,21 @@ function SharedRow({ connection: c }: { connection: MyConnection }) {
         </div>
       </div>
       {c.phone && (
-        <a href={`https://wa.me/${c.phone.replace(/[^\d]/g, "")}`} target="_blank" rel="noopener noreferrer" style={{ fontSize: 12, color: "var(--ivory-muted)", textDecoration: "none", margin: "4px 0 0", display: "block" }}>
-          💬 {c.phone}
-        </a>
+        <div style={{ display: "flex", gap: 8, marginTop: 6 }}>
+          <a href={`tel:${c.phone}`} style={{
+            display: "flex", alignItems: "center", gap: 6, padding: "6px 10px", borderRadius: 9,
+            background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.07)",
+            color: "var(--ivory-muted)", textDecoration: "none", fontSize: 12,
+          }}>
+            <PhoneGlyph /> {c.phone}
+          </a>
+          <a href={`https://wa.me/${c.phone.replace(/[^\d]/g, "")}`} target="_blank" rel="noopener noreferrer" aria-label="Message on WhatsApp" style={{
+            display: "flex", alignItems: "center", justifyContent: "center", width: 30, height: 30, borderRadius: 9,
+            background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.07)",
+          }}>
+            <WhatsAppGlyph />
+          </a>
+        </div>
       )}
       <p style={{ fontSize: 10.5, color: "rgba(240,237,232,0.35)", margin: "6px 0 0" }}>
         Sent their details back after scanning your card — one-way until they create their own.
