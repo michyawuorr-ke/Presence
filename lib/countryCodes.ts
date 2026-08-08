@@ -15,16 +15,17 @@ export interface CountryCode {
   dialCode: string;  // "254" — no plus sign, digits only
   digitLength: number;
   leadingDigits?: RegExp; // e.g. /^[71]/ for Kenya mobile numbers
+  placeholder: string;    // example shown in the input, per country's actual format
 }
 
 export const COUNTRY_CODES: CountryCode[] = [
-  { iso: "KE", name: "Kenya", dialCode: "254", digitLength: 9, leadingDigits: /^[71]/ },
-  { iso: "UG", name: "Uganda", dialCode: "256", digitLength: 9 },
-  { iso: "TZ", name: "Tanzania", dialCode: "255", digitLength: 9 },
-  { iso: "NG", name: "Nigeria", dialCode: "234", digitLength: 10 },
-  { iso: "ZA", name: "South Africa", dialCode: "27", digitLength: 9 },
-  { iso: "GB", name: "United Kingdom", dialCode: "44", digitLength: 10 },
-  { iso: "US", name: "United States", dialCode: "1", digitLength: 10 },
+  { iso: "KE", name: "Kenya", dialCode: "254", digitLength: 9, leadingDigits: /^[71]/, placeholder: "7XX XXX XXX" },
+  { iso: "UG", name: "Uganda", dialCode: "256", digitLength: 9, placeholder: "7XX XXX XXX" },
+  { iso: "TZ", name: "Tanzania", dialCode: "255", digitLength: 9, placeholder: "7XX XXX XXX" },
+  { iso: "NG", name: "Nigeria", dialCode: "234", digitLength: 10, placeholder: "8XX XXX XXXX" },
+  { iso: "ZA", name: "South Africa", dialCode: "27", digitLength: 9, placeholder: "8X XXX XXXX" },
+  { iso: "GB", name: "United Kingdom", dialCode: "44", digitLength: 10, placeholder: "7XXX XXXXXX" },
+  { iso: "US", name: "United States", dialCode: "1", digitLength: 10, placeholder: "(XXX) XXX-XXXX" },
 ];
 
 export const DEFAULT_COUNTRY = COUNTRY_CODES[0]; // Kenya

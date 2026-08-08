@@ -561,7 +561,7 @@ export default function HomeProfilePage({ embedded = false }: { embedded?: boole
                     setTimeout(() => setNotification(""), 4000);
                   }
                 }}
-                placeholder="7XX XXX XXX"
+                placeholder={phoneCountry.placeholder}
                 type="tel"
                 style={{ ...inp, marginBottom: 0, flex: 1 }}
               />

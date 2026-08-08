@@ -437,7 +437,7 @@ export default function PublicProfilePage() {
                       const err = validatePhoneForCountry(qcPhone, qcCountry);
                       if (err) setQcError(err);
                     }}
-                    placeholder="7XX XXX XXX" type="tel"
+                    placeholder={qcCountry.placeholder} type="tel"
                     style={{ flex: 1, padding: "12px 14px", borderRadius: 12, border: "1px solid rgba(255,255,255,0.07)", background: "rgba(255,255,255,0.02)", color: "var(--ivory)", fontSize: 14, outline: "none", boxSizing: "border-box" }}
                   />
                 </div>
