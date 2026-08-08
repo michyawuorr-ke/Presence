@@ -3,7 +3,6 @@ import { useEffect, useState } from "react";
 import { useParams } from "next/navigation";
 import { supabase } from "@/lib/supabase/client";
 import { buildVCard, downloadVCardFile, toHref } from "@/lib/vcard";
-import OreetiMark from "@/components/OreetiMark";
 
 interface PublicProfile {
   id: string;
@@ -255,10 +254,18 @@ export default function PublicProfilePage() {
     <div style={{ minHeight: "100vh", background: "radial-gradient(ellipse 900px 500px at 50% -10%, rgba(226,109,52,0.08), transparent), var(--base)" }}>
       <div style={{ maxWidth: 480, margin: "0 auto", padding: "28px 24px 60px" }}>
 
-        {/* Brand mark — so it's evident this is an Oreeti card even before
-            anyone reads a word of it. */}
-        <div style={{ display: "flex", justifyContent: "center", marginBottom: 24, opacity: 0.9 }}>
-          <OreetiMark size={26} />
+        {/* Brand wordmark — the actual word "Oreeti", not the O icon, set in
+            the same display serif used for the person's name below it, so
+            it reads as typography rather than a logo/spinner. */}
+        <div style={{ display: "flex", alignItems: "center", marginBottom: 24 }}>
+          <span style={{
+            fontFamily: "var(--font-display)", fontSize: 17, fontStyle: "italic",
+            letterSpacing: "0.01em",
+          }}>
+            <span style={{ color: "var(--ivory)", opacity: 0.85 }}>Or</span>
+            <span style={{ color: "var(--ember)" }}>ee</span>
+            <span style={{ color: "var(--ivory)", opacity: 0.85 }}>ti</span>
+          </span>
         </div>
 
         {/* ---------------------------------------------------------------
@@ -406,12 +413,15 @@ export default function PublicProfilePage() {
                 <input value={qcPhone} onChange={e => setQcPhone(e.target.value)} placeholder="Your phone number" type="tel" style={{ width: "100%", padding: "12px 14px", borderRadius: 12, border: "1px solid rgba(255,255,255,0.07)", background: "rgba(255,255,255,0.02)", color: "var(--ivory)", fontSize: 14, outline: "none", marginBottom: 10, boxSizing: "border-box" }} />
                 {qcError && <p style={{ fontSize: 12, color: "#ef4444", margin: "0 0 10px" }}>{qcError}</p>}
                 <button onClick={submitQuickContact} disabled={qcSubmitting || !qcName.trim() || !qcPhone.trim()} style={{
-                  width: "100%", padding: 13, borderRadius: 12,
-                  background: qcSubmitting ? "rgba(255,255,255,0.06)" : "linear-gradient(135deg, var(--ember), #c9591f)",
-                  color: "#fff", border: "none", fontSize: 12.5, fontWeight: 700, letterSpacing: "0.03em",
-                  textTransform: "uppercase", cursor: qcSubmitting ? "default" : "pointer",
+                  width: "100%", padding: "13px 20px", borderRadius: 12,
+                  background: qcSubmitting
+                    ? "rgba(255,255,255,0.06)"
+                    : "linear-gradient(165deg, rgba(226,109,52,0.14), rgba(212,175,55,0.07))",
+                  border: "1px solid rgba(212,175,55,0.35)", color: "var(--ivory)",
+                  fontSize: 13, fontWeight: 500, letterSpacing: "0.02em",
+                  cursor: qcSubmitting ? "default" : "pointer",
                 }}>
-                  {qcSubmitting ? "Sending..." : "Send my details"}
+                  {qcSubmitting ? "Sending..." : "Send My Details"}
                 </button>
               </div>
             )}
@@ -419,7 +429,7 @@ export default function PublicProfilePage() {
             <div style={{ textAlign: "center", fontSize: 11, color: "rgba(240,237,232,0.3)", margin: "12px 0" }}>or</div>
 
             <p style={{ fontSize: 12, color: "rgba(240,237,232,0.5)", margin: "0 0 12px", lineHeight: 1.5, textAlign: "center" }}>
-              Or create a free Oreeti account to see {profile.display_name.split(" ")[0]}'s full profile and share yours back.
+              Or get your own free Oreeti Digital Card — share it as instantly as this one.
             </p>
             <a href="/login?mode=landing" style={{
               display: "block", width: "100%", padding: 13, borderRadius: 12, boxSizing: "border-box",
