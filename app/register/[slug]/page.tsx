@@ -266,7 +266,7 @@ export default function RegisterPage() {
           60%{opacity:0.8;letter-spacing:0.25em;filter:blur(1px);}
           100%{opacity:1;letter-spacing:0.2em;transform:translateY(0px) scaleY(1);filter:blur(0px);}
         }
-        .living-tagline{font-size:11px;color:transparent;text-transform:uppercase;font-weight:500;margin:0;opacity:0;animation:organicFlow 1.6s cubic-bezier(0.25,1,0.5,1) forwards;animation-delay:0.4s;text-shadow:0 0 8px rgba(226,109,52,0.2);}
+        .living-tagline{font-size:11px;color:transparent;text-transform:uppercase;font-weight:500;margin:0;opacity:0;animation:organicFlow 1.6s cubic-bezier(0.25,1,0.5,1) forwards;animation-delay:0.4s;text-shadow:0 0 4px rgba(226,109,52,0.65),0 0 14px rgba(226,109,52,0.4);}
       `}</style>
       <div>
         <div style={{marginBottom:"40px",textAlign:"center",display:"flex",flexDirection:"column",alignItems:"center",gap:"16px"}}>

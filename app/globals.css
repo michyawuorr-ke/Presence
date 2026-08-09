@@ -91,5 +91,5 @@ input, textarea, button { font-family: var(--font-body); }
   font-weight: 600;
   letter-spacing: 0.14em;
   text-transform: uppercase;
-  color: var(--dusk);
+  color: var(--ember);
 }
