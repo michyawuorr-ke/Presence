@@ -168,7 +168,15 @@ export default function HomePage() {
           <HomeProfilePage embedded />
         ) : dataLoading ? (
           <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
-            {[0, 1, 2].map(i => <div key={i} style={{ height: 84, borderRadius: 14, background: "rgba(255,255,255,0.02)" }} />)}
+            <style>{`@keyframes skeletonShimmer{0%{background-position:100% 0}100%{background-position:-100% 0}}`}</style>
+            {[0, 1, 2].map(i => (
+              <div key={i} style={{
+                height: 84, borderRadius: 14,
+                background: "linear-gradient(90deg, rgba(255,255,255,0.02) 25%, rgba(255,255,255,0.06) 37%, rgba(255,255,255,0.02) 63%)",
+                backgroundSize: "400% 100%",
+                animation: "skeletonShimmer 1.6s ease-in-out infinite",
+              }} />
+            ))}
           </div>
         ) : tab === "events" ? (
           <EventsList upcoming={upcoming} past={past} archivedIds={archivedIds} onToggleArchive={handleToggleArchive} hadAnyMatch={events.length > 0} />
@@ -194,13 +202,27 @@ function EventsList({ upcoming, past, archivedIds, onToggleArchive, hadAnyMatch 
     );
   }
 
+  // "Happening now" pulled out of upcoming rather than requiring a
+  // separate query — status is already loaded on every MyEvent, and
+  // 'live' is the exact value the go-live API route sets.
+  const live = upcoming.filter(e => e.status === "live");
+  const notLive = upcoming.filter(e => e.status !== "live");
+
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: 28 }}>
-      {upcoming.length > 0 && (
+      {live.length > 0 && (
+        <div>
+          <p style={{ fontSize: 10, fontWeight: 700, letterSpacing: "0.1em", textTransform: "uppercase", color: "#22c55e", margin: "0 0 12px" }}>Happening now</p>
+          <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+            {live.map(e => <EventRow key={e.id} event={e} isArchived={archivedIds.has(e.id)} onToggleArchive={onToggleArchive} />)}
+          </div>
+        </div>
+      )}
+      {notLive.length > 0 && (
         <div>
           <p style={{ fontSize: 10, fontWeight: 700, letterSpacing: "0.1em", textTransform: "uppercase", color: "rgba(138,115,85,0.6)", margin: "0 0 12px" }}>Upcoming</p>
           <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
-            {upcoming.map(e => <EventRow key={e.id} event={e} isArchived={archivedIds.has(e.id)} onToggleArchive={onToggleArchive} />)}
+            {notLive.map(e => <EventRow key={e.id} event={e} isArchived={archivedIds.has(e.id)} onToggleArchive={onToggleArchive} />)}
           </div>
         </div>
       )}
@@ -309,6 +331,25 @@ function ConnectionsList({ connections, hadAnyMatch }: { connections: MyConnecti
   const shared = connections.filter(c => c.source === "shared");
   const mutual = connections.filter(c => c.source !== "shared");
 
+  // Group mutual connections by the first event they were met at.
+  // A connection met at multiple events only groups under the first —
+  // showing it in every matching event group would mean the same person
+  // appearing several times in one list, which reads as more confusing
+  // than helpful. "card" connections and anyone with no event tie land
+  // in "Other connections" instead of being left out.
+  const eventGroups = new Map<string, MyConnection[]>();
+  const otherConnections: MyConnection[] = [];
+  mutual.forEach(c => {
+    const firstEvent = c.events_met_at[0];
+    if (firstEvent) {
+      const list = eventGroups.get(firstEvent.event_title) || [];
+      list.push(c);
+      eventGroups.set(firstEvent.event_title, list);
+    } else {
+      otherConnections.push(c);
+    }
+  });
+
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: 28 }}>
       {shared.length > 0 && (
@@ -321,15 +362,23 @@ function ConnectionsList({ connections, hadAnyMatch }: { connections: MyConnecti
           </div>
         </div>
       )}
-      {mutual.length > 0 && (
-        <div>
-          {shared.length > 0 && (
-            <p style={{ fontSize: 10, fontWeight: 700, letterSpacing: "0.1em", textTransform: "uppercase", color: "rgba(138,115,85,0.6)", margin: "0 0 12px" }}>
-              Connects
-            </p>
-          )}
+      {Array.from(eventGroups.entries()).map(([eventTitle, group]) => (
+        <div key={eventTitle}>
+          <p style={{ fontSize: 10, fontWeight: 700, letterSpacing: "0.1em", textTransform: "uppercase", color: "rgba(138,115,85,0.6)", margin: "0 0 12px" }}>
+            {eventTitle}
+          </p>
           <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
-            {mutual.map(c => <ConnectionRow key={c.id} connection={c} />)}
+            {group.map(c => <ConnectionRow key={c.id} connection={c} />)}
+          </div>
+        </div>
+      ))}
+      {otherConnections.length > 0 && (
+        <div>
+          <p style={{ fontSize: 10, fontWeight: 700, letterSpacing: "0.1em", textTransform: "uppercase", color: "rgba(138,115,85,0.6)", margin: "0 0 12px" }}>
+            Other connections
+          </p>
+          <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+            {otherConnections.map(c => <ConnectionRow key={c.id} connection={c} />)}
           </div>
         </div>
       )}
@@ -348,11 +397,11 @@ function ConnectionRow({ connection: c }: { connection: MyConnection }) {
       </div>
       {c.organisation && <p style={{ fontSize: 11.5, color: "var(--dusk)", margin: "0 0 6px" }}>{c.organisation}</p>}
       {c.source === "event" ? (
-        <p style={{ fontSize: 11, color: "var(--ember)", margin: 0 }}>
-          {c.events_met_at.length === 1
-            ? `Met at ${c.events_met_at[0].event_title}`
-            : `Met at ${c.events_met_at.length} events`}
-        </p>
+        c.events_met_at.length > 1 && (
+          <p style={{ fontSize: 11, color: "var(--ember)", margin: 0 }}>
+            +{c.events_met_at.length - 1} other event{c.events_met_at.length > 2 ? "s" : ""}
+          </p>
+        )
       ) : (
         <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
           <p style={{ fontSize: 11, color: "#22c55e", margin: 0 }}>✓ Connected</p>

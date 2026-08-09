@@ -22,6 +22,31 @@ const sectionLabel = { fontSize: "10px", fontWeight: 700, letterSpacing: "0.12em
 const sectionSub = { fontSize: "11.5px", color: "rgba(240,237,232,0.35)", margin: "0 0 18px", lineHeight: 1.5 };
 const tagLabel = { fontSize: "10.5px", color: "rgba(240,237,232,0.3)", margin: "0 0 6px" };
 
+/** Mirrors the actual view-mode card shape — avatar circle, name bar,
+ * headline bar, three contact rows — so loading feels like the real
+ * content is about to arrive rather than a blank stall. */
+function ProfileSkeleton({ embedded }: { embedded?: boolean }) {
+  const shimmer = {
+    background: "linear-gradient(90deg, rgba(255,255,255,0.04) 25%, rgba(255,255,255,0.08) 37%, rgba(255,255,255,0.04) 63%)",
+    backgroundSize: "400% 100%",
+    animation: "skeletonShimmer 1.6s ease-in-out infinite",
+    borderRadius: 8,
+  };
+  return (
+    <div style={{ minHeight: embedded ? "40vh" : "100vh", background: embedded ? "transparent" : "var(--base)", padding: embedded ? "24px 4px" : "60px 20px" }}>
+      <style>{`@keyframes skeletonShimmer{0%{background-position:100% 0}100%{background-position:-100% 0}}`}</style>
+      <div style={{ maxWidth: 440, margin: "0 auto" }}>
+        <div style={{ width: 92, height: 92, borderRadius: "50%", margin: "0 auto 18px", ...shimmer }} />
+        <div style={{ width: 160, height: 22, margin: "0 auto 10px", ...shimmer }} />
+        <div style={{ width: 110, height: 14, margin: "0 auto 28px", ...shimmer }} />
+        {[0, 1, 2].map(i => (
+          <div key={i} style={{ height: 48, marginBottom: 8, ...shimmer }} />
+        ))}
+      </div>
+    </div>
+  );
+}
+
 function Section({ title, sub, children }: { title: string; sub?: string; children: React.ReactNode }) {
   return (
     <div style={{
@@ -485,11 +510,7 @@ export default function HomeProfilePage({ embedded = false }: { embedded?: boole
   }
 
   if (loading) {
-    return (
-      <div style={{ minHeight: embedded ? "40vh" : "100vh", background: embedded ? "transparent" : "var(--base)", display: "flex", alignItems: "center", justifyContent: "center" }}>
-        <p style={{ color: "var(--dusk)", fontSize: 13.5 }}>Loading...</p>
-      </div>
-    );
+    return <ProfileSkeleton embedded={embedded} />;
   }
 
   // -------------------------------------------------------------------
