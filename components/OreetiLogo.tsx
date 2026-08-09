@@ -56,15 +56,18 @@ export default function OreetiLogo({ size = "md" }: OreetiLogoProps) {
           d="M 118 82 C 122 66, 136 58, 154 66"
         />
 
-        {/* THIRD & FOURTH LETTERS: 'ee' (True Typographic Open Lowercase Shapes) */}
+        {/* THIRD & FOURTH LETTERS: 'ee' (True Typographic Open Lowercase Shapes)
+            Shifted down 16 units from the original coordinates so both bowls
+            actually sit on the same y=140 baseline as O/r/t/i — previously
+            they ended at y=124, floating visibly above the rest of the word. */}
         <g className="ee">
-          {/* First e: Linear horizontal crossbar, crisp top dome, wide flare terminal */}
+          {/* First e */}
           <path stroke="#EAE6DF" strokeWidth="8" strokeLinecap="round" strokeLinejoin="round" fill="none"
-            d="M 160 102 L 194 102 C 194 76, 160 72, 160 98 C 160 124, 192 124, 194 112"
+            d="M 160 118 L 194 118 C 194 92, 160 88, 160 114 C 160 140, 192 140, 194 128"
           />
-          {/* Second e: Parallel layout tracking perfectly with identical terminal spacing */}
+          {/* Second e */}
           <path stroke="#EAE6DF" strokeWidth="8" strokeLinecap="round" strokeLinejoin="round" fill="none"
-            d="M 206 102 L 240 102 C 240 76, 206 72, 206 98 C 206 124, 238 124, 240 112"
+            d="M 206 118 L 240 118 C 240 92, 206 88, 206 114 C 206 140, 238 140, 240 128"
           />
         </g>
 
