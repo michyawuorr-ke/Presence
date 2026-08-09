@@ -36,7 +36,7 @@ function ProfileSkeleton({ embedded }: { embedded?: boolean }) {
     <div style={{ minHeight: embedded ? "40vh" : "100vh", background: embedded ? "transparent" : "var(--base)", padding: embedded ? "24px 4px" : "60px 20px" }}>
       <style>{`@keyframes skeletonShimmer{0%{background-position:100% 0}100%{background-position:-100% 0}}`}</style>
       <div style={{ maxWidth: 440, margin: "0 auto" }}>
-        <div style={{ width: 92, height: 92, borderRadius: "50%", margin: "0 auto 18px", ...shimmer }} />
+        <div style={{ ...shimmer, width: 92, height: 92, borderRadius: "50%", margin: "0 auto 18px" }} />
         <div style={{ width: 160, height: 22, margin: "0 auto 10px", ...shimmer }} />
         <div style={{ width: 110, height: 14, margin: "0 auto 28px", ...shimmer }} />
         {[0, 1, 2].map(i => (
