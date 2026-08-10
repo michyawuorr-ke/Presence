@@ -8,11 +8,20 @@ interface OreetiLogoProps {
 export default function OreetiLogo({ size = "md" }: OreetiLogoProps) {
   const scales: Record<string, number> = { xs: 0.28, sm: 0.42, md: 0.55, lg: 0.7 };
   const s = scales[size] || 0.55;
-  const w = Math.round(620 * s);
-  const h = Math.round(220 * s);
+  // Tightened to the actual glyph bounding box (letters span roughly
+  // x:0-313, y:62-174 inside the old 620x220 canvas) plus a small margin,
+  // instead of the original viewBox which had ~300px of dead space to the
+  // right and ~60px above the letters — that empty space is what was
+  // making the rendered logo look oversized/misaligned wherever it sat
+  // next to other elements, since containers size around the full box,
+  // not the visible ink.
+  const viewW = 335;
+  const viewH = 140;
+  const w = Math.round(viewW * s);
+  const h = Math.round(viewH * s);
 
   return (
-    <svg width={w} height={h} viewBox="0 0 620 220" xmlns="http://www.w3.org/2000/svg" fill="none">
+    <svg width={w} height={h} viewBox={`-10 44 ${viewW} ${viewH}`} xmlns="http://www.w3.org/2000/svg" fill="none">
       <defs>
         <filter id="ga" x="-60%" y="-60%" width="220%" height="220%">
           <feGaussianBlur stdDeviation="4.5" result="b"/>
