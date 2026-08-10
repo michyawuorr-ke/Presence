@@ -35,7 +35,7 @@ export default function OreetiLogo({ size = "md" }: OreetiLogoProps) {
       <style>{`
         @keyframes pulseUp{0%,100%{transform:translateY(0)}50%{transform:translateY(-6px)}}
         .rO{animation:pulseUp 3s ease-in-out infinite;transform-origin:94px 86px;}
-        @keyframes breathe{0%,100%{stroke-width:8;opacity:1}50%{stroke-width:11;opacity:0.85}}
+        @keyframes breathe{0%,100%{stroke-width:10;opacity:1}50%{stroke-width:13;opacity:0.85}}
         .ee{animation:breathe 2.8s ease-in-out infinite;}
         @keyframes land{0%,72%{r:7;opacity:0.45}84%{r:11;opacity:1}95%{r:7;opacity:1}100%{r:7;opacity:0.45}}
         .idot{animation:land 3.4s ease-in-out infinite;}
@@ -57,16 +57,13 @@ export default function OreetiLogo({ size = "md" }: OreetiLogoProps) {
           />
         </g>
 
-        {/* SECOND LETTER: 'r' (Ivory Linen) — stem brought down to x-height
-            (matching e/i at y86) instead of the original y62, which drew
-            it almost as tall as the ascender on 't'. Lowercase r has no
-            ascender in real typography; the arch is scaled proportionally
-            so the flick stays natural rather than just being clipped. */}
-        <path stroke="#EAE6DF" strokeWidth="8" strokeLinecap="round" strokeLinejoin="round"
-          d="M 118 140 L 118 86"
-        />
-        <path stroke="#EAE6DF" strokeWidth="8" strokeLinecap="round"
-          d="M 118 100 C 122 89, 136 83, 154 89"
+        {/* SECOND LETTER: 'r' (Ivory Linen) — stem at x-height (y86, matching
+            e/i) with the shoulder drawn as ONE continuous path from the
+            stem, not two separate paths — the two-path version left a
+            visible disconnected gap between the stem and the arch, which
+            read as a stray floating mark rather than part of the letter. */}
+        <path stroke="#EAE6DF" strokeWidth="8" strokeLinecap="round" strokeLinejoin="round" fill="none"
+          d="M 118 140 L 118 90 C 118 84, 124 80, 134 80 C 142 80, 148 83, 153 88"
         />
 
         {/* THIRD & FOURTH LETTERS: 'ee' (True Typographic Open Lowercase Shapes)
@@ -75,11 +72,11 @@ export default function OreetiLogo({ size = "md" }: OreetiLogoProps) {
             they ended at y=124, floating visibly above the rest of the word. */}
         <g className="ee">
           {/* First e */}
-          <path stroke="#EAE6DF" strokeWidth="8" strokeLinecap="round" strokeLinejoin="round" fill="none"
+          <path stroke="#EAE6DF" strokeWidth="10" strokeLinecap="round" strokeLinejoin="round" fill="none"
             d="M 160 118 L 194 118 C 194 92, 160 88, 160 114 C 160 140, 192 140, 194 128"
           />
           {/* Second e */}
-          <path stroke="#EAE6DF" strokeWidth="8" strokeLinecap="round" strokeLinejoin="round" fill="none"
+          <path stroke="#EAE6DF" strokeWidth="10" strokeLinecap="round" strokeLinejoin="round" fill="none"
             d="M 206 118 L 240 118 C 240 92, 206 88, 206 114 C 206 140, 238 140, 240 128"
           />
         </g>
@@ -98,7 +95,7 @@ export default function OreetiLogo({ size = "md" }: OreetiLogoProps) {
         />
 
         {/* SIXTH LETTER: 'i' (Dot - Amber Orange Accent) */}
-        <circle className="idot" cx="302" cy="66" r="7" fill="#E26D34" filter="url(#ga)"/>
+        <circle className="idot" cx="302" cy="74" r="7" fill="#E26D34" filter="url(#ga)"/>
       </g>
     </svg>
   );
