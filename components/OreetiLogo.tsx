@@ -57,12 +57,16 @@ export default function OreetiLogo({ size = "md" }: OreetiLogoProps) {
           />
         </g>
 
-        {/* SECOND LETTER: 'r' (Ivory Linen) */}
+        {/* SECOND LETTER: 'r' (Ivory Linen) — stem brought down to x-height
+            (matching e/i at y86) instead of the original y62, which drew
+            it almost as tall as the ascender on 't'. Lowercase r has no
+            ascender in real typography; the arch is scaled proportionally
+            so the flick stays natural rather than just being clipped. */}
         <path stroke="#EAE6DF" strokeWidth="8" strokeLinecap="round" strokeLinejoin="round"
-          d="M 118 140 L 118 62"
+          d="M 118 140 L 118 86"
         />
         <path stroke="#EAE6DF" strokeWidth="8" strokeLinecap="round"
-          d="M 118 82 C 122 66, 136 58, 154 66"
+          d="M 118 100 C 122 89, 136 83, 154 89"
         />
 
         {/* THIRD & FOURTH LETTERS: 'ee' (True Typographic Open Lowercase Shapes)
