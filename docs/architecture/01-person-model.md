@@ -166,3 +166,46 @@ typechecks clean.
 (`handshakes`/`handshake_requests`/`profile_connections`/quick-contact) is
 the one still on the board — the person-graph underneath it is settled now,
 so it's a reasonable next target whenever you're ready to take it on.
+
+## Connections Merge — Staged Plan (2026-08-12)
+
+14 files touch `handshakes`/`handshake_requests`/`profile_connections`
+directly, and `SceneView.tsx` has a live Realtime subscription hard-wired to
+the `handshakes` table name — this is a bigger change than Stages 1–3 and
+touches live production data, so it's not a single push. Breaking it into
+five stages, each independently shippable and verifiable before the next:
+
+**Stage A — design + create the new table, additive only.** Nothing reads
+from or writes to it yet. Zero risk, ships alone. *(This stage.)*
+
+The unified shape: `profile_a_id`/`profile_b_id` both reference
+`master_profiles` — not `guest_profiles`, and not a mix — which is only
+possible now because Stage 1 (guest onboarding) and Stage 2 (host signup)
+made sure every guest_profiles/hosts row has `master_profile_id` set. Before
+those two stages this table would have needed two different id shapes; now
+it doesn't. `event_id` is nullable: set for event-scoped connections
+(QR-unlock, in-event requests), null for cross-event card connections
+(`/u/[slug]`). `status`/`source` fold `handshakes` and `handshake_requests`
+into one state machine instead of two tables — a request starts as
+`status='requested'`, becomes `status='connected'` on approval, instead of
+existing in one table then getting duplicated into another.
+`profile_contact_requests` (anonymous lead capture, no account on the other
+end) stays separate — confirmed earlier it's a different kind of thing, not
+a connection.
+
+**Stage B — dual-write.** Every place that currently writes to `handshakes`,
+`handshake_requests`, or `profile_connections` also writes the equivalent
+row to `connections`. Old tables stay authoritative for reads. Also where
+the RLS/access-model question (flagged in the person-model section above)
+gets settled for real, since Realtime on the new table needs it decided.
+
+**Stage C — backfill.** One-time migration of existing rows from the three
+old tables into `connections`, so historical data isn't lost when reads
+switch over.
+
+**Stage D — cut reads over, file by file.** All 14 files, one at a time,
+verified against dual-written data before moving to the next. `SceneView`'s
+Realtime subscription moves to watching `connections` in this stage too.
+
+**Stage E — retire the old tables.** Only once dual-write has run long
+enough to be confident and every read path is off them.
