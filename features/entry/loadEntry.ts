@@ -1,5 +1,6 @@
 import { supabase } from "@/lib/supabase/client";
 import { bootstrapIdentity } from "./bootstrapIdentity";
+import { isHostRegistration } from "@/lib/hostRole";
 
 type LoadEntryResult = {
   status: "not_found" | "onboarding" | "scene";
@@ -73,7 +74,7 @@ export async function loadEntry(token: string): Promise<LoadEntryResult> {
   // and roles with bypass_visibility (VIP, Speaker, etc.) can enter.
   // Regular attendees get a "not started yet" holding screen.
   if (event?.status === "upcoming") {
-    const isHost = registration.status === "host";
+    const isHost = isHostRegistration(registration);
     const role = registration.role ?? "attendee";
     const isPrivileged = isHost || ["vip", "speaker"].includes(role);
 
@@ -90,7 +91,7 @@ export async function loadEntry(token: string): Promise<LoadEntryResult> {
   }
 
   // Host registrations route through bootstrapIdentity's host branch.
-  if (registration.status === "host") {
+  if (isHostRegistration(registration)) {
     const identity = await bootstrapIdentity(registration);
     return {
       status: "scene",

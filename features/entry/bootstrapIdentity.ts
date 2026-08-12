@@ -1,5 +1,6 @@
 import { supabase } from "@/lib/supabase/client";
 import { createClient } from "@supabase/supabase-js";
+import { ORGANIZER_ROLE } from "@/lib/hostRole";
 
 // Service role client — needed to bypass RLS when creating the host
 // guest_profiles row. Only used server-side (bootstrapIdentity is called
@@ -95,7 +96,7 @@ export async function bootstrapIdentity(reg: any) {
           linkedin_url:    hostProfile?.linkedin_url ?? null,
           website_url:     hostProfile?.website_url ?? null,
           portfolio_url:   hostProfile?.portfolio_url ?? null,
-          role:            "organizer",
+          role:            ORGANIZER_ROLE,
           networking_visible: true,
           aura_active:     false,
           show_linkedin:   true,

@@ -2,6 +2,7 @@
 import { useState } from "react";
 import { supabase } from "@/lib/supabase/client";
 import { cleanUrl, toHref } from "./shared";
+import { isHostRegistration } from "@/lib/hostRole";
 
 interface ProfileTabProps {
   profile: any;
@@ -179,7 +180,7 @@ export default function ProfileTab({ profile, masterProfile, event, onProfileUpd
     }
   }
 
-  const isHost = registration?.status === "host";
+  const isHost = isHostRegistration(registration);
   const accent = isHost ? "#D4AF37" : "#E26D34";
   const accentBg = isHost ? "rgba(212,175,55,0.08)" : "rgba(226,109,52,0.08)";
   const accentBorder = isHost ? "rgba(212,175,55,0.15)" : "rgba(226,109,52,0.15)";

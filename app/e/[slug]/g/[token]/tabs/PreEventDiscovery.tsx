@@ -2,6 +2,7 @@
 import { useState } from "react";
 import { supabase } from "@/lib/supabase/client";
 import { getFirstName, parseIntents, REASON_OPTIONS, INTENTS_BY_GROUP, INTENT_GROUPS, INTENT_MAP } from "./shared";
+import { isHostRegistration } from "@/lib/hostRole";
 import AttendeeCard from "./AttendeeCard";
 import MatchRecommendations from "./MatchRecommendations";
 import { useEventAttendees, useEventStations, useHostNode, useInvalidators } from "./queries";
@@ -20,7 +21,7 @@ export default function PreEventDiscovery({ event, profile, sentRequests, setSen
   const[notification,setNotification]=useState("");
   const[search,setSearch]=useState("");
 
-  const isHost = registration?.status === "host";
+  const isHost = isHostRegistration(registration);
   const { data: rawAttendees = [], isLoading: loading } = useEventAttendees(event?.id, profile?.id);
   const { data: stations = [] } = useEventStations(event?.id);
   const { data: hostNode } = useHostNode(event?.id, isHost);

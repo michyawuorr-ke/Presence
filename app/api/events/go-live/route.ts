@@ -1,5 +1,6 @@
 import{NextRequest,NextResponse}from'next/server';
 import{createClient}from'@supabase/supabase-js';
+import{HOST_REGISTRATION_STATUS,ORGANIZER_ROLE}from'@/lib/hostRole';
 
 const supabase=createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -81,7 +82,7 @@ export async function POST(req:NextRequest){
           guest_name:hostProfile?.display_name||host.name,
           guest_email:host_email,
           guest_phone:host.phone||'',
-          status:'host',
+          status:HOST_REGISTRATION_STATUS,
           amount:0,
           paid:true,
           access_token:accessToken,
@@ -129,7 +130,7 @@ export async function POST(req:NextRequest){
           linkedin_url:       hostProfile?.linkedin_url||null,
           website_url:        hostProfile?.website_url||null,
           portfolio_url:      hostProfile?.portfolio_url||null,
-          role:               'organizer',
+          role:               ORGANIZER_ROLE,
           networking_visible: true,
           aura_active:        false,
           show_linkedin:      true,

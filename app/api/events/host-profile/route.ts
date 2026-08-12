@@ -1,6 +1,7 @@
 import{NextRequest,NextResponse}from'next/server';
 import { rateLimit } from '@/lib/rateLimit';
 import{createClient}from'@supabase/supabase-js';
+import{ORGANIZER_ROLE}from'@/lib/hostRole';
 
 const supabase=createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -87,7 +88,7 @@ export async function POST(req:NextRequest){
         linkedin_url:    linkedin_url||null,
         website_url:     website_url||null,
         portfolio_url:   portfolio_url||null,
-        role:            'organizer',
+        role:            ORGANIZER_ROLE,
         networking_visible: true,
         aura_active:     false,
         show_linkedin:   true,

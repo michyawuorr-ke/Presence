@@ -2,6 +2,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { supabase } from "@/lib/supabase/client";
+import { HOST_REGISTRATION_STATUS } from "@/lib/hostRole";
 
 export default function CreateEvent() {
   const [title, setTitle] = useState("");
@@ -64,7 +65,7 @@ export default function CreateEvent() {
         guest_name: user.email?.split("@")[0] || "Host",
         guest_email: user.email,
         guest_phone: "",
-        status: "host",
+        status: HOST_REGISTRATION_STATUS,
         amount: 0,
         paid: true,
         access_token: accessToken,

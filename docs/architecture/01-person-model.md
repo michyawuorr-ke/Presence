@@ -135,3 +135,34 @@ at every point that needed to check.
 and `hosts` table membership) — worth resolving before the connections-table
 merge, so that merge builds against a settled person-graph instead of one
 that's still ambiguous about what "role" even means.
+
+## Follow-up — Done (2026-08-12)
+
+Consolidated the three role/status checks. On closer look these genuinely
+answer three different questions at three different scopes — per-registration
+(`registrations.status`), per-guest-profile (`guest_profiles.role`), and
+per-person cross-event (`hosts` table membership, via `checkIsHost`) — so
+this wasn't a table merge, just centralizing the *definition* so it isn't
+restated as a raw string literal in nine separate files with nothing
+enforcing they agree.
+
+- `lib/hostRole.ts` — new file. Exports `HOST_REGISTRATION_STATUS` /
+  `ORGANIZER_ROLE` constants and `isHostRegistration()` /
+  `isOrganizerProfile()` helpers, with a comment explaining how all three
+  scopes (including `checkIsHost`, left where it is) relate.
+- Every site that compared against `'host'` or `'organizer'` as a raw string
+  now goes through this file instead: `go-live/route.ts`,
+  `dashboard/events/create/page.tsx`, `host-profile/route.ts`,
+  `bootstrapIdentity.ts`, `NetworkingTab.tsx`, `ProfileTab.tsx`,
+  `PreEventDiscovery.tsx`, `loadEntry.ts` (two sites), `homeData.ts`.
+- `checkIsHost` in `homeData.ts` got a comment pointing at `hostRole.ts` and
+  explaining why it's intentionally not folded in (different scope, not an
+  oversight).
+
+No schema change, no migration — this one's code-only. Whole repo
+typechecks clean.
+
+**Next up:** the connections-table merge
+(`handshakes`/`handshake_requests`/`profile_connections`/quick-contact) is
+the one still on the board — the person-graph underneath it is settled now,
+so it's a reasonable next target whenever you're ready to take it on.

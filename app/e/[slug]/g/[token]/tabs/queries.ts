@@ -1,5 +1,6 @@
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/lib/supabase/client";
+import { isOrganizerProfile } from "@/lib/hostRole";
 
 // ─── Query Keys ──────────────────────────────────────────────────────────────
 // Centralised key factory prevents typos and makes cache invalidation precise.
@@ -196,8 +197,8 @@ export function useConnections(profileId: string | undefined, eventId?: string) 
       });
       // Host/organizer always first, then everyone else in order received
       return mapped.sort((a: any, b: any) => {
-        if (a.role === "organizer") return -1;
-        if (b.role === "organizer") return 1;
+        if (isOrganizerProfile(a)) return -1;
+        if (isOrganizerProfile(b)) return 1;
         return 0;
       });
     },

@@ -1,6 +1,7 @@
 "use client";
 import { useEffect, useState, useRef, useCallback, useMemo } from "react";
 import { supabase } from "@/lib/supabase/client";
+import { isHostRegistration } from "@/lib/hostRole";
 import { getFirstName, parseIntents, REASON_OPTIONS, PALETTE, INTENTS_BY_GROUP, INTENT_GROUPS, INTENT_MAP } from "./shared";
 import AttendeeCard from "./AttendeeCard";
 import PreEventDiscovery from "./PreEventDiscovery";
@@ -68,7 +69,7 @@ export default function NetworkingTab({ event, profile, isLive, isEnded, registr
       setSentRequests(new Set((sent||[]).map((r:any)=>r.recipient_id)));
       const{data:declined}=await supabase.from("handshake_requests").select("recipient_id").eq("requester_id",profile.id).eq("event_id",event.id).eq("status","declined");
       setDeclinedIds(new Set((declined||[]).map((r:any)=>r.recipient_id)));
-      if(registration?.status==="host"){
+      if(isHostRegistration(registration)){
         // Hosts are always active — set state immediately without DB round-trip
         // (the server already created their guest_profiles row with networking_visible=true)
         setNetworkingActive(true);

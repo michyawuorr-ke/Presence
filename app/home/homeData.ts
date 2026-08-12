@@ -1,4 +1,5 @@
 import { supabase } from "@/lib/supabase/client";
+import { HOST_REGISTRATION_STATUS } from "@/lib/hostRole";
 
 export interface MyEvent {
   id: string;
@@ -42,7 +43,12 @@ export interface MyConnection {
  * not for filtering — the whole point is one unified "My Events" view. */
 /** Cheap standalone check for whether this email has a hosts row at all —
  * used to decide whether to show a host-dashboard entry point on /home,
- * without needing the full loadMyEvents fetch. */
+ * without needing the full loadMyEvents fetch.
+ *
+ * This is a different question from isHostRegistration/isOrganizerProfile
+ * in @/lib/hostRole (person-level, cross-event, vs. those two which are
+ * per-event) — intentionally not folded into that file. See the comment
+ * there for how all three relate. */
 export async function checkIsHost(email: string): Promise<boolean> {
   const { data } = await supabase.from("hosts").select("id").eq("email", email).maybeSingle();
   return !!data;
@@ -69,7 +75,7 @@ export async function loadMyEvents(email: string): Promise<MyEvent[]> {
       .from("registrations")
       .select("event_id,access_token,events(id,title,venue,start_time,status,slug,banner_url)")
       .eq("guest_email", email)
-      .neq("status", "host"),
+      .neq("status", HOST_REGISTRATION_STATUS),
     supabase.from("hosts").select("id").eq("email", email).maybeSingle(),
   ]);
 
