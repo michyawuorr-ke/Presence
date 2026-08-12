@@ -91,24 +91,28 @@ export async function POST(req:NextRequest){
 
       registration=newReg;
 
-      // Link this synthetic guest_profiles row to a real master_profiles
-      // row too — same as regular guest onboarding — so a host who also
-      // attends other events (as guest or host) shows up as one person in
-      // My Connections instead of a disconnected row per event.
-      const{data:existingMaster}=await supabase
-        .from('master_profiles')
-        .select('id')
-        .eq('email',host_email)
-        .maybeSingle();
-
-      let masterProfileId=existingMaster?.id||null;
+      // hosts now carries master_profile_id directly (set at signup in
+      // app/login/page.tsx, or by the migration backfill for older rows),
+      // so use that instead of re-deriving it by email each time. Only
+      // falls back to a fresh lookup-or-create for a host row that
+      // predates both the signup change and the backfill.
+      let masterProfileId=host.master_profile_id||null;
       if(!masterProfileId){
-        const{data:newMaster}=await supabase
+        const{data:existingMaster}=await supabase
           .from('master_profiles')
-          .insert({email:host_email,display_name:hostProfile?.display_name||host.name})
           .select('id')
-          .single();
-        masterProfileId=newMaster?.id||null;
+          .eq('email',host_email)
+          .maybeSingle();
+
+        masterProfileId=existingMaster?.id||null;
+        if(!masterProfileId){
+          const{data:newMaster}=await supabase
+            .from('master_profiles')
+            .insert({email:host_email,display_name:hostProfile?.display_name||host.name})
+            .select('id')
+            .single();
+          masterProfileId=newMaster?.id||null;
+        }
       }
 
       // Create host guest_profiles immediately when registration is first made

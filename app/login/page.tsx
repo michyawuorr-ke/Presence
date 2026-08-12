@@ -91,7 +91,28 @@ function LoginForm() {
     });
 
     if (err) { setError(err.message); setLoading(false); return; }
-    await supabase.from("hosts").upsert({ email, name, phone }, { onConflict: "email" });
+
+    // Link this host to the same central person record everything else
+    // in the app uses, so their dashboard identity and their consumer-app
+    // account collapse into one person instead of two that only happen
+    // to share an email.
+    const { data: existingMaster } = await supabase
+      .from("master_profiles")
+      .select("id")
+      .eq("email", email)
+      .maybeSingle();
+
+    let masterProfileId = existingMaster?.id ?? null;
+    if (!masterProfileId) {
+      const { data: newMaster } = await supabase
+        .from("master_profiles")
+        .insert({ email, display_name: name })
+        .select("id")
+        .single();
+      masterProfileId = newMaster?.id ?? null;
+    }
+
+    await supabase.from("hosts").upsert({ email, name, phone, master_profile_id: masterProfileId }, { onConflict: "email" });
     setMode("sent");
     setLoading(false);
   }

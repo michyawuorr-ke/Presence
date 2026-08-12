@@ -60,11 +60,12 @@ export async function bootstrapIdentity(reg: any) {
     try {
       const svc = getServiceClient();
 
-      // Same master_profiles link as go-live's insert path — this fallback
-      // exists for host registrations created before that path started
-      // linking them, so it needs the same lookup-or-create step.
-      let masterProfileId: string | null = null;
-      if (host.email) {
+      // hosts now carries master_profile_id directly (set at signup, or by
+      // the migration backfill for older rows) — use that first. Only
+      // falls back to a fresh lookup-or-create for a host row that
+      // predates both the signup change and the backfill.
+      let masterProfileId: string | null = host.master_profile_id ?? null;
+      if (!masterProfileId && host.email) {
         const { data: existingMaster } = await svc
           .from("master_profiles")
           .select("id")

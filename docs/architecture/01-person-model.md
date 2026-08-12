@@ -108,3 +108,30 @@ role/status being encoded three ways (`registrations.status`,
 `guest_profiles.role`, `hosts` membership) before touching the
 connections-table merge, since that merge would otherwise build against a
 person-graph that's still half-linked.
+
+## Follow-up — Done (2026-08-07, part 2)
+
+Linked `hosts` to `master_profiles`, same shape as Stage 1:
+
+- `supabase/migrations/20260807b_add_hosts_master_profile_id.sql` — adds
+  `hosts.master_profile_id`, indexes it, backfills existing rows by
+  case-insensitive email match. **Not yet applied to the database.**
+- `app/login/page.tsx` — host signup now finds-or-creates a
+  `master_profiles` row by email and sets it on the `hosts` upsert, so the
+  link exists from the moment someone signs up as a host, not just via
+  backfill.
+- `app/api/events/go-live/route.ts` and `features/entry/bootstrapIdentity.ts`
+  — the find-or-create-by-email logic Stage 1 added to each of these is now
+  a fallback only. Both read `host.master_profile_id` first, since `hosts`
+  carries it directly now, and only fall back to the email lookup for a host
+  row that predates both this change and the backfill.
+
+A host's dashboard identity and their consumer-app account are now one
+person end to end, not two records bridged by "happens to share an email"
+at every point that needed to check.
+
+**Next up:** role/status is still encoded three separate ways
+(`registrations.status === 'host'`, `guest_profiles.role === 'organizer'`,
+and `hosts` table membership) — worth resolving before the connections-table
+merge, so that merge builds against a settled person-graph instead of one
+that's still ambiguous about what "role" even means.
