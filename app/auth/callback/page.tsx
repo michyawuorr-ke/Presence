@@ -6,14 +6,25 @@ import { supabase } from "@/lib/supabase/client";
 export default function AuthCallback() {
   const router = useRouter();
   const [status, setStatus] = useState("Signing in...");
+  const [dots, setDots] = useState(".");
+  useEffect(() => {
+    const interval = setInterval(() => setDots(d => d.length >= 3 ? "." : d + "."), 500);
+    return () => clearInterval(interval);
+  }, []);
 
   useEffect(() => {
+    const timeout = setTimeout(() => {
+      router.push("/login");
+    }, 6000);
+
     async function handleCallback() {
       const { data: { session } } = await supabase.auth.getSession();
       if (!session?.user) {
+        clearTimeout(timeout);
         router.push("/login");
         return;
       }
+      clearTimeout(timeout);
 
       const authUserId = session.user.id;
       const email = session.user.email?.trim().toLowerCase();
