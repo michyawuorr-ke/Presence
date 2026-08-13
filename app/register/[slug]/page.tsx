@@ -201,18 +201,20 @@ export default function RegisterPage() {
             <div style={{background:"rgba(0,0,0,0.3)",borderRadius:"8px",padding:"10px 12px",marginBottom:"10px",wordBreak:"break-all",fontFamily:"monospace",fontSize:"10px",color:"rgba(255,255,255,0.4)"}}>
               {window.location.origin + "/e/" + event?.slug + "/g/" + confirmedToken}
             </div>
-            <div style={{display:"flex",gap:"8px"}}>
+            <div style={{display:"flex",flexDirection:"column",gap:"8px"}}>
               <button onClick={() => {
                 const link = window.location.origin + "/e/" + event?.slug + "/g/" + confirmedToken;
                 navigator.clipboard?.writeText(link).then(() => { setLinkCopied(true); setTimeout(() => setLinkCopied(false), 2000); });
-              }}
-                style={{flex:1,padding:"10px",background:linkCopied?"rgba(74,222,128,0.08)":"rgba(226,109,52,0.08)",color:linkCopied?"#4ade80":"#E26D34",border:`1px solid ${linkCopied?"rgba(74,222,128,0.3)":"rgba(226,109,52,0.3)"}`,borderRadius:"8px",fontSize:"12px",fontWeight:"600",cursor:"pointer"}}>
+              }} style={{width:"100%",padding:"12px",background:linkCopied?"rgba(74,222,128,0.08)":"rgba(226,109,52,0.1)",color:linkCopied?"#4ade80":"#E26D34",border:`1px solid ${linkCopied?"rgba(74,222,128,0.3)":"rgba(226,109,52,0.3)"}`,borderRadius:"8px",fontSize:"13px",fontWeight:"600",cursor:"pointer"}}>
                 {linkCopied ? "✓ Copied" : "Copy Link"}
               </button>
-              <button onClick={sendAccessEmail} disabled={emailSending||emailSent}
-                style={{flex:1,padding:"10px",background:emailSent?"rgba(74,222,128,0.08)":"rgba(255,255,255,0.04)",color:emailSent?"#4ade80":"rgba(255,255,255,0.5)",border:`1px solid ${emailSent?"rgba(74,222,128,0.3)":"rgba(255,255,255,0.08)"}`,borderRadius:"8px",fontSize:"12px",fontWeight:"600",cursor:emailSending||emailSent?"default":"pointer"}}>
-                {emailSent?"✓ Sent":emailSending?"Sending...":"Email Me"}
-              </button>
+              {!emailSent && (
+                <button onClick={sendAccessEmail} disabled={emailSending} style={{width:"100%",padding:"8px",background:"transparent",color:"rgba(255,255,255,0.3)",border:"none",fontSize:"11px",fontWeight:"500",cursor:emailSending?"default":"pointer",textDecoration:"underline"}}>
+                  {emailSending ? "Sending..." : "Email me this link"}
+                </button>
+              )}
+              {emailSent && <p style={{textAlign:"center",fontSize:"11px",color:"#4ade80",margin:0}}>✓ Sent to your email</p>}
+              {emailError && <p style={{textAlign:"center",fontSize:"11px",color:"#f87171",margin:0}}>{emailError}</p>}
             </div>
           </div>
         )}
