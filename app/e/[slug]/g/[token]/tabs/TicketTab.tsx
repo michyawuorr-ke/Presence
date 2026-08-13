@@ -13,13 +13,7 @@ interface TicketTabProps {
 }
 
 export default function TicketTab({ event, registration, entryQR, networkingQR, qrError, isEnded, onGoToScene, onGoToConnections }: TicketTabProps) {
-  const [copied, setCopied] = useState(false););
-      const json = await res.json();
-      if (json.sent) { setEmailSent(true); setTimeout(() => setEmailSent(false), 4000); }
-    } finally {
-      setEmailSending(false);
-    }
-  }
+  const [copied, setCopied] = useState(false);
 
   function copyLink() {
     const url = typeof window !== "undefined" ? window.location.href : "";
@@ -148,12 +142,7 @@ export default function TicketTab({ event, registration, entryQR, networkingQR, 
             style={{flex:1,padding:"11px",borderRadius:"10px",background:copied?"rgba(74,222,128,0.08)":"rgba(226,109,52,0.08)",border:`1px solid ${copied?"rgba(74,222,128,0.3)":"rgba(226,109,52,0.3)"}`,color:copied?"#4ade80":"#E26D34",fontSize:"12px",fontWeight:"600",cursor:"pointer"}}>
             {copied ? "✓ Copied" : "Copy Link"}
           </button>
-          {registration?.guest_email && (
-            <button onClick={sendAccessEmail} disabled={emailSending||emailSent}
-              style={{flex:1,padding:"11px",borderRadius:"10px",background:emailSent?"rgba(74,222,128,0.08)":"rgba(255,255,255,0.04)",border:`1px solid ${emailSent?"rgba(74,222,128,0.3)":"rgba(255,255,255,0.08)"}`,color:emailSent?"#4ade80":"rgba(255,255,255,0.5)",fontSize:"12px",fontWeight:"600",cursor:emailSending||emailSent?"default":"pointer"}}>
-              {emailSent?"✓ Sent":emailSending?"Sending...":"Email Me"}
-            </button>
-          )}
+
         </div>
       </div>
     </div>
