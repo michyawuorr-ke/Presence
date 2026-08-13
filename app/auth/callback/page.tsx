@@ -1,93 +1,97 @@
 "use client";
-import { useEffect, useState } from "react";
+import { Suspense, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { supabase } from "@/lib/supabase/client";
 
-export default function AuthCallback() {
+function CallbackHandler() {
   const router = useRouter();
   const [status, setStatus] = useState("Signing in...");
   const [dots, setDots] = useState(".");
-  useEffect(() => {
-    const interval = setInterval(() => setDots(d => d.length >= 3 ? "." : d + "."), 500);
-    return () => clearInterval(interval);
-  }, []);
-  const [dots, setDots] = useState(".");
+
   useEffect(() => {
     const interval = setInterval(() => setDots(d => d.length >= 3 ? "." : d + "."), 500);
     return () => clearInterval(interval);
   }, []);
 
   useEffect(() => {
-    const timeout = setTimeout(() => {
-      router.push("/login");
-    }, 6000);
+    let redirected = false;
 
-    async function handleCallback() {
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(
+      async (event, session) => {
+        if (redirected) return;
+        if (event === "SIGNED_IN" && session?.user) {
+          redirected = true;
+          subscription.unsubscribe();
+          clearTimeout(fallbackTimer);
+
+          const authUserId = session.user.id;
+          const email = session.user.email?.trim().toLowerCase();
+          if (!email) { router.push("/home"); return; }
+
+          setStatus("Setting up your account...");
+
+          const { data: existing } = await supabase
+            .from("master_profiles")
+            .select("id,auth_user_id")
+            .eq("email", email)
+            .maybeSingle();
+
+          if (existing && !existing.auth_user_id) {
+            await supabase
+              .from("master_profiles")
+              .update({ auth_user_id: authUserId })
+              .eq("id", existing.id);
+          } else if (!existing) {
+            await supabase
+              .from("master_profiles")
+              .insert({ email, auth_user_id: authUserId });
+          }
+
+          router.push("/home");
+        }
+      }
+    );
+
+    const fallbackTimer = setTimeout(async () => {
+      if (redirected) return;
+      redirected = true;
+      subscription.unsubscribe();
       const { data: { session } } = await supabase.auth.getSession();
-      if (!session?.user) {
-        clearTimeout(timeout);
-        router.push("/login");
-        return;
-      }
-      clearTimeout(timeout);
-
-      const authUserId = session.user.id;
-      const email = session.user.email?.trim().toLowerCase();
-
-      if (!email) {
-        // Shouldn't happen with the email-OTP flow, but fail safe rather
-        // than proceed with a claim step that has nothing to match on.
+      if (session?.user) {
         router.push("/home");
-        return;
+      } else {
+        router.push("/login");
       }
+    }, 5000);
 
-      // Claim or create the master_profiles row for this login. This is
-      // the actual bridge between "guest at some event via an access
-      // token" and "a real logged-in identity" — auth_user_id was always
-      // a nullable column on master_profiles, unused until now.
-      const { data: existing } = await supabase
-        .from("master_profiles")
-        .select("id,auth_user_id")
-        .eq("email", email)
-        .maybeSingle();
-
-      if (existing && !existing.auth_user_id) {
-        // Found a master_profiles row from prior guest activity
-        // (onboarding at some event), never claimed by a real login —
-        // claim it now so their history carries forward.
-        setStatus("Linking your event history...");
-        await supabase
-          .from("master_profiles")
-          .update({ auth_user_id: authUserId })
-          .eq("id", existing.id);
-      } else if (!existing) {
-        // No prior guest activity at all — first-ever contact with
-        // Oreeti via login rather than an event link. Create a bare
-        // profile now so master_profiles is still the single source of
-        // truth for this identity, not a special-cased empty state.
-        await supabase
-          .from("master_profiles")
-          .insert({ email, auth_user_id: authUserId });
-      }
-      // else: existing.auth_user_id is already set (either to this user
-      // or, in a rare edge case, someone else's old session) — leave it
-      // alone rather than overwrite silently.
-
-      router.push("/home");
-    }
-
-    handleCallback();
+    return () => {
+      subscription.unsubscribe();
+      clearTimeout(fallbackTimer);
+    };
   }, [router]);
 
   return (
-    <div style={{
-      minHeight: "100vh",
-      background: "radial-gradient(ellipse 900px 500px at 50% -10%, rgba(226,109,52,0.08), transparent), var(--base)",
-      display: "flex",
-      alignItems: "center",
-      justifyContent: "center",
-    }}>
-      <p style={{ color: "var(--dusk)", fontSize: 13.5 }}>{status}</p>
+    <div style={{ minHeight: "100vh", background: "radial-gradient(ellipse 900px 500px at 50% -10%, rgba(226,109,52,0.08), transparent), var(--base)", display: "flex", alignItems: "center", justifyContent: "center" }}>
+      <div style={{ textAlign: "center" }}>
+        <div style={{ display: "flex", gap: 6, justifyContent: "center", marginBottom: 16 }}>
+          {[0,1,2].map(i => (
+            <div key={i} style={{ width: 8, height: 8, borderRadius: "50%", background: "var(--ember)", opacity: dots.length > i ? 1 : 0.2, transition: "opacity 0.3s" }} />
+          ))}
+        </div>
+        <p style={{ color: "var(--dusk)", fontSize: 13 }}>{status}</p>
+      </div>
     </div>
+  );
+}
+
+export default function AuthCallback() {
+  return (
+    <Suspense fallback={
+      <div style={{ minHeight: "100vh", background: "var(--base)", display: "flex", alignItems: "center", justifyContent: "center" }}>
+        <p style={{ color: "var(--dusk)", fontSize: 13 }}>Signing in...</p>
+      </div>
+    }>
+      <CallbackHandler />
+    </Suspense>
   );
 }
