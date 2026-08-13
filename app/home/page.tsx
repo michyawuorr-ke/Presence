@@ -399,7 +399,7 @@ function ConnectionsList({ connections, hadAnyMatch }: { connections: MyConnecti
       borderRadius: 12, background: "rgba(226,109,52,0.06)", border: "1px solid rgba(226,109,52,0.15)",
       textDecoration: "none",
     }}>
-      <span style={{ fontSize: 18 }}>🪪</span>
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--ember)" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="M7 15h0M2 9h20"/></svg>
       <div style={{ flex: 1 }}>
         <p style={{ margin: 0, fontSize: 12.5, fontWeight: 600, color: "var(--ember)" }}>Share your card</p>
         <p style={{ margin: 0, fontSize: 11.5, color: "var(--dusk)" }}>Works anywhere — not just at events</p>
