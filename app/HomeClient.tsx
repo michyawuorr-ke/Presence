@@ -24,13 +24,18 @@ export default function HomeClient() {
   const [checkingSession, setCheckingSession] = useState(true);
 
   useEffect(() => {
+    // Timeout fallback — if session check takes too long (cold start, slow
+    // network), show the marketing page rather than staying dark forever.
+    const timeout = setTimeout(() => setCheckingSession(false), 1500);
     supabase.auth.getSession().then(({ data: { session } }) => {
+      clearTimeout(timeout);
       if (session) {
         router.push("/home");
       } else {
         setCheckingSession(false);
       }
     });
+    return () => clearTimeout(timeout);
   }, [router]);
 
   if (checkingSession) {
