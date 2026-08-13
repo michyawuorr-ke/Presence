@@ -73,7 +73,7 @@ export default function DiscoverPage() {
                     <p style={{ margin: "0 0 3px", fontSize: 13.5, fontWeight: 600, color: "var(--ivory)", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{event.title}</p>
                     <p style={{ margin: 0, fontSize: 11.5, color: "var(--dusk)" }}>{date}{event.venue ? ` · ${event.venue}` : ""}</p>
                   </div>
-                  {event.status === "live"
+                  {event.status === "live" && new Date(event.start_time) <= new Date()
                     ? <span style={{ fontSize: 9, fontWeight: 700, letterSpacing: "0.06em", color: "#22c55e", background: "rgba(34,197,94,0.1)", border: "1px solid rgba(34,197,94,0.25)", padding: "3px 8px", borderRadius: 20, flexShrink: 0 }}>LIVE</span>
                     : <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" opacity={0.2} style={{ flexShrink: 0, color: "var(--ivory)" }}><path d="M9 18l6-6-6-6"/></svg>
                   }

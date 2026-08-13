@@ -35,7 +35,15 @@ export default function UpcomingEvents() {
   // Nothing to show and nothing loading — don't render an empty section
   // on the homepage; the /events page itself already handles the empty
   // state for anyone who navigates there directly.
-  if (!loading && events.length === 0) return null;
+  if (loading) return null;
+  if (events.length === 0) return (
+    <section style={{ padding: "48px 32px" }}>
+      <div style={{ maxWidth: 1100, margin: "0 auto", textAlign: "center", padding: "40px 0" }}>
+        <p style={{ fontSize: 15, fontWeight: 600, color: "var(--ivory)", margin: "0 0 8px" }}>No events right now.</p>
+        <p style={{ fontSize: 13.5, color: "var(--dusk)", margin: 0 }}>Be the first to know when the next one drops.</p>
+      </div>
+    </section>
+  );
 
   return (
     <section style={{
@@ -79,11 +87,7 @@ export default function UpcomingEvents() {
           display: "flex", gap: 14, overflowX: "auto", paddingBottom: 6,
           scrollSnapType: "x mandatory", WebkitOverflowScrolling: "touch",
         }}>
-          {loading
-            ? [0, 1, 2].map(i => (
-                <div key={i} style={{ flex: "0 0 240px", height: 180, borderRadius: 14, background: "rgba(255,255,255,0.02)", scrollSnapAlign: "start" }} />
-              ))
-            : events.map(event => {
+          {events.map(event => {
                 const date = event.start_time
                   ? new Date(event.start_time).toLocaleDateString("en-KE", { day: "numeric", month: "short" })
                   : "";
@@ -129,7 +133,7 @@ export default function UpcomingEvents() {
                     </div>
                   </Link>
                 );
-              })}
+          })}
         </div>
       </div>
     </section>
