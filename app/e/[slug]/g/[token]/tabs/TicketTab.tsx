@@ -13,19 +13,7 @@ interface TicketTabProps {
 }
 
 export default function TicketTab({ event, registration, entryQR, networkingQR, qrError, isEnded, onGoToScene, onGoToConnections }: TicketTabProps) {
-  const [copied, setCopied] = useState(false);
-  const [emailSent, setEmailSent] = useState(false);
-  const [emailSending, setEmailSending] = useState(false);
-
-  async function sendAccessEmail() {
-    if (!registration?.id || !event?.id) return;
-    setEmailSending(true);
-    try {
-      const res = await fetch("/api/email/access-link", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ registration_id: registration.id, event_id: event.id }),
-      });
+  const [copied, setCopied] = useState(false););
       const json = await res.json();
       if (json.sent) { setEmailSent(true); setTimeout(() => setEmailSent(false), 4000); }
     } finally {

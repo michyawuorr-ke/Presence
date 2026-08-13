@@ -9,19 +9,32 @@ const supabase = createClient(
   process.env.SUPABASE_SERVICE_ROLE_KEY!
 );
 
+async function sendWithRetry(payload: any, attempts = 3): Promise<{ error: any }> {
+  for (let i = 0; i < attempts; i++) {
+    const { error } = await resend.emails.send(payload);
+    if (!error) return { error: null };
+    if (i < attempts - 1) await new Promise(r => setTimeout(r, 1000 * (i + 1)));
+  }
+  return { error: new Error("Failed after retries") };
+}
+
 export async function POST(req: NextRequest) {
   try {
     const ip = req.headers.get("x-forwarded-for")?.split(",")[0]?.trim() || "unknown";
-    // This route always emails the address already on file for the
-    // registration, not one the caller supplies, so it can't leak a link
-    // to a stranger — but with no limit, anyone with a registration_id and
-    // event_id could bomb a guest's inbox by calling it on repeat.
-    if (!rateLimit("access-link:" + ip, 5, 60000)) {
+
+    // IP-level guard — prevents bulk abuse
+    if (!rateLimit("access-link:ip:" + ip, 10, 60000)) {
       return NextResponse.json({ error: "Too many requests." }, { status: 429 });
     }
+
     const { registration_id, event_id } = await req.json();
     if (!registration_id || !event_id) {
       return NextResponse.json({ error: "Missing fields" }, { status: 400 });
+    }
+
+    // Strict per-registration limit — exactly 1 email per registration ever
+    if (!rateLimit("access-link:reg:" + registration_id, 1, 99999999999)) {
+      return NextResponse.json({ error: "already_sent" }, { status: 429 });
     }
 
     const [{ data: reg }, { data: event }] = await Promise.all([
@@ -36,16 +49,16 @@ export async function POST(req: NextRequest) {
     const accessLink = reg.guest_access_link || `${appUrl}/e/${event.slug}/g/${reg.access_token}`;
     const firstName = reg.guest_name?.split(" ")[0] || "there";
 
-    const { error } = await resend.emails.send({
+    const { error } = await sendWithRetry({
       from: "Oreeti <events@oreeti.com>",
       to: reg.guest_email,
       subject: `Your access link for ${event.title}`,
       html: `<!DOCTYPE html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"></head><body style="margin:0;padding:0;background:#08080a;font-family:Inter,sans-serif;color:#f0ede8;"><table width="100%" cellpadding="0" cellspacing="0" style="max-width:480px;margin:0 auto;padding:40px 24px;"><tr><td><p style="font-size:22px;font-weight:800;margin:0 0 4px;letter-spacing:-0.03em;"><span style="color:#FFFFFF;">Or</span><span style="color:#E26D34;">ee</span><span style="color:#FFFFFF;">ti</span></p><p style="font-size:11px;color:#555;margin:0 0 40px;letter-spacing:0.15em;text-transform:uppercase;">${event.title}</p><p style="font-size:22px;font-weight:600;color:#f0ede8;margin:0 0 12px;">Hey ${firstName}</p><p style="font-size:14px;color:rgba(240,237,232,0.55);line-height:1.6;margin:0 0 32px;">Here's your personal access link for <strong style="color:#f0ede8;">${event.title}</strong>. Bookmark it or save this email — no login needed.</p><a href="${accessLink}" style="display:block;text-align:center;padding:16px 24px;background:rgba(226,109,52,0.1);border:1px solid rgba(226,109,52,0.35);border-radius:12px;color:#E26D34;font-size:14px;font-weight:600;text-decoration:none;margin-bottom:16px;">Open My Event →</a><p style="font-size:11px;color:#333;text-align:center;margin:0 0 32px;word-break:break-all;">${accessLink}</p><p style="font-size:11px;color:#333;line-height:1.6;margin:0;">This link is personal to you — don't share it.</p></td></tr></table></body></html>`,
     });
 
-    if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+    if (error) return NextResponse.json({ error: "failed" }, { status: 500 });
     return NextResponse.json({ sent: true, to: reg.guest_email });
   } catch (err: any) {
-    return NextResponse.json({ error: err.message }, { status: 500 });
+    return NextResponse.json({ error: "failed" }, { status: 500 });
   }
 }

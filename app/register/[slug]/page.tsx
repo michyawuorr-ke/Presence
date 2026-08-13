@@ -30,9 +30,11 @@ export default function RegisterPage() {
   const [selfSelectRoles, setSelfSelectRoles] = useState<string[]>([]);
   const [selectedRole, setSelectedRole] = useState("attendee");
 
+  const [emailError, setEmailError] = useState("");
   async function sendAccessEmail() {
     if (!confirmedRegId || !event?.id) return;
     setEmailSending(true);
+    setEmailError("");
     try {
       const res = await fetch("/api/email/access-link", {
         method: "POST",
@@ -40,8 +42,21 @@ export default function RegisterPage() {
         body: JSON.stringify({ registration_id: confirmedRegId, event_id: event.id }),
       });
       const json = await res.json();
-      if (json.sent) { setEmailSent(true); setTimeout(() => setEmailSent(false), 4000); }
-    } finally { setEmailSending(false); }
+      if (json.sent) {
+        setEmailSent(true);
+      } else if (json.error === "already_sent") {
+        setEmailError("Already sent to your email.");
+        setTimeout(() => setEmailError(""), 4000);
+      } else {
+        setEmailError("Could not send — copy the link instead.");
+        setTimeout(() => setEmailError(""), 4000);
+      }
+    } catch {
+      setEmailError("Could not send — copy the link instead.");
+      setTimeout(() => setEmailError(""), 4000);
+    } finally {
+      setEmailSending(false);
+    }
   }
 
   const isSubmittingRef = useRef(false);
