@@ -27,7 +27,18 @@ export default function HomePage() {
 
   useEffect(() => {
     async function init() {
-      const { data: { session } } = await supabase.auth.getSession();
+      const sessionPromise = supabase.auth.getSession();
+      const timeoutPromise = new Promise<never>((_, reject) =>
+        setTimeout(() => reject(new Error("session timeout")), 4000)
+      );
+      let session: any;
+      try {
+        const { data } = await Promise.race([sessionPromise, timeoutPromise]) as any;
+        session = data?.session;
+      } catch {
+        router.push("/login");
+        return;
+      }
       if (!session?.user?.email) {
         router.push("/login");
         return;
@@ -72,8 +83,26 @@ export default function HomePage() {
 
   if (loading) {
     return (
-      <div style={{ minHeight: "100vh", background: "var(--base)", display: "flex", alignItems: "center", justifyContent: "center" }}>
-        <p style={{ color: "var(--dusk)", fontSize: 13.5 }}>Loading...</p>
+      <div style={{ minHeight: "100vh", background: "radial-gradient(ellipse 900px 500px at 50% -10%, rgba(226,109,52,0.06), transparent), var(--base)" }}>
+        <div style={{ maxWidth: 720, margin: "0 auto", padding: "24px 24px 100px" }}>
+          {/* Header skeleton */}
+          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 20 }}>
+            <div style={{ width: 72, height: 20, borderRadius: 6, background: "rgba(255,255,255,0.05)" }} />
+            <div style={{ width: 48, height: 14, borderRadius: 6, background: "rgba(255,255,255,0.03)" }} />
+          </div>
+          {/* Tab skeleton */}
+          <div style={{ display: "flex", gap: 24, marginBottom: 20, borderBottom: "1px solid rgba(234,230,223,0.08)", paddingBottom: 1 }}>
+            {[60, 52, 44].map((w, i) => (
+              <div key={i} style={{ width: w, height: 13, borderRadius: 4, background: i === 1 ? "rgba(226,109,52,0.25)" : "rgba(255,255,255,0.04)", marginBottom: 10 }} />
+            ))}
+          </div>
+          {/* Search skeleton */}
+          <div style={{ height: 42, borderRadius: 12, background: "rgba(255,255,255,0.03)", marginBottom: 24 }} />
+          {/* Card skeletons */}
+          {[0, 1, 2, 3].map(i => (
+            <div key={i} style={{ height: 72, borderRadius: 14, background: "rgba(255,255,255,0.025)", marginBottom: 8 }} />
+          ))}
+        </div>
       </div>
     );
   }
