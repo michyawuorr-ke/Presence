@@ -154,7 +154,7 @@ export default function EventsDirectoryPage() {
                         </span>
                       </div>
                     )}
-                    {event.status === "live" && (
+                    {event.status === "live" && new Date(event.start_time) <= new Date() && (
                       <span style={{
                         position: "absolute", top: 12, left: 12,
                         display: "inline-flex", alignItems: "center", gap: 5,
