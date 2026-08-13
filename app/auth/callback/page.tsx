@@ -71,14 +71,16 @@ function CallbackHandler() {
 
       // Check if session already exists (user clicked link twice)
       const { data: { session } } = await supabase.auth.getSession();
+
+      let fallbackTimer: ReturnType<typeof setTimeout>;
+
       if (session?.user && !redirected) {
         subscription.unsubscribe();
-        clearTimeout(fallbackTimer);
         await finish(session);
         return;
       }
 
-      var fallbackTimer = setTimeout(() => {
+      fallbackTimer = setTimeout(() => {
         if (!redirected) {
           redirected = true;
           subscription.unsubscribe();
