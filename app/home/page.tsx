@@ -16,7 +16,7 @@ export default function HomePage() {
   const router = useRouter();
   const [loading, setLoading] = useState(true);
   const [email, setEmail] = useState<string | null>(null);
-  const [tab, setTab] = useState<Tab>("events");
+  const [tab, setTab] = useState<Tab>("connections");
   const [events, setEvents] = useState<MyEvent[]>([]);
   const [connections, setConnections] = useState<MyConnection[]>([]);
   const [archivedIds, setArchivedIds] = useState<Set<string>>(new Set());
@@ -136,6 +136,20 @@ export default function HomePage() {
             </button>
           ))}
         </div>
+
+        {/* Discover pill — always visible below tabs, only on events tab */}
+        {tab === "events" && (
+          <a href="/home/discover" style={{
+            display: "flex", alignItems: "center", justifyContent: "center", gap: 6,
+            padding: "9px 16px", marginBottom: 16, borderRadius: 10,
+            background: "rgba(226,109,52,0.07)", border: "1px solid rgba(226,109,52,0.18)",
+            textDecoration: "none",
+          }}>
+            <span style={{ width: 6, height: 6, borderRadius: "50%", background: "var(--ember)", flexShrink: 0 }} />
+            <span style={{ fontSize: 12.5, fontWeight: 600, color: "var(--ember)", letterSpacing: "0.02em" }}>Discover events happening on Oreeti</span>
+            <span style={{ fontSize: 12, color: "var(--ember)", opacity: 0.6 }}>→</span>
+          </a>
+        )}
 
         {/* Search — only relevant to Events/Connects, not the Profile tab */}
         {tab !== "profile" && (
@@ -321,14 +335,49 @@ function WhatsAppGlyph() {
 
 function ConnectionsList({ connections, hadAnyMatch }: { connections: MyConnection[]; hadAnyMatch: boolean }) {
   if (connections.length === 0) {
+    if (hadAnyMatch) {
+      return <p style={{ color: "var(--dusk)", fontSize: 13.5, textAlign: "center", padding: "60px 0" }}>No connects match.</p>;
+    }
+    // Empty state — no connections at all
     return (
-      <p style={{ color: "var(--dusk)", fontSize: 13.5, textAlign: "center", padding: "60px 0" }}>
-        {hadAnyMatch ? "No connects match." : "No connects yet — they'll show up here once you meet people at an event, connect via your Oreeti card, or someone scans your card and sends their details back."}
-      </p>
+      <div style={{ textAlign: "center", padding: "48px 24px" }}>
+        <div style={{ width: 52, height: 52, borderRadius: "50%", background: "rgba(226,109,52,0.08)", border: "1px solid rgba(226,109,52,0.15)", display: "flex", alignItems: "center", justifyContent: "center", margin: "0 auto 20px" }}>
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="var(--ember)" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+            <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/>
+          </svg>
+        </div>
+        <p style={{ fontSize: 15, fontWeight: 600, color: "var(--ivory)", margin: "0 0 8px", letterSpacing: "-0.01em" }}>Your network starts here</p>
+        <p style={{ fontSize: 13, color: "var(--dusk)", lineHeight: 1.6, margin: "0 0 28px" }}>Share your Oreeti card with anyone — in meetings, at events, anywhere. Your connects show up here.</p>
+        <a href="/home/profile" style={{
+          display: "inline-flex", alignItems: "center", gap: 8, padding: "12px 24px",
+          borderRadius: 12, background: "rgba(226,109,52,0.1)", border: "1px solid rgba(226,109,52,0.3)",
+          color: "var(--ember)", fontSize: 13, fontWeight: 600, textDecoration: "none",
+        }}>
+          Share your card →
+        </a>
+      </div>
     );
   }
 
+  // Few connects (1–5) — show list + subtle card nudge at top
+  const showCardNudge = connections.filter(c => c.source !== "shared").length <= 5;
+
   const shared = connections.filter(c => c.source === "shared");
+
+  const cardNudge = showCardNudge ? (
+    <a href="/home/profile" style={{
+      display: "flex", alignItems: "center", gap: 12, padding: "12px 14px", marginBottom: 8,
+      borderRadius: 12, background: "rgba(226,109,52,0.06)", border: "1px solid rgba(226,109,52,0.15)",
+      textDecoration: "none",
+    }}>
+      <span style={{ fontSize: 18 }}>🪪</span>
+      <div style={{ flex: 1 }}>
+        <p style={{ margin: 0, fontSize: 12.5, fontWeight: 600, color: "var(--ember)" }}>Share your card</p>
+        <p style={{ margin: 0, fontSize: 11.5, color: "var(--dusk)" }}>Works anywhere — not just at events</p>
+      </div>
+      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" opacity={0.3} style={{ flexShrink: 0, color: "var(--ivory)" }}><path d="M9 18l6-6-6-6"/></svg>
+    </a>
+  ) : null;
   const mutual = connections.filter(c => c.source !== "shared");
 
   // Group mutual connections by the first event they were met at.
@@ -352,6 +401,7 @@ function ConnectionsList({ connections, hadAnyMatch }: { connections: MyConnecti
 
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: 28 }}>
+      {cardNudge}
       {shared.length > 0 && (
         <div>
           <p style={{ fontSize: 10, fontWeight: 700, letterSpacing: "0.1em", textTransform: "uppercase", color: "var(--gold)", margin: "0 0 12px" }}>
