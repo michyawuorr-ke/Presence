@@ -3,6 +3,7 @@ import { useState, useEffect, useCallback } from "react";
 import { supabase } from "@/lib/supabase/client";
 import { rankMatches, type AttendeeProfile, type InteractionMap } from "@/lib/matching/score";
 import { parseIntents, getFirstName, INTENT_MAP } from "./shared";
+import { dualWriteConnectionRequest } from "@/lib/dualWriteConnection";
 
 interface ForYouTabProps {
   profile: any;
@@ -93,6 +94,13 @@ export default function ForYouTab({ profile, event, registration }: ForYouTabPro
     if (!error) {
       setSent(prev => new Set([...prev, match.profile.id]));
       toast(`Request sent to ${getFirstName(match.profile.display_name)}`);
+      dualWriteConnectionRequest({
+        accessToken: registration?.access_token,
+        requesterGuestProfileId: profile.id,
+        recipientGuestProfileId: match.profile.id,
+        eventId: event.id,
+        status: "requested",
+      });
     } else {
       toast("Couldn't send request — try again");
     }

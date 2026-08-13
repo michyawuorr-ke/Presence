@@ -174,6 +174,21 @@ export default function PublicProfilePage() {
       receiver_id: profile.id,
     });
     setConnectState(error ? "error" : "connected");
+
+    // Stage B shadow-write to the new connections table (see
+    // docs/architecture/01-person-model.md) — best-effort, doesn't affect
+    // the state above either way since profile_connections stays
+    // authoritative until Stage D.
+    if (!error) {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (session?.access_token) {
+        fetch("/api/connections/card", {
+          method: "POST",
+          headers: { "Content-Type": "application/json", Authorization: "Bearer " + session.access_token },
+          body: JSON.stringify({ receiver_master_profile_id: profile.id }),
+        }).catch(() => {});
+      }
+    }
   }
 
   async function submitQuickContact() {

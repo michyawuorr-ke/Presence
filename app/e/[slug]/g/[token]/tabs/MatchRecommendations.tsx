@@ -4,6 +4,7 @@ import { supabase } from "@/lib/supabase/client";
 import { rankMatches, rankMatchesChunked, type AttendeeProfile, type InteractionMap } from "@/lib/matching/score";
 import { bestIntentPair } from "@/lib/matching/intents";
 import { parseIntents, getFirstName, INTENT_MAP } from "./shared";
+import { dualWriteConnectionRequest } from "@/lib/dualWriteConnection";
 
 interface Props {
   profile: any;
@@ -11,11 +12,12 @@ interface Props {
   sentRequests: Set<string>;
   onRequestSent: (id: string) => void;
   onRecommended?: (ids: Set<string>) => void;
+  registration?: any;
 }
 
 const EMBER = "#E26D34";
 
-export default function MatchRecommendations({ profile, event, sentRequests, onRequestSent, onRecommended }: Props) {
+export default function MatchRecommendations({ profile, event, sentRequests, onRequestSent, onRecommended, registration }: Props) {
   const [matches, setMatches] = useState<ReturnType<typeof rankMatches>>([]);
   const [loading, setLoading] = useState(true);
   const [sending, setSending] = useState<string | null>(null);
@@ -95,6 +97,13 @@ export default function MatchRecommendations({ profile, event, sentRequests, onR
     });
     onRequestSent(match.profile.id);
     setSending(null);
+    dualWriteConnectionRequest({
+      accessToken: registration?.access_token,
+      requesterGuestProfileId: profile.id,
+      recipientGuestProfileId: match.profile.id,
+      eventId: event.id,
+      status: "requested",
+    });
   }
 
   // Don't show if: loading, dismissed, no matches, or no intents set

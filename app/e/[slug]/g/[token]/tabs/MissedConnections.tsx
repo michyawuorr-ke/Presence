@@ -4,15 +4,17 @@ import { supabase } from "@/lib/supabase/client";
 import { getFirstName, INTENTS_BY_GROUP, INTENT_GROUPS, PALETTE } from "./shared";
 import AttendeeCard from "./AttendeeCard";
 import { useMissedConnections, useInvalidators } from "./queries";
+import { dualWriteConnectionRequest } from "@/lib/dualWriteConnection";
 
 interface MissedConnectionsProps {
   event: any;
   profile: any;
+  registration?: any;
 }
 
 const WINDOW_HOURS = 72;
 
-export default function MissedConnections({ event, profile }: MissedConnectionsProps) {
+export default function MissedConnections({ event, profile, registration }: MissedConnectionsProps) {
   const [confirmTarget, setConfirmTarget] = useState<any>(null);
   const [selectedReason, setSelectedReason] = useState("");
   const [notification, setNotification] = useState("");
@@ -56,6 +58,13 @@ export default function MissedConnections({ event, profile }: MissedConnectionsP
       setNotification(`Request sent to ${getFirstName(target.display_name)}`);
       setTimeout(() => setNotification(""), 4000);
       invalidate.invalidatePending();
+      dualWriteConnectionRequest({
+        accessToken: registration?.access_token,
+        requesterGuestProfileId: profile.id,
+        recipientGuestProfileId: target.id,
+        eventId: event.id,
+        status: "requested",
+      });
     }
   }
 

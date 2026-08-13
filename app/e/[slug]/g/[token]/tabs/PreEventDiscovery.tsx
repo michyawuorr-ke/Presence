@@ -3,6 +3,7 @@ import { useState } from "react";
 import { supabase } from "@/lib/supabase/client";
 import { getFirstName, parseIntents, REASON_OPTIONS, INTENTS_BY_GROUP, INTENT_GROUPS, INTENT_MAP } from "./shared";
 import { isHostRegistration } from "@/lib/hostRole";
+import { dualWriteConnectionRequest } from "@/lib/dualWriteConnection";
 import AttendeeCard from "./AttendeeCard";
 import MatchRecommendations from "./MatchRecommendations";
 import { useEventAttendees, useEventStations, useHostNode, useInvalidators } from "./queries";
@@ -55,6 +56,13 @@ export default function PreEventDiscovery({ event, profile, sentRequests, setSen
       setNotification(`Request sent to ${getFirstName(target.display_name)}`);
       setTimeout(()=>setNotification(""),4000);
       invalidate.invalidatePending();
+      dualWriteConnectionRequest({
+        accessToken: registration?.access_token,
+        requesterGuestProfileId: profile.id,
+        recipientGuestProfileId: target.id,
+        eventId: event.id,
+        status: "requested",
+      });
     }
   }
 
@@ -92,6 +100,7 @@ export default function PreEventDiscovery({ event, profile, sentRequests, setSen
         event={event}
         sentRequests={sentRequests}
         onRequestSent={id => setSentRequests(prev => new Set([...prev, id]))}
+        registration={registration}
       />
 
       <input

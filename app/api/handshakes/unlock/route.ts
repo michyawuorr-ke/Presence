@@ -3,6 +3,7 @@ import{NextRequest,NextResponse}from'next/server';
 import{rateLimit}from'@/lib/rateLimit';
 import{sanitizeString}from'@/lib/sanitize';
 import{verifyQRPayload}from'@/lib/qrSecurity';
+import{recordConnection}from'@/lib/recordConnection';
 
 const supabase=createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -91,13 +92,13 @@ export async function POST(req:NextRequest){
     // Get guest profiles
     const{data:sp}=await supabase
       .from('guest_profiles')
-      .select('id')
+      .select('id,master_profile_id')
       .eq('registration_id',scanner_registration_id)
       .single();
 
     const{data:tp}=await supabase
       .from('guest_profiles')
-      .select('id')
+      .select('id,master_profile_id')
       .eq('registration_id',target_registration_id)
       .single();
 
@@ -137,6 +138,21 @@ export async function POST(req:NextRequest){
       }
       handshake=newHandshake;
       createdHandshake=true;
+    }
+
+    // Stage B shadow-write to the new connections table (see
+    // docs/architecture/01-person-model.md) — best-effort, doesn't affect
+    // the response either way since handshakes stays authoritative until
+    // Stage D. No-ops silently if either side hasn't been linked to a
+    // master_profiles row yet.
+    if(sp.master_profile_id&&tp.master_profile_id){
+      recordConnection({
+        profileAId:sp.master_profile_id,
+        profileBId:tp.master_profile_id,
+        eventId:scannerReg.event_id,
+        status:'connected',
+        source:'qr_unlock',
+      }).catch(()=>{});
     }
 
     // handshakes has no per-side unlock-status column in the real schema —

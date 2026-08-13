@@ -199,6 +199,53 @@ row to `connections`. Old tables stay authoritative for reads. Also where
 the RLS/access-model question (flagged in the person-model section above)
 gets settled for real, since Realtime on the new table needs it decided.
 
+## Stage B — Done (2026-08-13)
+
+Turned out to be 9 write sites, not the smaller number implied earlier —
+`handshakes` (created via QR-unlock), 7 places inserting into
+`handshake_requests` (send a request), one place updating it (approve/
+decline in ConnectionsTab), and `profile_connections` (card connect). All 9
+now shadow-write to `connections` too. Old tables remain fully
+authoritative for every read — nothing in the app depends on `connections`
+having correct or complete data yet.
+
+**The RLS decision, made concretely:** rather than write open RLS policies
+on `connections` (which would need to solve "guests have no Supabase Auth
+session" for real, or replicate the same gap the old tables already have),
+every write goes through one of two new server routes instead, keeping
+`connections` itself locked down to service-role only:
+
+- `app/api/connections/record/route.ts` — event-scoped writes (requests,
+  approvals, QR-unlocks-via-client... actually QR-unlock writes directly,
+  see below). Verifies the caller's `access_token` against the
+  `guest_profiles` row they claim to be, same ownership pattern as
+  `qr/generate` and `host-profile/update`.
+- `app/api/connections/card/route.ts` — card connections from `/u/[slug]`.
+  This is the one place in the app where a real Supabase Auth session
+  exists client-side, so this verifies that session directly instead.
+- `app/api/handshakes/unlock/route.ts` writes to `connections` in-process
+  (already server-side, already trusted, already resolved both guest
+  profiles) rather than calling its own new endpoint over HTTP.
+
+**The shared logic:** `lib/recordConnection.ts` — the one place that
+actually inserts/updates a `connections` row. Enforces canonical ordering
+(`profile_a_id < profile_b_id`, matching Stage A's check constraint) and a
+status-precedence rule (`connected` > `requested` > `declined`) so a stale
+duplicate request arriving after two people already connected via QR can't
+downgrade the row. `lib/dualWriteConnection.ts` is the matching client-side
+fire-and-forget helper used by the 7 `.tsx` call sites — failures here are
+swallowed on purpose, since the old-table write that already succeeded is
+what's authoritative during this stage.
+
+**Two components didn't have what they needed yet:** `MatchRecommendations`
+and `MissedConnections` weren't receiving `registration` as a prop at all
+(no `access_token` available = no way to verify a dual-write), so that got
+threaded through from both of `MatchRecommendations`' render sites and
+`MissedConnections`' one render site as part of this stage.
+
+Whole repo typechecks clean. Every one of the 9 write sites was
+cross-checked by grep against the list, not just assumed correct.
+
 **Stage C — backfill.** One-time migration of existing rows from the three
 old tables into `connections`, so historical data isn't lost when reads
 switch over.

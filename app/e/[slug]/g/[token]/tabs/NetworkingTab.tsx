@@ -2,6 +2,7 @@
 import { useEffect, useState, useRef, useCallback, useMemo } from "react";
 import { supabase } from "@/lib/supabase/client";
 import { isHostRegistration } from "@/lib/hostRole";
+import { dualWriteConnectionRequest } from "@/lib/dualWriteConnection";
 import { getFirstName, parseIntents, REASON_OPTIONS, PALETTE, INTENTS_BY_GROUP, INTENT_GROUPS, INTENT_MAP } from "./shared";
 import AttendeeCard from "./AttendeeCard";
 import PreEventDiscovery from "./PreEventDiscovery";
@@ -277,6 +278,13 @@ export default function NetworkingTab({ event, profile, isLive, isEnded, registr
     setSentRequests(prev=>new Set(prev).add(node.id));
     const{data:req}=await supabase.from("handshake_requests").insert({requester_id:profile.id,recipient_id:node.id,event_id:event.id,status:"pending",expires_at:event.end_time,reason}).select().single();
     await channelRef.current?.send({type:"broadcast",event:"handshake_requested",payload:{request_id:req?.id,requester_id:profile.id,recipient_id:node.id,requester_name:profile.display_name,reason}});
+    dualWriteConnectionRequest({
+      accessToken: registration?.access_token,
+      requesterGuestProfileId: profile.id,
+      recipientGuestProfileId: node.id,
+      eventId: event.id,
+      status: "requested",
+    });
   }
 
   if(!isLive&&!isEnded){
@@ -293,7 +301,7 @@ export default function NetworkingTab({ event, profile, isLive, isEnded, registr
 
   if(isEnded){
     return(
-      <MissedConnections event={event} profile={profile} />
+      <MissedConnections event={event} profile={profile} registration={registration} />
     );
   }
 
@@ -329,6 +337,7 @@ export default function NetworkingTab({ event, profile, isLive, isEnded, registr
         event={event}
         sentRequests={sentRequests}
         onRequestSent={id => setSentRequests(prev => new Set([...prev, id]))}
+        registration={registration}
 
       />
 

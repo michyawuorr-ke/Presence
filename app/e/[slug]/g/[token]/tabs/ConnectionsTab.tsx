@@ -9,6 +9,7 @@ import {
   useConnections, usePendingRequests, useSavedNotes, useIncomingSignals,
   useEventStations, useInvalidators, useIntroductions,
 } from "./queries";
+import { dualWriteConnectionRequest } from "@/lib/dualWriteConnection";
 
 interface ConnectionsTabProps {
   profile: any;
@@ -73,8 +74,22 @@ export default function ConnectionsTab({ profile, event, registration, isEnded }
         return;
       }
       showToast(`Connected with ${getFirstName(name)}`);
+      dualWriteConnectionRequest({
+        accessToken: registration?.access_token,
+        requesterGuestProfileId: profile.id,
+        recipientGuestProfileId: requesterId,
+        eventId: event.id,
+        status: "connected",
+      });
     } else {
       showToast(`Declined ${getFirstName(name)}`);
+      dualWriteConnectionRequest({
+        accessToken: registration?.access_token,
+        requesterGuestProfileId: profile.id,
+        recipientGuestProfileId: requesterId,
+        eventId: event.id,
+        status: "declined",
+      });
     }
     invalidate.invalidatePending();
     invalidate.invalidateConnections();
@@ -176,6 +191,13 @@ export default function ConnectionsTab({ profile, event, registration, isEnded }
     await supabase.from("host_introductions").update({ [isA ? "status_a" : "status_b"]: "connected" }).eq("id", introId);
     invalidate.invalidateIntroductions();
     showToast("Connection request sent");
+    dualWriteConnectionRequest({
+      accessToken: registration?.access_token,
+      requesterGuestProfileId: profile.id,
+      recipientGuestProfileId: otherId,
+      eventId: event.id,
+      status: "requested",
+    });
   }
 
   return (
