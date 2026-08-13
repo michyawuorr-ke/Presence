@@ -11,6 +11,11 @@ export default function AuthCallback() {
     const interval = setInterval(() => setDots(d => d.length >= 3 ? "." : d + "."), 500);
     return () => clearInterval(interval);
   }, []);
+  const [dots, setDots] = useState(".");
+  useEffect(() => {
+    const interval = setInterval(() => setDots(d => d.length >= 3 ? "." : d + "."), 500);
+    return () => clearInterval(interval);
+  }, []);
 
   useEffect(() => {
     const timeout = setTimeout(() => {
