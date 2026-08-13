@@ -1,10 +1,11 @@
 "use client";
 import { Suspense, useEffect, useState } from "react";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { supabase } from "@/lib/supabase/client";
 
 function CallbackHandler() {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const [status, setStatus] = useState("Signing in...");
   const [dots, setDots] = useState(".");
 
@@ -16,59 +17,78 @@ function CallbackHandler() {
   useEffect(() => {
     let redirected = false;
 
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      async (event, session) => {
-        if (redirected) return;
-        if (event === "SIGNED_IN" && session?.user) {
-          redirected = true;
-          subscription.unsubscribe();
-          clearTimeout(fallbackTimer);
-
-          const authUserId = session.user.id;
-          const email = session.user.email?.trim().toLowerCase();
-          if (!email) { router.push("/home"); return; }
-
-          setStatus("Setting up your account...");
-
-          const { data: existing } = await supabase
-            .from("master_profiles")
-            .select("id,auth_user_id")
-            .eq("email", email)
-            .maybeSingle();
-
-          if (existing && !existing.auth_user_id) {
-            await supabase
-              .from("master_profiles")
-              .update({ auth_user_id: authUserId })
-              .eq("id", existing.id);
-          } else if (!existing) {
-            await supabase
-              .from("master_profiles")
-              .insert({ email, auth_user_id: authUserId });
-          }
-
-          router.push("/home");
-        }
-      }
-    );
-
-    const fallbackTimer = setTimeout(async () => {
+    async function finish(session: any) {
       if (redirected) return;
       redirected = true;
-      subscription.unsubscribe();
-      const { data: { session } } = await supabase.auth.getSession();
-      if (session?.user) {
-        router.push("/home");
-      } else {
-        router.push("/login");
-      }
-    }, 5000);
 
-    return () => {
-      subscription.unsubscribe();
-      clearTimeout(fallbackTimer);
-    };
-  }, [router]);
+      const authUserId = session.user.id;
+      const email = session.user.email?.trim().toLowerCase();
+      if (!email) { router.push("/home"); return; }
+
+      setStatus("Setting up your account...");
+
+      const { data: existing } = await supabase
+        .from("master_profiles")
+        .select("id,auth_user_id")
+        .eq("email", email)
+        .maybeSingle();
+
+      if (existing && !existing.auth_user_id) {
+        await supabase
+          .from("master_profiles")
+          .update({ auth_user_id: authUserId })
+          .eq("id", existing.id);
+      } else if (!existing) {
+        await supabase
+          .from("master_profiles")
+          .insert({ email, auth_user_id: authUserId });
+      }
+
+      router.push("/home");
+    }
+
+    async function handleCallback() {
+      // PKCE flow — code in query param
+      const code = searchParams.get("code");
+      if (code) {
+        const { data, error } = await supabase.auth.exchangeCodeForSession(code);
+        if (!error && data.session) {
+          await finish(data.session);
+          return;
+        }
+      }
+
+      // Magic link flow — token in fragment, use onAuthStateChange
+      const { data: { subscription } } = supabase.auth.onAuthStateChange(
+        async (event, session) => {
+          if (event === "SIGNED_IN" && session?.user && !redirected) {
+            subscription.unsubscribe();
+            clearTimeout(fallbackTimer);
+            await finish(session);
+          }
+        }
+      );
+
+      // Check if session already exists (user clicked link twice)
+      const { data: { session } } = await supabase.auth.getSession();
+      if (session?.user && !redirected) {
+        subscription.unsubscribe();
+        clearTimeout(fallbackTimer);
+        await finish(session);
+        return;
+      }
+
+      var fallbackTimer = setTimeout(() => {
+        if (!redirected) {
+          redirected = true;
+          subscription.unsubscribe();
+          router.push("/login");
+        }
+      }, 8000);
+    }
+
+    handleCallback();
+  }, [router, searchParams]);
 
   return (
     <div style={{ minHeight: "100vh", background: "radial-gradient(ellipse 900px 500px at 50% -10%, rgba(226,109,52,0.08), transparent), var(--base)", display: "flex", alignItems: "center", justifyContent: "center" }}>
