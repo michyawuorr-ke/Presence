@@ -140,10 +140,15 @@ export async function POST(req:NextRequest){
       }
     }
 
-    // Update event status to live
+    // Update event status — scheduled, not live directly. Going live
+    // happens automatically at start_time via the auto_go_live cron job,
+    // same as the dashboard "Publish Event" button (handlePublish in
+    // app/dashboard/events/[id]/page.tsx). This route currently has no
+    // caller in the UI, but kept consistent with that flow rather than
+    // left as a second, contradictory way to reach "live".
     await supabase
       .from('events')
-      .update({status:'live'})
+      .update({status:'scheduled'})
       .eq('id',event_id);
 
 

@@ -103,10 +103,15 @@ export default function EventDashboardPage() {
 
   useEffect(() => { load(); }, [load]);
 
-  async function handleGoLive() {
-    await supabase.from("events").update({ status: "live" }).eq("id", id);
-    // Ensure an event_policies row exists so networking policies are enforced.
-    // Uses upsert so re-publishing doesn't overwrite any existing config.
+  async function handlePublish() {
+    // Publish moves draft -> scheduled, not straight to live. Going live
+    // happens automatically at start_time (see the auto_go_live cron job)
+    // — no host action needed from here.
+    await supabase.from("events").update({ status: "scheduled" }).eq("id", id);
+    // Ensure an event_policies row exists so networking policies are enforced
+    // once the event goes live, and so pre-event discovery has something to
+    // read in the meantime. Uses upsert so re-publishing doesn't overwrite
+    // any existing config.
     await supabase.from("event_policies").upsert(
       { event_id: id, networking_enabled: true, default_visibility: "visible", mutual_discovery: false, self_select_roles: ["attendee"] },
       { onConflict: "event_id", ignoreDuplicates: true }
@@ -193,7 +198,8 @@ export default function EventDashboardPage() {
         {tab === "attendees" && <AttendeesTab eventId={id} isLive={event.status === "live"} />}
         {tab === "setup" && (
           <SetupTab eventId={id} event={event} ticketTypes={ticketTypes} stations={stations}
-            onGoLive={handleGoLive}
+            onPublish={handlePublish}
+            timeToLive={timeToLive}
             onEndEvent={handleEndEvent}
             ending={ending}
             onTicketAdded={t => setTicketTypes(prev => [...prev, t])}

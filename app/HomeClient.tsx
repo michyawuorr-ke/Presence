@@ -34,6 +34,9 @@ export default function HomeClient() {
       } else {
         setCheckingSession(false);
       }
+    }).catch(() => {
+      clearTimeout(timeout);
+      setCheckingSession(false);
     });
     return () => clearTimeout(timeout);
   }, [router]);
