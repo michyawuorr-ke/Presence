@@ -36,10 +36,6 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
         padding: "0 20px", maxWidth: "480px", margin: "0 auto",
       }}>
         <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", height: "52px" }}>
-          <p style={{ fontSize: "19px", fontWeight: "700", letterSpacing: "-0.03em", fontFamily: "'Helvetica Neue',Arial,sans-serif", margin: 0 }}>
-            <Wordmark />
-          </p>
-
           {/* Avatar button — opens profile menu */}
           <div style={{ position: "relative" }}>
             <button
@@ -80,6 +76,10 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
               </>
             )}
           </div>
+
+          <p style={{ fontSize: "19px", fontWeight: "700", letterSpacing: "-0.03em", fontFamily: "'Helvetica Neue',Arial,sans-serif", margin: 0 }}>
+            <Wordmark />
+          </p>
         </div>
 
         {/* Only show nav tabs when not inside an event detail page */}

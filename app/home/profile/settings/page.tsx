@@ -111,6 +111,11 @@ export default function ProfileSettingsPage() {
     setTimeout(() => setNotification(""), 3000);
   }
 
+  async function handleSignOut() {
+    await supabase.auth.signOut();
+    router.push("/login");
+  }
+
   async function handleDeleteAccount() {
     if (deleteInput !== "DELETE") return;
     setDeleting(true);
@@ -146,7 +151,12 @@ export default function ProfileSettingsPage() {
   return (
     <div style={{ minHeight: "100vh", background: "radial-gradient(ellipse 900px 500px at 50% -15%, rgba(226,109,52,0.06), transparent 60%), var(--base)" }}>
       <div style={{ maxWidth: 560, margin: "0 auto", padding: "40px 24px 100px" }}>
-        <a href="/home/profile" style={{ display: "inline-block", marginBottom: 28, color: "var(--ivory-muted)", fontSize: 11.5, textDecoration: "none" }}>← Back to profile</a>
+        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 28 }}>
+          <a href="/home/profile" style={{ color: "var(--ivory-muted)", fontSize: 11.5, textDecoration: "none" }}>← Back to profile</a>
+          <button onClick={handleSignOut} style={{ background: "none", border: "none", color: "var(--ivory-muted)", fontSize: 11.5, letterSpacing: "0.04em", cursor: "pointer" }}>
+            Sign Out
+          </button>
+        </div>
 
         <h1 style={{ fontFamily: "var(--font-display)", fontSize: "clamp(20px,4vw,24px)", fontWeight: 500, color: "var(--ivory)", letterSpacing: "-0.02em", margin: "0 0 4px" }}>
           Settings

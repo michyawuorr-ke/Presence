@@ -631,18 +631,6 @@ export default function HomeProfilePage({ embedded = false }: { embedded?: boole
             </>
           )}
 
-          <a href="/home/profile/settings" style={{
-            display: "flex", alignItems: "center", justifyContent: "space-between",
-            padding: "16px 20px", borderRadius: 16, marginBottom: 18, textDecoration: "none",
-            background: "rgba(255,255,255,0.015)", border: "1px solid rgba(255,255,255,0.05)",
-          }}>
-            <div>
-              <p style={{ fontSize: 13, fontWeight: 600, color: "var(--ivory)", margin: "0 0 2px" }}>Privacy & Account</p>
-              <p style={{ fontSize: 11.5, color: "rgba(240,237,232,0.35)", margin: 0 }}>Control what's visible, manage your account</p>
-            </div>
-            <span style={{ color: "var(--ember)", fontSize: 16 }}>→</span>
-          </a>
-
           {notification && (
             <div style={{ marginBottom: "16px", padding: "10px 14px", borderRadius: "12px", background: "rgba(226,109,52,0.08)", border: "1px solid rgba(226,109,52,0.2)" }}>
               <p style={{ color: "var(--ember)", fontSize: "12px", margin: 0, textAlign: "center" }}>{notification}</p>
