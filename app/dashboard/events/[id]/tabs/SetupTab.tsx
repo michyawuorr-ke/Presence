@@ -9,6 +9,7 @@ interface SetupTabProps {
   ticketTypes: any[];
   stations: any[];
   onPublish: () => void;
+  publishError?: string;
   onEndEvent: () => void;
   ending: boolean;
   onTicketAdded: (t: any) => void;
@@ -20,7 +21,7 @@ interface SetupTabProps {
 
 const GOLD = "#D4AF37";
 
-export default function SetupTab({ eventId, event, ticketTypes, stations, onPublish, onEndEvent, ending, onTicketAdded, onStationAdded, onStationDeleted, onTicketDeleted, timeToLive }: SetupTabProps) {
+export default function SetupTab({ eventId, event, ticketTypes, stations, onPublish, publishError, onEndEvent, ending, onTicketAdded, onStationAdded, onStationDeleted, onTicketDeleted, timeToLive }: SetupTabProps) {
   const [ticketName, setTicketName] = useState("");
   const [ticketPrice, setTicketPrice] = useState("");
   const [ticketQty, setTicketQty] = useState("");
@@ -149,6 +150,9 @@ export default function SetupTab({ eventId, event, ticketTypes, stations, onPubl
             style={{ width: "100%", padding: "14px", borderRadius: "12px", background: GOLD, color: "#000", border: "none", fontSize: "13px", fontWeight: "700", cursor: "pointer", letterSpacing: "0.06em", marginBottom: "10px" }}>
             PUBLISH EVENT
           </button>
+        )}
+        {publishError && (
+          <p style={{ fontSize: "11.5px", color: "#f87171", margin: "0 0 10px", lineHeight: 1.5 }}>{publishError}</p>
         )}
         {event?.status === "scheduled" && (
           // No manual "go live" action anymore — live is automatic once

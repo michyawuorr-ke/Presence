@@ -74,9 +74,16 @@ export default function OverviewTab({
   timeToLive, bannerUrl, onBannerUpload, uploadingBanner, bannerError
 }: OverviewTabProps) {
 
-  const isLive  = event?.status === "live";
-  const isEnded = event?.status === "ended";
-  const isDraft = !isLive && !isEnded;
+  const isLive      = event?.status === "live";
+  const isEnded     = event?.status === "ended";
+  const isScheduled = event?.status === "scheduled";
+  // Was `!isLive && !isEnded` — meant "draft" before "scheduled" existed as
+  // a status, so a genuinely published (scheduled) event still read as
+  // draft here: the badge said DRAFT and the registration link stayed
+  // hidden behind a "available after publishing" placeholder even though
+  // it had been published. Exact match now instead of a negation that
+  // silently swallowed the new middle state.
+  const isDraft     = event?.status === "draft";
 
   // ── Post-event report data ──────────────────────────────────────────────
   // Fetched separately from the live `stats` prop since these numbers only
@@ -213,10 +220,12 @@ export default function OverviewTab({
           </span>
         ) : isEnded ? (
           <span style={{ fontSize: "10px", fontWeight: "700", letterSpacing: "0.15em", color: "#555" }}>✓ ENDED</span>
+        ) : isScheduled ? (
+          <span style={{ fontSize: "10px", fontWeight: "700", letterSpacing: "0.15em", color: GOLD }}>◐ UPCOMING</span>
         ) : (
           <span style={{ fontSize: "10px", fontWeight: "700", letterSpacing: "0.15em", color: GOLD }}>◌ DRAFT</span>
         )}
-        {timeToLive && isDraft && (
+        {timeToLive && isScheduled && (
           <span style={{ fontSize: "11px", color: DIM, fontWeight: "500" }}>Goes live in <span style={{ color: GOLD }}>{timeToLive}</span></span>
         )}
       </div>
@@ -313,7 +322,7 @@ export default function OverviewTab({
       {/* Links */}
       <p style={{ fontSize: "9px", fontWeight: "700", letterSpacing: "0.15em", color: DIM, textTransform: "uppercase", marginBottom: "12px" }}>Event Links</p>
 
-      {isLive || isEnded ? (
+      {isScheduled || isLive || isEnded ? (
         <LinkCard label="Registration Link" hint="Share with attendees" url={registrationLink} icon="registration" />
       ) : (
         <div style={{ background: FAINT, border: "1px dashed rgba(255,255,255,0.06)", borderRadius: "14px", padding: "14px 16px", marginBottom: "10px" }}>

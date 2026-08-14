@@ -23,6 +23,7 @@ export default function EventDashboardPage() {
   const [hostLink, setHostLink] = useState("");
   const [registrationLink, setRegistrationLink] = useState("");
   const [scannerLink, setScannerLink] = useState("");
+  const [publishError, setPublishError] = useState("");
   const [scannerToken, setScannerToken] = useState("");
   const [timeToLive, setTimeToLive] = useState("");
   const [bannerUrl, setBannerUrl] = useState("");
@@ -107,7 +108,15 @@ export default function EventDashboardPage() {
     // Publish moves draft -> scheduled, not straight to live. Going live
     // happens automatically at start_time (see the auto_go_live cron job)
     // — no host action needed from here.
-    await supabase.from("events").update({ status: "scheduled" }).eq("id", id);
+    setPublishError("");
+    const { error: statusErr } = await supabase.from("events").update({ status: "scheduled" }).eq("id", id);
+    if (statusErr) {
+      // This was previously unhandled — a blocked write (RLS, a network
+      // blip) failed completely silently, and the event just kept
+      // reading as draft with no indication anything had gone wrong.
+      setPublishError("Couldn't publish — " + statusErr.message);
+      return;
+    }
     // Ensure an event_policies row exists so networking policies are enforced
     // once the event goes live, and so pre-event discovery has something to
     // read in the meantime. Uses upsert so re-publishing doesn't overwrite
@@ -199,6 +208,7 @@ export default function EventDashboardPage() {
         {tab === "setup" && (
           <SetupTab eventId={id} event={event} ticketTypes={ticketTypes} stations={stations}
             onPublish={handlePublish}
+            publishError={publishError}
             timeToLive={timeToLive}
             onEndEvent={handleEndEvent}
             ending={ending}

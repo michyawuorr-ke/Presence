@@ -52,6 +52,12 @@ export default function CreateEvent() {
         slug,
         status: "draft",
         host_id: host.id,
+        // Explicit rather than relying on the column's DB default —
+        // UpcomingEvents, /events, and /home/discover all require this to
+        // be true before an event shows up anywhere, and nothing else in
+        // the creation or publish flow ever set it. Whatever the actual
+        // default was, it silently made every published event invisible.
+        is_public: true,
       }).select("id").single();
 
       if (evErr) throw evErr;
