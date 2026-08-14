@@ -7,6 +7,8 @@ import HomeProfilePage from "./profile/page";
 import {
   loadMyEvents, loadMyConnections, checkIsHost,
   loadArchivedEventIds, archiveEvent, unarchiveEvent,
+  loadArchivedConnectionIds, archiveConnection, unarchiveConnection,
+  loadDeletedConnectionIds, deleteConnection,
   type MyEvent, type MyConnection,
 } from "./homeData";
 
@@ -21,6 +23,9 @@ export default function HomePage() {
   const [connections, setConnections] = useState<MyConnection[]>([]);
   const [archivedIds, setArchivedIds] = useState<Set<string>>(new Set());
   const [showArchived, setShowArchived] = useState(false);
+  const [connectionArchivedIds, setConnectionArchivedIds] = useState<Set<string>>(new Set());
+  const [connectionDeletedIds, setConnectionDeletedIds] = useState<Set<string>>(new Set());
+  const [showArchivedConnections, setShowArchivedConnections] = useState(false);
   const [dataLoading, setDataLoading] = useState(true);
   const [isHost, setIsHost] = useState(false);
   const [search, setSearch] = useState("");
@@ -47,16 +52,20 @@ export default function HomePage() {
       setEmail(userEmail);
       setLoading(false);
 
-      const [ev, conn, hostStatus, archived] = await Promise.all([
+      const [ev, conn, hostStatus, archived, connArchived, connDeleted] = await Promise.all([
         loadMyEvents(userEmail),
         loadMyConnections(userEmail),
         checkIsHost(userEmail),
         loadArchivedEventIds(userEmail),
+        loadArchivedConnectionIds(userEmail),
+        loadDeletedConnectionIds(userEmail),
       ]);
       setEvents(ev);
       setConnections(conn);
       setIsHost(hostStatus);
       setArchivedIds(archived);
+      setConnectionArchivedIds(connArchived);
+      setConnectionDeletedIds(connDeleted);
       setDataLoading(false);
     }
     init();
@@ -79,6 +88,27 @@ export default function HomePage() {
     });
     if (isArchived) await unarchiveEvent(email, eventId);
     else await archiveEvent(email, eventId);
+  }
+
+  async function handleToggleArchiveConnection(connectionId: string) {
+    if (!email) return;
+    const isArchived = connectionArchivedIds.has(connectionId);
+    setConnectionArchivedIds(prev => {
+      const next = new Set(prev);
+      isArchived ? next.delete(connectionId) : next.add(connectionId);
+      return next;
+    });
+    if (isArchived) await unarchiveConnection(email, connectionId);
+    else await archiveConnection(email, connectionId);
+  }
+
+  async function handleDeleteConnection(connectionId: string) {
+    if (!email) return;
+    if (!confirm("Remove this connect from your list? This can't be undone.")) return;
+    // One-way, unlike archive — optimistic update still applies since the
+    // confirm() above is the actual point of no return, not this call.
+    setConnectionDeletedIds(prev => new Set(prev).add(connectionId));
+    await deleteConnection(email, connectionId);
   }
 
   if (loading) {
@@ -114,11 +144,18 @@ export default function HomePage() {
   const upcoming = searched.filter(e => e.status === "scheduled" || e.status === "live");
   const past = searched.filter(e => e.status === "ended");
 
-  const searchedConnections = search.trim()
-    ? connections.filter(c => c.display_name?.toLowerCase().includes(search.toLowerCase()) || c.organisation?.toLowerCase().includes(search.toLowerCase()))
-    : connections;
-
   const archivedCount = events.filter(e => archivedIds.has(e.id)).length;
+
+  // Deleted connects never come back regardless of the archive toggle —
+  // that's the whole difference from archive here. "Archived" means
+  // everything not deleted, filtered by archived status same as events.
+  const undeletedConnections = connections.filter(c => !connectionDeletedIds.has(c.id));
+  const visibleConnections = showArchivedConnections ? undeletedConnections : undeletedConnections.filter(c => !connectionArchivedIds.has(c.id));
+  const connectionArchivedCount = undeletedConnections.filter(c => connectionArchivedIds.has(c.id)).length;
+
+  const searchedConnections = search.trim()
+    ? visibleConnections.filter(c => c.display_name?.toLowerCase().includes(search.toLowerCase()) || c.organisation?.toLowerCase().includes(search.toLowerCase()))
+    : visibleConnections;
 
   return (
     <div style={{ minHeight: "100vh", background: "radial-gradient(ellipse 900px 500px at 50% -10%, rgba(226,109,52,0.06), transparent), var(--base)" }}>
@@ -204,6 +241,17 @@ export default function HomePage() {
                 {showArchived ? "Hide archived" : `Archived (${archivedCount})`}
               </button>
             )}
+            {tab === "connections" && connectionArchivedCount > 0 && (
+              <button onClick={() => setShowArchivedConnections(s => !s)}
+                style={{
+                  flexShrink: 0, padding: "0 14px", borderRadius: 12, fontSize: 12, fontWeight: 600,
+                  background: showArchivedConnections ? "rgba(226,109,52,0.1)" : "rgba(255,255,255,0.03)",
+                  border: showArchivedConnections ? "1px solid rgba(226,109,52,0.3)" : "1px solid rgba(255,255,255,0.08)",
+                  color: showArchivedConnections ? "var(--ember)" : "var(--ivory-muted)", cursor: "pointer",
+                }}>
+                {showArchivedConnections ? "Hide archived" : `Archived (${connectionArchivedCount})`}
+              </button>
+            )}
           </div>
         )}
 
@@ -224,7 +272,13 @@ export default function HomePage() {
         ) : tab === "events" ? (
           <EventsList upcoming={upcoming} past={past} archivedIds={archivedIds} onToggleArchive={handleToggleArchive} hadAnyMatch={events.length > 0} />
         ) : (
-          <ConnectionsList connections={searchedConnections} hadAnyMatch={connections.length > 0} />
+          <ConnectionsList
+            connections={searchedConnections}
+            hadAnyMatch={connections.length > 0}
+            archivedIds={connectionArchivedIds}
+            onToggleArchive={handleToggleArchiveConnection}
+            onDelete={handleDeleteConnection}
+          />
         )}
       </div>
     </div>
@@ -362,7 +416,10 @@ function WhatsAppGlyph() {
   return (<svg width="14" height="14" viewBox="0 0 32 32" fill="#25D366"><path d="M16 0C7.163 0 0 7.163 0 16c0 2.833.737 5.49 2.027 7.8L0 32l8.418-2.004A15.95 15.95 0 0 0 16 32c8.837 0 16-7.163 16-16S24.837 0 16 0zm8.093 22.188c-.337.944-1.67 1.728-2.337 1.838-.6.1-1.362.142-2.194-.138-.506-.17-1.155-.395-1.986-.773-3.488-1.506-5.768-5.012-5.944-5.244-.173-.232-1.41-1.874-1.41-3.574s.893-2.538 1.21-2.882c.317-.344.692-.43.923-.43l.663.012c.213.01.498-.081.779.594.29.694 1.006 2.432 1.093 2.607.087.175.144.379.028.614-.116.234-.173.38-.346.585-.173.206-.364.46-.52.618-.173.173-.353.362-.152.71.202.347.896 1.478 1.922 2.393 1.32 1.177 2.433 1.54 2.78 1.713.347.173.549.144.75-.087.202-.23.866-1.012 1.097-1.36.231-.346.462-.289.779-.173.317.116 2.01.948 2.356 1.12.347.173.578.26.664.404.087.144.087.838-.25 1.782z"/></svg>);
 }
 
-function ConnectionsList({ connections, hadAnyMatch }: { connections: MyConnection[]; hadAnyMatch: boolean }) {
+function ConnectionsList({ connections, hadAnyMatch, archivedIds, onToggleArchive, onDelete }: {
+  connections: MyConnection[]; hadAnyMatch: boolean;
+  archivedIds: Set<string>; onToggleArchive: (id: string) => void; onDelete: (id: string) => void;
+}) {
   if (connections.length === 0) {
     if (hadAnyMatch) {
       return <p style={{ color: "var(--dusk)", fontSize: 13.5, textAlign: "center", padding: "60px 0" }}>No connects match.</p>;
@@ -437,7 +494,7 @@ function ConnectionsList({ connections, hadAnyMatch }: { connections: MyConnecti
             Shared With You
           </p>
           <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
-            {shared.map(c => <SharedRow key={c.id} connection={c} />)}
+            {shared.map(c => <SharedRow key={c.id} connection={c} isArchived={archivedIds.has(c.id)} onToggleArchive={onToggleArchive} onDelete={onDelete} />)}
           </div>
         </div>
       )}
@@ -447,7 +504,7 @@ function ConnectionsList({ connections, hadAnyMatch }: { connections: MyConnecti
             {eventTitle}
           </p>
           <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
-            {group.map(c => <ConnectionRow key={c.id} connection={c} />)}
+            {group.map(c => <ConnectionRow key={c.id} connection={c} isArchived={archivedIds.has(c.id)} onToggleArchive={onToggleArchive} onDelete={onDelete} />)}
           </div>
         </div>
       ))}
@@ -457,7 +514,7 @@ function ConnectionsList({ connections, hadAnyMatch }: { connections: MyConnecti
             Other connections
           </p>
           <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
-            {otherConnections.map(c => <ConnectionRow key={c.id} connection={c} />)}
+            {otherConnections.map(c => <ConnectionRow key={c.id} connection={c} isArchived={archivedIds.has(c.id)} onToggleArchive={onToggleArchive} onDelete={onDelete} />)}
           </div>
         </div>
       )}
@@ -465,9 +522,53 @@ function ConnectionsList({ connections, hadAnyMatch }: { connections: MyConnecti
   );
 }
 
-function ConnectionRow({ connection: c }: { connection: MyConnection }) {
+/** Same ⋯ menu pattern as EventRow's archive toggle, shared here since
+ * both ConnectionRow and SharedRow need it identically. */
+function ConnectionMenu({ isArchived, onToggleArchive, onDelete }: {
+  isArchived: boolean; onToggleArchive: () => void; onDelete: () => void;
+}) {
+  const [menuOpen, setMenuOpen] = useState(false);
   return (
-    <div style={{ padding: "14px 16px", borderRadius: 14, background: "rgba(255,255,255,0.02)", border: "1px solid rgba(255,255,255,0.06)" }}>
+    <>
+      <button
+        onClick={e => { e.stopPropagation(); e.preventDefault(); setMenuOpen(o => !o); }}
+        style={{
+          position: "absolute", top: 10, right: 10, width: 26, height: 26, borderRadius: 8,
+          background: "rgba(255,255,255,0.04)", border: "none", color: "var(--ivory-muted)",
+          fontSize: 14, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center",
+        }}
+      >
+        ⋯
+      </button>
+      {menuOpen && (
+        <div
+          onClick={e => e.stopPropagation()}
+          style={{ position: "absolute", top: 40, right: 10, background: "#141416", border: "1px solid rgba(255,255,255,0.08)", borderRadius: 10, overflow: "hidden", zIndex: 10 }}
+        >
+          <button
+            onClick={() => { onToggleArchive(); setMenuOpen(false); }}
+            style={{ display: "block", width: "100%", padding: "9px 16px", background: "none", border: "none", color: "var(--ivory)", fontSize: 12.5, textAlign: "left", cursor: "pointer", whiteSpace: "nowrap" }}
+          >
+            {isArchived ? "Unarchive" : "Archive from my list"}
+          </button>
+          <button
+            onClick={() => { setMenuOpen(false); onDelete(); }}
+            style={{ display: "block", width: "100%", padding: "9px 16px", background: "none", border: "none", borderTop: "1px solid rgba(255,255,255,0.06)", color: "#f87171", fontSize: 12.5, textAlign: "left", cursor: "pointer", whiteSpace: "nowrap" }}
+          >
+            Delete
+          </button>
+        </div>
+      )}
+    </>
+  );
+}
+
+function ConnectionRow({ connection: c, isArchived, onToggleArchive, onDelete }: {
+  connection: MyConnection; isArchived: boolean; onToggleArchive: (id: string) => void; onDelete: (id: string) => void;
+}) {
+  return (
+    <div style={{ position: "relative", padding: "14px 44px 14px 16px", borderRadius: 14, background: "rgba(255,255,255,0.02)", border: "1px solid rgba(255,255,255,0.06)", opacity: isArchived ? 0.55 : 1 }}>
+      <ConnectionMenu isArchived={isArchived} onToggleArchive={() => onToggleArchive(c.id)} onDelete={() => onDelete(c.id)} />
       <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
         <p style={{ fontSize: 13.5, fontWeight: 600, color: "var(--ivory)", margin: "0 0 2px" }}>{c.display_name}</p>
         {c.source === "card" && (
@@ -498,9 +599,12 @@ function ConnectionRow({ connection: c }: { connection: MyConnection }) {
  * Surfaces the phone directly since that's the whole point of the
  * exchange, plus a nudge that this becomes a real connection if they ever
  * create an account and connect through their own card. */
-function SharedRow({ connection: c }: { connection: MyConnection }) {
+function SharedRow({ connection: c, isArchived, onToggleArchive, onDelete }: {
+  connection: MyConnection; isArchived: boolean; onToggleArchive: (id: string) => void; onDelete: (id: string) => void;
+}) {
   return (
-    <div style={{ padding: "14px 16px", borderRadius: 14, background: "rgba(212,175,55,0.04)", border: "1px solid rgba(212,175,55,0.15)" }}>
+    <div style={{ position: "relative", padding: "14px 44px 14px 16px", borderRadius: 14, background: "rgba(212,175,55,0.04)", border: "1px solid rgba(212,175,55,0.15)", opacity: isArchived ? 0.55 : 1 }}>
+      <ConnectionMenu isArchived={isArchived} onToggleArchive={() => onToggleArchive(c.id)} onDelete={() => onDelete(c.id)} />
       <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
         <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
           <p style={{ fontSize: 13.5, fontWeight: 600, color: "var(--ivory)", margin: 0 }}>{c.display_name}</p>

@@ -1,6 +1,6 @@
 "use client";
-import { useState, useEffect, useCallback } from "react";
-import { useParams, useRouter } from "next/navigation";
+import { useState, useEffect, useCallback, Suspense } from "react";
+import { useParams, useRouter, useSearchParams } from "next/navigation";
 import { supabase } from "@/lib/supabase/client";
 import OverviewTab from "./tabs/OverviewTab";
 import AttendeesTab from "./tabs/AttendeesTab";
@@ -12,10 +12,27 @@ type Tab = "overview" | "attendees" | "setup" | "settings";
 const GOLD = "#D4AF37";
 
 export default function EventDashboardPage() {
+  return (
+    <Suspense fallback={null}>
+      <EventDashboardContent />
+    </Suspense>
+  );
+}
+
+// useSearchParams requires a Suspense boundary in the App Router — without
+// the wrapper above, the build fails outright (not just a runtime
+// warning). Same pattern already used in app/login/page.tsx.
+function EventDashboardContent() {
   const { id } = useParams() as { id: string };
   const router = useRouter();
+  const searchParams = useSearchParams();
 
-  const [tab, setTab] = useState<Tab>("overview");
+  // Landing straight on Setup after creating an event (instead of a mostly
+  // empty Overview tab with no visible next step) was the whole point of
+  // the ?tab=setup redirect in the create flow — this just reads it, which
+  // wasn't happening before.
+  const initialTab = (searchParams.get("tab") as Tab) || "overview";
+  const [tab, setTab] = useState<Tab>(initialTab);
   const [event, setEvent] = useState<any>(null);
   const [ticketTypes, setTicketTypes] = useState<any[]>([]);
   const [stations, setStations] = useState<any[]>([]);

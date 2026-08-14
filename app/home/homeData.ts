@@ -69,6 +69,34 @@ export async function unarchiveEvent(email: string, eventId: string): Promise<vo
   await supabase.from("home_archived_events").delete().eq("email", email).eq("event_id", eventId);
 }
 
+/** Same pattern as the event-archive functions above, applied to the
+ * Connects tab — per-viewer only, doesn't touch the underlying connection
+ * data (handshakes/profile_connections/etc) at all. */
+export async function loadArchivedConnectionIds(email: string): Promise<Set<string>> {
+  const { data } = await supabase.from("home_archived_connections").select("connection_id").eq("email", email);
+  return new Set((data || []).map((r: any) => r.connection_id));
+}
+
+export async function archiveConnection(email: string, connectionId: string): Promise<void> {
+  await supabase.from("home_archived_connections").insert({ email, connection_id: connectionId });
+}
+
+export async function unarchiveConnection(email: string, connectionId: string): Promise<void> {
+  await supabase.from("home_archived_connections").delete().eq("email", email).eq("connection_id", connectionId);
+}
+
+/** One-way — no unhide path is exposed in the UI for this one, unlike
+ * archive. The underlying connection data is untouched either way; this
+ * only ever affects what shows in this one person's own list. */
+export async function loadDeletedConnectionIds(email: string): Promise<Set<string>> {
+  const { data } = await supabase.from("home_deleted_connections").select("connection_id").eq("email", email);
+  return new Set((data || []).map((r: any) => r.connection_id));
+}
+
+export async function deleteConnection(email: string, connectionId: string): Promise<void> {
+  await supabase.from("home_deleted_connections").insert({ email, connection_id: connectionId });
+}
+
 export async function loadMyEvents(email: string): Promise<MyEvent[]> {
   const [{ data: guestRegs }, { data: hostRow }] = await Promise.all([
     supabase
