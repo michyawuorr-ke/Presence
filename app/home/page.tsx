@@ -174,19 +174,6 @@ export default function HomePage() {
   return (
     <div style={{ minHeight: "100vh", background: "radial-gradient(ellipse 900px 500px at 50% -10%, rgba(226,109,52,0.06), transparent), var(--base)" }}>
       <div style={{ maxWidth: 720, margin: "0 auto", padding: "24px 24px 100px" }}>
-        {showHomeScreenTip && (
-          <div style={{
-            display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12,
-            background: "rgba(226,109,52,0.1)", border: "1px solid rgba(226,109,52,0.25)",
-            borderRadius: 12, padding: "12px 14px", marginBottom: 16, fontSize: 12.5,
-            color: "var(--ivory-soft)", lineHeight: 1.5,
-          }}>
-            <span>You're signed in here — for instant access next time (no email link), open Oreeti from your home screen icon instead of the browser.</span>
-            <button onClick={() => setShowHomeScreenTip(false)}
-              style={{ background: "none", border: "none", color: "var(--ivory-muted)", fontSize: 16, cursor: "pointer", flexShrink: 0, lineHeight: 1 }}
-              aria-label="Dismiss">×</button>
-          </div>
-        )}
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 20 }}>
           <a href="/home/profile/settings" style={{ display: "flex", alignItems: "center", gap: 6, color: "var(--ivory-muted)", fontSize: 11.5, letterSpacing: "0.04em", textDecoration: "none" }}>
             <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round">
@@ -197,6 +184,21 @@ export default function HomePage() {
           </a>
           <Wordmark />
         </div>
+
+        {showHomeScreenTip && (
+          <div style={{ display: "flex", justifyContent: "center", marginBottom: 20 }}>
+            <button onClick={() => setShowHomeScreenTip(false)}
+              style={{
+                display: "flex", alignItems: "center", gap: "6px", padding: "9px 18px", borderRadius: "24px",
+                background: "rgba(20,20,22,0.92)", backdropFilter: "blur(12px)", WebkitBackdropFilter: "blur(12px)",
+                border: "1px solid rgba(255,255,255,0.14)", boxShadow: "0 8px 24px rgba(0,0,0,0.4)",
+                color: "rgba(240,237,232,0.9)", fontSize: "12px", fontWeight: "500", cursor: "pointer", whiteSpace: "nowrap",
+              }}
+            >
+              Reopen from home screen
+            </button>
+          </div>
+        )}
 
         {isHost && (
           <div style={{

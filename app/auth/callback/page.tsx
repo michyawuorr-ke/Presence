@@ -2,6 +2,7 @@
 import { Suspense, useEffect, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { supabase } from "@/lib/supabase/client";
+import { completeSignIn } from "@/lib/auth/completeSignIn";
 
 function CallbackHandler() {
   const router = useRouter();
@@ -20,46 +21,17 @@ function CallbackHandler() {
     async function finish(session: any) {
       if (redirected) return;
       redirected = true;
-
-      const authUserId = session.user.id;
-      const email = session.user.email?.trim().toLowerCase();
-      if (!email) { router.push("/home"); return; }
-
       setStatus("Setting up your account...");
-
-      const { data: existing } = await supabase
-        .from("master_profiles")
-        .select("id,auth_user_id")
-        .eq("email", email)
-        .maybeSingle();
-
-      if (existing && !existing.auth_user_id) {
-        await supabase
-          .from("master_profiles")
-          .update({ auth_user_id: authUserId })
-          .eq("id", existing.id);
-      } else if (!existing) {
-        await supabase
-          .from("master_profiles")
-          .insert({ email, auth_user_id: authUserId });
-      }
-
-      // iOS "Add to Home Screen" installs run in a storage context that's
-      // isolated from Safari — a session created here (a plain browser
-      // tab, opened from the Gmail app) won't be visible from the home
-      // screen icon. Flag that so /home can tell the person to finish by
-      // opening the app from their home screen, instead of them silently
-      // hitting the login screen again next time.
-      const isStandalone =
-        typeof window !== "undefined" &&
-        (window.matchMedia?.("(display-mode: standalone)").matches ||
-          (window.navigator as any).standalone === true);
-
-      router.push(isStandalone ? "/home" : "/home?fromBrowser=1");
+      const destination = await completeSignIn(session);
+      router.push(destination);
     }
 
     async function handleCallback() {
-      // PKCE flow — code in query param
+      // PKCE flow — code in query param. This only succeeds if it's opened
+      // in the same browser/app instance that requested it (the code
+      // verifier is stored locally there). Opening the link from Gmail
+      // often lands in a different instance — that's expected to fail
+      // here, not a bug; the login page's 6-digit code covers that case.
       const code = searchParams.get("code");
       if (code) {
         const { data, error } = await supabase.auth.exchangeCodeForSession(code);
@@ -91,13 +63,16 @@ function CallbackHandler() {
         return;
       }
 
+      // Don't wait the full 8s in the cross-context-failure case — the
+      // code path failed above, so waiting here just delays getting the
+      // person back to where they can use the 6-digit code instead.
       fallbackTimer = setTimeout(() => {
         if (!redirected) {
           redirected = true;
           subscription.unsubscribe();
-          router.push("/login");
+          router.push("/login?mode=login");
         }
-      }, 8000);
+      }, code ? 1500 : 8000);
     }
 
     handleCallback();

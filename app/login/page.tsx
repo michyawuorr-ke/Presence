@@ -1,7 +1,8 @@
 "use client";
 import { useEffect, useState, Suspense } from "react";
-import { useSearchParams } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { supabase } from "@/lib/supabase/client";
+import { completeSignIn } from "@/lib/auth/completeSignIn";
 import OreetiLogo from "@/components/OreetiLogo";
 
 type Mode = "landing" | "signup" | "login" | "sent";
@@ -42,6 +43,7 @@ const PAGE_BG: React.CSSProperties = {
 
 function LoginForm() {
   useReveal();
+  const router = useRouter();
   const searchParams = useSearchParams();
   // Lets other parts of the app (e.g. the post-event "save your history"
   // prompt) link straight into Sign In with the guest's known email
@@ -55,6 +57,8 @@ function LoginForm() {
   const [phone, setPhone] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
+  const [otpCode, setOtpCode] = useState("");
+  const [verifying, setVerifying] = useState(false);
 
   const inp = {
     width: "100%",
@@ -135,6 +139,34 @@ function LoginForm() {
     setLoading(false);
   }
 
+  // The magic link only works if it's opened in the exact same browser/app
+  // instance that requested it (PKCE code exchange requires a local
+  // verifier). Opening it from Gmail often lands in a different context —
+  // so the 6-digit code lets someone finish sign-in right here instead,
+  // with no redirect and no context switch.
+  async function verifyCode() {
+    const digits = otpCode.replace(/\D/g, "");
+    if (digits.length < 6) { setError("Enter the 6-digit code from the email"); return; }
+
+    setVerifying(true);
+    setError("");
+
+    const { data, error: err } = await supabase.auth.verifyOtp({
+      email,
+      token: digits,
+      type: "email",
+    });
+
+    if (err || !data.session) {
+      setError(err?.message || "That code didn't work — check the latest email or resend");
+      setVerifying(false);
+      return;
+    }
+
+    const destination = await completeSignIn(data.session);
+    router.push(destination);
+  }
+
   if (mode === "landing") {
     return (
       <main style={PAGE_BG}>
@@ -169,10 +201,39 @@ function LoginForm() {
         <h2 data-reveal className="display" style={{ fontSize: "20px", fontWeight: 500, color: "var(--ivory)", textAlign: "center", marginBottom: "10px", letterSpacing: "-0.01em" }}>
           Check your email
         </h2>
-        <p data-reveal style={{ color: "var(--ivory-muted)", textAlign: "center", marginBottom: "4px", fontSize: "13.5px" }}>We sent an access verification link to</p>
-        <p data-reveal style={{ color: "var(--ember)", textAlign: "center", marginBottom: "36px", fontSize: "14.5px", fontWeight: "500" }}>{email}</p>
-        <button onClick={() => { setMode("landing"); setEmail(""); setName(""); setPhone(""); }}
-          style={{ background: "transparent", border: "none", color: "var(--ivory-muted)", fontSize: "11px", letterSpacing: "0.06em", textTransform: "uppercase", cursor: "pointer" }}>
+        <p data-reveal style={{ color: "var(--ivory-muted)", textAlign: "center", marginBottom: "4px", fontSize: "13.5px" }}>We sent a code and a link to</p>
+        <p data-reveal style={{ color: "var(--ember)", textAlign: "center", marginBottom: "28px", fontSize: "14.5px", fontWeight: "500" }}>{email}</p>
+
+        <div data-reveal style={{ width: "100%", maxWidth: "280px", display: "flex", flexDirection: "column", gap: "14px" }}>
+          <input
+            value={otpCode}
+            onChange={e => setOtpCode(e.target.value.replace(/\D/g, "").slice(0, 6))}
+            placeholder="6-digit code"
+            inputMode="numeric"
+            maxLength={6}
+            style={{ ...inp, textAlign: "center", fontSize: "20px", letterSpacing: "0.3em" }}
+          />
+          {error && <p style={{ color: "#ef4444", fontSize: "12px", textAlign: "center" }}>{error}</p>}
+          <button
+            onClick={verifyCode}
+            disabled={verifying}
+            style={{
+              width: "100%", padding: "13px", borderRadius: "12px",
+              background: verifying ? "rgba(234,230,223,0.1)" : "linear-gradient(135deg, var(--ember), #c9591f)",
+              color: verifying ? "var(--ivory-muted)" : "#fff", border: "none",
+              fontSize: "12.5px", fontWeight: "600", letterSpacing: "0.06em", textTransform: "uppercase",
+              cursor: verifying ? "not-allowed" : "pointer",
+            }}
+          >
+            {verifying ? "Verifying..." : "Enter Code"}
+          </button>
+          <p style={{ color: "var(--ivory-muted)", textAlign: "center", fontSize: "11px" }}>
+            Or tap the link in the email — fastest on the same browser you started in.
+          </p>
+        </div>
+
+        <button onClick={() => { setMode("landing"); setEmail(""); setName(""); setPhone(""); setOtpCode(""); setError(""); }}
+          style={{ background: "transparent", border: "none", color: "var(--ivory-muted)", fontSize: "11px", letterSpacing: "0.06em", textTransform: "uppercase", cursor: "pointer", marginTop: "28px" }}>
           ← Return
         </button>
       </main>
