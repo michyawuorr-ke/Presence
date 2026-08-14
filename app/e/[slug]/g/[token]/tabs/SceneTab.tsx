@@ -25,18 +25,25 @@ export default function SceneTab({
 }: SceneTabProps) {
   return (
     <div>
-      <div style={{ padding: "20px 20px 0", display: "flex", alignItems: "center", justifyContent: "space-between" }}>
-        {/* Only place that leads to app/home (My Events, My Connections,
-            Profile) — installs the PWA first if it isn't already there. */}
-        <button
-          onClick={onOpenApp}
-          style={{ display: "flex", alignItems: "center", gap: "5px", padding: "6px 12px", borderRadius: "20px", background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.1)", color: "rgba(240,237,232,0.8)", fontSize: "11.5px", fontWeight: "500", cursor: "pointer" }}
-        >
-          Open App ↗
-        </button>
-
+      <div style={{ padding: "20px 20px 0", display: "flex", justifyContent: "flex-end" }}>
         <Wordmark size={19} />
       </div>
+
+      {/* Floating, centered above the bottom tab bar — doesn't compete
+          with the wordmark/header row, and stays reachable no matter
+          how far down the scene content scrolls. */}
+      <button
+        onClick={onOpenApp}
+        style={{
+          position: "fixed", bottom: "calc(84px + env(safe-area-inset-bottom))", left: "50%", transform: "translateX(-50%)",
+          zIndex: 45, display: "flex", alignItems: "center", gap: "6px", padding: "9px 18px", borderRadius: "24px",
+          background: "rgba(20,20,22,0.92)", backdropFilter: "blur(12px)", WebkitBackdropFilter: "blur(12px)",
+          border: "1px solid rgba(255,255,255,0.14)", boxShadow: "0 8px 24px rgba(0,0,0,0.4)",
+          color: "rgba(240,237,232,0.9)", fontSize: "12px", fontWeight: "500", cursor: "pointer", whiteSpace: "nowrap",
+        }}
+      >
+        Open App ↗
+      </button>
 
       {/* Banner sits below the wordmark */}
       {event?.banner_url && (
