@@ -44,7 +44,18 @@ function CallbackHandler() {
           .insert({ email, auth_user_id: authUserId });
       }
 
-      router.push("/home");
+      // iOS "Add to Home Screen" installs run in a storage context that's
+      // isolated from Safari — a session created here (a plain browser
+      // tab, opened from the Gmail app) won't be visible from the home
+      // screen icon. Flag that so /home can tell the person to finish by
+      // opening the app from their home screen, instead of them silently
+      // hitting the login screen again next time.
+      const isStandalone =
+        typeof window !== "undefined" &&
+        (window.matchMedia?.("(display-mode: standalone)").matches ||
+          (window.navigator as any).standalone === true);
+
+      router.push(isStandalone ? "/home" : "/home?fromBrowser=1");
     }
 
     async function handleCallback() {

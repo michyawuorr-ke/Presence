@@ -29,6 +29,25 @@ export default function HomePage() {
   const [dataLoading, setDataLoading] = useState(true);
   const [isHost, setIsHost] = useState(false);
   const [search, setSearch] = useState("");
+  const [showHomeScreenTip, setShowHomeScreenTip] = useState(false);
+
+  // Mark that this device has actually opened Oreeti as an installed
+  // home-screen app at least once, so future browser-tab logins know
+  // whether prompting "open from your home screen" is useful advice.
+  useEffect(() => {
+    const isStandalone =
+      typeof window !== "undefined" &&
+      (window.matchMedia?.("(display-mode: standalone)").matches ||
+        (window.navigator as any).standalone === true);
+    if (isStandalone) {
+      localStorage.setItem("oreeti_standalone_seen", "1");
+    } else if (
+      typeof window !== "undefined" &&
+      new URLSearchParams(window.location.search).get("fromBrowser") === "1"
+    ) {
+      setShowHomeScreenTip(true);
+    }
+  }, []);
 
   useEffect(() => {
     async function init() {
@@ -155,6 +174,19 @@ export default function HomePage() {
   return (
     <div style={{ minHeight: "100vh", background: "radial-gradient(ellipse 900px 500px at 50% -10%, rgba(226,109,52,0.06), transparent), var(--base)" }}>
       <div style={{ maxWidth: 720, margin: "0 auto", padding: "24px 24px 100px" }}>
+        {showHomeScreenTip && (
+          <div style={{
+            display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12,
+            background: "rgba(226,109,52,0.1)", border: "1px solid rgba(226,109,52,0.25)",
+            borderRadius: 12, padding: "12px 14px", marginBottom: 16, fontSize: 12.5,
+            color: "var(--ivory-soft)", lineHeight: 1.5,
+          }}>
+            <span>You're signed in here — for instant access next time (no email link), open Oreeti from your home screen icon instead of the browser.</span>
+            <button onClick={() => setShowHomeScreenTip(false)}
+              style={{ background: "none", border: "none", color: "var(--ivory-muted)", fontSize: 16, cursor: "pointer", flexShrink: 0, lineHeight: 1 }}
+              aria-label="Dismiss">×</button>
+          </div>
+        )}
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 20 }}>
           <a href="/home/profile/settings" style={{ display: "flex", alignItems: "center", gap: 6, color: "var(--ivory-muted)", fontSize: 11.5, letterSpacing: "0.04em", textDecoration: "none" }}>
             <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round">
