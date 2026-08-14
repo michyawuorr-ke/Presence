@@ -26,13 +26,6 @@ export default function SceneTab({
   return (
     <div>
       <div style={{ padding: "20px 20px 0", display: "flex", alignItems: "center", justifyContent: "space-between" }}>
-        {/* OREETI wordmark — matches host dashboard: Or(white) ee(gold) ti(white) */}
-        <p style={{ fontSize: "19px", fontWeight: "700", letterSpacing: "-0.03em", fontFamily: "'Helvetica Neue',Arial,sans-serif", margin: "0 0 0" }}>
-          <span style={{ color: "#ffffff" }}>Or</span>
-          <span style={{ color: "#E26D34" }}>ee</span>
-          <span style={{ color: "#ffffff" }}>ti</span>
-        </p>
-
         {/* Only place that leads to app/home (My Events, My Connections,
             Profile) — installs the PWA first if it isn't already there. */}
         <button
@@ -41,6 +34,8 @@ export default function SceneTab({
         >
           Open App ↗
         </button>
+
+        <Wordmark size={19} />
       </div>
 
       {/* Banner sits below the wordmark */}

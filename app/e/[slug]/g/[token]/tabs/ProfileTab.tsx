@@ -3,6 +3,7 @@ import { useState } from "react";
 import { supabase } from "@/lib/supabase/client";
 import { cleanUrl, toHref } from "./shared";
 import { isHostRegistration } from "@/lib/hostRole";
+import Wordmark from "@/components/Wordmark";
 
 interface ProfileTabProps {
   profile: any;
@@ -206,6 +207,10 @@ export default function ProfileTab({ profile, masterProfile, event, onProfileUpd
 
   return (
     <div style={{ padding: "16px", background: "#08080a", minHeight: "100vh" }}>
+      <div style={{ padding: "4px 4px 16px", display: "flex", alignItems: "center", justifyContent: "flex-end" }}>
+        <Wordmark size={19} />
+      </div>
+
       {/* Profile card */}
       <div style={{ background: "#0c0c0f", borderRadius: "22px", padding: "24px", marginBottom: "12px", border: "1px solid " + accentBorder, boxShadow: "0 4px 8px rgba(0,0,0,0.35),0 16px 48px rgba(0,0,0,0.5)", position: "relative", overflow: "hidden" }}>
         <div style={{ position: "absolute", top: "20px", right: "20px", zIndex: 50 }}>
