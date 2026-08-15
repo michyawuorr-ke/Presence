@@ -224,7 +224,7 @@ export default function EventsDirectoryPage() {
       <style>{`body { max-width: 100% !important; }`}</style>
       <Nav />
 
-      <section style={{ padding: "160px 32px 60px", maxWidth: 900, margin: "0 auto" }}>
+      <section style={{ padding: "96px 32px 60px", maxWidth: 900, margin: "0 auto" }}>
         <p className="eyebrow reveal" style={{ marginBottom: 20 }}>Happening on Oreeti</p>
         <h1 style={{
           fontFamily: "var(--font-display)",
@@ -249,7 +249,7 @@ export default function EventsDirectoryPage() {
         </p>
       </section>
 
-      <div style={{ maxWidth: 480, margin: "0 auto", padding: "0 32px 60px" }}>
+      <div style={{ maxWidth: 400, margin: "0 auto", padding: "0 32px 60px" }}>
         {loading ? (
           <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
             {[0, 1, 2].map(i => (

@@ -29,7 +29,7 @@ export default function AttendeesPage() {
       <style>{`body { max-width: 100% !important; }`}</style>
       <Nav />
 
-      <section style={{ padding: "160px 32px 100px", maxWidth: 900, margin: "0 auto" }}>
+      <section style={{ padding: "96px 32px 100px", maxWidth: 900, margin: "0 auto" }}>
         <p className="eyebrow reveal" style={{ marginBottom: 20 }}>For attendees</p>
         <h1 style={{
           fontFamily: "var(--font-display)",

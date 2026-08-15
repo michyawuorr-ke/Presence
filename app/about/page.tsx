@@ -33,7 +33,7 @@ export default function AboutPage() {
 
       {/* Hero */}
       <section style={{
-        padding: "160px 32px 100px",
+        padding: "96px 32px 100px",
         maxWidth: 900, margin: "0 auto",
         textAlign: "center",
       }}>

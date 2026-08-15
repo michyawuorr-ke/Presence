@@ -1,6 +1,7 @@
 "use client";
 import React, { useEffect, useState } from "react";
 import Link from "next/link";
+import Wordmark from "@/components/Wordmark";
 
 const links = [
   { href: "/events",     label: "Events" },
@@ -34,24 +35,6 @@ export default function Nav() {
         backdropFilter: scrolled ? "blur(18px)" : "none",
         WebkitBackdropFilter: scrolled ? "blur(18px)" : "none",
       }}>
-        <Link href="/" style={{ textDecoration: "none", display: "flex", alignItems: "center", gap: "6px" }}>
-          <svg width="14" height="14" viewBox="0 0 44 44" fill="none">
-            <path d="M10 22C10 15.373 15.373 10 22 10" stroke="#EAE6DF" strokeWidth="4" strokeLinecap="round"/>
-            <path d="M34 22C34 28.627 28.627 34 22 34" stroke="#E26D34" strokeWidth="4" strokeLinecap="round"/>
-            <circle cx="22" cy="10" r="2.5" fill="#E26D34"/>
-          </svg>
-          <span style={{ fontSize: "14px", fontWeight: "700", color: "#EAE6DF", letterSpacing: "-0.03em" }}>Oreeti</span>
-        </Link>
-
-        <div style={{ display: "flex", alignItems: "center", gap: "24px" }} className="mkt-desktop-links">
-          {links.map(l => (
-            <Link key={l.href} href={l.href} style={{
-              color: "rgba(234,230,223,0.45)", fontSize: "12px", fontWeight: "500",
-              textDecoration: "none", letterSpacing: "0.01em",
-            }}>{l.label}</Link>
-          ))}
-        </div>
-
         <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
           <Link href="/login" className="mkt-signin-link" style={{
             color: "rgba(234,230,223,0.45)", fontSize: "12px", fontWeight: "500",
@@ -79,6 +62,19 @@ export default function Nav() {
             </svg>
           </button>
         </div>
+
+        <div style={{ display: "flex", alignItems: "center", gap: "24px" }} className="mkt-desktop-links">
+          {links.map(l => (
+            <Link key={l.href} href={l.href} style={{
+              color: "rgba(234,230,223,0.45)", fontSize: "12px", fontWeight: "500",
+              textDecoration: "none", letterSpacing: "0.01em",
+            }}>{l.label}</Link>
+          ))}
+        </div>
+
+        <Link href="/" style={{ textDecoration: "none", display: "flex", alignItems: "center" }}>
+          <Wordmark size={16} />
+        </Link>
       </nav>
 
       {open && (
