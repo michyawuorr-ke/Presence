@@ -24,7 +24,7 @@ export default function PrivacyPage() {
     <div style={{ background: "var(--base)", minHeight: "100vh" }}>
       <style>{`body { max-width: 100% !important; }`}</style>
       <Nav />
-      <section style={{ padding: "96px 32px 80px", maxWidth: 760, margin: "0 auto" }}>
+      <section style={{ padding: "76px 32px 80px", maxWidth: 760, margin: "0 auto" }}>
         <p className="eyebrow" style={{ marginBottom: 20 }}>Legal</p>
         <h1 style={{
           fontFamily: "var(--font-display)",

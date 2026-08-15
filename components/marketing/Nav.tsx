@@ -36,17 +36,6 @@ export default function Nav() {
         WebkitBackdropFilter: scrolled ? "blur(18px)" : "none",
       }}>
         <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
-          <Link href="/login" className="mkt-signin-link" style={{
-            color: "rgba(234,230,223,0.45)", fontSize: "12px", fontWeight: "500",
-            textDecoration: "none", padding: "6px 10px",
-          }}>Sign in</Link>
-          <Link href="/login" style={{
-            background: "transparent", color: "rgba(234,230,223,0.7)",
-            fontSize: "12px", fontWeight: "500", textDecoration: "none",
-            padding: "6px 13px", borderRadius: "6px",
-            border: "1px solid rgba(234,230,223,0.15)",
-            letterSpacing: "0.01em", whiteSpace: "nowrap",
-          }}>Get started</Link>
           <button onClick={() => setOpen(!open)} className="mkt-hamburger"
             style={{ display: "none", background: "none", border: "none", color: "#EAE6DF", cursor: "pointer", padding: "4px" }}
             aria-label="Menu">
@@ -61,6 +50,17 @@ export default function Nav() {
               )}
             </svg>
           </button>
+          <Link href="/login" style={{
+            background: "transparent", color: "rgba(234,230,223,0.7)",
+            fontSize: "12px", fontWeight: "500", textDecoration: "none",
+            padding: "6px 13px", borderRadius: "6px",
+            border: "1px solid rgba(234,230,223,0.15)",
+            letterSpacing: "0.01em", whiteSpace: "nowrap",
+          }}>Get started</Link>
+          <Link href="/login" className="mkt-signin-link" style={{
+            color: "rgba(234,230,223,0.45)", fontSize: "12px", fontWeight: "500",
+            textDecoration: "none", padding: "6px 10px",
+          }}>Sign in</Link>
         </div>
 
         <div style={{ display: "flex", alignItems: "center", gap: "24px" }} className="mkt-desktop-links">

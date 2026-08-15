@@ -224,7 +224,7 @@ export default function EventsDirectoryPage() {
       <style>{`body { max-width: 100% !important; }`}</style>
       <Nav />
 
-      <section style={{ padding: "96px 32px 60px", maxWidth: 900, margin: "0 auto" }}>
+      <section style={{ padding: "76px 32px 60px", maxWidth: 900, margin: "0 auto" }}>
         <p className="eyebrow reveal" style={{ marginBottom: 20 }}>Happening on Oreeti</p>
         <h1 style={{
           fontFamily: "var(--font-display)",

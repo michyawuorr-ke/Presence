@@ -31,7 +31,7 @@ export default function OrganizersPage() {
       <Nav />
 
       {/* Hero */}
-      <section style={{ padding: "96px 32px 100px", maxWidth: 900, margin: "0 auto", textAlign: "center" }}>
+      <section style={{ padding: "76px 32px 100px", maxWidth: 900, margin: "0 auto", textAlign: "center" }}>
         <p className="eyebrow reveal" style={{ marginBottom: 20, color: "var(--gold)" }}>
           For organizers
         </p>

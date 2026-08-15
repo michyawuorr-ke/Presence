@@ -1,4 +1,4 @@
-import OreetiLogo from "@/components/OreetiLogo";
+import Wordmark from "@/components/Wordmark";
 import React from "react";
 import Link from "next/link";
 
@@ -31,13 +31,8 @@ export default function Footer() {
           alignItems: "flex-start", flexWrap: "wrap", gap: "40px", marginBottom: "40px",
         }}>
           <div style={{ maxWidth: "220px" }}>
-            <div style={{ display: "flex", alignItems: "center", gap: "6px", marginBottom: "12px" }}>
-              <svg width="14" height="14" viewBox="0 0 44 44" fill="none">
-                <path d="M10 22C10 15.373 15.373 10 22 10" stroke="#EAE6DF" strokeWidth="4" strokeLinecap="round"/>
-                <path d="M34 22C34 28.627 28.627 34 22 34" stroke="#E26D34" strokeWidth="4" strokeLinecap="round"/>
-                <circle cx="22" cy="10" r="2.5" fill="#E26D34"/>
-              </svg>
-              <span style={{ fontSize: "14px", fontWeight: "700", color: "#EAE6DF", letterSpacing: "-0.03em" }}>Oreeti</span>
+            <div style={{ marginBottom: "12px" }}>
+              <Wordmark size={16} />
             </div>
             <p style={{ fontSize: "13px", color: "rgba(138,115,85,0.8)", lineHeight: "1.65", margin: "0 0 8px" }}>
               The networking layer for live events.
