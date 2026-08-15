@@ -1,36 +1,71 @@
 "use client";
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
-import Link from "next/link";
 import { supabase } from "@/lib/supabase/client";
 import Wordmark from "@/components/Wordmark";
-
-interface TeaserEvent {
-  id: string; title: string; venue: string;
-  start_time: string; slug: string; status: string; banner_url: string | null;
-}
+import EventCard, { DirectoryEvent } from "@/components/events/EventCard";
+import SectionHeading from "@/components/events/SectionHeading";
 
 export default function DiscoverPage() {
   const router = useRouter();
-  const [events, setEvents] = useState<TeaserEvent[]>([]);
+  const [events, setEvents] = useState<DirectoryEvent[]>([]);
+  const [accessByEventId, setAccessByEventId] = useState<Record<string, string>>({});
   const [loading, setLoading] = useState(true);
+  const [search, setSearch] = useState("");
 
   useEffect(() => {
-    supabase.auth.getSession().then(({ data: { session } }) => {
+    async function load() {
+      const { data: { session } } = await supabase.auth.getSession();
       if (!session) { router.push("/login"); return; }
-    });
-    supabase.from("events")
-      .select("id,title,venue,start_time,slug,status,banner_url")
-      .eq("is_public", true)
-      .in("status", ["scheduled", "live"])
-      .order("start_time", { ascending: true })
-      .limit(20)
-      .then(({ data }) => { setEvents(data || []); setLoading(false); });
+
+      // Same fields as the public Events directory, so both surfaces
+      // render identical cards.
+      const { data } = await supabase
+        .from("events")
+        .select("id,title,venue,description,start_time,slug,status,banner_url")
+        .eq("is_public", true)
+        .in("status", ["scheduled", "live"])
+        .order("start_time", { ascending: true })
+        .limit(50);
+      setEvents(data || []);
+
+      const email = session.user?.email?.trim().toLowerCase();
+      if (email) {
+        const { data: regs } = await supabase
+          .from("registrations")
+          .select("event_id,access_token")
+          .eq("guest_email", email);
+        const map: Record<string, string> = {};
+        (regs || []).forEach((r: any) => {
+          if (r.event_id && r.access_token) map[r.event_id] = r.access_token;
+        });
+        setAccessByEventId(map);
+      }
+
+      setLoading(false);
+    }
+    load();
   }, [router]);
+
+  const now = Date.now();
+  const liveEvents = useMemo(
+    () => events.filter(e => e.status === "live" && new Date(e.start_time).getTime() <= now),
+    [events, now]
+  );
+  const upcomingEvents = useMemo(
+    () => events.filter(e => !(e.status === "live" && new Date(e.start_time).getTime() <= now)),
+    [events, now]
+  );
+  const filtered = search.trim()
+    ? events.filter(e =>
+        e.title?.toLowerCase().includes(search.toLowerCase()) ||
+        e.venue?.toLowerCase().includes(search.toLowerCase())
+      )
+    : events;
 
   return (
     <div style={{ minHeight: "100vh", background: "radial-gradient(ellipse 900px 500px at 50% -10%, rgba(226,109,52,0.06), transparent), var(--base)" }}>
-      <div style={{ maxWidth: 560, margin: "0 auto", padding: "28px 24px 80px" }}>
+      <div style={{ maxWidth: 440, margin: "0 auto", padding: "28px 24px 80px" }}>
         <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 28 }}>
           <a href="/home" style={{ color: "var(--dusk)", fontSize: 12, textDecoration: "none" }}>← Back</a>
           <Wordmark />
@@ -43,44 +78,65 @@ export default function DiscoverPage() {
 
         {loading ? (
           <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
-            {[0,1,2].map(i => <div key={i} style={{ height: 88, borderRadius: 14, background: "rgba(255,255,255,0.02)" }} />)}
+            {[0, 1, 2].map(i => <div key={i} style={{ height: 88, borderRadius: 14, background: "rgba(255,255,255,0.02)" }} />)}
           </div>
         ) : events.length === 0 ? (
           <p style={{ color: "var(--dusk)", fontSize: 13.5, textAlign: "center", padding: "60px 0" }}>No public events right now. Check back soon.</p>
         ) : (
-          <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
-            {events.map(event => {
-              const date = event.start_time
-                ? new Date(event.start_time).toLocaleDateString("en-KE", { weekday: "short", day: "numeric", month: "short" })
-                : "";
-              return (
-                <Link key={event.id} href={`/register/${event.slug}`} style={{
-                  display: "flex", alignItems: "center", gap: 14, padding: "14px 16px",
-                  borderRadius: 14, background: "linear-gradient(135deg, rgba(255,255,255,0.035), rgba(255,255,255,0.015))",
-                  border: "1px solid rgba(255,255,255,0.07)", textDecoration: "none",
+          <>
+            {liveEvents.length > 0 && (
+              <div style={{ marginBottom: 40 }}>
+                <SectionHeading eyebrow="Live Now" title="Happening right now" />
+                <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
+                  {liveEvents.map(event => (
+                    <EventCard key={event.id} event={event} accessToken={accessByEventId[event.id]} />
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {upcomingEvents.length > 0 && (
+              <div style={{ marginBottom: 40 }}>
+                <SectionHeading eyebrow="Upcoming" title="Coming up" />
+                <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
+                  {upcomingEvents.slice(0, 4).map(event => (
+                    <EventCard key={event.id} event={event} accessToken={accessByEventId[event.id]} />
+                  ))}
+                </div>
+              </div>
+            )}
+
+            <div>
+              <SectionHeading eyebrow="Explore All" title="Find your room" />
+              <input
+                value={search}
+                onChange={e => setSearch(e.target.value)}
+                placeholder="Search by name or venue"
+                style={{
+                  width: "100%", padding: "12px 16px", borderRadius: 12,
+                  background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.08)",
+                  color: "var(--ivory)", fontSize: 14, outline: "none", marginBottom: 16,
+                  boxSizing: "border-box",
+                }}
+              />
+              {filtered.length === 0 ? (
+                <p style={{ color: "var(--dusk)", fontSize: 13.5, textAlign: "center", padding: "40px 0" }}>
+                  No events match your search.
+                </p>
+              ) : (
+                <div style={{
+                  display: "flex", gap: 12, overflowX: "auto", paddingBottom: 4,
+                  scrollSnapType: "x mandatory", WebkitOverflowScrolling: "touch",
                 }}>
-                  <div style={{
-                    width: 48, height: 48, borderRadius: 10, flexShrink: 0, overflow: "hidden",
-                    background: event.banner_url ? "#000" : "linear-gradient(135deg, rgba(226,109,52,0.3), rgba(212,175,55,0.2))",
-                    display: "flex", alignItems: "center", justifyContent: "center",
-                  }}>
-                    {event.banner_url
-                      ? <img src={event.banner_url} alt="" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
-                      : <span style={{ fontFamily: "var(--font-display)", fontSize: 20, fontWeight: 500, color: "rgba(255,255,255,0.4)" }}>{event.title?.[0]?.toUpperCase()}</span>
-                    }
-                  </div>
-                  <div style={{ flex: 1, minWidth: 0 }}>
-                    <p style={{ margin: "0 0 3px", fontSize: 13.5, fontWeight: 600, color: "var(--ivory)", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{event.title}</p>
-                    <p style={{ margin: 0, fontSize: 11.5, color: "var(--dusk)" }}>{date}{event.venue ? ` · ${event.venue}` : ""}</p>
-                  </div>
-                  {event.status === "live" && new Date(event.start_time) <= new Date()
-                    ? <span style={{ fontSize: 9, fontWeight: 700, letterSpacing: "0.06em", color: "#22c55e", background: "rgba(34,197,94,0.1)", border: "1px solid rgba(34,197,94,0.25)", padding: "3px 8px", borderRadius: 20, flexShrink: 0 }}>LIVE</span>
-                    : <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" opacity={0.2} style={{ flexShrink: 0, color: "var(--ivory)" }}><path d="M9 18l6-6-6-6"/></svg>
-                  }
-                </Link>
-              );
-            })}
-          </div>
+                  {filtered.map(event => (
+                    <div key={event.id} style={{ flex: "0 0 200px", scrollSnapAlign: "start" }}>
+                      <EventCard event={event} accessToken={accessByEventId[event.id]} />
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          </>
         )}
       </div>
     </div>
