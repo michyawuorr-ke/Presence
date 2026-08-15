@@ -86,7 +86,7 @@ function EventCard({
         textDecoration: "none", transition: "border-color 0.15s ease",
       }}
     >
-      <div style={{ position: "relative", width: "100%", aspectRatio: "16 / 7", background: event.banner_url ? "#000" : fallback.background, overflow: "hidden" }}>
+      <div style={{ position: "relative", width: "100%", aspectRatio: "6 / 5", background: event.banner_url ? "#000" : fallback.background, overflow: "hidden" }}>
         {event.banner_url ? (
           <img src={event.banner_url} alt="" style={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }} />
         ) : (
