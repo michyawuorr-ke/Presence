@@ -132,22 +132,32 @@ export default function EventsDirectoryPage() {
         ) : (
           <>
             {liveEvents.length > 0 && (
-              <div style={{ marginBottom: 56 }}>
-                <SectionHeading eyebrow="Live Now" title="Events happening on Oreeti right now" />
-                <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
+              <div style={{ marginBottom: 40 }}>
+                <SectionHeading eyebrow="Live Now" />
+                <div style={{
+                  display: "flex", gap: 12, overflowX: "auto", paddingBottom: 4,
+                  scrollSnapType: "x mandatory", WebkitOverflowScrolling: "touch",
+                }}>
                   {liveEvents.map(event => (
-                    <EventCard key={event.id} event={event} accessToken={accessByEventId[event.id]} />
+                    <div key={event.id} style={{ flex: "0 0 200px", scrollSnapAlign: "start" }}>
+                      <EventCard event={event} accessToken={accessByEventId[event.id]} />
+                    </div>
                   ))}
                 </div>
               </div>
             )}
 
             {upcomingEvents.length > 0 && (
-              <div style={{ marginBottom: 56 }}>
-                <SectionHeading eyebrow="Upcoming" title="Events coming up on Oreeti" />
-                <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
-                  {upcomingEvents.slice(0, 4).map(event => (
-                    <EventCard key={event.id} event={event} accessToken={accessByEventId[event.id]} />
+              <div style={{ marginBottom: 40 }}>
+                <SectionHeading eyebrow="Upcoming" />
+                <div style={{
+                  display: "flex", gap: 12, overflowX: "auto", paddingBottom: 4,
+                  scrollSnapType: "x mandatory", WebkitOverflowScrolling: "touch",
+                }}>
+                  {upcomingEvents.slice(0, 8).map(event => (
+                    <div key={event.id} style={{ flex: "0 0 200px", scrollSnapAlign: "start" }}>
+                      <EventCard event={event} accessToken={accessByEventId[event.id]} />
+                    </div>
                   ))}
                 </div>
               </div>

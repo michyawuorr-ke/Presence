@@ -86,10 +86,15 @@ export default function DiscoverPage() {
           <>
             {liveEvents.length > 0 && (
               <div style={{ marginBottom: 40 }}>
-                <SectionHeading eyebrow="Live Now" title="Happening right now" />
-                <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
+                <SectionHeading eyebrow="Live Now" />
+                <div style={{
+                  display: "flex", gap: 12, overflowX: "auto", paddingBottom: 4,
+                  scrollSnapType: "x mandatory", WebkitOverflowScrolling: "touch",
+                }}>
                   {liveEvents.map(event => (
-                    <EventCard key={event.id} event={event} accessToken={accessByEventId[event.id]} />
+                    <div key={event.id} style={{ flex: "0 0 200px", scrollSnapAlign: "start" }}>
+                      <EventCard event={event} accessToken={accessByEventId[event.id]} />
+                    </div>
                   ))}
                 </div>
               </div>
@@ -97,10 +102,15 @@ export default function DiscoverPage() {
 
             {upcomingEvents.length > 0 && (
               <div style={{ marginBottom: 40 }}>
-                <SectionHeading eyebrow="Upcoming" title="Coming up" />
-                <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
-                  {upcomingEvents.slice(0, 4).map(event => (
-                    <EventCard key={event.id} event={event} accessToken={accessByEventId[event.id]} />
+                <SectionHeading eyebrow="Upcoming" />
+                <div style={{
+                  display: "flex", gap: 12, overflowX: "auto", paddingBottom: 4,
+                  scrollSnapType: "x mandatory", WebkitOverflowScrolling: "touch",
+                }}>
+                  {upcomingEvents.slice(0, 8).map(event => (
+                    <div key={event.id} style={{ flex: "0 0 200px", scrollSnapAlign: "start" }}>
+                      <EventCard event={event} accessToken={accessByEventId[event.id]} />
+                    </div>
                   ))}
                 </div>
               </div>
