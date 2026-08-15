@@ -86,18 +86,18 @@ function EventCard({
         textDecoration: "none", transition: "border-color 0.15s ease",
       }}
     >
-      <div style={{ position: "relative", width: "100%", aspectRatio: "16 / 7", background: event.banner_url ? "#000" : fallback.background, overflow: "hidden" }}>
+      <div style={{ position: "relative", width: "100%", aspectRatio: "16 / 3.5", background: event.banner_url ? "#000" : fallback.background, overflow: "hidden" }}>
         {event.banner_url ? (
           <img src={event.banner_url} alt="" style={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }} />
         ) : (
           <>
             <div style={{
               position: "absolute", left: `calc(50% - ${fallback.ringOffset}px)`, top: "50%", transform: "translate(-50%,-50%)",
-              width: 180, height: 180, borderRadius: "50%", border: "1px solid rgba(255,255,255,0.14)",
+              width: 90, height: 90, borderRadius: "50%", border: "1px solid rgba(255,255,255,0.14)",
             }} />
             <div style={{
               position: "absolute", left: `calc(50% + ${fallback.ringOffset}px)`, top: "50%", transform: "translate(-50%,-50%)",
-              width: 120, height: 120, borderRadius: "50%", border: "1px solid rgba(255,255,255,0.1)",
+              width: 60, height: 60, borderRadius: "50%", border: "1px solid rgba(255,255,255,0.1)",
             }} />
           </>
         )}
@@ -303,9 +303,14 @@ export default function EventsDirectoryPage() {
                   No events match your search.
                 </p>
               ) : (
-                <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
+                <div style={{
+                  display: "flex", gap: 12, overflowX: "auto", paddingBottom: 4,
+                  scrollSnapType: "x mandatory", WebkitOverflowScrolling: "touch",
+                }}>
                   {filtered.map(event => (
-                    <EventCard key={event.id} event={event} accessToken={accessByEventId[event.id]} />
+                    <div key={event.id} style={{ flex: "0 0 240px", scrollSnapAlign: "start" }}>
+                      <EventCard event={event} accessToken={accessByEventId[event.id]} />
+                    </div>
                   ))}
                 </div>
               )}
