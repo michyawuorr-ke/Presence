@@ -92,7 +92,7 @@ export default function DiscoverPage() {
                   scrollSnapType: "x mandatory", WebkitOverflowScrolling: "touch",
                 }}>
                   {liveEvents.map(event => (
-                    <div key={event.id} style={{ flex: "0 0 200px", scrollSnapAlign: "start" }}>
+                    <div key={event.id} style={{ flex: "0 0 180px", scrollSnapAlign: "start" }}>
                       <EventCard event={event} accessToken={accessByEventId[event.id]} />
                     </div>
                   ))}
@@ -108,7 +108,7 @@ export default function DiscoverPage() {
                   scrollSnapType: "x mandatory", WebkitOverflowScrolling: "touch",
                 }}>
                   {upcomingEvents.slice(0, 8).map(event => (
-                    <div key={event.id} style={{ flex: "0 0 200px", scrollSnapAlign: "start" }}>
+                    <div key={event.id} style={{ flex: "0 0 180px", scrollSnapAlign: "start" }}>
                       <EventCard event={event} accessToken={accessByEventId[event.id]} />
                     </div>
                   ))}
@@ -139,7 +139,7 @@ export default function DiscoverPage() {
                   scrollSnapType: "x mandatory", WebkitOverflowScrolling: "touch",
                 }}>
                   {filtered.map(event => (
-                    <div key={event.id} style={{ flex: "0 0 200px", scrollSnapAlign: "start" }}>
+                    <div key={event.id} style={{ flex: "0 0 180px", scrollSnapAlign: "start" }}>
                       <EventCard event={event} accessToken={accessByEventId[event.id]} />
                     </div>
                   ))}

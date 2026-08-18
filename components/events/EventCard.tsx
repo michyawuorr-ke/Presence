@@ -42,23 +42,23 @@ export default function EventCard({
     <a
       href={cta.href}
       style={{
-        display: "block", width: 200, borderRadius: 16, overflow: "hidden",
+        display: "block", width: 180, borderRadius: 14, overflow: "hidden",
         background: "rgba(255,255,255,0.02)", border: "1px solid rgba(255,255,255,0.06)",
         textDecoration: "none", transition: "border-color 0.15s ease",
       }}
     >
-      <div style={{ position: "relative", width: "100%", height: 150, background: event.banner_url ? "#000" : fallback.background, overflow: "hidden" }}>
+      <div style={{ position: "relative", width: "100%", height: 130, background: event.banner_url ? "#000" : fallback.background, overflow: "hidden" }}>
         {event.banner_url ? (
           <img src={event.banner_url} alt="" style={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }} />
         ) : (
           <>
             <div style={{
               position: "absolute", left: `calc(50% - ${fallback.ringOffset}px)`, top: "50%", transform: "translate(-50%,-50%)",
-              width: 100, height: 100, borderRadius: "50%", border: "1px solid rgba(255,255,255,0.14)",
+              width: 90, height: 90, borderRadius: "50%", border: "1px solid rgba(255,255,255,0.14)",
             }} />
             <div style={{
               position: "absolute", left: `calc(50% + ${fallback.ringOffset}px)`, top: "50%", transform: "translate(-50%,-50%)",
-              width: 65, height: 65, borderRadius: "50%", border: "1px solid rgba(255,255,255,0.1)",
+              width: 58, height: 58, borderRadius: "50%", border: "1px solid rgba(255,255,255,0.1)",
             }} />
           </>
         )}

@@ -11,6 +11,7 @@ import {
   loadDeletedConnectionIds, deleteConnection,
   type MyEvent, type MyConnection,
 } from "./homeData";
+import { fallbackVisual } from "@/lib/events/fallbackVisual";
 
 type Tab = "events" | "connections" | "profile";
 
@@ -384,12 +385,12 @@ function EventRow({ event, isArchived, onToggleArchive }: { event: MyEvent; isAr
   return (
     <div style={{ position: "relative", opacity: isArchived ? 0.55 : 1 }}>
       <a href={href} style={{
-        display: "flex", alignItems: "center", gap: 14, padding: "14px 44px 14px 16px", borderRadius: 14,
+        display: "flex", alignItems: "center", gap: 14, padding: "12px 44px 12px 14px", borderRadius: 14,
         background: "rgba(255,255,255,0.02)", border: "1px solid rgba(255,255,255,0.06)", textDecoration: "none",
       }}>
         <div style={{
-          width: 44, height: 44, borderRadius: 10, flexShrink: 0, overflow: "hidden",
-          background: event.banner_url ? "#000" : "linear-gradient(135deg, rgba(226,109,52,0.3), rgba(212,175,55,0.2))",
+          width: 52, height: 52, borderRadius: 11, flexShrink: 0, overflow: "hidden",
+          background: event.banner_url ? "#000" : fallbackVisual(event.id).background,
           display: "flex", alignItems: "center", justifyContent: "center",
         }}>
           {event.banner_url
