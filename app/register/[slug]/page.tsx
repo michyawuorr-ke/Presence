@@ -183,11 +183,11 @@ export default function RegisterPage() {
         <h2 style={{fontSize:"24px",fontWeight:"400",color:"#f5f5f5",marginBottom:"6px", marginTop: isFreeRegistration ? 0 : "8px"}}>
           {isFreeRegistration ? "You're In" : "Payment Submitted"}
         </h2>
-        <p style={{color:"rgba(255,255,255,0.4)",fontSize:"11px",letterSpacing:"0.15em",textTransform:"uppercase",marginBottom:"24px"}}>{event?.title}</p>
+        <p style={{color:"var(--ember, #E26D34)",fontSize:"16px",fontWeight:"600",marginBottom:"24px"}}>{event?.title}</p>
         <p style={{color:"#a3a3a3",fontSize:"14px",lineHeight:"1.5",marginBottom:"32px"}}>
           {isFreeRegistration
             ? "Your spot is confirmed. Head straight into the event."
-            : "Your M-Pesa code has been received. The host will confirm your payment shortly."}
+            : "Your payment has been received."}
         </p>
         <div style={{background:"rgba(0,0,0,0.15)",border:"1px solid rgba(255,255,255,0.05)",borderRadius:"14px",padding:"24px",marginBottom:"36px",textAlign:"left"}}>
           <div style={{display:"flex",justifyContent:"space-between",marginBottom:"12px",fontSize:"13px"}}>
@@ -209,10 +209,7 @@ export default function RegisterPage() {
         {confirmedToken && (
           <div style={{background:"rgba(255,255,255,0.02)",border:"1px solid rgba(255,255,255,0.06)",borderRadius:"12px",padding:"16px",marginBottom:"16px",textAlign:"left"}}>
             <p style={{fontSize:"10px",fontWeight:"700",letterSpacing:"0.12em",textTransform:"uppercase",color:"rgba(255,255,255,0.35)",margin:"0 0 8px"}}>Your Event Link</p>
-            <p style={{fontSize:"11px",color:"rgba(255,255,255,0.25)",margin:"0 0 10px",lineHeight:1.5}}>Save this link — it's how you get back into the event anytime.</p>
-            <div style={{background:"rgba(0,0,0,0.3)",borderRadius:"8px",padding:"10px 12px",marginBottom:"10px",wordBreak:"break-all",fontFamily:"monospace",fontSize:"10px",color:"rgba(255,255,255,0.4)"}}>
-              {window.location.origin + "/e/" + event?.slug + "/g/" + confirmedToken}
-            </div>
+            <p style={{fontSize:"11px",color:"rgba(255,255,255,0.25)",margin:"0 0 14px",lineHeight:1.5}}>Save this link — it's how you get back into the event anytime.</p>
             <div style={{display:"flex",flexDirection:"column",gap:"8px"}}>
               <button onClick={() => {
                 const link = window.location.origin + "/e/" + event?.slug + "/g/" + confirmedToken;
@@ -242,9 +239,7 @@ export default function RegisterPage() {
     <main style={{minHeight:"100vh",background:"#000",display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",padding:"40px 24px"}}>
       <div style={{maxWidth:"420px",width:"100%"}}>
         <div style={{textAlign:"center",marginBottom:"32px"}}>
-          <div style={{fontSize:"28px",marginBottom:"12px"}}>📲</div>
-          <h2 style={{fontSize:"20px",fontWeight:"400",color:"#f5f5f5",marginBottom:"8px"}}>Complete Payment</h2>
-          <p style={{color:"rgba(255,255,255,0.4)",fontSize:"13px"}}>Send payment then enter your M-Pesa code below</p>
+          <h2 style={{fontSize:"20px",fontWeight:"400",color:"#f5f5f5"}}>Complete Payment</h2>
         </div>
 
         <div style={{background:"rgba(255,255,255,0.03)",border:"1px solid rgba(255,255,255,0.08)",borderRadius:"14px",padding:"20px",marginBottom:"24px"}}>
