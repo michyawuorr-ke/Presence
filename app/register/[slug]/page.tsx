@@ -59,17 +59,6 @@ export default function RegisterPage() {
     }
   }
 
-  // Automatic now — no "email me this link" button to tap. The access
-  // link still needs to reach them somehow even though it's no longer
-  // shown on this screen (it's already in the Ticket tab once they're
-  // in), so this fires once as soon as registration succeeds.
-  useEffect(() => {
-    if (success && confirmedRegId && event?.id && !emailSent && !emailSending) {
-      sendAccessEmail();
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [success, confirmedRegId, event?.id]);
-
   const isSubmittingRef = useRef(false);
   const params = useParams();
   const slug = params.slug as string;
@@ -180,23 +169,18 @@ export default function RegisterPage() {
   if (success) return (
     <main style={{minHeight:"100vh",display:"flex",alignItems:"center",justifyContent:"center",padding:"24px",background:"#0a0a0a"}}>
       <div style={{maxWidth:"380px",width:"100%",padding:"40px 24px",background:"rgba(255,255,255,0.02)",border:"1px solid rgba(255,255,255,0.06)",borderRadius:"24px",textAlign:"center"}}>
-        <div style={{
-          width: 56, height: 56, margin: "0 auto 20px", borderRadius: "50%",
-          background: isFreeRegistration ? "rgba(74,222,128,0.1)" : "rgba(212,175,55,0.1)",
-          display: "flex", alignItems: "center", justifyContent: "center",
-        }}>
-          {isFreeRegistration ? (
+        {isFreeRegistration && (
+          <div style={{
+            width: 56, height: 56, margin: "0 auto 20px", borderRadius: "50%",
+            background: "rgba(74,222,128,0.1)",
+            display: "flex", alignItems: "center", justifyContent: "center",
+          }}>
             <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#4ade80" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
               <path d="M20 6L9 17l-5-5" />
             </svg>
-          ) : (
-            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#D4AF37" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round">
-              <circle cx="12" cy="12" r="9" />
-              <path d="M12 7v5l3.5 2" />
-            </svg>
-          )}
-        </div>
-        <h2 style={{fontSize:"24px",fontWeight:"400",color:"#f5f5f5",marginBottom:"6px"}}>
+          </div>
+        )}
+        <h2 style={{fontSize:"24px",fontWeight:"400",color:"#f5f5f5",marginBottom:"6px", marginTop: isFreeRegistration ? 0 : "8px"}}>
           {isFreeRegistration ? "You're In" : "Payment Submitted"}
         </h2>
         <p style={{color:"rgba(255,255,255,0.4)",fontSize:"11px",letterSpacing:"0.15em",textTransform:"uppercase",marginBottom:"24px"}}>{event?.title}</p>
@@ -205,7 +189,7 @@ export default function RegisterPage() {
             ? "Your spot is confirmed. Head straight into the event."
             : "Your M-Pesa code has been received. The host will confirm your payment shortly."}
         </p>
-        <div style={{background:"rgba(0,0,0,0.15)",border:"1px solid rgba(255,255,255,0.05)",borderRadius:"14px",padding:"24px",marginBottom:"32px",textAlign:"left"}}>
+        <div style={{background:"rgba(0,0,0,0.15)",border:"1px solid rgba(255,255,255,0.05)",borderRadius:"14px",padding:"24px",marginBottom:"36px",textAlign:"left"}}>
           <div style={{display:"flex",justifyContent:"space-between",marginBottom:"12px",fontSize:"13px"}}>
             <span style={{color:"rgba(255,255,255,0.4)"}}>Ticket:</span>
             <span style={{color:"#f5f5f5",fontWeight:"500"}}>{selectedTicket?.name || "General"}</span>
@@ -217,20 +201,39 @@ export default function RegisterPage() {
             </span>
           </div>
         </div>
-        {/* No link box here — it's the exact same "Your Access Link" block
-            shown in the Ticket tab the moment they enter. Showing it twice,
-            one tap apart, was the redundancy being flagged. The link still
-            reaches them (auto-emailed on success, see effect above) —
-            this line just confirms that quietly. */}
+        {/* Manual again — Resend's free tier caps at 100/day, so an
+            automatic send-on-every-registration has no visible fallback
+            once that's hit. Copy Link always works regardless of quota;
+            the email button is a convenience on top of it, not the only
+            path to the link. */}
+        {confirmedToken && (
+          <div style={{background:"rgba(255,255,255,0.02)",border:"1px solid rgba(255,255,255,0.06)",borderRadius:"12px",padding:"16px",marginBottom:"16px",textAlign:"left"}}>
+            <p style={{fontSize:"10px",fontWeight:"700",letterSpacing:"0.12em",textTransform:"uppercase",color:"rgba(255,255,255,0.35)",margin:"0 0 8px"}}>Your Event Link</p>
+            <p style={{fontSize:"11px",color:"rgba(255,255,255,0.25)",margin:"0 0 10px",lineHeight:1.5}}>Save this link — it's how you get back into the event anytime.</p>
+            <div style={{background:"rgba(0,0,0,0.3)",borderRadius:"8px",padding:"10px 12px",marginBottom:"10px",wordBreak:"break-all",fontFamily:"monospace",fontSize:"10px",color:"rgba(255,255,255,0.4)"}}>
+              {window.location.origin + "/e/" + event?.slug + "/g/" + confirmedToken}
+            </div>
+            <div style={{display:"flex",flexDirection:"column",gap:"8px"}}>
+              <button onClick={() => {
+                const link = window.location.origin + "/e/" + event?.slug + "/g/" + confirmedToken;
+                navigator.clipboard?.writeText(link).then(() => { setLinkCopied(true); setTimeout(() => setLinkCopied(false), 2000); });
+              }} style={{width:"100%",padding:"12px",background:linkCopied?"rgba(74,222,128,0.08)":"rgba(226,109,52,0.1)",color:linkCopied?"#4ade80":"#E26D34",border:`1px solid ${linkCopied?"rgba(74,222,128,0.3)":"rgba(226,109,52,0.3)"}`,borderRadius:"8px",fontSize:"13px",fontWeight:"600",cursor:"pointer"}}>
+                {linkCopied ? "✓ Copied" : "Copy Link"}
+              </button>
+              {!emailSent && (
+                <button onClick={sendAccessEmail} disabled={emailSending} style={{width:"100%",padding:"8px",background:"transparent",color:"rgba(255,255,255,0.3)",border:"none",fontSize:"11px",fontWeight:"500",cursor:emailSending?"default":"pointer",textDecoration:"underline"}}>
+                  {emailSending ? "Sending..." : "Email me this link"}
+                </button>
+              )}
+              {emailSent && <p style={{textAlign:"center",fontSize:"11px",color:"#4ade80",margin:0}}>✓ Sent to your email</p>}
+              {emailError && <p style={{textAlign:"center",fontSize:"11px",color:"#f87171",margin:0}}>{emailError}</p>}
+            </div>
+          </div>
+        )}
         <button onClick={() => { if (confirmedToken) window.location.href = window.location.origin + "/e/" + event?.slug + "/g/" + confirmedToken; }}
           style={{width:"100%",padding:"16px",background: isFreeRegistration ? "rgba(74,222,128,0.08)" : "rgba(255,255,255,0.05)",color:"#f5f5f5",border:`1px solid ${isFreeRegistration ? "rgba(74,222,128,0.3)" : "rgba(255,255,255,0.12)"}`,borderRadius:"12px",fontSize:"13px",fontWeight:"600",letterSpacing:"0.05em",textTransform:"uppercase",cursor:"pointer"}}>
           Enter Event →
         </button>
-        {emailSent && (
-          <p style={{marginTop:"14px",fontSize:"11px",color:"rgba(255,255,255,0.3)"}}>
-            Your access link was also sent to {email}
-          </p>
-        )}
       </div>
     </main>
   );
