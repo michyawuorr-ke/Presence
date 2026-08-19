@@ -31,10 +31,6 @@ export default function SetupTab({ eventId, event, ticketTypes, stations, onPubl
   const [stationSubtitle, setStationSubtitle] = useState("");
   const [savingStation, setSavingStation] = useState(false);
 
-  const [paybill, setPaybill] = useState(event?.paybill_number || "");
-  const [account, setAccount] = useState(event?.paybill_account || "");
-  const [savingPaybill, setSavingPaybill] = useState(false);
-  const [paybillSaved, setPaybillSaved] = useState(false);
 
   async function addTicket() {
     if (!ticketName) return;
@@ -58,13 +54,6 @@ export default function SetupTab({ eventId, event, ticketTypes, stations, onPubl
     setSavingStation(false);
   }
 
-  async function savePaybill() {
-    setSavingPaybill(true);
-    await supabase.from("events").update({ paybill_number: paybill.trim(), paybill_account: account.trim() }).eq("id", eventId);
-    setPaybillSaved(true);
-    setTimeout(() => setPaybillSaved(false), 2500);
-    setSavingPaybill(false);
-  }
 
   const inp = { width: "100%", padding: "11px 12px", borderRadius: "10px", border: "1px solid rgba(255,255,255,0.06)", background: "rgba(255,255,255,0.02)", color: "#fff", fontSize: "13px", outline: "none", boxSizing: "border-box" as const, marginBottom: "8px" };
   const sectionLabel = { fontSize: "10px", fontWeight: "700" as const, letterSpacing: "0.15em", textTransform: "uppercase" as const, marginBottom: "12px" };
@@ -132,17 +121,6 @@ export default function SetupTab({ eventId, event, ticketTypes, stations, onPubl
         </div>
       </section>
 
-      {/* ── Payment ── */}
-      <section>
-        <p style={{ ...sectionLabel, color: "#22c55e", marginBottom: "4px" }}>M-Pesa Payment Details</p>
-        <p style={{ fontSize: "12px", color: "#555", marginBottom: "12px" }}>Guests pay directly to your paybill. Oreeti records their receipt code and you confirm from the Attendees tab.</p>
-        <input value={paybill} onChange={e => setPaybill(e.target.value)} placeholder="Paybill / Till Number" style={inp} />
-        <input value={account} onChange={e => setAccount(e.target.value)} placeholder="Account Number (if paybill)" style={inp} />
-        <button onClick={savePaybill} disabled={savingPaybill}
-          style={{ width: "100%", padding: "10px", borderRadius: "8px", background: "transparent", border: "1px solid rgba(34,197,94,0.3)", color: "#22c55e", fontSize: "12px", fontWeight: "600", cursor: "pointer" }}>
-          {savingPaybill ? "Saving..." : paybillSaved ? "✓ Saved" : "Save Payment Details"}
-        </button>
-      </section>
       {/* ── Publish / End ── */}
       <section style={{ marginTop: "32px", borderTop: "1px solid rgba(255,255,255,0.04)", paddingTop: "24px" }}>
         {event?.status === "draft" && (
