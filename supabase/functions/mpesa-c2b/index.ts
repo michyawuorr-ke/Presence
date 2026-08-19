@@ -12,16 +12,24 @@ serve(async (req) => {
     return new Response(JSON.stringify({ ResultCode: 0, ResultDesc: "Accepted" }), { status: 200 })
   }
 
-  const { TransAmount, BillRefNumber, TransID } = body
+  const { TransAmount, MSISDN, TransID, BillRefNumber } = body
 
-  if (!BillRefNumber || !TransID) {
+  if (!TransID) {
     return new Response(JSON.stringify({ ResultCode: 0, ResultDesc: "Accepted" }), { status: 200 })
   }
 
+  // Normalize phone — Safaricom sends 2547XXXXXXXX, we store 07XXXXXXXX or 2547XXXXXXXX
+  const normalized = MSISDN?.replace(/^254/, "0")
+
+  // Match by phone number on a pending registration
   const { data: reg } = await supabase
     .from("registrations")
     .select("id, status, amount_expected")
-    .eq("payment_ref", BillRefNumber)
+    .or(`guest_phone.eq.${MSISDN},guest_phone.eq.${normalized}`)
+    .eq("status", "pending")
+    .eq("paid", false)
+    .order("created_at", { ascending: false })
+    .limit(1)
     .single()
 
   if (!reg) {

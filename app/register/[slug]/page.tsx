@@ -282,7 +282,7 @@ export default function RegisterPage() {
           </div>
           <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:"14px"}}>
             <span style={{fontSize:"12px",color:"rgba(255,255,255,0.4)",letterSpacing:"0.08em",textTransform:"uppercase"}}>Account</span>
-            <span style={{fontSize:"16px",fontWeight:"700",color:"#E26D34",letterSpacing:"0.1em"}}>{paymentRef}</span>
+            <span style={{fontSize:"16px",fontWeight:"700",color:"#E26D34",letterSpacing:"0.1em"}}>955154</span>
           </div>
           <div style={{borderTop:"1px solid rgba(255,255,255,0.05)",paddingTop:"14px",display:"flex",justifyContent:"space-between",alignItems:"center"}}>
             <span style={{fontSize:"12px",color:"rgba(255,255,255,0.4)",letterSpacing:"0.08em",textTransform:"uppercase"}}>Amount</span>
@@ -294,7 +294,7 @@ export default function RegisterPage() {
             "Open M-Pesa on your phone",
             "Select Lipa na M-Pesa → Paybill",
             "Business No: 516600",
-            `Account No: ${paymentRef}`,
+            `Account No: 955154`,
             `Amount: KES ${Number(selectedTicket?.price ?? 0) * quantity}`,
             "Enter PIN and send"
           ].map((step, i) => (
