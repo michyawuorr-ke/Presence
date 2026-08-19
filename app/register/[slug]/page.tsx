@@ -35,6 +35,7 @@ export default function RegisterPage() {
   const [isSavingCode, setIsSavingCode] = useState(false);
   const [currentRegId, setCurrentRegId] = useState("");
   const [paymentState, setPaymentState] = useState<"idle"|"waiting"|"success"|"failed">("idle");
+  const [paymentRef, setPaymentRef] = useState("");
   const [confirmedToken, setConfirmedToken] = useState("");
   const [confirmedRegId, setConfirmedRegId] = useState<string|null>(null);
   const [isFreeRegistration, setIsFreeRegistration] = useState(false);
@@ -103,6 +104,25 @@ export default function RegisterPage() {
     load();
   }, [slug]);
 
+
+  useEffect(() => {
+    if (paymentState !== "waiting" || !currentRegId) return;
+    const interval = setInterval(async () => {
+      const { data } = await supabase.from("registrations").select("status, paid").eq("id", currentRegId).single();
+      if (data?.status === "confirmed" && data?.paid) {
+        clearInterval(interval);
+        setSuccess(true);
+        setSubmitting(false);
+        isSubmittingRef.current = false;
+      }
+      if (data?.status === "underpaid") {
+        clearInterval(interval);
+        setError("Amount paid was less than required. Contact the organizer.");
+        setPaymentState("idle");
+      }
+    }, 3000);
+    return () => clearInterval(interval);
+  }, [paymentState, currentRegId]);
   async function handleRegister() {
     if (isSubmittingRef.current) return;
     isSubmittingRef.current = true;
@@ -131,6 +151,7 @@ export default function RegisterPage() {
       }
       setCurrentRegId(json.registration_id);
       setPaymentState("waiting");
+      setPaymentRef(json.payment_ref ?? "");
     } catch (err) {
       setError(friendlyError(err, "Registration failed. Please try again."));
       setSubmitting(false); isSubmittingRef.current = false;
@@ -246,47 +267,52 @@ export default function RegisterPage() {
     </main>
   );
 
+
   if (paymentState === "waiting") return (
     <main style={{minHeight:"100vh",background:"#000",display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",padding:"40px 24px"}}>
       <div style={{maxWidth:"420px",width:"100%"}}>
         <div style={{textAlign:"center",marginBottom:"32px"}}>
-          <h2 style={{fontSize:"20px",fontWeight:"400",color:"#f5f5f5"}}>Complete Payment</h2>
+          <p style={{fontSize:"11px",letterSpacing:"0.15em",textTransform:"uppercase",color:"rgba(255,255,255,0.3)",marginBottom:"12px"}}>Complete Payment</p>
+          <h2 style={{fontSize:"20px",fontWeight:"400",color:"#f5f5f5",margin:0}}>Pay via M-Pesa</h2>
         </div>
-
-        <div style={{background:"rgba(255,255,255,0.03)",border:"1px solid rgba(255,255,255,0.08)",borderRadius:"14px",padding:"20px",marginBottom:"24px"}}>
-          {event?.paybill_number && (
-            <>
-              <div style={{display:"flex",justifyContent:"space-between",marginBottom:"10px",fontSize:"13px"}}>
-                <span style={{color:"rgba(255,255,255,0.4)"}}>{event.paybill_account ? "Paybill No:" : "Till No:"}</span>
-                <span style={{color:"#fff",fontWeight:"700",fontSize:"18px",letterSpacing:"0.06em"}}>{event.paybill_number}</span>
-              </div>
-              {event.paybill_account && (
-                <div style={{display:"flex",justifyContent:"space-between",marginBottom:"10px",fontSize:"13px"}}>
-                  <span style={{color:"rgba(255,255,255,0.4)"}}>Account:</span>
-                  <span style={{color:"#fff",fontWeight:"600"}}>{event.paybill_account}</span>
-                </div>
-              )}
-            </>
-          )}
-          <div style={{display:"flex",justifyContent:"space-between",fontSize:"14px",borderTop: event?.paybill_number ? "1px solid rgba(255,255,255,0.05)" : "none",paddingTop: event?.paybill_number ? "10px" : "0",marginTop: event?.paybill_number ? "4px" : "0"}}>
-            <span style={{color:"rgba(255,255,255,0.4)"}}>Amount:</span>
-            <span style={{color:"#D4AF37",fontWeight:"700",fontSize:"16px"}}>KES {Number(selectedTicket?.price ?? 0) * quantity}</span>
+        <div style={{background:"rgba(255,255,255,0.03)",border:"1px solid rgba(255,255,255,0.08)",borderRadius:"14px",padding:"24px",marginBottom:"24px"}}>
+          <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:"14px"}}>
+            <span style={{fontSize:"12px",color:"rgba(255,255,255,0.4)",letterSpacing:"0.08em",textTransform:"uppercase"}}>Paybill</span>
+            <span style={{fontSize:"22px",fontWeight:"700",color:"#fff",letterSpacing:"0.1em"}}>516600</span>
+          </div>
+          <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:"14px"}}>
+            <span style={{fontSize:"12px",color:"rgba(255,255,255,0.4)",letterSpacing:"0.08em",textTransform:"uppercase"}}>Account</span>
+            <span style={{fontSize:"16px",fontWeight:"700",color:"#E26D34",letterSpacing:"0.1em"}}>{paymentRef}</span>
+          </div>
+          <div style={{borderTop:"1px solid rgba(255,255,255,0.05)",paddingTop:"14px",display:"flex",justifyContent:"space-between",alignItems:"center"}}>
+            <span style={{fontSize:"12px",color:"rgba(255,255,255,0.4)",letterSpacing:"0.08em",textTransform:"uppercase"}}>Amount</span>
+            <span style={{fontSize:"20px",fontWeight:"700",color:"#D4AF37"}}>KES {Number(selectedTicket?.price ?? 0) * quantity}</span>
           </div>
         </div>
-
-        <input value={manualMpesaCode} onChange={e => setManualMpesaCode(e.target.value.toUpperCase())}
-          placeholder="M-Pesa Code e.g. QHX7K2P3AB" type="text"
-          style={{...inp, textAlign:"center", letterSpacing:"0.12em", fontSize:"16px", marginBottom:"12px"}} />
-
-        {error && <p style={{color:"#ef4444",fontSize:"12px",marginBottom:"12px",textAlign:"center"}}>{error}</p>}
-
-        <button onClick={handleManualCodeSubmit} disabled={isSavingCode}
-          style={{width:"100%",padding:"14px",borderRadius:"6px",background:isSavingCode?"rgba(255,255,255,0.02)":"rgba(255,255,255,0.06)",color:isSavingCode?"rgba(255,255,255,0.2)":"#ffffff",border:"1px solid rgba(255,255,255,0.15)",fontSize:"12px",fontWeight:"600",letterSpacing:"0.06em",textTransform:"uppercase" as const,cursor:isSavingCode?"not-allowed":"pointer",marginBottom:"16px"}}>
-          {isSavingCode ? "Saving..." : error === "Couldn't connect." ? "Try Again" : "Submit Code"}
-        </button>
-
-        <button onClick={resetForm}
-          style={{display:"block",width:"100%",background:"none",border:"none",color:"rgba(255,255,255,0.2)",fontSize:"11px",cursor:"pointer",letterSpacing:"0.05em",textTransform:"uppercase" as const,textAlign:"center" as const}}>
+        <div style={{marginBottom:"32px"}}>
+          {[
+            "Open M-Pesa on your phone",
+            "Select Lipa na M-Pesa → Paybill",
+            "Business No: 516600",
+            `Account No: ${paymentRef}`,
+            `Amount: KES ${Number(selectedTicket?.price ?? 0) * quantity}`,
+            "Enter PIN and send"
+          ].map((step, i) => (
+            <div key={i} style={{display:"flex",gap:"12px",alignItems:"flex-start",marginBottom:"10px"}}>
+              <span style={{fontSize:"10px",fontWeight:"700",color:"rgba(226,109,52,0.6)",minWidth:"18px",paddingTop:"2px"}}>{i + 1}</span>
+              <span style={{fontSize:"13px",color:"rgba(255,255,255,0.55)",lineHeight:"1.5"}}>{step}</span>
+            </div>
+          ))}
+        </div>
+        <div style={{textAlign:"center",marginBottom:"24px"}}>
+          <div style={{display:"inline-flex",alignItems:"center",gap:"8px",padding:"10px 20px",borderRadius:"20px",background:"rgba(255,255,255,0.03)",border:"1px solid rgba(255,255,255,0.06)"}}>
+            <span style={{width:"6px",height:"6px",borderRadius:"50%",background:"#E26D34",display:"inline-block",animation:"pulse 1.5s ease-in-out infinite"}} />
+            <span style={{fontSize:"11px",color:"rgba(255,255,255,0.35)",letterSpacing:"0.08em"}}>WAITING FOR PAYMENT</span>
+          </div>
+          <style>{"@keyframes pulse{0%,100%{opacity:1;transform:scale(1)}50%{opacity:0.3;transform:scale(0.8)}}"}</style>
+        </div>
+        {error && <p style={{color:"#ef4444",fontSize:"12px",textAlign:"center",marginBottom:"16px"}}>{error}</p>}
+        <button onClick={resetForm} style={{display:"block",width:"100%",background:"none",border:"none",color:"rgba(255,255,255,0.2)",fontSize:"11px",cursor:"pointer",letterSpacing:"0.05em",textTransform:"uppercase",textAlign:"center"}}>
           Start Over
         </button>
       </div>
