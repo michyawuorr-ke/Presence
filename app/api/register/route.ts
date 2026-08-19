@@ -7,11 +7,9 @@ const supabase = createClient(
   process.env.SUPABASE_SERVICE_ROLE_KEY!
 );
 
-function generatePaymentRef(): string {
-  const chars = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
-  const short = Array.from(crypto.getRandomValues(new Uint8Array(6)))
-    .map(b => chars[b % chars.length]).join("");
-  return `955154-${short}`;
+function generatePaymentRef(name: string): string {
+  const first = name.trim().split(" ")[0].toUpperCase().replace(/[^A-Z0-9]/g, "").slice(0, 4);
+  return `955154${first}`;
 }
 
 export async function POST(req: NextRequest) {
@@ -71,7 +69,7 @@ export async function POST(req: NextRequest) {
     const accessToken = Date.now().toString(16) + "-" + randomBytes;
     const guestUrl = `${process.env.NEXT_PUBLIC_APP_URL || "https://oreeti.com"}/e/${event.slug}/g/${accessToken}`;
 
-    const paymentRef = isFree ? null : generatePaymentRef();
+    const paymentRef = isFree ? null : generatePaymentRef(name);
 
     const { data: reg, error: regError } = await supabase
       .from("registrations")
