@@ -325,7 +325,7 @@ export default function AttendeesTab({ eventId, isLive }: AttendeesTabProps) {
 
                   {/* Action buttons */}
                   <div style={{ display: "flex", flexDirection: "column", gap: "6px", flexShrink: 0 }}>
-                    {r.status === "pending" && r.mpesa_receipt && (
+                    {r.status === "pending" && (
                       <button onClick={() => confirmPayment(r.id, r.guest_name)} disabled={confirming === r.id}
                         style={{ padding: "6px 12px", borderRadius: "8px", background: "rgba(212,175,55,0.1)", border: "1px solid rgba(212,175,55,0.3)", color: GOLD, fontSize: "11px", fontWeight: "600", cursor: "pointer" }}>
                         {confirming === r.id ? "..." : "Confirm ✓"}
