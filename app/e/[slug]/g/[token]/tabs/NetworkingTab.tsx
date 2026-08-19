@@ -198,11 +198,11 @@ export default function NetworkingTab({ event, profile, isLive, isEnded, registr
       })
       .on("broadcast",{event:"handshake_approved"},(payload:any)=>{
         if(payload.payload.requester_id===profile.id){
-          setNotification("✓ Connected with "+getFirstName(payload.payload.recipient_name)+"! Open Profile tab → tap Scan to unlock their full profile");
+          setNotification("✓ Connected with "+getFirstName(payload.payload.recipient_name)+"! Open Profile tab, then tap Scan to unlock their full profile");
           setTimeout(()=>setNotification(""),10000);
           fetchNodes();
         }else if(payload.payload.recipient_id===profile.id){
-          setNotification("✓ Connected with "+getFirstName(payload.payload.requester_name)+"! Open Profile tab → tap Scan to unlock their full profile");
+          setNotification("✓ Connected with "+getFirstName(payload.payload.requester_name)+"! Open Profile tab, then tap Scan to unlock their full profile");
           setTimeout(()=>setNotification(""),10000);
           fetchNodes();
         }
@@ -434,7 +434,7 @@ export default function NetworkingTab({ event, profile, isLive, isEnded, registr
             <div style={{display:"flex",gap:"12px",marginTop:"16px"}}>
               <button onClick={()=>{setConfirmNode(null);setSelectedLiveReason("");}} style={{flex:1,padding:"11px",borderRadius:"10px",background:"transparent",color:"rgba(240,237,232,0.5)",border:"1px solid rgba(240,237,232,0.15)",fontSize:"13px",fontWeight:"500",letterSpacing:"0.08em",textTransform:"uppercase",cursor:"pointer"}}>Cancel</button>
               <button onClick={()=>sendRequest(confirmNode)} disabled={!selectedLiveReason} style={{flex:1,padding:"11px",borderRadius:"10px",background:"transparent",color:selectedLiveReason?PALETTE.orange:"rgba(240,237,232,0.2)",border:`1px solid rgba(226,109,52,0.4)`,fontSize:"13px",fontWeight:"500",letterSpacing:"0.08em",textTransform:"uppercase",cursor:selectedLiveReason?"pointer":"default"}}>
-                Send Request →
+                Send Request
               </button>
             </div>
           </div>

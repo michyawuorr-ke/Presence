@@ -189,7 +189,7 @@ export default function OrganizersPage() {
               e.currentTarget.style.borderColor = "rgba(212,175,55,0.3)";
             }}
           >
-            Start for free →
+            Start for free
           </Link>
         </div>
       </section>

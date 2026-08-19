@@ -234,7 +234,7 @@ export default function PublicProfilePage() {
     return (
       <div style={{ minHeight: "100vh", background: "var(--base)", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", padding: 24 }}>
         <p style={{ color: "var(--ivory)", fontSize: 16, marginBottom: 8 }}>This profile doesn't exist.</p>
-        <a href="/" style={{ color: "var(--ember)", fontSize: 13, textDecoration: "none" }}>Go to Oreeti →</a>
+        <a href="/" style={{ color: "var(--ember)", fontSize: 13, textDecoration: "none" }}>Go to Oreeti</a>
       </div>
     );
   }

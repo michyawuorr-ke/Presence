@@ -525,7 +525,7 @@ export default function HomeProfilePage({ embedded = false }: { embedded?: boole
     return (
       <div style={{ minHeight: embedded ? "auto" : "100vh", background: embedded ? "transparent" : "radial-gradient(ellipse 1000px 600px at 50% -15%, rgba(226,109,52,0.1), transparent 60%), var(--base)" }}>
         <div style={{ maxWidth: 560, margin: "0 auto", padding: embedded ? "0 0 60px" : "40px 24px 100px" }}>
-          <button onClick={() => setMode("view")} style={{ display: "inline-block", marginBottom: 28, color: "var(--ivory-muted)", fontSize: 11.5, background: "none", border: "none", cursor: "pointer", padding: 0 }}>← Back to card</button>
+          <button onClick={() => setMode("view")} style={{ display: "inline-block", marginBottom: 28, color: "var(--ivory-muted)", fontSize: 11.5, background: "none", border: "none", cursor: "pointer", padding: 0 }}>Back to card</button>
 
 
           <h1 style={{ fontFamily: "var(--font-display)", fontSize: "clamp(20px,4vw,24px)", fontWeight: 500, color: "var(--ivory)", letterSpacing: "-0.02em", margin: "0 0 4px" }}>
@@ -679,7 +679,7 @@ export default function HomeProfilePage({ embedded = false }: { embedded?: boole
     <div style={{ minHeight: embedded ? "auto" : "100vh", background: embedded ? "transparent" : "radial-gradient(ellipse 1000px 600px at 50% -15%, rgba(226,109,52,0.08), transparent 60%), var(--base)" }}>
       <div style={{ maxWidth: 420, margin: "0 auto", padding: embedded ? "0 0 40px" : "28px 24px 64px" }}>
         <div style={{ display: "flex", alignItems: "center", justifyContent: embedded ? "flex-end" : "space-between", marginBottom: 24 }}>
-          {!embedded && <a href="/home" style={{ color: "var(--dusk)", fontSize: 12, textDecoration: "none" }}>← Back</a>}
+          {!embedded && <a href="/home" style={{ color: "var(--dusk)", fontSize: 12, textDecoration: "none" }}>Back</a>}
           <button onClick={() => setMode("edit")} style={{ background: "none", border: "none", color: "var(--ember)", fontSize: 12, fontWeight: 600, cursor: "pointer", padding: 0 }}>
             Edit
           </button>

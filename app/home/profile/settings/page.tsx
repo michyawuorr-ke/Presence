@@ -152,7 +152,7 @@ export default function ProfileSettingsPage() {
     <div style={{ minHeight: "100vh", background: "radial-gradient(ellipse 900px 500px at 50% -15%, rgba(226,109,52,0.06), transparent 60%), var(--base)" }}>
       <div style={{ maxWidth: 560, margin: "0 auto", padding: "40px 24px 100px" }}>
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 28 }}>
-          <a href="/home/profile" style={{ color: "var(--ivory-muted)", fontSize: 11.5, textDecoration: "none" }}>← Back to profile</a>
+          <a href="/home/profile" style={{ color: "var(--ivory-muted)", fontSize: 11.5, textDecoration: "none" }}>Back to profile</a>
           <button onClick={handleSignOut} style={{ background: "none", border: "none", color: "var(--ivory-muted)", fontSize: 11.5, letterSpacing: "0.04em", cursor: "pointer" }}>
             Sign Out
           </button>

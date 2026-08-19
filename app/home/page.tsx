@@ -247,7 +247,6 @@ export default function HomePage() {
           }}>
             <span style={{ width: 6, height: 6, borderRadius: "50%", background: "var(--ember)", flexShrink: 0 }} />
             <span style={{ fontSize: 12.5, fontWeight: 600, color: "var(--ember)", letterSpacing: "0.02em" }}>Discover events happening on Oreeti</span>
-            <span style={{ fontSize: 12, color: "var(--ember)", opacity: 0.6 }}>→</span>
           </a>
         )}
 
@@ -328,7 +327,7 @@ function EventsList({ upcoming, past, archivedIds, onToggleArchive, hadAnyMatch 
         <p style={{ color: "var(--dusk)", fontSize: 13.5, marginBottom: 16 }}>
           {hadAnyMatch ? "No events match." : "You haven't attended or hosted an event yet."}
         </p>
-        {!hadAnyMatch && <a href="/events" style={{ color: "var(--ember)", fontSize: 13, fontWeight: 600, textDecoration: "none" }}>Find something happening →</a>}
+        {!hadAnyMatch && <a href="/events" style={{ color: "var(--ember)", fontSize: 13, fontWeight: 600, textDecoration: "none" }}>Find something happening</a>}
       </div>
     );
   }
@@ -473,7 +472,7 @@ function ConnectionsList({ connections, hadAnyMatch, archivedIds, onToggleArchiv
           borderRadius: 12, background: "rgba(226,109,52,0.1)", border: "1px solid rgba(226,109,52,0.3)",
           color: "var(--ember)", fontSize: 13, fontWeight: 600, textDecoration: "none",
         }}>
-          Share your card →
+          Share your card
         </a>
       </div>
     );
@@ -620,7 +619,7 @@ function ConnectionRow({ connection: c, isArchived, onToggleArchive, onDelete }:
         <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
           <p style={{ fontSize: 11, color: "#22c55e", margin: 0 }}>✓ Connected</p>
           {c.slug && (
-            <a href={`/u/${c.slug}`} style={{ fontSize: 11, color: "var(--gold)", textDecoration: "none", fontWeight: 600 }}>View card →</a>
+            <a href={`/u/${c.slug}`} style={{ fontSize: 11, color: "var(--gold)", textDecoration: "none", fontWeight: 600 }}>View card</a>
           )}
         </div>
       )}

@@ -81,13 +81,13 @@ export default function TicketTab({ event, registration, entryQR, networkingQR, 
           {onGoToScene && (
             <button onClick={onGoToScene}
               style={{ padding: "13px", borderRadius: "12px", background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.08)", color: "rgba(240,237,232,0.8)", fontSize: "13px", fontWeight: "500", cursor: "pointer" }}>
-              Relive the event →
+              Relive the event
             </button>
           )}
           {onGoToConnections && (
             <button onClick={onGoToConnections}
               style={{ padding: "13px", borderRadius: "12px", background: "rgba(226,109,52,0.06)", border: "1px solid rgba(226,109,52,0.2)", color: "#E26D34", fontSize: "13px", fontWeight: "500", cursor: "pointer" }}>
-              See who you connected with →
+              See who you connected with
             </button>
           )}
         </div>

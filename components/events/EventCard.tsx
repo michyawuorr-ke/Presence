@@ -80,7 +80,7 @@ export default function EventCard({
           color: "rgba(255,255,255,0.85)", background: "rgba(0,0,0,0.35)",
           padding: "5px 11px", borderRadius: 20, backdropFilter: "blur(6px)",
         }}>
-          {cta.label} →
+          {cta.label}
         </span>
       </div>
 

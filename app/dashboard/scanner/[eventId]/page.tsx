@@ -127,7 +127,7 @@ export default function ScannerPage() {
   return (
     <div style={{ minHeight: "100vh", background: "#0f0f13", padding: "24px 20px", fontFamily: "var(--font-inter),-apple-system,sans-serif" }}>
       <div style={{ display: "flex", alignItems: "center", gap: "12px", marginBottom: "24px" }}>
-        <button onClick={() => router.back()} style={{ background: "rgba(255,255,255,0.06)", border: "none", color: "#f1f0f5", fontSize: "16px", cursor: "pointer", width: "36px", height: "36px", borderRadius: "10px", display: "flex", alignItems: "center", justifyContent: "center" }}>←</button>
+        <button onClick={() => router.back()} style={{ background: "rgba(255,255,255,0.06)", border: "none", color: "#f1f0f5", fontSize: "13px", fontWeight: "500", cursor: "pointer", padding: "8px 14px", borderRadius: "10px", display: "flex", alignItems: "center", justifyContent: "center" }}>Back</button>
         <div style={{ flex: 1 }}>
           <p style={{ fontSize: "15px", fontWeight: "600", color: "#f1f0f5", margin: 0 }}>{event?.title}</p>
           <p style={{ fontSize: "11px", color: "#6b6880", letterSpacing: "0.05em", textTransform: "uppercase", margin: 0 }}>Entry Scanner</p>
@@ -183,7 +183,7 @@ export default function ScannerPage() {
             )}
             {result.offline && <p style={{ fontSize: "11px", color: "#fbbf24", marginTop: "8px" }}>⚡ Offline — will sync when connected</p>}
           </div>
-          <button onClick={scanNext} style={{ width: "100%", padding: "16px", borderRadius: "16px", background: "linear-gradient(135deg,#7c6aff,#5b4fd4)", color: "#fff", border: "none", fontSize: "15px", fontWeight: "600", cursor: "pointer" }}>Scan Next →</button>
+          <button onClick={scanNext} style={{ width: "100%", padding: "16px", borderRadius: "16px", background: "linear-gradient(135deg,#7c6aff,#5b4fd4)", color: "#fff", border: "none", fontSize: "15px", fontWeight: "600", cursor: "pointer" }}>Scan Next</button>
         </div>
       )}
     </div>

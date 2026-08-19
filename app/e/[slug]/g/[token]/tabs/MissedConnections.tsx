@@ -154,7 +154,7 @@ export default function MissedConnections({ event, profile, registration }: Miss
                 disabled={!selectedReason}
                 style={{ flex: 1, padding: "11px", borderRadius: "10px", background: "transparent", color: selectedReason ? "#E26D34" : "rgba(240,237,232,0.2)", border: "1px solid rgba(226,109,52,0.4)", fontSize: "13px", cursor: selectedReason ? "pointer" : "default", fontWeight: "500" }}
               >
-                Send Request →
+                Send Request
               </button>
             </div>
           </div>

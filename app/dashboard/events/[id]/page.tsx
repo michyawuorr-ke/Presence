@@ -194,7 +194,7 @@ function EventDashboardContent() {
       {/* Event title + back — sits below the layout header */}
       <div style={{ padding: "12px 16px 0", maxWidth: "480px", margin: "0 auto" }}>
         <div style={{ display: "flex", alignItems: "center", gap: "10px", minWidth: 0, marginBottom: "12px" }}>
-          <button onClick={() => router.push("/dashboard/events")} style={{ background: "none", border: "none", color: "#555", fontSize: "18px", cursor: "pointer", padding: "4px", flexShrink: 0 }}>←</button>
+          <button onClick={() => router.push("/dashboard/events")} style={{ background: "none", border: "none", color: "#555", fontSize: "13px", fontWeight: "500", cursor: "pointer", padding: "4px 8px", flexShrink: 0 }}>Back</button>
           <p style={{ fontSize: "15px", fontWeight: "600", color: "#f0ede8", margin: 0, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{event.title}</p>
         </div>
 

@@ -135,7 +135,7 @@ export default function HostProfilePage() {
       {/* Header */}
       <header style={{ position: "sticky", top: 0, background: "rgba(8,8,10,0.95)", backdropFilter: "blur(20px)", borderBottom: "1px solid rgba(255,255,255,0.04)", zIndex: 30, padding: "0 16px" }}>
         <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", height: "52px", maxWidth: "480px", margin: "0 auto" }}>
-          <button onClick={() => router.back()} style={{ background: "none", border: "none", color: "#555", fontSize: "18px", cursor: "pointer", padding: "4px" }}>←</button>
+          <button onClick={() => router.back()} style={{ background: "none", border: "none", color: "#555", fontSize: "13px", fontWeight: "500", cursor: "pointer", padding: "4px 8px" }}>Back</button>
           <p style={{ fontSize: "11px", fontWeight: "700", letterSpacing: "0.15em", color: GOLD, textTransform: "uppercase", margin: 0 }}>Organizer Profile</p>
           <button onClick={() => editing ? handleSave() : setEditing(true)}
             style={{ background: "none", border: `1px solid rgba(212,175,55,${editing ? "0.5" : "0.2"})`, borderRadius: "8px", color: editing ? GOLD : "#555", fontSize: "11px", fontWeight: "600", padding: "5px 12px", cursor: "pointer", letterSpacing: "0.06em" }}>

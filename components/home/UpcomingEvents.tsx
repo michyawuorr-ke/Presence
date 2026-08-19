@@ -77,7 +77,7 @@ export default function UpcomingEvents() {
             fontSize: 12.5, fontWeight: 600, color: "#E26D34", textDecoration: "none",
             letterSpacing: "0.03em", whiteSpace: "nowrap", flexShrink: 0,
           }}>
-            See all events →
+            See all events
           </Link>
         </div>
 

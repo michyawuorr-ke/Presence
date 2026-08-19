@@ -192,7 +192,7 @@ export default function PublicScannerPage() {
             )}
             {result.offline && <p style={{ fontSize: "11px", color: "#fbbf24", marginTop: "8px" }}>⚡ Offline — will sync when connected</p>}
           </div>
-          <button onClick={scanNext} style={{ width: "100%", padding: "16px", borderRadius: "16px", background: "linear-gradient(135deg,#7c6aff,#5b4fd4)", color: "#fff", border: "none", fontSize: "15px", fontWeight: "600", cursor: "pointer" }}>Scan Next →</button>
+          <button onClick={scanNext} style={{ width: "100%", padding: "16px", borderRadius: "16px", background: "linear-gradient(135deg,#7c6aff,#5b4fd4)", color: "#fff", border: "none", fontSize: "15px", fontWeight: "600", cursor: "pointer" }}>Scan Next</button>
         </div>
       )}
     </div>

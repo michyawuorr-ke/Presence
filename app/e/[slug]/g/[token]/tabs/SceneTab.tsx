@@ -83,7 +83,7 @@ export default function SceneTab({
                 : "Your connections from this event are saved to this link"}
             </p>
             <button onClick={onViewConnections} style={{ padding: "12px 24px", borderRadius: "14px", background: "#fff", color: "#000", border: "none", fontSize: "14px", cursor: "pointer", fontWeight: "500" }}>
-              Explore your connections →
+              Explore your connections
             </button>
 
             {/* Only shown if this identity hasn't been claimed by a real
@@ -98,7 +98,7 @@ export default function SceneTab({
                   href={`/login?mode=login&email=${encodeURIComponent(masterProfile.email)}`}
                   style={{ display: "inline-block", padding: "10px 20px", borderRadius: "12px", background: "rgba(226,109,52,0.1)", border: "1px solid rgba(226,109,52,0.3)", color: PALETTE.orange, fontSize: "13px", fontWeight: "600", cursor: "pointer", textDecoration: "none" }}
                 >
-                  Save my history →
+                  Save my history
                 </a>
               </div>
             )}
@@ -123,7 +123,7 @@ export default function SceneTab({
                 </div>
               </div>
               <button onClick={onGoNetworking} style={{ width: "100%", padding: "11px", borderRadius: "10px", background: "transparent", color: PALETTE.orange, border: `1px solid rgba(226,109,52,0.35)`, fontSize: "13px", cursor: "pointer", fontWeight: "500", letterSpacing: "0.08em", textTransform: "uppercase" }}>
-                Start Networking →
+                Start Networking
               </button>
             </div>
           </>

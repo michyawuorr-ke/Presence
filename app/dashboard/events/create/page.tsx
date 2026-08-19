@@ -106,9 +106,9 @@ export default function CreateEvent() {
 
         <button
           onClick={() => router.back()}
-          style={{ background: "transparent", border: "none", color: "rgba(255,255,255,0.3)", cursor: "pointer", marginBottom: "28px", fontSize: "20px", padding: 0, display: "flex", alignItems: "center", gap: "6px" }}
+          style={{ background: "transparent", border: "none", color: "rgba(255,255,255,0.3)", cursor: "pointer", marginBottom: "28px", fontSize: "13px", fontWeight: "500", padding: 0, display: "flex", alignItems: "center", gap: "6px" }}
         >
-          ←
+          Back
         </button>
 
         <h1 style={{ fontSize: "26px", fontWeight: "700", letterSpacing: "-0.02em", margin: "0 0 4px" }}>New Event</h1>
@@ -205,7 +205,7 @@ export default function CreateEvent() {
               width: "100%",
             }}
           >
-            {loading ? "Creating..." : "Create Event →"}
+            {loading ? "Creating..." : "Create Event"}
           </button>
 
         </div>

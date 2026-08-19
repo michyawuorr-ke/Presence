@@ -173,7 +173,7 @@ function LoginForm() {
         <p data-reveal style={{ color: "var(--ember)", textAlign: "center", marginBottom: "36px", fontSize: "14.5px", fontWeight: "500" }}>{email}</p>
         <button onClick={() => { setMode("landing"); setEmail(""); setName(""); setPhone(""); setError(""); }}
           style={{ background: "transparent", border: "none", color: "var(--ivory-muted)", fontSize: "11px", letterSpacing: "0.06em", textTransform: "uppercase", cursor: "pointer" }}>
-          ← Return
+          Return
         </button>
       </main>
     );
@@ -184,7 +184,7 @@ function LoginForm() {
       <div>
         <button onClick={() => { setMode("landing"); setError(""); }}
           style={{ background: "none", border: "none", color: "var(--ivory-muted)", fontSize: "11px", letterSpacing: "0.06em", textTransform: "uppercase", cursor: "pointer", marginBottom: "48px", padding: "0" }}>
-          ← Cancel
+          Cancel
         </button>
 
         <div data-reveal style={{ marginBottom: "40px", textAlign: "center", display: "flex", flexDirection: "column", alignItems: "center", gap: "16px" }}>
@@ -227,7 +227,7 @@ function LoginForm() {
             boxShadow: loading ? "none" : "0 8px 24px rgba(226,109,52,0.25)",
           }}
         >
-          {loading ? "Processing..." : "Continue →"}
+          {loading ? "Processing..." : "Continue"}
         </button>
 
         <div style={{ marginTop: "24px", textAlign: "center", padding: "0 16px" }}>

@@ -62,7 +62,7 @@ export default function TicketsRevenueHub() {
       <div style={{ maxWidth: '480px', margin: '0 auto' }}>
 
         <div style={{ display: 'flex', alignItems: 'center', marginBottom: '20px' }}>
-          <button onClick={() => router.back()} style={{ background: 'none', border: 'none', color: 'rgba(255,255,255,0.4)', cursor: 'pointer', fontSize: '13px' }}>← Back</button>
+          <button onClick={() => router.back()} style={{ background: 'none', border: 'none', color: 'rgba(255,255,255,0.4)', cursor: 'pointer', fontSize: '13px' }}>Back</button>
         </div>
 
         {/* STATS ROW */}

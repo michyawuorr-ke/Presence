@@ -229,7 +229,7 @@ export default function RegisterPage() {
         )}
         <button onClick={() => { if (confirmedToken) window.location.href = window.location.origin + "/e/" + event?.slug + "/g/" + confirmedToken; }}
           style={{width:"100%",padding:"16px",background: isFreeRegistration ? "rgba(74,222,128,0.08)" : "rgba(255,255,255,0.05)",color:"#f5f5f5",border:`1px solid ${isFreeRegistration ? "rgba(74,222,128,0.3)" : "rgba(255,255,255,0.12)"}`,borderRadius:"12px",fontSize:"13px",fontWeight:"600",letterSpacing:"0.05em",textTransform:"uppercase",cursor:"pointer"}}>
-          Enter Event →
+          Enter Event
         </button>
       </div>
     </main>

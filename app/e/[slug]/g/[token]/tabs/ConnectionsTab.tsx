@@ -263,7 +263,7 @@ export default function ConnectionsTab({ profile, event, registration, isEnded }
                   </button>
                   <button onClick={() => connectFromIntro(intro.id, intro.isA, other.id)}
                     style={{ flex: 2, padding: "9px", borderRadius: "9px", background: "rgba(226,109,52,0.08)", border: `1px solid rgba(226,109,52,0.3)`, color: EMBER, fontSize: "12px", fontWeight: "600", cursor: "pointer" }}>
-                    Connect with {firstName} →
+                    Connect with {firstName}
                   </button>
                 </div>
               </div>
@@ -437,7 +437,7 @@ export default function ConnectionsTab({ profile, event, registration, isEnded }
                   <p style={{ fontSize: "12.5px", color: "rgba(240,237,232,0.6)", margin: "0 0 8px" }}>Share contact details with {getFirstName(c.display_name)}?</p>
                   <button onClick={() => setAcceptDisclosureTarget(c)}
                     style={{ width: "100%", padding: "10px", borderRadius: "9px", background: "rgba(226,109,52,0.08)", border: "1px solid rgba(226,109,52,0.3)", color: EMBER, fontSize: "12.5px", fontWeight: "600", cursor: "pointer" }}>
-                    Choose what to share →
+                    Choose what to share
                   </button>
                 </div>
               )}
@@ -454,7 +454,7 @@ export default function ConnectionsTab({ profile, event, registration, isEnded }
                       color: signalSent ? "rgba(255,255,255,0.25)" : EMBER,
                       animation: !signalSent ? "pulseGlow 2.5s ease-in-out infinite" : "none",
                     }}>
-                    {signalSent ? "Signal sent" : "Signal Meetup →"}
+                    {signalSent ? "Signal sent" : "Signal Meetup"}
                   </button>
                 )}
                 <button onClick={() => { setMemoryTarget(c); setMemoryDraft((savedNotes as any)[c.id] || ""); }}
@@ -488,7 +488,7 @@ export default function ConnectionsTab({ profile, event, registration, isEnded }
               <button onClick={() => setSignalTarget(null)} style={{ flex: 1, padding: "11px", borderRadius: "10px", background: "transparent", color: "rgba(255,255,255,0.5)", border: "1px solid rgba(255,255,255,0.1)", fontSize: "13px", cursor: "pointer" }}>Cancel</button>
               <button onClick={sendSignalMeetup} disabled={!signalStationId && !signalCustomLocation.trim()}
                 style={{ flex: 2, padding: "11px", borderRadius: "10px", background: "transparent", color: (!signalStationId && !signalCustomLocation.trim()) ? "rgba(255,255,255,0.2)" : EMBER, border: "1px solid rgba(226,109,52,0.4)", fontSize: "13px", cursor: (!signalStationId && !signalCustomLocation.trim()) ? "default" : "pointer", fontWeight: "500" }}>
-                Send Signal →
+                Send Signal
               </button>
             </div>
           </div>
