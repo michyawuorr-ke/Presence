@@ -5,6 +5,17 @@ import { useParams } from "next/navigation";
 import { supabase } from "@/lib/supabase/client";
 
 export default function RegisterPage() {
+  // Raw browser/network errors ("Failed to fetch", "NetworkError...") are
+  // too technical to show someone mid-registration. Real messages from
+  // our own API (like "This event is full") are fine as-is and pass
+  // through unchanged.
+  function friendlyError(err: unknown, fallback: string): string {
+    const msg = (err as any)?.message || "";
+    if (/failed to fetch|networkerror|load failed/i.test(msg)) {
+      return "Couldn't connect.";
+    }
+    return msg || fallback;
+  }
   const [event, setEvent] = useState<any>(null);
   const [hostProfile, setHostProfile] = useState<any>(null);
   const [ticketTypes, setTicketTypes] = useState<any[]>([]);
@@ -121,7 +132,7 @@ export default function RegisterPage() {
       setCurrentRegId(json.registration_id);
       setPaymentState("waiting");
     } catch (err) {
-      setError((err as any).message || "Registration failed. Please try again.");
+      setError(friendlyError(err, "Registration failed. Please try again."));
       setSubmitting(false); isSubmittingRef.current = false;
     }
   }
@@ -137,7 +148,7 @@ export default function RegisterPage() {
       setConfirmedRegId(currentRegId ?? null);
       setSuccess(true); isSubmittingRef.current = false;
     } catch (err) {
-      setError((err as any).message || "Failed to save code. Please try again.");
+      setError(friendlyError(err, "Couldn't save your code. Please try again."));
     } finally { setIsSavingCode(false); }
   }
 
@@ -187,7 +198,7 @@ export default function RegisterPage() {
         <p style={{color:"#a3a3a3",fontSize:"14px",lineHeight:"1.5",marginBottom:"32px"}}>
           {isFreeRegistration
             ? "Your spot is confirmed. Head straight into the event."
-            : "Your payment has been received."}
+            : "Pending host verification."}
         </p>
         <div style={{background:"rgba(0,0,0,0.15)",border:"1px solid rgba(255,255,255,0.05)",borderRadius:"14px",padding:"24px",marginBottom:"36px",textAlign:"left"}}>
           <div style={{display:"flex",justifyContent:"space-between",marginBottom:"12px",fontSize:"13px"}}>
@@ -271,7 +282,7 @@ export default function RegisterPage() {
 
         <button onClick={handleManualCodeSubmit} disabled={isSavingCode}
           style={{width:"100%",padding:"14px",borderRadius:"6px",background:isSavingCode?"rgba(255,255,255,0.02)":"rgba(255,255,255,0.06)",color:isSavingCode?"rgba(255,255,255,0.2)":"#ffffff",border:"1px solid rgba(255,255,255,0.15)",fontSize:"12px",fontWeight:"600",letterSpacing:"0.06em",textTransform:"uppercase" as const,cursor:isSavingCode?"not-allowed":"pointer",marginBottom:"16px"}}>
-          {isSavingCode ? "Saving..." : "I Have Paid — Submit Code"}
+          {isSavingCode ? "Saving..." : error === "Couldn't connect." ? "Try Again" : "Submit Code"}
         </button>
 
         <button onClick={resetForm}
@@ -364,7 +375,7 @@ export default function RegisterPage() {
         {error && <p style={{color:"#ef4444",fontSize:"12px",marginBottom:"16px",textAlign:"center"}}>{error}</p>}
         <button onClick={handleRegister} disabled={submitting}
           style={{width:"100%",padding:"14px",borderRadius:"6px",background:submitting?"rgba(255,255,255,0.02)":"rgba(255,255,255,0.06)",color:submitting?"rgba(255,255,255,0.2)":"#ffffff",border:"1px solid rgba(255,255,255,0.15)",fontSize:"12px",fontWeight:"600",letterSpacing:"0.06em",textTransform:"uppercase",cursor:submitting?"not-allowed":"pointer"}}>
-          {submitting?"Processing...":"Register"}
+          {submitting ? "Processing..." : error === "Couldn't connect." ? "Try Again" : "Register"}
         </button>
         <p style={{lineHeight:"1.5",fontSize:"11px",color:"rgba(255,255,255,0.3)",textAlign:"center",marginTop:"16px",marginBottom:"0"}}>
           By continuing, you agree to our <a href="/terms" target="_blank" style={{color:"#888",textDecoration:"none"}}>Terms of Use</a> and <a href="/privacy" target="_blank" style={{color:"#888",textDecoration:"none"}}>Privacy Policy</a>.

@@ -120,7 +120,7 @@ export default function TicketTab({ event, registration, entryQR, networkingQR, 
               <p style={{color:"#fff",fontSize:"12px",fontWeight:"500",margin:0}}>Networking QR</p>
               <p style={{color:"#555",fontSize:"11px",margin:"4px 0 0"}}>For profile unlocks · refreshes every minute</p>
             </div>
-            <span style={{fontSize:"11px",color:"#FFBF00",fontWeight:"600",textTransform:"uppercase",letterSpacing:"0.05em",background:"rgba(255,255,255,0.05)",padding:"4px 8px",borderRadius:"6px"}}>Toggle ⊙</span>
+            <span style={{fontSize:"11px",color:"#8A7355",fontWeight:"600",textTransform:"uppercase",letterSpacing:"0.05em",background:"rgba(255,255,255,0.05)",padding:"4px 8px",borderRadius:"6px"}}>Toggle ⊙</span>
           </summary>
           <div style={{marginTop:"12px",paddingTop:"12px",borderTop:"1px solid rgba(255,255,255,0.05)"}}>
             {networkingQR
@@ -136,11 +136,24 @@ export default function TicketTab({ event, registration, entryQR, networkingQR, 
       {/* Re-entry link — this page URL IS the guest's access link */}
       <div style={{background:"rgba(255,255,255,0.02)",border:"1px solid rgba(255,255,255,0.05)",borderRadius:"16px",padding:"16px",marginTop:"8px"}}>
         <p style={{fontSize:"10px",fontWeight:"700",letterSpacing:"0.12em",textTransform:"uppercase",color:"rgba(255,255,255,0.3)",margin:"0 0 6px"}}>Your Access Link</p>
-        <p style={{fontSize:"11px",color:"rgba(255,255,255,0.25)",margin:"0 0 12px",lineHeight:1.5}}>Save or share this link to return to the event anytime — no login needed.</p>
+        <p style={{fontSize:"11px",color:"rgba(255,255,255,0.25)",margin:"0 0 12px",lineHeight:1.5}}>Save this link — it's how you get back into the event anytime.</p>
         <div style={{display:"flex",gap:"8px"}}>
           <button onClick={copyLink}
-            style={{flex:1,padding:"11px",borderRadius:"10px",background:copied?"rgba(74,222,128,0.08)":"rgba(226,109,52,0.08)",border:`1px solid ${copied?"rgba(74,222,128,0.3)":"rgba(226,109,52,0.3)"}`,color:copied?"#4ade80":"#E26D34",fontSize:"12px",fontWeight:"600",cursor:"pointer"}}>
-            {copied ? "✓ Copied" : "Copy Link"}
+            style={{flex:1,display:"flex",alignItems:"center",justifyContent:"center",gap:"7px",padding:"11px",borderRadius:"10px",background:copied?"rgba(74,222,128,0.08)":"rgba(226,109,52,0.08)",border:`1px solid ${copied?"rgba(74,222,128,0.3)":"rgba(226,109,52,0.3)"}`,color:copied?"#4ade80":"#E26D34",fontSize:"12px",fontWeight:"600",cursor:"pointer"}}>
+            {copied ? (
+              "✓ Copied"
+            ) : (
+              <>
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <circle cx="18" cy="5" r="3" />
+                  <circle cx="6" cy="12" r="3" />
+                  <circle cx="18" cy="19" r="3" />
+                  <line x1="8.6" y1="10.5" x2="15.4" y2="6.5" />
+                  <line x1="8.6" y1="13.5" x2="15.4" y2="17.5" />
+                </svg>
+                Copy Link
+              </>
+            )}
           </button>
 
         </div>

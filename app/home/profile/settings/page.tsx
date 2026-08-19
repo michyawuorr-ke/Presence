@@ -3,27 +3,22 @@ import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { supabase } from "@/lib/supabase/client";
 
-function Toggle({ on, onClick }: { on: boolean; onClick: () => void }) {
+function PrivacyChip({ l, on, set }: { l: string; on: boolean; set: (v: boolean) => void }) {
   return (
-    <button type="button" onClick={onClick} style={{
-      flexShrink: 0, width: "34px", height: "20px", borderRadius: "10px", border: "none",
-      cursor: "pointer", position: "relative", transition: "background 0.2s",
-      background: on ? "var(--ember)" : "rgba(255,255,255,0.1)",
+    <button type="button" onClick={() => set(!on)} style={{
+      display: "inline-flex", alignItems: "center", gap: 6,
+      padding: "8px 14px", borderRadius: 20, cursor: "pointer",
+      border: `1px solid ${on ? "rgba(226,109,52,0.35)" : "rgba(255,255,255,0.08)"}`,
+      background: on ? "rgba(226,109,52,0.1)" : "rgba(255,255,255,0.02)",
+      color: on ? "var(--ember)" : "rgba(240,237,232,0.35)",
+      fontSize: 12.5, fontWeight: 600, transition: "all 0.15s ease",
     }}>
-      <span style={{ position: "absolute", top: "2.5px", left: on ? "16.5px" : "2.5px", width: "15px", height: "15px", borderRadius: "50%", background: "#fff", transition: "left 0.2s" }} />
+      <span style={{
+        width: 6, height: 6, borderRadius: "50%", flexShrink: 0,
+        background: on ? "var(--ember)" : "rgba(255,255,255,0.2)",
+      }} />
+      {l}
     </button>
-  );
-}
-
-function PrivacyRow({ l, on, set }: { l: string; on: boolean; set: (v: boolean) => void }) {
-  return (
-    <div style={{
-      display: "flex", justifyContent: "space-between", alignItems: "center",
-      padding: "12px 14px", borderRadius: 12, background: "rgba(255,255,255,0.02)", border: "1px solid rgba(255,255,255,0.05)",
-    }}>
-      <span style={{ fontSize: 13, color: "rgba(240,237,232,0.85)" }}>{l}</span>
-      <Toggle on={on} onClick={() => set(!on)} />
-    </div>
   );
 }
 
@@ -172,21 +167,21 @@ export default function ProfileSettingsPage() {
           <p style={{ fontSize: 11.5, color: "rgba(240,237,232,0.35)", margin: "0 0 18px", lineHeight: 1.5 }}>
             Your name, headline, and role are always visible when someone views your profile.
           </p>
-          <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
-            <PrivacyRow l="Bio" on={showBio} set={setShowBio} />
-            <PrivacyRow l="Headline" on={showHeadline} set={setShowHeadline} />
-            <PrivacyRow l="Featured Work" on={showFeaturedWork} set={setShowFeaturedWork} />
-            <PrivacyRow l="Location" on={showLocation} set={setShowLocation} />
-            <PrivacyRow l="Skills" on={showSkills} set={setShowSkills} />
-            <PrivacyRow l="Availability" on={showAvailability} set={setShowAvailability} />
-            <PrivacyRow l="Causes" on={showCauses} set={setShowCauses} />
-            <PrivacyRow l="Languages" on={showLanguages} set={setShowLanguages} />
-            <PrivacyRow l="LinkedIn" on={showLinkedin} set={setShowLinkedin} />
-            <PrivacyRow l="Website" on={showWebsite} set={setShowWebsite} />
-            <PrivacyRow l="Portfolio" on={showPortfolio} set={setShowPortfolio} />
-            <PrivacyRow l="Instagram" on={showInstagram} set={setShowInstagram} />
-            <PrivacyRow l="Phone" on={showPhone} set={setShowPhone} />
-            <PrivacyRow l="Email" on={showEmail} set={setShowEmail} />
+          <div style={{ display: "flex", flexWrap: "wrap", gap: 8 }}>
+            <PrivacyChip l="Bio" on={showBio} set={setShowBio} />
+            <PrivacyChip l="Headline" on={showHeadline} set={setShowHeadline} />
+            <PrivacyChip l="Featured Work" on={showFeaturedWork} set={setShowFeaturedWork} />
+            <PrivacyChip l="Location" on={showLocation} set={setShowLocation} />
+            <PrivacyChip l="Skills" on={showSkills} set={setShowSkills} />
+            <PrivacyChip l="Availability" on={showAvailability} set={setShowAvailability} />
+            <PrivacyChip l="Causes" on={showCauses} set={setShowCauses} />
+            <PrivacyChip l="Languages" on={showLanguages} set={setShowLanguages} />
+            <PrivacyChip l="LinkedIn" on={showLinkedin} set={setShowLinkedin} />
+            <PrivacyChip l="Website" on={showWebsite} set={setShowWebsite} />
+            <PrivacyChip l="Portfolio" on={showPortfolio} set={setShowPortfolio} />
+            <PrivacyChip l="Instagram" on={showInstagram} set={setShowInstagram} />
+            <PrivacyChip l="Phone" on={showPhone} set={setShowPhone} />
+            <PrivacyChip l="Email" on={showEmail} set={setShowEmail} />
           </div>
         </div>
 

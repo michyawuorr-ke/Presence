@@ -42,7 +42,7 @@ export default function SceneTab({
           color: "rgba(240,237,232,0.9)", fontSize: "12px", fontWeight: "500", cursor: "pointer", whiteSpace: "nowrap",
         }}
       >
-        Open App ↗
+        Open App
       </button>
 
       {/* Banner sits below the wordmark */}
