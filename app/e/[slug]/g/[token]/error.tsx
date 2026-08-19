@@ -9,10 +9,8 @@ export default function Error({
 }) {
   return (
     <div style={{ minHeight: "100vh", background: "#0A0A0A", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", padding: "32px", textAlign: "center" }}>
-      <p style={{ fontSize: "28px", margin: "0 0 16px" }}>✦</p>
-      <p style={{ fontSize: "16px", fontWeight: "600", color: "#f0ede8", margin: "0 0 8px" }}>Something went wrong</p>
-      <p style={{ fontSize: "13px", color: "rgba(255,255,255,0.4)", margin: "0 0 28px", lineHeight: "1.6", maxWidth: "280px" }}>
-        Your connection may have dropped or the event is loading. Try again — your progress is saved.
+      <p style={{ fontSize: "13px", color: "rgba(255,255,255,0.35)", margin: "0 0 28px" }}>
+        Couldn't connect.
       </p>
       <button
         onClick={reset}

@@ -28,6 +28,7 @@ export default function HomePage() {
   const [connectionDeletedIds, setConnectionDeletedIds] = useState<Set<string>>(new Set());
   const [showArchivedConnections, setShowArchivedConnections] = useState(false);
   const [dataLoading, setDataLoading] = useState(true);
+  const [loadError, setLoadError] = useState(false);
   const [isHost, setIsHost] = useState(false);
   const [search, setSearch] = useState("");
   const [showHomeScreenTip, setShowHomeScreenTip] = useState(false);
@@ -72,20 +73,26 @@ export default function HomePage() {
       setEmail(userEmail);
       setLoading(false);
 
-      const [ev, conn, hostStatus, archived, connArchived, connDeleted] = await Promise.all([
-        loadMyEvents(userEmail),
-        loadMyConnections(userEmail),
-        checkIsHost(userEmail),
-        loadArchivedEventIds(userEmail),
-        loadArchivedConnectionIds(userEmail),
-        loadDeletedConnectionIds(userEmail),
-      ]);
-      setEvents(ev);
-      setConnections(conn);
-      setIsHost(hostStatus);
-      setArchivedIds(archived);
-      setConnectionArchivedIds(connArchived);
-      setConnectionDeletedIds(connDeleted);
+      try {
+        const [ev, conn, hostStatus, archived, connArchived, connDeleted] = await Promise.all([
+          loadMyEvents(userEmail),
+          loadMyConnections(userEmail),
+          checkIsHost(userEmail),
+          loadArchivedEventIds(userEmail),
+          loadArchivedConnectionIds(userEmail),
+          loadDeletedConnectionIds(userEmail),
+        ]);
+        setEvents(ev);
+        setConnections(conn);
+        setIsHost(hostStatus);
+        setArchivedIds(archived);
+        setConnectionArchivedIds(connArchived);
+        setConnectionDeletedIds(connDeleted);
+      } catch {
+        // Shell (header, wordmark, nav) is already visible by this point —
+        // just this section couldn't load. Quiet inline note, not a crash.
+        setLoadError(true);
+      }
       setDataLoading(false);
     }
     init();
@@ -302,6 +309,10 @@ export default function HomePage() {
               }} />
             ))}
           </div>
+        ) : loadError ? (
+          <p style={{ textAlign: "center", padding: "40px 0", fontSize: 13, color: "rgba(255,255,255,0.3)" }}>
+            Couldn't connect.
+          </p>
         ) : tab === "events" ? (
           <EventsList upcoming={upcoming} past={past} archivedIds={archivedIds} onToggleArchive={handleToggleArchive} hadAnyMatch={events.length > 0} />
         ) : (

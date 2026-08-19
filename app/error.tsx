@@ -9,9 +9,8 @@ export default function RootError({ error, reset }: { error: Error & { digest?: 
         <span style={{ color: "#E26D34" }}>ee</span>
         <span style={{ color: "#ffffff" }}>ti</span>
       </p>
-      <p style={{ fontSize: "16px", fontWeight: 600, color: "#f0ede8", margin: "0 0 8px" }}>Something went wrong</p>
-      <p style={{ fontSize: "13px", color: "rgba(255,255,255,0.4)", margin: "0 0 28px", lineHeight: 1.6, maxWidth: "280px" }}>
-        This page hit an unexpected error. Nothing you've saved was affected.
+      <p style={{ fontSize: "13px", color: "rgba(255,255,255,0.35)", margin: "0 0 28px" }}>
+        Couldn't connect.
       </p>
       <button
         onClick={reset}
