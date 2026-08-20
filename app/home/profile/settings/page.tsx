@@ -3,7 +3,10 @@ import { useEffect, useRef, useState, useMemo } from "react";
 import { useRouter } from "next/navigation";
 import { supabase } from "@/lib/supabase/client";
 
-// The 14 user-controllable visibility fields, grouped exactly as specced.
+// Only fields that actually render somewhere (the public card, or a
+// guest-facing surface) get a visibility toggle here. Featured Work,
+// Availability, Causes, Languages, and Skills were removed — none of
+// them display anywhere yet (Skills is deferred for a later release).
 const FIELD_GROUPS: { title: string; fields: { key: FieldKey; label: string }[] }[] = [
   {
     title: "Contact Details",
@@ -18,9 +21,6 @@ const FIELD_GROUPS: { title: string; fields: { key: FieldKey; label: string }[] 
     fields: [
       { key: "showHeadline", label: "Headline" },
       { key: "showBio", label: "Bio" },
-      { key: "showFeaturedWork", label: "Featured Work" },
-      { key: "showSkills", label: "Skills" },
-      { key: "showAvailability", label: "Availability" },
     ],
   },
   {
@@ -30,16 +30,16 @@ const FIELD_GROUPS: { title: string; fields: { key: FieldKey; label: string }[] 
       { key: "showWebsite", label: "Website" },
       { key: "showPortfolio", label: "Portfolio" },
       { key: "showInstagram", label: "Instagram" },
-      { key: "showCauses", label: "Causes" },
-      { key: "showLanguages", label: "Languages" },
+      { key: "showFacebook", label: "Facebook" },
+      { key: "showX", label: "X" },
     ],
   },
 ];
 
 type FieldKey =
-  | "showBio" | "showHeadline" | "showFeaturedWork" | "showLocation" | "showSkills"
-  | "showAvailability" | "showCauses" | "showLanguages" | "showLinkedin" | "showWebsite"
-  | "showPortfolio" | "showInstagram" | "showPhone" | "showEmail";
+  | "showBio" | "showHeadline" | "showLocation"
+  | "showLinkedin" | "showWebsite" | "showPortfolio" | "showInstagram" | "showFacebook" | "showX"
+  | "showPhone" | "showEmail";
 
 const ALL_KEYS: FieldKey[] = FIELD_GROUPS.flatMap(g => g.fields.map(f => f.key));
 
@@ -49,9 +49,10 @@ const PUBLIC_PRESET: Record<FieldKey, boolean> = Object.fromEntries(ALL_KEYS.map
 // Preset: professional identity visible, contact details and external
 // links held back — a sensible "networking, not cold-contact" default.
 const CONNECTIONS_PRESET: Record<FieldKey, boolean> = {
-  showBio: true, showHeadline: true, showFeaturedWork: true, showSkills: true, showAvailability: true,
-  showLocation: false, showCauses: true, showLanguages: true,
+  showBio: true, showHeadline: true,
+  showLocation: false,
   showLinkedin: false, showWebsite: false, showPortfolio: false, showInstagram: false,
+  showFacebook: false, showX: false,
   showPhone: false, showEmail: false,
 };
 
@@ -59,15 +60,20 @@ function matchesPreset(state: Record<FieldKey, boolean>, preset: Record<FieldKey
   return ALL_KEYS.every(k => state[k] === preset[k]);
 }
 
+// Deliberately quiet — a thin outline that fills subtly when on, not a
+// bold solid-color pill. Matches the app's restrained accent-color use
+// (ember shows up sparingly elsewhere too) instead of a loud switch.
 function Switch({ on }: { on: boolean }) {
   return (
     <span aria-hidden style={{
-      flexShrink: 0, width: 40, height: 24, borderRadius: 12, position: "relative",
-      background: on ? "var(--ember)" : "rgba(255,255,255,0.1)", transition: "background 0.2s",
+      flexShrink: 0, width: 32, height: 19, borderRadius: 10, position: "relative",
+      background: on ? "rgba(226,109,52,0.16)" : "transparent",
+      border: `1px solid ${on ? "rgba(226,109,52,0.4)" : "rgba(255,255,255,0.12)"}`,
+      transition: "all 0.15s ease",
     }}>
       <span style={{
-        position: "absolute", top: 3, left: on ? 19 : 3, width: 18, height: 18, borderRadius: "50%",
-        background: "#fff", transition: "left 0.2s",
+        position: "absolute", top: 2, left: on ? 15 : 2, width: 13, height: 13, borderRadius: "50%",
+        background: on ? "var(--ember)" : "rgba(255,255,255,0.3)", transition: "left 0.15s ease, background 0.15s ease",
       }} />
     </span>
   );
@@ -77,10 +83,10 @@ function SettingsRow({ label, on, onToggle }: { label: string; on: boolean; onTo
   return (
     <button type="button" onClick={onToggle} style={{
       width: "100%", display: "flex", alignItems: "center", justifyContent: "space-between",
-      background: "none", border: "none", borderBottom: "1px solid rgba(255,255,255,0.05)",
-      padding: "14px 2px", cursor: "pointer", textAlign: "left",
+      background: "none", border: "none", borderBottom: "1px solid rgba(255,255,255,0.04)",
+      padding: "13px 2px", cursor: "pointer", textAlign: "left",
     }}>
-      <span style={{ fontSize: 13.5, color: "rgba(240,237,232,0.85)" }}>{label}</span>
+      <span style={{ fontSize: 13, color: "rgba(240,237,232,0.75)" }}>{label}</span>
       <Switch on={on} />
     </button>
   );
@@ -113,31 +119,28 @@ export default function ProfileSettingsPage() {
   const [showHeadline, setShowHeadline] = useState(true);
   const [showKnownFor, setShowKnownFor] = useState(true);
   const [showWhatIDo, setShowWhatIDo] = useState(true);
-  const [showFeaturedWork, setShowFeaturedWork] = useState(true);
   const [showLocation, setShowLocation] = useState(true);
-  const [showSkills, setShowSkills] = useState(true);
   const [showOpenTo, setShowOpenTo] = useState(true);
-  const [showAvailability, setShowAvailability] = useState(true);
   const [showInterests, setShowInterests] = useState(true);
-  const [showCauses, setShowCauses] = useState(true);
-  const [showLanguages, setShowLanguages] = useState(true);
   const [showLinkedin, setShowLinkedin] = useState(true);
   const [showWebsite, setShowWebsite] = useState(true);
   const [showPortfolio, setShowPortfolio] = useState(true);
   const [showInstagram, setShowInstagram] = useState(true);
+  const [showFacebook, setShowFacebook] = useState(true);
+  const [showX, setShowX] = useState(true);
   const [showPhone, setShowPhone] = useState(false);
   const [showEmail, setShowEmail] = useState(false);
 
   const fieldState: Record<FieldKey, boolean> = {
-    showBio, showHeadline, showFeaturedWork, showLocation, showSkills, showAvailability,
-    showCauses, showLanguages, showLinkedin, showWebsite, showPortfolio, showInstagram,
+    showBio, showHeadline, showLocation,
+    showLinkedin, showWebsite, showPortfolio, showInstagram, showFacebook, showX,
     showPhone, showEmail,
   };
   const setters: Record<FieldKey, (v: boolean) => void> = {
-    showBio: setShowBio, showHeadline: setShowHeadline, showFeaturedWork: setShowFeaturedWork,
-    showLocation: setShowLocation, showSkills: setShowSkills, showAvailability: setShowAvailability,
-    showCauses: setShowCauses, showLanguages: setShowLanguages, showLinkedin: setShowLinkedin,
-    showWebsite: setShowWebsite, showPortfolio: setShowPortfolio, showInstagram: setShowInstagram,
+    showBio: setShowBio, showHeadline: setShowHeadline,
+    showLocation: setShowLocation,
+    showLinkedin: setShowLinkedin, showWebsite: setShowWebsite, showPortfolio: setShowPortfolio,
+    showInstagram: setShowInstagram, showFacebook: setShowFacebook, showX: setShowX,
     showPhone: setShowPhone, showEmail: setShowEmail,
   };
 
@@ -166,28 +169,24 @@ export default function ProfileSettingsPage() {
         setShowHeadline(data.show_headline ?? true);
         setShowKnownFor(data.show_known_for ?? true);
         setShowWhatIDo(data.show_what_i_do ?? true);
-        setShowFeaturedWork(data.show_featured_work ?? true);
         setShowLocation(data.show_location ?? true);
-        setShowSkills(data.show_skills ?? true);
         setShowOpenTo(data.show_open_to ?? true);
-        setShowAvailability(data.show_availability ?? true);
         setShowInterests(data.show_interests ?? true);
-        setShowCauses(data.show_causes ?? true);
-        setShowLanguages(data.show_languages ?? true);
         setShowLinkedin(data.show_linkedin ?? true);
         setShowWebsite(data.show_website ?? true);
         setShowPortfolio(data.show_portfolio ?? true);
         setShowInstagram(data.show_instagram ?? true);
+        setShowFacebook(data.show_facebook ?? true);
+        setShowX(data.show_x ?? true);
         setShowPhone(data.show_phone ?? false);
         setShowEmail(data.show_email ?? false);
 
         const loadedState: Record<FieldKey, boolean> = {
           showBio: data.show_bio ?? true, showHeadline: data.show_headline ?? true,
-          showFeaturedWork: data.show_featured_work ?? true, showLocation: data.show_location ?? true,
-          showSkills: data.show_skills ?? true, showAvailability: data.show_availability ?? true,
-          showCauses: data.show_causes ?? true, showLanguages: data.show_languages ?? true,
+          showLocation: data.show_location ?? true,
           showLinkedin: data.show_linkedin ?? true, showWebsite: data.show_website ?? true,
           showPortfolio: data.show_portfolio ?? true, showInstagram: data.show_instagram ?? true,
+          showFacebook: data.show_facebook ?? true, showX: data.show_x ?? true,
           showPhone: data.show_phone ?? false, showEmail: data.show_email ?? false,
         };
         if (!matchesPreset(loadedState, PUBLIC_PRESET) && !matchesPreset(loadedState, CONNECTIONS_PRESET)) {
@@ -195,8 +194,6 @@ export default function ProfileSettingsPage() {
         }
       }
       setLoading(false);
-      // Auto-save should only fire for changes the person makes from here
-      // on — not for the state-setting that just happened during load.
       setTimeout(() => { didLoad.current = true; }, 0);
     }
     load();
@@ -209,27 +206,25 @@ export default function ProfileSettingsPage() {
       .from("master_profiles")
       .update({
         show_bio: merged.showBio, show_headline: merged.showHeadline, show_known_for: showKnownFor,
-        show_what_i_do: showWhatIDo, show_featured_work: merged.showFeaturedWork, show_location: merged.showLocation,
-        show_skills: merged.showSkills, show_open_to: showOpenTo, show_availability: merged.showAvailability,
-        show_interests: showInterests, show_causes: merged.showCauses, show_languages: merged.showLanguages,
+        show_what_i_do: showWhatIDo, show_location: merged.showLocation,
+        show_open_to: showOpenTo, show_interests: showInterests,
         show_linkedin: merged.showLinkedin, show_website: merged.showWebsite, show_portfolio: merged.showPortfolio,
-        show_instagram: merged.showInstagram, show_phone: merged.showPhone, show_email: merged.showEmail,
+        show_instagram: merged.showInstagram, show_facebook: merged.showFacebook, show_x: merged.showX,
+        show_phone: merged.showPhone, show_email: merged.showEmail,
       })
       .eq("id", profile.id);
     setToast(error ? "Couldn't save." : "Saved");
     setTimeout(() => setToast(""), 2000);
   }
 
-  // Auto-save, debounced — no explicit Save button. Skips the very first
-  // render (that's just the loaded values being set, not a real change).
   useEffect(() => {
     if (!didLoad.current) return;
     if (saveTimer.current) clearTimeout(saveTimer.current);
     saveTimer.current = setTimeout(() => { persist(); }, 500);
     return () => { if (saveTimer.current) clearTimeout(saveTimer.current); };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [showBio, showHeadline, showFeaturedWork, showLocation, showSkills, showAvailability,
-      showCauses, showLanguages, showLinkedin, showWebsite, showPortfolio, showInstagram,
+  }, [showBio, showHeadline, showLocation,
+      showLinkedin, showWebsite, showPortfolio, showInstagram, showFacebook, showX,
       showPhone, showEmail]);
 
   function applyPreset(preset: Record<FieldKey, boolean>) {
@@ -295,7 +290,7 @@ export default function ProfileSettingsPage() {
         }}>
           <p style={{ fontSize: 10, fontWeight: 700, letterSpacing: "0.12em", textTransform: "uppercase", color: "var(--ember)", margin: "0 0 4px" }}>Profile Visibility</p>
           <p style={{ fontSize: 11.5, color: "rgba(240,237,232,0.35)", margin: "0 0 16px", lineHeight: 1.5 }}>
-            Your name, headline, and role are always visible when someone views your profile.
+            Your name and role are always visible when someone views your profile.
           </p>
 
           <div style={{ display: "flex", gap: 4, padding: 4, borderRadius: 12, background: "rgba(0,0,0,0.2)", marginBottom: customOpen ? 20 : 0 }}>
@@ -378,8 +373,6 @@ export default function ProfileSettingsPage() {
         </div>
       </div>
 
-      {/* Auto-save toast — bottom, subtle, self-dismissing. No Save button
-          anywhere on this page anymore. */}
       {toast && (
         <div style={{
           position: "fixed", bottom: 24, left: "50%", transform: "translateX(-50%)",

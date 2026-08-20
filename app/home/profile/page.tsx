@@ -5,8 +5,6 @@ import { supabase } from "@/lib/supabase/client";
 import { generateUniqueSlug } from "../slug";
 import QRCode from "qrcode";
 import TagInput from "./TagInput";
-import MultiSelectChips from "./MultiSelectChips";
-import { AVAILABILITY_OPTIONS } from "./profileOptions";
 import { buildVCard, downloadVCardFile } from "@/lib/vcard";
 import { COUNTRY_CODES, DEFAULT_COUNTRY, formatPhoneWithCountry, validatePhoneForCountry, CountryCode } from "@/lib/countryCodes";
 
@@ -212,16 +210,11 @@ export default function HomeProfilePage({ embedded = false }: { embedded?: boole
   const [knownFor, setKnownFor] = useState("");
   // What you do
   const [whatIDo, setWhatIDo] = useState("");
-  const [featuredWork, setFeaturedWork] = useState("");
   const [industry, setIndustry] = useState("");
   const [location, setLocation] = useState("");
-  const [skills, setSkills] = useState<string[]>([]);
   // Connect
   const [openTo, setOpenTo] = useState<string[]>([]);
-  const [availability, setAvailability] = useState<string[]>([]);
   const [interests, setInterests] = useState<string[]>([]);
-  const [causes, setCauses] = useState<string[]>([]);
-  const [languages, setLanguages] = useState<string[]>([]);
   const [portfolio, setPortfolio] = useState("");
   const [website, setWebsite] = useState("");
   const [linkedin, setLinkedin] = useState("");
@@ -236,14 +229,9 @@ export default function HomeProfilePage({ embedded = false }: { embedded?: boole
   const [showHeadline, setShowHeadline] = useState(true);
   const [showKnownFor, setShowKnownFor] = useState(true);
   const [showWhatIDo, setShowWhatIDo] = useState(true);
-  const [showFeaturedWork, setShowFeaturedWork] = useState(true);
   const [showLocation, setShowLocation] = useState(true);
-  const [showSkills, setShowSkills] = useState(true);
   const [showOpenTo, setShowOpenTo] = useState(true);
-  const [showAvailability, setShowAvailability] = useState(true);
   const [showInterests, setShowInterests] = useState(true);
-  const [showCauses, setShowCauses] = useState(true);
-  const [showLanguages, setShowLanguages] = useState(true);
   const [showLinkedin, setShowLinkedin] = useState(true);
   const [showWebsite, setShowWebsite] = useState(true);
   const [showPortfolio, setShowPortfolio] = useState(true);
@@ -286,15 +274,10 @@ export default function HomeProfilePage({ embedded = false }: { embedded?: boole
       setRoleTitle(data.role_title ?? "");
       setKnownFor(data.known_for ?? "");
       setWhatIDo(data.what_i_do ?? "");
-      setFeaturedWork(data.featured_work ?? "");
       setIndustry(data.industry ?? "");
       setLocation(data.location ?? "");
-      setSkills(data.skills ?? []);
       setOpenTo(data.open_to ?? []);
-      setAvailability(data.availability ?? []);
       setInterests(data.interests ?? []);
-      setCauses(data.causes ?? []);
-      setLanguages(data.languages ?? []);
       setPortfolio(data.portfolio_url ?? "");
       setWebsite(data.website_url ?? "");
       setLinkedin(data.linkedin_url ?? "");
@@ -306,14 +289,9 @@ export default function HomeProfilePage({ embedded = false }: { embedded?: boole
       setShowHeadline(data.show_headline ?? true);
       setShowKnownFor(data.show_known_for ?? true);
       setShowWhatIDo(data.show_what_i_do ?? true);
-      setShowFeaturedWork(data.show_featured_work ?? true);
       setShowLocation(data.show_location ?? true);
-      setShowSkills(data.show_skills ?? true);
       setShowOpenTo(data.show_open_to ?? true);
-      setShowAvailability(data.show_availability ?? true);
       setShowInterests(data.show_interests ?? true);
-      setShowCauses(data.show_causes ?? true);
-      setShowLanguages(data.show_languages ?? true);
       setShowLinkedin(data.show_linkedin ?? true);
       setShowWebsite(data.show_website ?? true);
       setShowPortfolio(data.show_portfolio ?? true);
@@ -445,15 +423,15 @@ export default function HomeProfilePage({ embedded = false }: { embedded?: boole
       .from("master_profiles")
       .update({
         display_name: displayName, headline, bio, organisation, role_title: roleTitle, known_for: knownFor,
-        what_i_do: whatIDo, featured_work: featuredWork, industry, location, skills,
-        open_to: openTo, availability, interests, causes, languages,
+        what_i_do: whatIDo, industry, location,
+        open_to: openTo, interests,
         portfolio_url: portfolio, website_url: website, linkedin_url: linkedin,
         phone_number: phone, instagram_url: instagram, facebook_url: facebook, x_url: x,
         slug,
         show_bio: showBio, show_headline: showHeadline, show_known_for: showKnownFor,
-        show_what_i_do: showWhatIDo, show_featured_work: showFeaturedWork, show_location: showLocation,
-        show_skills: showSkills, show_open_to: showOpenTo, show_availability: showAvailability,
-        show_interests: showInterests, show_causes: showCauses, show_languages: showLanguages,
+        show_what_i_do: showWhatIDo, show_location: showLocation,
+        show_open_to: showOpenTo,
+        show_interests: showInterests,
         show_linkedin: showLinkedin, show_website: showWebsite, show_portfolio: showPortfolio,
         show_instagram: showInstagram, show_facebook: showFacebook, show_x: showX,
         show_phone: showPhone, show_email: showEmail,
@@ -516,10 +494,10 @@ export default function HomeProfilePage({ embedded = false }: { embedded?: boole
   // -------------------------------------------------------------------
   // EDIT MODE — only Identity + Contact & Links (the fields that
   // actually appear on the card) are shown up front. Everything else
-  // (skills, interests, causes, languages, open to, availability, known
-  // for, what I do, featured work, industry) never shows on the card,
-  // so it's tucked behind "More details" instead of cluttering the
-  // primary edit flow. Still fully editable, still saved the same way.
+  // (interests, open to, known for, what I do, industry) never shows on
+  // the card, so it's tucked behind "More details" instead of
+  // cluttering the primary edit flow. Still fully editable, still saved
+  // the same way.
   // -------------------------------------------------------------------
   if (mode === "edit") {
     return (
@@ -607,26 +585,8 @@ export default function HomeProfilePage({ embedded = false }: { embedded?: boole
 
           {showMore && (
             <>
-              <Section title="More About You" sub="Kept for future use — none of this appears on your card.">
-                <input value={featuredWork} onChange={e => setFeaturedWork(e.target.value)} placeholder="Featured work" style={inp} />
-                <input value={industry} onChange={e => setIndustry(e.target.value)} placeholder="Industry" style={{ ...inp, marginBottom: 14 }} />
-                <p style={tagLabel}>Skills</p>
-                <TagInput tags={skills} onChange={setSkills} placeholder="Type a skill, press Enter" />
-              </Section>
-
-              <Section title="Connect Preferences" sub="Used elsewhere in Oreeti's networking features.">
-                <p style={tagLabel}>Available For — At Events</p>
-                <div style={{ marginBottom: 16 }}>
-                  <MultiSelectChips options={AVAILABILITY_OPTIONS} selected={availability} onChange={setAvailability} />
-                </div>
-                <p style={tagLabel}>Causes</p>
-                <div style={{ marginBottom: 14 }}>
-                  <TagInput tags={causes} onChange={setCauses} placeholder="A cause you care about, press Enter" />
-                </div>
-                <p style={tagLabel}>Languages</p>
-                <div>
-                  <TagInput tags={languages} onChange={setLanguages} placeholder="A language you speak, press Enter" />
-                </div>
+              <Section title="More About You" sub="Kept for future use — doesn't appear on your card yet.">
+                <input value={industry} onChange={e => setIndustry(e.target.value)} placeholder="Industry" style={inp} />
               </Section>
             </>
           )}

@@ -15,24 +15,26 @@ interface PublicProfile {
   location: string | null;
   industry: string | null;
   avatar_url: string | null;
-  skills: string[] | null;
   interests: string[] | null;
   linkedin_url: string | null;
   website_url: string | null;
   portfolio_url: string | null;
   instagram_url: string | null;
+  facebook_url: string | null;
+  x_url: string | null;
   phone_number: string | null;
   email: string | null;
   slug: string;
   show_bio: boolean;
   show_headline: boolean;
   show_location: boolean;
-  show_skills: boolean;
   show_interests: boolean;
   show_linkedin: boolean;
   show_website: boolean;
   show_portfolio: boolean;
   show_instagram: boolean;
+  show_facebook: boolean;
+  show_x: boolean;
   show_phone: boolean;
   show_email: boolean;
 }
@@ -248,12 +250,13 @@ export default function PublicProfilePage() {
 
   const roleOrgLine = [profile.role_title, profile.organisation].filter(Boolean).join(" · ");
   const hasTeaserContent = Boolean(
-    (profile.show_skills && profile.skills?.length) ||
     (profile.show_interests && profile.interests?.length) ||
     (profile.show_linkedin && profile.linkedin_url) ||
     (profile.show_website && profile.website_url) ||
     (profile.show_portfolio && profile.portfolio_url) ||
-    (profile.show_instagram && profile.instagram_url)
+    (profile.show_instagram && profile.instagram_url) ||
+    (profile.show_facebook && profile.facebook_url) ||
+    (profile.show_x && profile.x_url)
   );
 
   const links = [
@@ -261,6 +264,8 @@ export default function PublicProfilePage() {
     { label: "Website", url: profile.website_url, show: profile.show_website },
     { label: "Portfolio", url: profile.portfolio_url, show: profile.show_portfolio },
     { label: "Instagram", url: profile.instagram_url, show: profile.show_instagram },
+    { label: "Facebook", url: profile.facebook_url, show: profile.show_facebook },
+    { label: "X", url: profile.x_url, show: profile.show_x },
   ].filter(l => l.url && l.show);
 
   function scrollToUnlock() {
@@ -327,13 +332,6 @@ export default function PublicProfilePage() {
         ----------------------------------------------------------- */}
         {!isUnlocked && hasTeaserContent && (
           <div style={{ marginBottom: 22 }}>
-            {profile.show_skills && profile.skills && profile.skills.length > 0 && (
-              <LockedCard title="Skills" onTap={scrollToUnlock}>
-                <div style={{ display: "flex", flexWrap: "wrap", gap: 6 }}>
-                  {profile.skills.map(s => <span key={s} style={{ fontSize: 11.5, color: "var(--ivory)", background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.08)", padding: "5px 11px", borderRadius: 20 }}>{s}</span>)}
-                </div>
-              </LockedCard>
-            )}
             {profile.show_interests && profile.interests && profile.interests.length > 0 && (
               <LockedCard title="Interested In" onTap={scrollToUnlock}>
                 <div style={{ display: "flex", flexWrap: "wrap", gap: 6 }}>
@@ -365,14 +363,6 @@ export default function PublicProfilePage() {
             (rendered above) plus real, tappable links and tags. */}
         {isUnlocked && (
           <>
-            {profile.show_skills && profile.skills && profile.skills.length > 0 && (
-              <div style={{ marginBottom: 20 }}>
-                <p style={{ fontSize: 9.5, fontWeight: 700, letterSpacing: "0.1em", textTransform: "uppercase", color: "rgba(138,115,85,0.6)", textAlign: "center", marginBottom: 8 }}>Skills</p>
-                <div style={{ display: "flex", flexWrap: "wrap", gap: 6, justifyContent: "center" }}>
-                  {profile.skills.map(s => <span key={s} style={{ fontSize: 11.5, color: "var(--ivory)", background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.08)", padding: "5px 11px", borderRadius: 20 }}>{s}</span>)}
-                </div>
-              </div>
-            )}
             {profile.show_interests && profile.interests && profile.interests.length > 0 && (
               <div style={{ marginBottom: 24 }}>
                 <p style={{ fontSize: 9.5, fontWeight: 700, letterSpacing: "0.1em", textTransform: "uppercase", color: "rgba(138,115,85,0.6)", textAlign: "center", marginBottom: 8 }}>Interested In</p>
