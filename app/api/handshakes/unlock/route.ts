@@ -14,7 +14,7 @@ export async function POST(req:NextRequest){
   try{
     // Rate limit by IP
     const ip=req.headers.get('x-forwarded-for')?.split(',')[0]?.trim()||'unknown';
-    if(!rateLimit('unlock:'+ip,20,60000)){
+    if(!(await rateLimit('unlock:'+ip,20,60000))) {
       return NextResponse.json({error:'Too many requests.'},{status:429});
     }
 

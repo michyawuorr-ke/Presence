@@ -23,7 +23,7 @@ export async function POST(req: NextRequest) {
     const ip = req.headers.get("x-forwarded-for")?.split(",")[0]?.trim() || "unknown";
 
     // IP-level guard — prevents bulk abuse
-    if (!rateLimit("access-link:ip:" + ip, 10, 60000)) {
+    if (!(await rateLimit("access-link:ip:" + ip, 10, 60000))) {
       return NextResponse.json({ error: "Too many requests." }, { status: 429 });
     }
 
@@ -33,7 +33,7 @@ export async function POST(req: NextRequest) {
     }
 
     // Strict per-registration limit — exactly 1 email per registration ever
-    if (!rateLimit("access-link:reg:" + registration_id, 1, 99999999999)) {
+    if (!(await rateLimit("access-link:reg:" + registration_id, 1, 99999999999))) {
       return NextResponse.json({ error: "already_sent" }, { status: 429 });
     }
 

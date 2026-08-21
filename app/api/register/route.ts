@@ -16,7 +16,7 @@ export async function POST(req: NextRequest) {
   try {
     const ip = req.headers.get("x-forwarded-for")?.split(",")[0]?.trim() || "unknown";
 
-    if (!rateLimit("register:ip:" + ip, 5, 600000)) {
+    if (!(await rateLimit("register:ip:" + ip, 5, 600000))) {
       return NextResponse.json({ error: "Too many registrations. Please try again later." }, { status: 429 });
     }
 
@@ -30,7 +30,7 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "Invalid email address" }, { status: 400 });
     }
 
-    if (!rateLimit("register:email:" + email.toLowerCase(), 2, 3600000)) {
+    if (!(await rateLimit("register:email:" + email.toLowerCase(), 2, 3600000))) {
       return NextResponse.json({ error: "This email has been used too many times recently." }, { status: 429 });
     }
 
@@ -64,6 +64,31 @@ export async function POST(req: NextRequest) {
     const totalAmount = ticketPrice * qty;
     const isFree = totalAmount <= 0;
 
+    const cleanEmail = email.trim().toLowerCase();
+
+    // Someone re-registering (double-tap, retry after a dropped
+    // connection, or navigating back and submitting again) should land
+    // back on their existing registration, not get a second one with a
+    // different access link.
+    const { data: existingReg } = await supabase
+      .from("registrations")
+      .select("id, access_token, guest_access_link, status, paid, amount")
+      .eq("event_id", event_id)
+      .eq("guest_email", cleanEmail)
+      .maybeSingle();
+
+    if (existingReg) {
+      return NextResponse.json({
+        success: true,
+        registration_id: existingReg.id,
+        access_token: existingReg.access_token,
+        guest_url: existingReg.guest_access_link,
+        is_free: !existingReg.amount || existingReg.amount <= 0,
+        total_amount: existingReg.amount,
+        already_registered: true,
+      });
+    }
+
     const randomBytes = Array.from(crypto.getRandomValues(new Uint8Array(16)))
       .map(b => b.toString(16).padStart(2, "0")).join("");
     const accessToken = Date.now().toString(16) + "-" + randomBytes;
@@ -77,7 +102,7 @@ export async function POST(req: NextRequest) {
         event_id,
         ticket_type_id: ticket_type_id || null,
         guest_name: name.trim(),
-        guest_email: email.trim().toLowerCase(),
+        guest_email: cleanEmail,
         guest_phone: phone?.trim() || null,
         role: role || "attendee",
         status: isFree ? "confirmed" : "pending",
@@ -92,6 +117,28 @@ export async function POST(req: NextRequest) {
       .single();
 
     if (regError) {
+      // Unique violation = two requests raced past the check above at
+      // the exact same moment. Rare, but real at event-scale on shared
+      // wifi. Fetch and return the row that won instead of failing.
+      if (regError.code === "23505") {
+        const { data: winner } = await supabase
+          .from("registrations")
+          .select("id, access_token, guest_access_link, amount")
+          .eq("event_id", event_id)
+          .eq("guest_email", cleanEmail)
+          .maybeSingle();
+        if (winner) {
+          return NextResponse.json({
+            success: true,
+            registration_id: winner.id,
+            access_token: winner.access_token,
+            guest_url: winner.guest_access_link,
+            is_free: !winner.amount || winner.amount <= 0,
+            total_amount: winner.amount,
+            already_registered: true,
+          });
+        }
+      }
       console.error("Registration insert error:", regError);
       return NextResponse.json({ error: "Registration failed" }, { status: 500 });
     }

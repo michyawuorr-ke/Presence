@@ -15,13 +15,13 @@ async function getToken(){
 export async function POST(req:NextRequest){
   try{
     const ip=req.headers.get('x-forwarded-for')||'unknown';
-    if(!rateLimit('payments:'+ip, 5, 60000)){
+    if(!(await rateLimit('payments:'+ip, 5, 60000))) {
       return NextResponse.json({error:'Too many requests. Please wait a minute.'},{status:429});
     }
     const reqBody=await req.json();
     const phone=sanitizePhone(reqBody.phone);
     // Rate limit by phone number — max 3 attempts per hour
-    if(phone&&!rateLimit('payments:phone:'+phone, 3, 3600000)){
+    if(phone&&!(await rateLimit('payments:phone:'+phone, 3, 3600000))) {
       return NextResponse.json({error:'Too many payment attempts for this number. Try again in an hour.'},{status:429});
     }
     const amount=sanitizeAmount(reqBody.amount);

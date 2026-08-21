@@ -14,7 +14,7 @@ const supabase = createClient(
 export async function POST(req: NextRequest) {
   try {
     const ip = req.headers.get('x-forwarded-for')?.split(',')[0]?.trim() || 'unknown';
-    if (!rateLimit('quick-contact:' + ip, 10, 60000)) {
+    if (!(await rateLimit('quick-contact:' + ip, 10, 60000))) {
       return NextResponse.json({ error: 'Too many requests.' }, { status: 429 });
     }
 

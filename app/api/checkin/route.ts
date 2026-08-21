@@ -11,7 +11,7 @@ const supabase = createClient(
 export async function POST(req: NextRequest) {
   try {
     const ip = req.headers.get('x-forwarded-for')?.split(',')[0]?.trim() || 'unknown';
-    if (!rateLimit('checkin:' + ip, 60, 60000)) {
+    if (!(await rateLimit('checkin:' + ip, 60, 60000))) {
       return NextResponse.json({ error: 'Too many requests.' }, { status: 429 });
     }
     const { qr_payload, event_id, scanner_token } = await req.json();

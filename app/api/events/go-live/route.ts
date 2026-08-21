@@ -73,7 +73,7 @@ export async function POST(req:NextRequest){
         crypto.getRandomValues(new Uint8Array(32))
       ).map(b=>b.toString(16).padStart(2,'0')).join('');
 
-      const guestUrl=`${process.env.NEXT_PUBLIC_APP_URL}/e/${event.slug}/g/${accessToken}`;
+      const guestUrl=`${process.env.NEXT_PUBLIC_APP_URL || "https://oreeti.com"}/e/${event.slug}/g/${accessToken}`;
 
       const{data:newReg}=await supabase
         .from('registrations')

@@ -13,7 +13,7 @@ const WINDOW_MS=60000; // QR payloads rotate every 60 seconds
 export async function GET(req:NextRequest){
   try{
     const ip=req.headers.get('x-forwarded-for')?.split(',')[0]?.trim()||'unknown';
-    if(!rateLimit('qr-generate:'+ip,30,60000)){
+    if(!(await rateLimit('qr-generate:'+ip,30,60000))) {
       return NextResponse.json({error:'Too many requests.'},{status:429});
     }
 

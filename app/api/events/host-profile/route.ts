@@ -60,7 +60,7 @@ export async function GET(req:NextRequest){
 export async function POST(req:NextRequest){
   try{
     const ip = req.headers.get('x-forwarded-for')?.split(',')[0]?.trim() || 'unknown';
-    if (!rateLimit('host-profile:' + ip, 20, 60000)) {
+    if (!(await rateLimit('host-profile:' + ip, 20, 60000))) {
       return NextResponse.json({ error: 'Too many requests.' }, { status: 429 });
     }
 
