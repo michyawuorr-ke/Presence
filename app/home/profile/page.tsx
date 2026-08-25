@@ -220,6 +220,12 @@ export default function HomeProfilePage({ embedded = false }: { embedded?: boole
   // Connect
   const [openTo, setOpenTo] = useState<string[]>([]);
   const [interests, setInterests] = useState<string[]>([]);
+  // Free-typed text for the Interests input — kept separate from the
+  // `interests` array so a trailing comma isn't stripped mid-typing
+  // (splitting on every keystroke would eat "Film," right as you type it,
+  // making it impossible to start the next item). Parsed into the array
+  // only on save.
+  const [interestsText, setInterestsText] = useState("");
   const [portfolio, setPortfolio] = useState("");
   const [website, setWebsite] = useState("");
   const [linkedin, setLinkedin] = useState("");
@@ -284,6 +290,7 @@ export default function HomeProfilePage({ embedded = false }: { embedded?: boole
       setLocation(data.location ?? "");
       setOpenTo(data.open_to ?? []);
       setInterests(data.interests ?? []);
+      setInterestsText((data.interests ?? []).join(", "));
       setPortfolio(data.portfolio_url ?? "");
       setWebsite(data.website_url ?? "");
       setLinkedin(data.linkedin_url ?? "");
@@ -425,12 +432,14 @@ export default function HomeProfilePage({ embedded = false }: { embedded?: boole
       slug = await generateUniqueSlug(displayName, profile.id);
     }
 
+    const parsedInterests = interestsText.split(",").map(s => s.trim()).filter(Boolean);
+
     const { data, error } = await supabase
       .from("master_profiles")
       .update({
         display_name: displayName, headline, bio, organisation, role_title: roleTitle, known_for: knownFor,
         what_i_do: whatIDo, industry, skills, location,
-        open_to: openTo, interests,
+        open_to: openTo, interests: parsedInterests,
         portfolio_url: portfolio, website_url: website, linkedin_url: linkedin,
         phone_number: phone, instagram_url: instagram, facebook_url: facebook, x_url: x,
         slug,
@@ -593,7 +602,13 @@ export default function HomeProfilePage({ embedded = false }: { embedded?: boole
             <>
               <Section title="More About You" sub="Kept for future use — doesn't appear on your card yet.">
                 <input value={industry} onChange={e => setIndustry(e.target.value)} placeholder="Industry" style={inp} />
-                <input value={skills} onChange={e => setSkills(e.target.value)} placeholder="Skills — e.g. Brand strategy, Illustration, Growth marketing" style={{ ...inp, marginBottom: 0 }} />
+                <input value={skills} onChange={e => setSkills(e.target.value)} placeholder="Skills — e.g. Brand strategy, Illustration, Growth marketing" style={inp} />
+                <input
+                  value={interestsText}
+                  onChange={e => setInterestsText(e.target.value)}
+                  placeholder="Interests — e.g. Film, Cycling, Coffee"
+                  style={{ ...inp, marginBottom: 0 }}
+                />
               </Section>
             </>
           )}
