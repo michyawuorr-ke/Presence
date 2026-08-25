@@ -3,7 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import { useParams } from "next/navigation";
 import { supabase } from "@/lib/supabase/client";
-import OreetiLogo from "@/components/OreetiLogo";
+import Wordmark from "@/components/Wordmark";
 
 export default function RegisterPage() {
   // Raw browser/network errors ("Failed to fetch", "NetworkError...") are
@@ -189,7 +189,7 @@ export default function RegisterPage() {
 
   if (loading) return (
     <div style={{minHeight:"100vh",background:"#000",display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",gap:"22px"}}>
-      <OreetiLogo size="sm" />
+      <Wordmark size={26} />
       <div style={{display:"flex",gap:"7px"}}>
         <span className="oreeti-loading-dot" style={{animationDelay:"0s"}} />
         <span className="oreeti-loading-dot" style={{animationDelay:"0.15s"}} />
