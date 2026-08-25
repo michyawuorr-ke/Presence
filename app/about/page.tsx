@@ -180,7 +180,7 @@ export default function AboutPage() {
             Early. Intentional. Building.
           </h2>
           <p style={{ color: "var(--dusk)", fontSize: 15, lineHeight: 1.75 }}>
-            Oreeti is an early-stage product built by a solo founder in Nairobi. We are not trying to be everything to everyone. We are trying to be the best possible infrastructure for meaningful connection at African events — professional, creative, or community — and to do it with the level of craft that the problem deserves.
+            Oreeti is an early-stage product built by a solo founder in Nairobi. We are not trying to be everything to everyone. We are trying to be the best possible infrastructure for meaningful connection at African events — and to do it with the level of craft that the problem deserves.
           </p>
         </div>
       </section>
