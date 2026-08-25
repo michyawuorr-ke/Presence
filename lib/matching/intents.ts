@@ -28,9 +28,17 @@ export const INTENTS: Intent[] = [
   // Opportunities
   { id: "Open to New Roles",    label: "Open to New Roles",      group: "Opportunities","description": "Exploring career opportunities and new challenges",   seeking: true  },
   { id: "Has Opportunities",    label: "Has Opportunities",      group: "Opportunities","description": "Has roles, projects or introductions to offer",       seeking: false },
+
+  // Craft — arts, entertainment, creative work
+  { id: "Seeking Collaborators",label: "Seeking Collaborators",  group: "Craft",        description: "Looking for creative collaborators for a project",     seeking: true  },
+  { id: "Open to Creative Work",label: "Open to Creative Work",  group: "Craft",        description: "Available for creative gigs, commissions or collabs",   seeking: false },
+
+  // Community — community and social causes
+  { id: "Seeking Community",    label: "Seeking Community",      group: "Community",    description: "Looking to connect with people who share this world",  seeking: true  },
+  { id: "Building Community",   label: "Building Community",     group: "Community",    description: "Organizing or hosting something and want more people in it", seeking: false },
 ];
 
-export const INTENT_GROUPS = ["Capital", "Synergy", "Mentorship", "Opportunities"] as const;
+export const INTENT_GROUPS = ["Capital", "Synergy", "Mentorship", "Opportunities", "Craft", "Community"] as const;
 
 export const INTENT_MAP: Record<string, Intent> = Object.fromEntries(
   INTENTS.map(i => [i.id, i])
@@ -58,7 +66,10 @@ export function intentScore(intentsA: string[], intentsB: string[]): number {
       } else {
         // Cross-group pairings that make sense
         const pair = [iA.group, iB.group].sort().join("+");
-        score = ({ "Capital+Synergy": 0.6, "Mentorship+Opportunities": 0.5, "Capital+Opportunities": 0.4, "Mentorship+Synergy": 0.4 } as any)[pair] ?? 0;
+        score = ({
+          "Capital+Synergy": 0.6, "Mentorship+Opportunities": 0.5, "Capital+Opportunities": 0.4, "Mentorship+Synergy": 0.4,
+          "Craft+Synergy": 0.5, "Community+Mentorship": 0.4, "Community+Synergy": 0.4, "Community+Opportunities": 0.3,
+        } as any)[pair] ?? 0;
       }
       best = Math.max(best, score);
     }

@@ -29,8 +29,9 @@ type EntryOnboardingScreenProps = {
 
 const INDUSTRIES = [
   "Technology","Finance & Banking","Healthcare","Education","Agribusiness",
-  "Real Estate","Retail & E-commerce","Media & Creative","Energy","NGO & Social Impact",
-  "Government & Policy","Legal","Consulting","Manufacturing","Logistics & Supply Chain","Other",
+  "Real Estate","Retail & E-commerce","Media & Creative","Arts & Entertainment","Energy",
+  "Community & Culture","NGO & Social Impact","Government & Policy","Legal","Consulting",
+  "Manufacturing","Logistics & Supply Chain","Other",
 ];
 
 export default function EntryOnboardingScreen({
