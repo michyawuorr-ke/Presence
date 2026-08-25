@@ -393,31 +393,38 @@ function EventRow({ event, isArchived, onToggleArchive }: { event: MyEvent; isAr
     : "";
 
   return (
-    <div style={{ position: "relative", opacity: isArchived ? 0.55 : 1 }}>
-      <a href={href} style={{
-        display: "flex", alignItems: "center", gap: 14, padding: "12px 44px 12px 14px", borderRadius: 14,
-        background: "rgba(255,255,255,0.02)", border: "1px solid rgba(255,255,255,0.06)", textDecoration: "none",
-      }}>
-        <div style={{
-          width: 52, height: 52, borderRadius: 11, flexShrink: 0, overflow: "hidden",
+    <div style={{ position: "relative", opacity: isArchived ? 0.6 : 1 }}>
+      <a
+        href={href}
+        className={`event-row-card${event.status === "live" ? " event-row-card--live" : ""}`}
+        style={{
+          display: "flex", alignItems: "center", gap: 14, padding: "13px 44px 13px 13px", borderRadius: 16,
+          textDecoration: "none",
+        }}
+      >
+        <div className="event-row-thumb" style={{
+          width: 56, height: 56, borderRadius: 13, flexShrink: 0, overflow: "hidden",
           background: event.banner_url ? "#000" : fallbackVisual(event.id).background,
           display: "flex", alignItems: "center", justifyContent: "center",
         }}>
           {event.banner_url
             ? <img src={event.banner_url} alt="" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
-            : <span style={{ fontFamily: "var(--font-display)", fontSize: 16, color: "rgba(255,255,255,0.4)" }}>{event.title?.charAt(0)?.toUpperCase() || "?"}</span>}
+            : <span style={{ fontFamily: "var(--font-display)", fontSize: 18, fontWeight: 500, color: "rgba(255,255,255,0.55)" }}>{event.title?.charAt(0)?.toUpperCase() || "?"}</span>}
         </div>
         <div style={{ minWidth: 0, flex: 1 }}>
           <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
-            <p style={{ fontSize: 13.5, fontWeight: 600, color: "var(--ivory)", margin: 0, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{event.title}</p>
+            <p style={{
+              fontFamily: "var(--font-display)", fontSize: 15, fontWeight: 500, letterSpacing: "-0.005em",
+              color: "var(--ivory)", margin: 0, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap",
+            }}>{event.title}</p>
             {event.is_host && (
-              <span style={{ fontSize: 8.5, fontWeight: 700, color: "var(--gold)", background: "rgba(212,175,55,0.1)", padding: "2px 6px", borderRadius: 4, letterSpacing: "0.04em" }}>HOST</span>
+              <span style={{ fontSize: 8.5, fontWeight: 700, color: "var(--gold)", background: "var(--gold-dim)", border: "1px solid var(--gold-border)", padding: "2px 6px", borderRadius: 5, letterSpacing: "0.06em" }}>HOST</span>
             )}
             {event.status === "live" && (
-              <span style={{ fontSize: 8.5, fontWeight: 700, color: "#22c55e", background: "rgba(34,197,94,0.1)", padding: "2px 6px", borderRadius: 4, letterSpacing: "0.04em" }}>LIVE</span>
+              <span style={{ fontSize: 8.5, fontWeight: 700, color: "#22c55e", background: "rgba(34,197,94,0.1)", border: "1px solid rgba(34,197,94,0.25)", padding: "2px 6px", borderRadius: 5, letterSpacing: "0.06em" }}>● LIVE</span>
             )}
           </div>
-          <p style={{ fontSize: 11.5, color: "var(--dusk)", margin: "2px 0 0" }}>{date}{event.venue ? ` · ${event.venue}` : ""}</p>
+          <p style={{ fontSize: 12, color: "var(--dusk)", margin: "3px 0 0", letterSpacing: "0.01em" }}>{date}{event.venue ? `  ·  ${event.venue}` : ""}</p>
         </div>
       </a>
 
@@ -426,8 +433,8 @@ function EventRow({ event, isArchived, onToggleArchive }: { event: MyEvent; isAr
       <button
         onClick={e => { e.stopPropagation(); e.preventDefault(); setMenuOpen(o => !o); }}
         style={{
-          position: "absolute", top: 10, right: 10, width: 26, height: 26, borderRadius: 8,
-          background: "rgba(255,255,255,0.04)", border: "none", color: "var(--ivory-muted)",
+          position: "absolute", top: 11, right: 11, width: 26, height: 26, borderRadius: 8,
+          background: "rgba(234,230,223,0.05)", border: "1px solid rgba(234,230,223,0.06)", color: "var(--ivory-muted)",
           fontSize: 14, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center",
         }}
       >
@@ -436,7 +443,7 @@ function EventRow({ event, isArchived, onToggleArchive }: { event: MyEvent; isAr
       {menuOpen && (
         <div
           onClick={e => e.stopPropagation()}
-          style={{ position: "absolute", top: 40, right: 10, background: "#141416", border: "1px solid rgba(255,255,255,0.08)", borderRadius: 10, overflow: "hidden", zIndex: 10 }}
+          style={{ position: "absolute", top: 42, right: 11, background: "var(--obsidian)", border: "1px solid var(--dusk-border)", borderRadius: 10, overflow: "hidden", zIndex: 10, boxShadow: "0 6px 20px rgba(0,0,0,0.4)" }}
         >
           <button
             onClick={() => { onToggleArchive(event.id); setMenuOpen(false); }}

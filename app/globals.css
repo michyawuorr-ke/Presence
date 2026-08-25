@@ -73,6 +73,29 @@ input, textarea, button { font-family: var(--font-body); }
 
 .premium-input:focus { border-color: var(--ember); }
 
+/* ─── Event row card (My Events list) ───────────────────────────────────
+   Replaces a near-invisible flat row (rgba(255,255,255,0.02) background)
+   with the same Obsidian card surface used for premium inputs elsewhere,
+   plus real depth and a hover lift so it reads as tappable, not printed. */
+.event-row-card {
+  background: var(--obsidian);
+  border: 1px solid var(--dusk-border);
+  box-shadow: 0 1px 2px rgba(0,0,0,0.25);
+  transition: border-color 0.18s ease, box-shadow 0.18s ease, transform 0.18s ease;
+}
+.event-row-card:hover, .event-row-card:active {
+  border-color: var(--ember-border);
+  box-shadow: 0 4px 14px rgba(0,0,0,0.35);
+  transform: translateY(-1px);
+}
+.event-row-card--live {
+  border-color: rgba(34,197,94,0.3);
+  box-shadow: 0 0 0 1px rgba(34,197,94,0.08), 0 1px 2px rgba(0,0,0,0.25);
+}
+.event-row-thumb {
+  box-shadow: inset 0 0 0 1px rgba(234,230,223,0.08);
+}
+
 /* ─── Loading dots (used under the Oreeti wordmark on splash/loading
    screens — e.g. the guest registration link opening) ────────────────── */
 .oreeti-loading-dot {
