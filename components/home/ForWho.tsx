@@ -31,7 +31,7 @@ export default function ForWho() {
 																												              lineHeight: 1.15,
 																													                }}
 																															        >
-																																          Built for two kinds of ambition.
+																																          Built for everyone in the room.
 																																			          </h2>
 																																		        </div>
 

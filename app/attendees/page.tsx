@@ -50,7 +50,7 @@ export default function AttendeesPage() {
         }}
           data-reveal data-delay="100"
         >
-          Oreeti gives you a professional presence at the event — and the power to decide exactly who sees it, when.
+          Oreeti gives you a presence at the event — and the power to decide exactly who sees it, when.
         </p>
       </section>
 
@@ -79,7 +79,7 @@ export default function AttendeesPage() {
             {
               moment: "Before you arrive",
               headline: "Register and set your profile.",
-              body: "You receive a unique event link. You register with your name and contact — then build a professional profile: role, organisation, a short bio, and one link. This is your presence in the room.",
+              body: "You receive a unique event link. You register with your name and contact — then build your profile: role, organisation, a short bio, and one link. This is your presence in the room.",
             },
             {
               moment: "When you arrive",

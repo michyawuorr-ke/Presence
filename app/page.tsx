@@ -5,12 +5,13 @@ import HomeClient from "./HomeClient";
 
 export const metadata: Metadata = {
   title: "Oreeti — The room, activated.",
-  description: "Oreeti is the live event activation platform for East Africa. QR-based networking handshakes, M-Pesa ticketing, consent-first connections, and real-time event intelligence — built for professional events in Nairobi and beyond.",
+  description: "Oreeti is the live event activation platform for East Africa. QR-based networking handshakes, M-Pesa ticketing, consent-first connections, and real-time event intelligence — built for any event where the room itself is the point, from conferences to community gatherings.",
   keywords: [
     "event networking Kenya",
     "event technology Nairobi",
     "M-Pesa event ticketing",
     "professional networking events",
+    "community events Kenya",
     "live event platform East Africa",
     "event check-in app Kenya",
     "networking at events",

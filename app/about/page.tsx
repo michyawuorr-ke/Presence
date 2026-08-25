@@ -135,7 +135,7 @@ export default function AboutPage() {
             { title: "Consent is design.", body: "Every connection at Oreeti requires both parties to want it. That's not just an ethical position — it's a product decision. Forced connections aren't connections." },
             { title: "Friction is not the enemy.", body: "The right amount of intentionality makes connections more meaningful. We reduce anxiety, not effort. A handshake that takes 30 seconds is worth more than one that took 30 milliseconds." },
             { title: "The room matters.", body: "Oreeti is built for physical spaces. Real events. Real presence. The digital layer should amplify the room, not replace it." },
-            { title: "Africa first.", body: "We build for M-Pesa before Stripe. For Nairobi before New York. For the specific texture of professional events in East Africa — and then we scale." },
+            { title: "Africa first.", body: "We build for M-Pesa before Stripe. For Nairobi before New York. For the specific texture of live events in East Africa — and then we scale." },
           ].map((v, i) => (
             <div key={v.title} data-reveal data-delay={String(i * 80)} style={{
               background: "var(--obsidian)",
@@ -180,7 +180,7 @@ export default function AboutPage() {
             Early. Intentional. Building.
           </h2>
           <p style={{ color: "var(--dusk)", fontSize: 15, lineHeight: 1.75 }}>
-            Oreeti is an early-stage product built by a solo founder in Nairobi. We are not trying to be everything to everyone. We are trying to be the best possible infrastructure for meaningful professional connection at African events — and to do it with the level of craft that the problem deserves.
+            Oreeti is an early-stage product built by a solo founder in Nairobi. We are not trying to be everything to everyone. We are trying to be the best possible infrastructure for meaningful connection at African events — professional, creative, or community — and to do it with the level of craft that the problem deserves.
           </p>
         </div>
       </section>

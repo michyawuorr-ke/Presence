@@ -7,14 +7,14 @@ export const metadata: Metadata = {
   alternates: { canonical: "https://oreeti.com/features" },
   openGraph: {
     title: "Oreeti Features — The Complete Event Platform",
-    description: "Everything you need to run a connected, professional event.",
+    description: "Everything you need to run a connected event — professional, creative, or community.",
     url: "https://oreeti.com/features",
     images: [{ url: "/og-image.png", width: 1200, height: 630, alt: "Oreeti" }],
   },
   twitter: {
     card: "summary_large_image",
     title: "Oreeti Features — The Complete Event Platform",
-    description: "Everything you need to run a connected, professional event.",
+    description: "Everything you need to run a connected event — professional, creative, or community.",
     images: ["/og-image.png"],
   },
 };

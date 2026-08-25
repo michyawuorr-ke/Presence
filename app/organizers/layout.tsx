@@ -3,7 +3,7 @@ import React from "react";
 
 export const metadata: Metadata = {
   title: "For Organizers | Oreeti",
-  description: "Host events that actually connect people. M-Pesa ticketing, QR networking, real-time dashboards and check-in — built for professional events in East Africa.",
+  description: "Host events that actually connect people. M-Pesa ticketing, QR networking, real-time dashboards and check-in — built for any live event in East Africa.",
   alternates: { canonical: "https://oreeti.com/organizers" },
   openGraph: {
     title: "Oreeti for Organizers — Host Better Events",

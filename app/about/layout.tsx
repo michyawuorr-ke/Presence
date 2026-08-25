@@ -7,14 +7,14 @@ export const metadata: Metadata = {
   alternates: { canonical: "https://oreeti.com/about" },
   openGraph: {
     title: "About Oreeti — Built in Nairobi",
-    description: "Built because professional events in East Africa deserved better infrastructure.",
+    description: "Built because live events in East Africa deserved better infrastructure.",
     url: "https://oreeti.com/about",
     images: [{ url: "/og-image.png", width: 1200, height: 630, alt: "Oreeti" }],
   },
   twitter: {
     card: "summary_large_image",
     title: "About Oreeti — Built in Nairobi",
-    description: "Built because professional events in East Africa deserved better infrastructure.",
+    description: "Built because live events in East Africa deserved better infrastructure.",
     images: ["/og-image.png"],
   },
 };

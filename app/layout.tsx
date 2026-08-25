@@ -18,6 +18,7 @@ export const metadata: Metadata = {
     "event technology Nairobi",
     "M-Pesa event ticketing",
     "professional networking events",
+    "community events Kenya",
     "live event platform East Africa",
     "event check-in app Kenya",
     "Oreeti",

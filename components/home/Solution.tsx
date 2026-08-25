@@ -58,13 +58,13 @@ export default function Solution() {
             {
               step: "Register",
               headline: "Arrive with intent.",
-              detail: "Guests register before the event and build their professional profile. No forms at the door. No name-tag confusion. You walk in already known.",
+              detail: "Guests register before the event and build their profile — who they are, not just what they do. No forms at the door. No name-tag confusion. You walk in already known.",
               accent: "var(--dusk)",
             },
             {
               step: "Discover",
               headline: "See who's in the room.",
-              detail: "The Networking tab shows live attendee discovery. Browse professional context, set intent badges, and signal openness to connection — on your own terms.",
+              detail: "The Networking tab shows live attendee discovery. Browse who's in the room, set intent badges, and signal openness to connection — on your own terms.",
               accent: "var(--dusk)",
             },
             {
