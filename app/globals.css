@@ -73,6 +73,18 @@ input, textarea, button { font-family: var(--font-body); }
 
 .premium-input:focus { border-color: var(--ember); }
 
+/* ─── Loading dots (used under the Oreeti wordmark on splash/loading
+   screens — e.g. the guest registration link opening) ────────────────── */
+.oreeti-loading-dot {
+  width: 6px; height: 6px; border-radius: 50%;
+  background: var(--ember);
+  animation: oreetiDotBounce 1.2s ease-in-out infinite;
+}
+@keyframes oreetiDotBounce {
+  0%, 80%, 100% { transform: scale(0.6); opacity: 0.35; }
+  40%           { transform: scale(1);   opacity: 1; }
+}
+
 /* ─── Scroll reveal ──────────────────────────────────────────────────── */
 @keyframes fadeUp {
   from { opacity: 0; transform: translateY(24px); }

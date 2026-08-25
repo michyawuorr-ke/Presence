@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import { useParams } from "next/navigation";
 import { supabase } from "@/lib/supabase/client";
+import OreetiLogo from "@/components/OreetiLogo";
 
 export default function RegisterPage() {
   // Raw browser/network errors ("Failed to fetch", "NetworkError...") are
@@ -187,8 +188,13 @@ export default function RegisterPage() {
   };
 
   if (loading) return (
-    <div style={{minHeight:"100vh",background:"#000",display:"flex",alignItems:"center",justifyContent:"center"}}>
-      <p style={{color:"rgba(255,255,255,0.3)",fontSize:"12px",letterSpacing:"0.1em"}}>LOADING DOORWAY...</p>
+    <div style={{minHeight:"100vh",background:"#000",display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",gap:"22px"}}>
+      <OreetiLogo size="sm" />
+      <div style={{display:"flex",gap:"7px"}}>
+        <span className="oreeti-loading-dot" style={{animationDelay:"0s"}} />
+        <span className="oreeti-loading-dot" style={{animationDelay:"0.15s"}} />
+        <span className="oreeti-loading-dot" style={{animationDelay:"0.3s"}} />
+      </div>
     </div>
   );
 
