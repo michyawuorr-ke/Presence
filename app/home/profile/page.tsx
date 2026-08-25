@@ -211,6 +211,11 @@ export default function HomeProfilePage({ embedded = false }: { embedded?: boole
   // What you do
   const [whatIDo, setWhatIDo] = useState("");
   const [industry, setIndustry] = useState("");
+  // Skills — plain text for now, matching Industry. A proper LinkedIn-style
+  // picker (search + suggest + select, not free-typed tags) is a deliberate
+  // later step, once this is actually surfaced somewhere — see the "More
+  // About You" section below for why it's not built yet.
+  const [skills, setSkills] = useState("");
   const [location, setLocation] = useState("");
   // Connect
   const [openTo, setOpenTo] = useState<string[]>([]);
@@ -275,6 +280,7 @@ export default function HomeProfilePage({ embedded = false }: { embedded?: boole
       setKnownFor(data.known_for ?? "");
       setWhatIDo(data.what_i_do ?? "");
       setIndustry(data.industry ?? "");
+      setSkills(data.skills ?? "");
       setLocation(data.location ?? "");
       setOpenTo(data.open_to ?? []);
       setInterests(data.interests ?? []);
@@ -423,7 +429,7 @@ export default function HomeProfilePage({ embedded = false }: { embedded?: boole
       .from("master_profiles")
       .update({
         display_name: displayName, headline, bio, organisation, role_title: roleTitle, known_for: knownFor,
-        what_i_do: whatIDo, industry, location,
+        what_i_do: whatIDo, industry, skills, location,
         open_to: openTo, interests,
         portfolio_url: portfolio, website_url: website, linkedin_url: linkedin,
         phone_number: phone, instagram_url: instagram, facebook_url: facebook, x_url: x,
@@ -587,6 +593,7 @@ export default function HomeProfilePage({ embedded = false }: { embedded?: boole
             <>
               <Section title="More About You" sub="Kept for future use — doesn't appear on your card yet.">
                 <input value={industry} onChange={e => setIndustry(e.target.value)} placeholder="Industry" style={inp} />
+                <input value={skills} onChange={e => setSkills(e.target.value)} placeholder="Skills — e.g. Brand strategy, Illustration, Growth marketing" style={{ ...inp, marginBottom: 0 }} />
               </Section>
             </>
           )}
