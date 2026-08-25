@@ -1,7 +1,7 @@
 "use client";
 import { useState } from "react";
 import { supabase } from "@/lib/supabase/client";
-import { getFirstName, parseIntents, REASON_OPTIONS, INTENTS_BY_GROUP, INTENT_GROUPS, INTENT_MAP } from "./shared";
+import { getFirstName, parseIntents, INTENTS_BY_GROUP, INTENT_GROUPS, INTENT_MAP } from "./shared";
 import { isHostRegistration } from "@/lib/hostRole";
 import { dualWriteConnectionRequest } from "@/lib/dualWriteConnection";
 import AttendeeCard from "./AttendeeCard";

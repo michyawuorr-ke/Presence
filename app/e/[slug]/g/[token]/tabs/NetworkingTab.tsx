@@ -3,7 +3,7 @@ import { useEffect, useState, useRef, useCallback, useMemo } from "react";
 import { supabase } from "@/lib/supabase/client";
 import { isHostRegistration } from "@/lib/hostRole";
 import { dualWriteConnectionRequest } from "@/lib/dualWriteConnection";
-import { getFirstName, parseIntents, REASON_OPTIONS, PALETTE, INTENTS_BY_GROUP, INTENT_GROUPS, INTENT_MAP } from "./shared";
+import { getFirstName, parseIntents, PALETTE, INTENTS_BY_GROUP, INTENT_GROUPS, INTENT_MAP } from "./shared";
 import AttendeeCard from "./AttendeeCard";
 import PreEventDiscovery from "./PreEventDiscovery";
 import MatchRecommendations from "./MatchRecommendations";
