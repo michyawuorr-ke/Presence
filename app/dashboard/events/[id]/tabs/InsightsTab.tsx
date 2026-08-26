@@ -241,6 +241,82 @@ export default function InsightsTab({ event, stats }: InsightsTabProps) {
   }
   const takeaways = buildTakeaways();
 
+  // CSV export — assembles everything already computed above into one
+  // downloadable file, section by section. No new data fetching; this is
+  // purely a formatting pass over state that already exists on this tab.
+  // A styled/shareable version is a deliberate later step (see the
+  // conversation this was scoped in) — this is the fast, honest version:
+  // raw data an organizer can open in Sheets or hand to a sponsor.
+  function csvEscape(val: string | number): string {
+    const s = String(val);
+    return /[",\n]/.test(s) ? `"${s.replace(/"/g, '""')}"` : s;
+  }
+
+  function exportCSV() {
+    const rows: string[] = [];
+    const row = (...cells: (string | number)[]) => rows.push(cells.map(csvEscape).join(","));
+
+    row("Event Insights Export");
+    row("Event", event?.title || "");
+    row("Generated", new Date().toISOString().slice(0, 10));
+    row("");
+
+    row("Connection Activity");
+    row("Requests Sent", requestStats.total);
+    row("Accepted", requestStats.accepted);
+    row("Pending", requestStats.pending);
+    row("Declined", requestStats.declined);
+    row("QR Handshakes", qrHandshakeCount);
+    row("Connections Created", stats.handshakes);
+    row("Acceptance Rate", `${acceptanceRate}%`);
+    row("");
+
+    if (intentBreakdown.length > 0) {
+      row("What Attendees Came Looking For");
+      row("Intent", "Count", "% of Respondents");
+      intentBreakdown.forEach(i => row(i.label, i.count, `${i.pct}%`));
+      row("");
+    }
+
+    if (intentConnectionStats.length > 0) {
+      row("Intent \u2192 Connection");
+      row("Intent", "Selected", "Connected", "Accepted");
+      intentConnectionStats.forEach(i => row(i.label, i.selected, i.connected, i.accepted));
+      row("");
+    }
+
+    if (industryPairs.length > 0) {
+      row("Who Connected With Whom");
+      row("Industry Pair", "Connections");
+      industryPairs.forEach(p => row(p.a === p.b ? p.a : `${p.a} <-> ${p.b}`, p.count));
+      row("");
+    }
+
+    row("Most Connected");
+    row("Name", "Connections");
+    row(topConnector?.name || "\u2014", topConnector?.count || 0);
+    row("");
+
+    row("Summary");
+    row(narrative);
+    if (takeaways.length > 0) {
+      row("");
+      row("For Your Next Event");
+      takeaways.forEach(t => row(t));
+    }
+
+    const csv = rows.join("\n");
+    const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `${(event?.title || "event").replace(/[^\w\-]+/g, "-")}-insights.csv`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+  }
+
   if (!isEnded) {
     return (
       <div style={{ padding: "40px 16px", textAlign: "center" }}>
@@ -260,6 +336,10 @@ export default function InsightsTab({ event, stats }: InsightsTabProps) {
 
   return (
     <div style={{ paddingBottom: "48px", display: "flex", flexDirection: "column", gap: "10px" }}>
+
+      <button onClick={exportCSV} style={{ alignSelf: "flex-end", padding: "7px 14px", borderRadius: "8px", background: "rgba(212,175,55,0.06)", border: "1px solid rgba(212,175,55,0.25)", color: GOLD, fontSize: "11px", fontWeight: "700", letterSpacing: "0.04em", cursor: "pointer" }}>
+        Export CSV
+      </button>
 
       {/* Connection Activity — spec §2. "Attendance tells you who came.
           Connections tell you what happened." This is the request
