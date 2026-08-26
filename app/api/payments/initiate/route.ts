@@ -55,6 +55,7 @@ export async function POST(req:NextRequest){
     });
 
     const stkData=await stkRes.json();
+    console.error("STK response:", JSON.stringify(stkData));
 
     if(stkData.ResponseCode==='0'){
       await supabase.from('payments').insert({
