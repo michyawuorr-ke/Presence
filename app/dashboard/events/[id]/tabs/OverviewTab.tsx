@@ -1,6 +1,5 @@
 "use client";
-import { useEffect, useState } from "react";
-import { supabase } from "@/lib/supabase/client";
+import { useState } from "react";
 
 interface OverviewTabProps {
   event: any;
@@ -86,53 +85,18 @@ export default function OverviewTab({
   // silently swallowed the new middle state.
   const isDraft     = event?.status === "draft";
 
-  // ── Density / Scan Rate ──────────────────────────────────────────────
-  // These two numbers stay on Overview as plain stats. Top Connector, the
-  // narrative summary, and takeaways moved to the Insights tab — those are
-  // "story" content, not glance-and-go numbers, and kept piling onto this
-  // tab was making it a scroll instead of a snapshot. Density/Scan Rate
-  // stay here since they're just numbers like the rest of the stat grid.
-  const [attendeeCount, setAttendeeCount] = useState(0);
-  const [scanRate, setScanRate] = useState(0);
-
-  useEffect(() => {
-    if (!isEnded || !event?.id) return;
-    let cancelled = false;
-    async function loadReport() {
-      const [{ count: guestCount }, { data: unlocks }] = await Promise.all([
-        supabase.from("guest_profiles").select("id", { count: "exact", head: true }).eq("event_id", event.id).neq("role", "organizer"),
-        supabase.from("profile_unlocks").select("handshake_id").eq("event_id", event.id).limit(1000),
-      ]);
-      if (cancelled) return;
-
-      setAttendeeCount(guestCount || 0);
-
-      // Scan rate — % of connections confirmed via an actual QR scan
-      // (profile_unlocks writes 2 rows per scan, one per side, so distinct
-      // handshake_id is the real scan count, not row count).
-      const scannedHandshakeIds = new Set((unlocks || []).map((u: any) => u.handshake_id));
-      const totalHandshakes = stats.handshakes || 0;
-      setScanRate(totalHandshakes > 0 ? Math.round((scannedHandshakeIds.size / totalHandshakes) * 100) : 0);
-    }
-    loadReport();
-    return () => { cancelled = true; };
-  }, [isEnded, event?.id, stats.handshakes]);
-
-  const density = attendeeCount > 0 ? (stats.handshakes / attendeeCount).toFixed(1) : "0";
-
-  // Stat cards — Ember accent on the two live-energy stats. "Networking"
-  // (live visibility count) is dropped once ended since it's a frozen,
-  // meaningless number after guests have left. Density and Scan Rate take
-  // its place — same plain-number treatment as every other card here; the
-  // interpretive story around these numbers lives on the Insights tab.
+  // Stat cards — Ember accent on the two live-energy stats. Density and
+  // Scan Rate used to live here, computed from the same numbers now shown
+  // as QR Handshakes / Connections Created on the Insights tab — that made
+  // this grid redundant with itself across two screens. Removed rather
+  // than kept "for completeness"; nothing is lost, the raw numbers they
+  // were computed from are one tab away.
   const statCards = isEnded ? [
     { label: "Registered", value: stats.registrations,  accent: false },
     { label: "Confirmed",  value: stats.confirmed,       accent: false },
     { label: "Checked In", value: stats.checkins,        accent: false },
     { label: "Connections",value: stats.handshakes,      accent: true  },
     { label: "Revenue",    value: `KES ${(stats.revenue || 0).toLocaleString()}`, accent: false },
-    { label: "Density",    value: `${density}/attendee`, accent: false },
-    { label: "Scan Rate",  value: `${scanRate}%`,        accent: false },
   ] : [
     { label: "Registered", value: stats.registrations,  accent: false },
     { label: "Confirmed",  value: stats.confirmed,       accent: false },
