@@ -13,6 +13,7 @@ interface OverviewTabProps {
   onBannerUpload: (e: React.ChangeEvent<HTMLInputElement>) => void;
   uploadingBanner: boolean;
   bannerError: string;
+  onGoToInsights: () => void;
 }
 
 const GOLD  = "#D4AF37";
@@ -71,7 +72,7 @@ function LinkCard({ label, hint, url, icon }: { label: string; hint: string; url
 
 export default function OverviewTab({
   event, stats, hostLink, registrationLink, scannerLink,
-  timeToLive, bannerUrl, onBannerUpload, uploadingBanner, bannerError
+  timeToLive, bannerUrl, onBannerUpload, uploadingBanner, bannerError, onGoToInsights
 }: OverviewTabProps) {
 
   const isLive      = event?.status === "live";
@@ -85,120 +86,53 @@ export default function OverviewTab({
   // silently swallowed the new middle state.
   const isDraft     = event?.status === "draft";
 
-  // ── Post-event report data ──────────────────────────────────────────────
-  // Fetched separately from the live `stats` prop since these numbers only
-  // make sense once the event has ended, and computing "most connected
-  // person" / scan rate needs per-guest breakdowns the live stat counts don't carry.
-  const [reportLoading, setReportLoading] = useState(true);
+  // ── Density / Scan Rate ──────────────────────────────────────────────
+  // These two numbers stay on Overview as plain stats. Top Connector, the
+  // narrative summary, and takeaways moved to the Insights tab — those are
+  // "story" content, not glance-and-go numbers, and kept piling onto this
+  // tab was making it a scroll instead of a snapshot. Density/Scan Rate
+  // stay here since they're just numbers like the rest of the stat grid.
   const [attendeeCount, setAttendeeCount] = useState(0);
-  const [topConnector, setTopConnector] = useState<{ name: string; count: number } | null>(null);
   const [scanRate, setScanRate] = useState(0);
 
   useEffect(() => {
     if (!isEnded || !event?.id) return;
     let cancelled = false;
     async function loadReport() {
-      const [{ data: guests }, { data: hs }, { data: unlocks }] = await Promise.all([
-        supabase.from("guest_profiles").select("id,display_name,role").eq("event_id", event.id).limit(1000),
-        supabase.from("handshakes").select("id,sender_id,receiver_id,created_at").eq("event_id", event.id).limit(1000),
+      const [{ count: guestCount }, { data: unlocks }] = await Promise.all([
+        supabase.from("guest_profiles").select("id", { count: "exact", head: true }).eq("event_id", event.id).neq("role", "organizer"),
         supabase.from("profile_unlocks").select("handshake_id").eq("event_id", event.id).limit(1000),
       ]);
       if (cancelled) return;
 
-      const attendees = (guests || []).filter((g: any) => g.role !== "organizer");
-      setAttendeeCount(attendees.length);
+      setAttendeeCount(guestCount || 0);
 
-      // Most connected person — count appearances per guest across all handshakes
-      const countByGuest = new Map<string, number>();
-      (hs || []).forEach((h: any) => {
-        countByGuest.set(h.sender_id, (countByGuest.get(h.sender_id) || 0) + 1);
-        countByGuest.set(h.receiver_id, (countByGuest.get(h.receiver_id) || 0) + 1);
-      });
-      let top: { name: string; count: number } | null = null;
-      countByGuest.forEach((count, guestId) => {
-        if (!top || count > top.count) {
-          const g = attendees.find((a: any) => a.id === guestId);
-          if (g) top = { name: g.display_name, count };
-        }
-      });
-      setTopConnector(top);
-
-      // Scan rate — % of connections that were confirmed via an actual QR
-      // scan (profile_unlocks writes 2 rows per scan, one per side, so
-      // distinct handshake_id is the real scan count, not row count).
+      // Scan rate — % of connections confirmed via an actual QR scan
+      // (profile_unlocks writes 2 rows per scan, one per side, so distinct
+      // handshake_id is the real scan count, not row count).
       const scannedHandshakeIds = new Set((unlocks || []).map((u: any) => u.handshake_id));
-      const totalHandshakes = hs?.length || 0;
+      const totalHandshakes = stats.handshakes || 0;
       setScanRate(totalHandshakes > 0 ? Math.round((scannedHandshakeIds.size / totalHandshakes) * 100) : 0);
-
-      setReportLoading(false);
     }
     loadReport();
     return () => { cancelled = true; };
-  }, [isEnded, event?.id, event?.start_time]);
+  }, [isEnded, event?.id, stats.handshakes]);
 
-  // Networking density — connections per attendee. Uses the live handshake
-  // count from `stats` (already fixed to be distinct, not double-counted)
-  // against the attendee count fetched above.
   const density = attendeeCount > 0 ? (stats.handshakes / attendeeCount).toFixed(1) : "0";
-
-  // Narrative summary — describes what happened, stays descriptive.
-  // "Good/bad" judgment now lives separately in buildTakeaways() below,
-  // so the two don't get tangled: this says what happened, that says what
-  // it might mean for next time.
-  function buildNarrative(): string {
-    if (attendeeCount === 0) return "No attendance data was recorded for this event.";
-    const parts: string[] = [];
-    parts.push(`${attendeeCount} ${attendeeCount === 1 ? "person" : "people"} attended ${event?.title || "this event"}.`);
-    if (stats.handshakes === 0) {
-      parts.push("No connections were made during the event.");
-    } else {
-      parts.push(`Guests made ${stats.handshakes} connection${stats.handshakes === 1 ? "" : "s"}${scanRate > 0 ? `, ${scanRate}% of them confirmed through an in-person QR scan` : ""}.`);
-      if (topConnector) {
-        parts.push(`${topConnector.name} connected with the most people, at ${topConnector.count}.`);
-      }
-    }
-    return parts.join(" ");
-  }
-  const narrative = buildNarrative();
-
-  // Actionable takeaways — unlike the narrative above, these DO use
-  // judgment thresholds, deliberately. There's no real cross-event
-  // benchmark yet (new product), so these are placeholder targets grounded
-  // in general event-networking conventions, not Oreeti-specific data:
-  //   - density: ~0.3 connections/attendee is a rough floor for "most
-  //     people connected with someone" at a well-run networking event
-  //   - scan rate: 50% used as a neutral midpoint, since there's no
-  //     external benchmark for this Oreeti-specific mechanic at all
-  // Revisit both once there's enough real event data to replace them with
-  // actual medians instead of estimates.
-  function buildTakeaways(): string[] {
-    if (attendeeCount === 0 || stats.handshakes === 0) return [];
-    const out: string[] = [];
-    const densityNum = attendeeCount > 0 ? stats.handshakes / attendeeCount : 0;
-
-    if (densityNum < 0.3) {
-      out.push("Connections per attendee was below typical for a networking-focused event — consider a structured icebreaker or longer networking window next time.");
-    }
-    if (scanRate < 50 && stats.handshakes >= 3) {
-      out.push("Fewer than half of connections were confirmed with an in-person scan — clearer signage or a designated networking area may help guests find each other on the floor.");
-    }
-    if (topConnector && densityNum > 0 && topConnector.count > densityNum * 4) {
-      out.push(`Networking activity was concentrated in a few people — ${topConnector.name} connected far more than average, which may mean most guests need more encouragement or structure to start conversations.`);
-    }
-    return out;
-  }
-  const takeaways = buildTakeaways();
 
   // Stat cards — Ember accent on the two live-energy stats. "Networking"
   // (live visibility count) is dropped once ended since it's a frozen,
-  // meaningless number after guests have left — the report section below
-  // replaces it with numbers that are actually meaningful post-event.
+  // meaningless number after guests have left. Density and Scan Rate take
+  // its place — same plain-number treatment as every other card here; the
+  // interpretive story around these numbers lives on the Insights tab.
   const statCards = isEnded ? [
     { label: "Registered", value: stats.registrations,  accent: false },
     { label: "Confirmed",  value: stats.confirmed,       accent: false },
     { label: "Checked In", value: stats.checkins,        accent: false },
     { label: "Connections",value: stats.handshakes,      accent: true  },
     { label: "Revenue",    value: `KES ${(stats.revenue || 0).toLocaleString()}`, accent: false },
+    { label: "Density",    value: `${density}/attendee`, accent: false },
+    { label: "Scan Rate",  value: `${scanRate}%`,        accent: false },
   ] : [
     { label: "Registered", value: stats.registrations,  accent: false },
     { label: "Confirmed",  value: stats.confirmed,       accent: false },
@@ -259,64 +193,10 @@ export default function OverviewTab({
 
       {/* ── Post-event report ── */}
       {isEnded && (
-        <div style={{ marginBottom: "28px" }}>
-          <p style={{ fontSize: "9px", fontWeight: "700", letterSpacing: "0.15em", color: DIM, textTransform: "uppercase", marginBottom: "12px" }}>Event Report</p>
-          {reportLoading ? (
-            <div style={{ height: "180px", borderRadius: "12px", background: FAINT }} />
-          ) : (
-            <div style={{ display: "flex", flexDirection: "column", gap: "10px" }}>
-
-              {/* Narrative summary */}
-              <div style={{ background: FAINT, border: "1px solid rgba(255,255,255,0.05)", borderRadius: "14px", padding: "16px" }}>
-                <p style={{ fontSize: "13px", color: IVORY, lineHeight: "1.6", margin: 0 }}>{narrative}</p>
-              </div>
-
-              {/* Actionable takeaways — separate from the narrative above on
-                  purpose: that describes what happened, this suggests what
-                  to consider for next time. Only shows when there's
-                  something worth flagging. */}
-              {takeaways.length > 0 && (
-                <div style={{ background: "rgba(226,109,52,0.04)", border: "1px solid rgba(226,109,52,0.15)", borderRadius: "14px", padding: "16px" }}>
-                  <p style={{ fontSize: "9px", fontWeight: "700", letterSpacing: "0.12em", color: "#E26D34", textTransform: "uppercase", margin: "0 0 10px" }}>For Your Next Event</p>
-                  <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
-                    {takeaways.map((t, i) => (
-                      <p key={i} style={{ fontSize: "12.5px", color: "rgba(240,237,232,0.75)", lineHeight: "1.55", margin: 0 }}>• {t}</p>
-                    ))}
-                  </div>
-                </div>
-              )}
-
-              {/* Metric cards with interpretive lines */}
-              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "8px" }}>
-                <div style={{ background: FAINT, border: "1px solid rgba(255,255,255,0.04)", borderRadius: "12px", padding: "14px" }}>
-                  <p style={{ fontSize: "22px", fontWeight: "700", color: IVORY, margin: "0 0 2px", letterSpacing: "-0.02em" }}>{density}</p>
-                  <p style={{ fontSize: "9px", color: "#555", textTransform: "uppercase", letterSpacing: "0.08em", margin: "0 0 6px" }}>Connections / Attendee</p>
-                  <p style={{ fontSize: "10.5px", color: "rgba(240,237,232,0.4)", margin: 0, lineHeight: "1.4" }}>
-                    {attendeeCount > 0 ? `${stats.handshakes} connections across ${attendeeCount} attendees` : "No attendance recorded"}
-                  </p>
-                </div>
-                <div style={{ background: FAINT, border: "1px solid rgba(255,255,255,0.04)", borderRadius: "12px", padding: "14px" }}>
-                  <p style={{ fontSize: "22px", fontWeight: "700", color: IVORY, margin: "0 0 2px", letterSpacing: "-0.02em" }}>{scanRate}%</p>
-                  <p style={{ fontSize: "9px", color: "#555", textTransform: "uppercase", letterSpacing: "0.08em", margin: "0 0 6px" }}>Scan Rate</p>
-                  <p style={{ fontSize: "10.5px", color: "rgba(240,237,232,0.4)", margin: 0, lineHeight: "1.4" }}>
-                    {stats.handshakes > 0 ? "share of connections confirmed in person" : "no connections to measure"}
-                  </p>
-                </div>
-              </div>
-
-              <div style={{ background: "rgba(212,175,55,0.04)", border: "1px solid rgba(212,175,55,0.15)", borderRadius: "12px", padding: "14px 16px" }}>
-                <p style={{ fontSize: "9px", fontWeight: "700", letterSpacing: "0.12em", color: GOLD, textTransform: "uppercase", margin: "0 0 4px" }}>Most Connected</p>
-                {topConnector ? (
-                  <p style={{ fontSize: "14px", color: IVORY, margin: 0 }}>
-                    {topConnector.name} — <span style={{ color: GOLD, fontWeight: "700" }}>{topConnector.count}</span> connection{topConnector.count === 1 ? "" : "s"}
-                  </p>
-                ) : (
-                  <p style={{ fontSize: "13px", color: "#555", margin: 0 }}>No connections were made at this event.</p>
-                )}
-              </div>
-            </div>
-          )}
-        </div>
+        <button onClick={onGoToInsights} style={{ width: "100%", background: "rgba(212,175,55,0.04)", border: "1px solid rgba(212,175,55,0.15)", borderRadius: "12px", padding: "12px 14px", marginBottom: "28px", display: "flex", alignItems: "center", justifyContent: "space-between", gap: "10px", cursor: "pointer", textAlign: "left" }}>
+          <p style={{ fontSize: "12px", color: "rgba(240,237,232,0.75)", margin: 0 }}>Who was in the room, top connector, and takeaways for next time</p>
+          <span style={{ fontSize: "11px", fontWeight: "700", color: GOLD, whiteSpace: "nowrap" }}>See Insights →</span>
+        </button>
       )}
 
       {/* Links */}

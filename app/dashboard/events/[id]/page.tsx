@@ -4,10 +4,11 @@ import { useParams, useRouter, useSearchParams } from "next/navigation";
 import { supabase } from "@/lib/supabase/client";
 import OverviewTab from "./tabs/OverviewTab";
 import AttendeesTab from "./tabs/AttendeesTab";
+import InsightsTab from "./tabs/InsightsTab";
 import SetupTab from "./tabs/SetupTab";
 import SettingsTab from "./tabs/SettingsTab";
 
-type Tab = "overview" | "attendees" | "setup" | "settings";
+type Tab = "overview" | "attendees" | "insights" | "setup" | "settings";
 
 const GOLD = "#D4AF37";
 
@@ -177,6 +178,7 @@ function EventDashboardContent() {
   const nav: { id: Tab; label: string }[] = [
     { id: "overview", label: "Overview" },
     { id: "attendees", label: "Attendees" },
+    { id: "insights", label: "Insights" },
     { id: "setup", label: "Setup" },
     { id: "settings", label: "Settings" },
   ];
@@ -219,9 +221,11 @@ function EventDashboardContent() {
             registrationLink={registrationLink} scannerLink={scannerLink}
             timeToLive={timeToLive} bannerUrl={bannerUrl}
             onBannerUpload={handleBannerUpload}
-            uploadingBanner={uploadingBanner} bannerError={bannerError} />
+            uploadingBanner={uploadingBanner} bannerError={bannerError}
+            onGoToInsights={() => setTab("insights")} />
         )}
         {tab === "attendees" && <AttendeesTab eventId={id} isLive={event.status === "live"} />}
+        {tab === "insights" && <InsightsTab event={event} stats={stats} />}
         {tab === "setup" && (
           <SetupTab eventId={id} event={event} ticketTypes={ticketTypes} stations={stations}
             onPublish={handlePublish}
