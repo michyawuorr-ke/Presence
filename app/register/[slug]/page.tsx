@@ -19,7 +19,7 @@ export default function RegisterPage() {
   const [hostProfile, setHostProfile] = useState<any>(null);
   const [ticketTypes, setTicketTypes] = useState<any[]>([]);
   const [selectedTicket, setSelectedTicket] = useState<any>(null);
-  const [quantity] = useState(1);
+  const [quantity, setQuantity] = useState(1);
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [phone, setPhone] = useState("");
