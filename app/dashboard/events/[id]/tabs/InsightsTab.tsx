@@ -26,15 +26,25 @@ export default function InsightsTab({ event, stats }: InsightsTabProps) {
   const [attendeeCount, setAttendeeCount] = useState(0);
   const [topConnector, setTopConnector] = useState<{ name: string; count: number } | null>(null);
   const [scanRate, setScanRate] = useState(0);
+  // Connection Activity (spec §2) — the request lifecycle, distinct from
+  // the `handshakes` table (a handshake is a CONFIRMED connection; it can
+  // be created either by a request being approved, or directly via a QR
+  // scan/card add that never went through the request flow at all — see
+  // lib/recordConnection.ts's `source` field). Both numbers are real and
+  // can legitimately differ; showing both rather than forcing them to
+  // match is more honest than collapsing them into one figure.
+  const [requestStats, setRequestStats] = useState({ total: 0, accepted: 0, pending: 0, declined: 0 });
+  const [qrHandshakeCount, setQrHandshakeCount] = useState(0);
 
   useEffect(() => {
     if (!isEnded || !event?.id) return;
     let cancelled = false;
     async function loadInsights() {
-      const [{ data: guests }, { data: hs }, { data: unlocks }] = await Promise.all([
+      const [{ data: guests }, { data: hs }, { data: unlocks }, { data: requests }] = await Promise.all([
         supabase.from("guest_profiles").select("id,display_name,role").eq("event_id", event.id).limit(1000),
         supabase.from("handshakes").select("id,sender_id,receiver_id,created_at").eq("event_id", event.id).limit(1000),
         supabase.from("profile_unlocks").select("handshake_id").eq("event_id", event.id).limit(1000),
+        supabase.from("handshake_requests").select("id,status").eq("event_id", event.id).limit(1000),
       ]);
       if (cancelled) return;
 
@@ -62,6 +72,15 @@ export default function InsightsTab({ event, stats }: InsightsTabProps) {
       const scannedHandshakeIds = new Set((unlocks || []).map((u: any) => u.handshake_id));
       const totalHandshakes = hs?.length || 0;
       setScanRate(totalHandshakes > 0 ? Math.round((scannedHandshakeIds.size / totalHandshakes) * 100) : 0);
+      setQrHandshakeCount(scannedHandshakeIds.size);
+
+      const reqs = requests || [];
+      setRequestStats({
+        total: reqs.length,
+        accepted: reqs.filter((r: any) => r.status === "approved").length,
+        pending: reqs.filter((r: any) => r.status === "pending").length,
+        declined: reqs.filter((r: any) => r.status === "declined").length,
+      });
 
       setLoading(false);
     }
@@ -88,6 +107,11 @@ export default function InsightsTab({ event, stats }: InsightsTabProps) {
     return parts.join(" ");
   }
   const narrative = buildNarrative();
+
+  // Acceptance rate = accepted / all requests SENT (pending + declined
+  // included in the denominator, not just decided ones) — matches the
+  // spec's own worked example: 218 accepted / 327 total = 66.7%.
+  const acceptanceRate = requestStats.total > 0 ? Math.round((requestStats.accepted / requestStats.total) * 100) : 0;
 
   // Actionable takeaways — unlike the narrative above, these DO use
   // judgment thresholds, deliberately. There's no real cross-event
@@ -133,6 +157,46 @@ export default function InsightsTab({ event, stats }: InsightsTabProps) {
   return (
     <div style={{ paddingBottom: "48px", display: "flex", flexDirection: "column", gap: "10px" }}>
 
+      {/* Connection Activity — spec §2. "Attendance tells you who came.
+          Connections tell you what happened." This is the request
+          lifecycle (sent/accepted/pending), distinct from QR handshakes
+          (an in-person scan confirming a connection) and from Connections
+          Created (the `handshakes` table total — every confirmed
+          connection, whichever path created it: an approved request, a
+          direct QR scan, or a card add). These numbers can legitimately
+          differ from each other; that's real, not a bug to reconcile. */}
+      <div>
+        <p style={{ fontSize: "9px", fontWeight: "700", letterSpacing: "0.15em", color: "rgba(240,237,232,0.35)", textTransform: "uppercase", marginBottom: "10px" }}>Connection Activity</p>
+        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: "8px", marginBottom: "8px" }}>
+          <div style={{ background: FAINT, border: "1px solid rgba(255,255,255,0.04)", borderRadius: "12px", padding: "14px 10px", textAlign: "center" }}>
+            <p style={{ fontSize: "18px", fontWeight: "700", color: IVORY, margin: "0 0 4px", letterSpacing: "-0.02em" }}>{requestStats.total}</p>
+            <p style={{ fontSize: "9px", color: "#555", textTransform: "uppercase", letterSpacing: "0.1em", margin: 0 }}>Requests</p>
+          </div>
+          <div style={{ background: "rgba(34,197,94,0.05)", border: "1px solid rgba(34,197,94,0.15)", borderRadius: "12px", padding: "14px 10px", textAlign: "center" }}>
+            <p style={{ fontSize: "18px", fontWeight: "700", color: "#22c55e", margin: "0 0 4px", letterSpacing: "-0.02em" }}>{requestStats.accepted}</p>
+            <p style={{ fontSize: "9px", color: "rgba(34,197,94,0.6)", textTransform: "uppercase", letterSpacing: "0.1em", margin: 0 }}>Accepted</p>
+          </div>
+          <div style={{ background: FAINT, border: "1px solid rgba(255,255,255,0.04)", borderRadius: "12px", padding: "14px 10px", textAlign: "center" }}>
+            <p style={{ fontSize: "18px", fontWeight: "700", color: IVORY, margin: "0 0 4px", letterSpacing: "-0.02em" }}>{requestStats.pending}</p>
+            <p style={{ fontSize: "9px", color: "#555", textTransform: "uppercase", letterSpacing: "0.1em", margin: 0 }}>Pending</p>
+          </div>
+        </div>
+        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "8px" }}>
+          <div style={{ background: FAINT, border: "1px solid rgba(255,255,255,0.04)", borderRadius: "12px", padding: "14px" }}>
+            <p style={{ fontSize: "22px", fontWeight: "700", color: IVORY, margin: "0 0 2px", letterSpacing: "-0.02em" }}>{qrHandshakeCount}</p>
+            <p style={{ fontSize: "9px", color: "#555", textTransform: "uppercase", letterSpacing: "0.08em", margin: 0 }}>QR Handshakes</p>
+          </div>
+          <div style={{ background: "rgba(226,109,52,0.04)", border: "1px solid rgba(226,109,52,0.15)", borderRadius: "12px", padding: "14px" }}>
+            <p style={{ fontSize: "22px", fontWeight: "700", color: "#E26D34", margin: "0 0 2px", letterSpacing: "-0.02em" }}>{stats.handshakes}</p>
+            <p style={{ fontSize: "9px", color: "rgba(226,109,52,0.6)", textTransform: "uppercase", letterSpacing: "0.08em", margin: 0 }}>Connections Created</p>
+          </div>
+        </div>
+        <div style={{ marginTop: "8px", background: "rgba(212,175,55,0.04)", border: "1px solid rgba(212,175,55,0.15)", borderRadius: "12px", padding: "12px 16px", display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+          <p style={{ fontSize: "9px", fontWeight: "700", letterSpacing: "0.12em", color: GOLD, textTransform: "uppercase", margin: 0 }}>Acceptance Rate</p>
+          <p style={{ fontSize: "16px", fontWeight: "700", color: GOLD, margin: 0 }}>{acceptanceRate}%</p>
+        </div>
+      </div>
+
       {/* Narrative summary */}
       <div style={{ background: FAINT, border: "1px solid rgba(255,255,255,0.05)", borderRadius: "14px", padding: "16px" }}>
         <p style={{ fontSize: "13px", color: IVORY, lineHeight: "1.6", margin: 0 }}>{narrative}</p>
@@ -162,8 +226,16 @@ export default function InsightsTab({ event, stats }: InsightsTabProps) {
         )}
       </div>
 
-      {/* Composition breakdown, per-attendee engagement, and export are
-          the next additions to this tab. */}
+      {/* Still to build, in order: Intent breakdown (§3), Industry
+          cross-interaction (§5), Intent→Connection (§4), Activation
+          refinement using aura_active (§1), then the funnel (§7) with
+          Discovered People omitted — no view/discovery event is logged
+          anywhere yet, so that step needs new instrumentation before it
+          can show a real number; deferred per explicit decision, not an
+          oversight. Location/area analytics (§6) dropped entirely — the
+          only location data that exists is opt-in meetup-signal proposals,
+          not actual foot traffic, so an "activity by area" chart would
+          overclaim what's actually measured. */}
     </div>
   );
 }
