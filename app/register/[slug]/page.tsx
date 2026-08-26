@@ -182,6 +182,7 @@ export default function RegisterPage() {
       phone={phone} onPhone={setPhone}
       selfSelectRoles={selfSelectRoles}
       selectedRole={selectedRole} onRole={setSelectedRole}
+      quantity={quantity} onQuantity={setQuantity}
       submitting={submitting}
       error={error}
       onSubmit={handleRegister}

@@ -12,6 +12,8 @@ interface Props {
   selfSelectRoles: string[];
   selectedRole: string; onRole: (v: string) => void;
   submitting: boolean;
+  quantity: number;
+  onQuantity: (v: number) => void;
   error: string;
   onSubmit: () => void;
 }
@@ -26,7 +28,7 @@ const inp = {
 const ROLE_LABELS: Record<string,string> = { attendee:"Attendee", speaker:"Speaker", vip:"VIP" };
 const GOLD = "#D4AF37";
 
-export default function RegistrationForm({ event, hostProfile, ticketTypes, selectedTicket, onTicketChange, name, onName, email, onEmail, phone, onPhone, selfSelectRoles, selectedRole, onRole, submitting, error, onSubmit }: Props) {
+export default function RegistrationForm({ event, hostProfile, ticketTypes, selectedTicket, onTicketChange, name, onName, email, onEmail, phone, onPhone, selfSelectRoles, selectedRole, onRole, quantity, onQuantity, submitting, error, onSubmit }: Props) {
   return (
     <main style={{minHeight:"100vh",background:"#000",display:"flex",flexDirection:"column",padding:"40px 24px",maxWidth:"420px",margin:"0 auto",justifyContent:"space-between"}}>
       <style>{`
@@ -82,6 +84,20 @@ export default function RegistrationForm({ event, hostProfile, ticketTypes, sele
         <input value={name} onChange={e=>onName(e.target.value)} placeholder="Your Name" type="text" disabled={submitting} style={inp}/>
         <input value={email} onChange={e=>onEmail(e.target.value)} placeholder="Email Address" type="email" disabled={submitting} style={inp}/>
         <input value={phone} onChange={e=>onPhone(e.target.value)} placeholder="M-Pesa Number (you'll pay with this)" type="tel" disabled={submitting} style={inp}/>
+
+        {selectedTicket && Number(selectedTicket.price) > 0 && (
+          <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",padding:"14px 0",borderBottom:"1px solid rgba(255,255,255,0.08)",marginBottom:"20px"}}>
+            <span style={{fontSize:"14px",color:"rgba(255,255,255,0.5)"}}>Quantity</span>
+            <div style={{display:"flex",alignItems:"center",gap:"16px"}}>
+              <button type="button" onClick={()=>onQuantity(Math.max(1,quantity-1))} disabled={submitting||quantity<=1}
+                style={{width:"32px",height:"32px",borderRadius:"50%",border:"1px solid rgba(255,255,255,0.15)",background:"transparent",color:"#fff",fontSize:"18px",cursor:quantity<=1?"not-allowed":"pointer",display:"flex",alignItems:"center",justifyContent:"center",opacity:quantity<=1?0.3:1}}>−</button>
+              <span style={{fontSize:"16px",fontWeight:"600",color:"#fff",minWidth:"20px",textAlign:"center"}}>{quantity}</span>
+              <button type="button" onClick={()=>onQuantity(Math.min(10,quantity+1))} disabled={submitting||quantity>=10}
+                style={{width:"32px",height:"32px",borderRadius:"50%",border:"1px solid rgba(255,255,255,0.15)",background:"transparent",color:"#fff",fontSize:"18px",cursor:quantity>=10?"not-allowed":"pointer",display:"flex",alignItems:"center",justifyContent:"center",opacity:quantity>=10?0.3:1}}>+</button>
+            </div>
+            <span style={{fontSize:"14px",color:"#D4AF37",fontWeight:"600"}}>KES {Number(selectedTicket.price)*quantity}</span>
+          </div>
+        )}
 
         {selfSelectRoles.length > 1 && (
           <div style={{marginTop:"12px"}}>
