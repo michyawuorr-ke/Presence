@@ -36,6 +36,14 @@ export default function AttendeesTab({ eventId, isLive }: AttendeesTabProps) {
   // currently loaded once pagination is in place, giving a host a wrong
   // total the moment there's more than one page.
   const [counts, setCounts] = useState({ all: 0, pending: 0, confirmed: 0, checked_in: 0 });
+  // Connection count per attendee (spec: per-attendee engagement). Fetched
+  // for whichever registrations are currently loaded, keyed by
+  // guest_profile_id (handshakes reference that, not the registration id).
+  // A registration with no linked guest_profile yet (hasn't completed
+  // onboarding) simply won't have an entry here — treated as 0, not
+  // fetched separately, since there's nothing to look up.
+  const [connectionCounts, setConnectionCounts] = useState<Record<string, number>>({});
+  const [sortBy, setSortBy] = useState<"recent" | "connections">("recent");
   // Introduction: host selects two attendees to connect
   const [introMode, setIntroMode] = useState(false);
   const [introSelected, setIntroSelected] = useState<any[]>([]);
@@ -62,6 +70,26 @@ export default function AttendeesTab({ eventId, isLive }: AttendeesTabProps) {
       display_name: r.guest_profiles?.display_name || r.guest_name,
       guest_profile_id: r.guest_profiles?.id ?? null,
     }));
+  }
+
+  // Fetches handshake counts for a batch of guest_profile_ids and merges
+  // them into connectionCounts. Called after each page load (initial and
+  // "load more") so counts stay scoped to whatever's actually on screen,
+  // rather than pulling every handshake for the whole event up front.
+  async function loadConnectionCounts(guestIds: string[]) {
+    if (guestIds.length === 0) return;
+    const { data: hs } = await supabase
+      .from("handshakes")
+      .select("sender_id,receiver_id")
+      .eq("event_id", eventId)
+      .or(`sender_id.in.(${guestIds.join(",")}),receiver_id.in.(${guestIds.join(",")})`)
+      .limit(2000);
+    const counts: Record<string, number> = {};
+    (hs || []).forEach((h: any) => {
+      if (guestIds.includes(h.sender_id))   counts[h.sender_id]   = (counts[h.sender_id]   || 0) + 1;
+      if (guestIds.includes(h.receiver_id)) counts[h.receiver_id] = (counts[h.receiver_id] || 0) + 1;
+    });
+    setConnectionCounts(prev => ({ ...prev, ...counts }));
   }
 
   function buildQuery() {
@@ -110,6 +138,7 @@ export default function AttendeesTab({ eventId, isLive }: AttendeesTabProps) {
     // Exclude organizer from the assignment dropdown — that's set by host status
     setRoles(allRoles.filter(r => r.id !== "organizer"));
     setLoading(false);
+    loadConnectionCounts(enriched.map(r => r.guest_profile_id).filter(Boolean));
   }, [eventId, debouncedSearch, filter]);
 
   async function loadMore() {
@@ -120,6 +149,7 @@ export default function AttendeesTab({ eventId, isLive }: AttendeesTabProps) {
     setRegistrations(prev => [...prev, ...enriched]);
     setHasMore((regs?.length || 0) === PAGE_SIZE);
     setLoadingMore(false);
+    loadConnectionCounts(enriched.map(r => r.guest_profile_id).filter(Boolean));
   }
 
   useEffect(() => { load(); }, [load]);
@@ -166,9 +196,16 @@ export default function AttendeesTab({ eventId, isLive }: AttendeesTabProps) {
     load();
   }
 
-  // registrations is already the server-filtered, paginated result —
-  // no client-side filtering needed anymore.
-  const filtered = registrations;
+  // registrations is already the server-filtered, paginated result — the
+  // status filter pills above are server-side. Sort, though, is
+  // client-side and only reorders what's currently loaded: a true
+  // sort-by-connections across every page would need a materialized count
+  // column to do server-side, which doesn't exist yet. Honest scope for
+  // now — "most connected first, among what's loaded" — rather than
+  // pretending it's a full re-query.
+  const filtered = sortBy === "connections"
+    ? [...registrations].sort((a, b) => (connectionCounts[b.guest_profile_id] || 0) - (connectionCounts[a.guest_profile_id] || 0))
+    : registrations;
 
   async function introduceAttendees() {
     if (introSelected.length !== 2) return;
@@ -265,6 +302,23 @@ export default function AttendeesTab({ eventId, isLive }: AttendeesTabProps) {
         ))}
       </div>
 
+      <div style={{ display: "flex", gap: "6px", marginBottom: "16px" }}>
+        <button onClick={() => setSortBy("recent")}
+          style={{ padding: "4px 10px", borderRadius: "20px", border: "1px solid", fontSize: "10.5px", fontWeight: "600", cursor: "pointer",
+            background: sortBy === "recent" ? "rgba(226,109,52,0.08)" : "transparent",
+            borderColor: sortBy === "recent" ? "rgba(226,109,52,0.3)" : "rgba(255,255,255,0.06)",
+            color: sortBy === "recent" ? "#E26D34" : "#555" }}>
+          Recent
+        </button>
+        <button onClick={() => setSortBy("connections")}
+          style={{ padding: "4px 10px", borderRadius: "20px", border: "1px solid", fontSize: "10.5px", fontWeight: "600", cursor: "pointer",
+            background: sortBy === "connections" ? "rgba(226,109,52,0.08)" : "transparent",
+            borderColor: sortBy === "connections" ? "rgba(226,109,52,0.3)" : "rgba(255,255,255,0.06)",
+            color: sortBy === "connections" ? "#E26D34" : "#555" }}>
+          Most Connected
+        </button>
+      </div>
+
       {filtered.length === 0 ? (
         <p style={{ color: "#444", fontSize: "13px", textAlign: "center", padding: "40px 0" }}>
           {search ? "No attendees match your search" : "No attendees yet"}
@@ -303,6 +357,11 @@ export default function AttendeesTab({ eventId, isLive }: AttendeesTabProps) {
                       {r.ticket_types?.name && <span style={{ fontSize: "11px", color: "#555" }}>{r.ticket_types.name}</span>}
                       {r.amount > 0 && <span style={{ fontSize: "11px", color: GOLD }}>KES {Number(r.amount).toLocaleString()}</span>}
                       {r.mpesa_receipt && <span style={{ fontSize: "10px", color: "#555", fontFamily: "monospace" }}>{r.mpesa_receipt}</span>}
+                      {r.guest_profile_id && (connectionCounts[r.guest_profile_id] || 0) > 0 && (
+                        <span style={{ fontSize: "9px", fontWeight: "700", color: "#E26D34", background: "rgba(226,109,52,0.1)", border: "1px solid rgba(226,109,52,0.25)", borderRadius: "4px", padding: "2px 7px" }}>
+                          {connectionCounts[r.guest_profile_id]} connection{connectionCounts[r.guest_profile_id] === 1 ? "" : "s"}
+                        </span>
+                      )}
                     </div>
 
                     {/* Role selector — reads from DB, not hardcoded */}
