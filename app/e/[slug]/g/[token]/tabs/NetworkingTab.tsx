@@ -63,7 +63,7 @@ export default function NetworkingTab({ event, profile, isLive, isEnded, registr
   useEffect(()=>{
     if(!profile||auraLoaded)return;
     async function loadAura(){
-      const{data:prof}=await supabase.from("guest_profiles").select("aura_active,networking_visible").eq("id",profile.id).single();
+      const{data:prof}=await supabase.from("guest_profiles").select("networking_visible").eq("id",profile.id).single();
       const isActive=prof?.networking_visible??false;
       setNetworkingActive(isActive);
       const{data:sent}=await supabase.from("handshake_requests").select("recipient_id").eq("requester_id",profile.id).eq("event_id",event.id).in("status",["pending","approved"]);
@@ -255,19 +255,13 @@ export default function NetworkingTab({ event, profile, isLive, isEnded, registr
     };
   },[isLive,event,profile,networkingActive,fetchNodes]);
 
-  async function startNetworking(){
-    setNetworkingActive(true);
-    await supabase.from("guest_profiles").update({aura_active:true}).eq("id",profile.id);
-    await supabase.from("aura_status_logs").insert({guest_profile_id:profile.id,event_id:event.id,action:"ignited"});
-    await channelRef.current?.send({type:"broadcast",event:"aura_ignited",payload:{guest_profile_id:profile.id,display_name:profile.display_name}});
-  }
-
-  async function stopNetworking(){
-    await supabase.from("guest_profiles").update({aura_active:false}).eq("id",profile.id);
-    await supabase.from("aura_status_logs").insert({guest_profile_id:profile.id,event_id:event.id,action:"invisible"});
-    await channelRef.current?.send({type:"broadcast",event:"aura_invisible",payload:{guest_profile_id:profile.id}});
-    setNetworkingActive(false);
-  }
+  // NOTE: networking visibility is toggled from the Profile tab only (the
+  // combined networking_visible + aura_active update in ProfileTab.tsx).
+  // startNetworking/stopNetworking used to live here as a second, separate
+  // toggle, writing aura_active alone — but nothing in this tab ever called
+  // them, so a guest had no way to actually flip networking_visible from
+  // here. Removed rather than fixed, since the Profile tab toggle is the
+  // one real control and keeping two would just reintroduce the confusion.
 
   async function sendRequest(node:any){
     if(sentRequests.has(node.id)||declinedIds.has(node.id))return;
