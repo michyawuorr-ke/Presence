@@ -4,75 +4,37 @@ import { useEffect, useRef, useState } from "react";
 import { useParams } from "next/navigation";
 import { supabase } from "@/lib/supabase/client";
 import Wordmark from "@/components/Wordmark";
+import RegistrationForm from "@/components/register/RegistrationForm";
+import PaymentWaiting from "@/components/register/PaymentWaiting";
+import RegistrationSuccess from "@/components/register/RegistrationSuccess";
+
+function friendlyError(err: unknown, fallback: string): string {
+  const msg = (err as any)?.message || "";
+  if (/failed to fetch|networkerror|load failed/i.test(msg)) return "Couldn't connect.";
+  return msg || fallback;
+}
 
 export default function RegisterPage() {
-  // Raw browser/network errors ("Failed to fetch", "NetworkError...") are
-  // too technical to show someone mid-registration. Real messages from
-  // our own API (like "This event is full") are fine as-is and pass
-  // through unchanged.
-  function friendlyError(err: unknown, fallback: string): string {
-    const msg = (err as any)?.message || "";
-    if (/failed to fetch|networkerror|load failed/i.test(msg)) {
-      return "Couldn't connect.";
-    }
-    return msg || fallback;
-  }
   const [event, setEvent] = useState<any>(null);
   const [hostProfile, setHostProfile] = useState<any>(null);
   const [ticketTypes, setTicketTypes] = useState<any[]>([]);
   const [selectedTicket, setSelectedTicket] = useState<any>(null);
-  const [quantity, setQuantity] = useState(1);
+  const [quantity] = useState(1);
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [phone, setPhone] = useState("");
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
   const [success, setSuccess] = useState(false);
-  const [linkCopied, setLinkCopied] = useState(false);
-  const [emailSent, setEmailSent] = useState(false);
-  const [emailSending, setEmailSending] = useState(false);
   const [error, setError] = useState("");
-  const [manualMpesaCode, setManualMpesaCode] = useState("");
-  const [isSavingCode, setIsSavingCode] = useState(false);
   const [currentRegId, setCurrentRegId] = useState("");
-  const [paymentState, setPaymentState] = useState<"idle"|"waiting"|"success"|"failed">("idle");
+  const [paymentState, setPaymentState] = useState<"idle"|"waiting">("idle");
   const [stkFailed, setStkFailed] = useState(false);
-  const [paymentRef, setPaymentRef] = useState("");
   const [confirmedToken, setConfirmedToken] = useState("");
   const [confirmedRegId, setConfirmedRegId] = useState<string|null>(null);
   const [isFreeRegistration, setIsFreeRegistration] = useState(false);
   const [selfSelectRoles, setSelfSelectRoles] = useState<string[]>([]);
   const [selectedRole, setSelectedRole] = useState("attendee");
-
-  const [emailError, setEmailError] = useState("");
-  async function sendAccessEmail() {
-    if (!confirmedRegId || !event?.id) return;
-    setEmailSending(true);
-    setEmailError("");
-    try {
-      const res = await fetch("/api/email/access-link", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ registration_id: confirmedRegId, event_id: event.id }),
-      });
-      const json = await res.json();
-      if (json.sent) {
-        setEmailSent(true);
-      } else if (json.error === "already_sent") {
-        setEmailError("Already sent to your email.");
-        setTimeout(() => setEmailError(""), 4000);
-      } else {
-        setEmailError("Could not send — copy the link instead.");
-        setTimeout(() => setEmailError(""), 4000);
-      }
-    } catch {
-      setEmailError("Could not send — copy the link instead.");
-      setTimeout(() => setEmailError(""), 4000);
-    } finally {
-      setEmailSending(false);
-    }
-  }
-
   const isSubmittingRef = useRef(false);
   const params = useParams();
   const slug = params.slug as string;
@@ -85,27 +47,16 @@ export default function RegisterPage() {
       const { data: tickets } = await supabase.from("ticket_types").select("*").eq("event_id", ev.id).eq("is_active", true);
       setTicketTypes(tickets ?? []);
       if (tickets?.length) setSelectedTicket(tickets[0]);
-      // Load self-select roles from event_policies
       const { data: policy } = await supabase.from("event_policies").select("self_select_roles").eq("event_id", ev.id).maybeSingle();
       const roles = Array.isArray(policy?.self_select_roles) ? policy.self_select_roles : [];
       setSelfSelectRoles(roles);
-      // Default to attendee unless attendee not in list
       if (roles.length && !roles.includes("attendee")) setSelectedRole(roles[0]);
-
-      // Load host profile for the organizer card (only if show_in_events is true)
-      const { data: hp } = await supabase
-        .from("host_profiles")
-        .select("display_name,role_title,organisation,bio,avatar_url,website_url,linkedin_url,twitter_url,show_in_events")
-        .eq("host_id", ev.host_id)
-        .eq("show_in_events", true)
-        .maybeSingle();
+      const { data: hp } = await supabase.from("host_profiles").select("display_name,role_title,organisation,bio,avatar_url,website_url,linkedin_url,twitter_url,show_in_events").eq("host_id", ev.host_id).eq("show_in_events", true).maybeSingle();
       if (hp) setHostProfile(hp);
-
       setLoading(false);
     }
     load();
   }, [slug]);
-
 
   useEffect(() => {
     if (paymentState !== "waiting" || !currentRegId) return;
@@ -125,6 +76,7 @@ export default function RegisterPage() {
     }, 3000);
     return () => clearInterval(interval);
   }, [paymentState, currentRegId]);
+
   async function handleRegister() {
     if (isSubmittingRef.current) return;
     isSubmittingRef.current = true;
@@ -135,16 +87,10 @@ export default function RegisterPage() {
       const res = await fetch("/api/register", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          name, email, phone,
-          event_id: event?.id,
-          ticket_type_id: selectedTicket?.id || null,
-          role: selectedRole || "attendee",
-          quantity,
-        }),
+        body: JSON.stringify({ name, email, phone, event_id: event?.id, ticket_type_id: selectedTicket?.id || null, role: selectedRole || "attendee", quantity }),
       });
       const json = await res.json();
-      if (!res.ok) { throw new Error(json.error || "Registration failed"); }
+      if (!res.ok) throw new Error(json.error || "Registration failed");
       setConfirmedToken(json.access_token);
       setConfirmedRegId(json.registration_id);
       if (json.is_free) {
@@ -153,59 +99,39 @@ export default function RegisterPage() {
       }
       setCurrentRegId(json.registration_id);
       setPaymentState("waiting");
-      // Trigger STK push
       if (phone) {
         try {
           const stkRes = await fetch("/api/payments/initiate", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({
-              phone,
-              amount: json.total_amount,
-              registration_id: json.registration_id,
-            }),
+            body: JSON.stringify({ phone, amount: json.total_amount, registration_id: json.registration_id }),
           });
           const stkJson = await stkRes.json();
           if (!stkRes.ok || !stkJson.success) setStkFailed(true);
-        } catch {
-          setStkFailed(true);
-        }
-      } else {
-        setStkFailed(true);
-      }
+        } catch { setStkFailed(true); }
+      } else { setStkFailed(true); }
     } catch (err) {
       setError(friendlyError(err, "Registration failed. Please try again."));
       setSubmitting(false); isSubmittingRef.current = false;
     }
   }
 
-  async function handleManualCodeSubmit() {
-    if (!manualMpesaCode.trim()) { setError("Please enter your M-Pesa confirmation code"); return; }
-    setIsSavingCode(true); setError("");
-    try {
-      const { error: updateError } = await supabase.from("registrations")
-        .update({ mpesa_receipt: manualMpesaCode.trim(), status: "pending" })
-        .eq("id", currentRegId);
-      if (updateError) throw new Error(updateError.message);
-      setConfirmedRegId(currentRegId ?? null);
-      setSuccess(true); isSubmittingRef.current = false;
-    } catch (err) {
-      setError(friendlyError(err, "Couldn't save your code. Please try again."));
-    } finally { setIsSavingCode(false); }
+  async function sendAccessEmail() {
+    if (!confirmedRegId || !event?.id) return;
+    const res = await fetch("/api/email/access-link", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ registration_id: confirmedRegId, event_id: event.id }),
+    });
+    const json = await res.json();
+    if (!json.sent && json.error !== "already_sent") throw new Error("send failed");
   }
 
   function resetForm() {
     setSuccess(false); setPaymentState("idle"); setSubmitting(false);
     isSubmittingRef.current = false; setError(""); setConfirmedToken("");
-    setManualMpesaCode(""); setCurrentRegId(""); setName(""); setEmail(""); setPhone("");
+    setStkFailed(false); setCurrentRegId(""); setName(""); setEmail(""); setPhone("");
   }
-
-  const inp = {
-    width:"100%", padding:"14px 0", background:"transparent",
-    border:"1px solid transparent", borderBottom:"1px solid rgba(255,255,255,0.08)",
-    color:"#fff", fontSize:"14px", outline:"none", marginBottom:"20px",
-    boxSizing:"border-box" as const, borderRadius:0
-  };
 
   if (loading) return (
     <div style={{minHeight:"100vh",background:"#000",display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",gap:"22px"}}>
@@ -225,215 +151,40 @@ export default function RegisterPage() {
   );
 
   if (success) return (
-    <main style={{minHeight:"100vh",display:"flex",alignItems:"center",justifyContent:"center",padding:"24px",background:"#0a0a0a"}}>
-      <div style={{maxWidth:"380px",width:"100%",padding:"40px 24px",background:"rgba(255,255,255,0.02)",border:"1px solid rgba(255,255,255,0.06)",borderRadius:"24px",textAlign:"center"}}>
-        {isFreeRegistration && (
-          <div style={{
-            width: 56, height: 56, margin: "0 auto 20px", borderRadius: "50%",
-            background: "rgba(74,222,128,0.1)",
-            display: "flex", alignItems: "center", justifyContent: "center",
-          }}>
-            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#4ade80" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-              <path d="M20 6L9 17l-5-5" />
-            </svg>
-          </div>
-        )}
-        <h2 style={{fontSize:"24px",fontWeight:"400",color:"#f5f5f5",marginBottom:"6px", marginTop: isFreeRegistration ? 0 : "8px"}}>
-          {isFreeRegistration ? "You're In" : "Payment Submitted"}
-        </h2>
-        <p style={{color:"var(--ember, #E26D34)",fontSize:"16px",fontWeight:"600",marginBottom:"24px"}}>{event?.title}</p>
-        <p style={{color:"#a3a3a3",fontSize:"14px",lineHeight:"1.5",marginBottom:"32px"}}>
-          {isFreeRegistration
-            ? "Your spot is confirmed. Head straight into the event."
-            : "Pending host verification."}
-        </p>
-        <div style={{background:"rgba(0,0,0,0.15)",border:"1px solid rgba(255,255,255,0.05)",borderRadius:"14px",padding:"24px",marginBottom:"36px",textAlign:"left"}}>
-          <div style={{display:"flex",justifyContent:"space-between",marginBottom:"12px",fontSize:"13px"}}>
-            <span style={{color:"rgba(255,255,255,0.4)"}}>Ticket:</span>
-            <span style={{color:"#f5f5f5",fontWeight:"500"}}>{selectedTicket?.name || "General"}</span>
-          </div>
-          <div style={{display:"flex",justifyContent:"space-between",fontSize:"13px"}}>
-            <span style={{color:"rgba(255,255,255,0.4)"}}>Status:</span>
-            <span style={{color: isFreeRegistration ? "#4ade80" : "#D4AF37",fontWeight:"500"}}>
-              {isFreeRegistration ? "Confirmed" : "Pending Verification"}
-            </span>
-          </div>
-        </div>
-        {/* Manual again — Resend's free tier caps at 100/day, so an
-            automatic send-on-every-registration has no visible fallback
-            once that's hit. Copy Link always works regardless of quota;
-            the email button is a convenience on top of it, not the only
-            path to the link. */}
-        {confirmedToken && (
-          <div style={{background:"rgba(255,255,255,0.02)",border:"1px solid rgba(255,255,255,0.06)",borderRadius:"12px",padding:"16px",marginBottom:"16px",textAlign:"left"}}>
-            <p style={{fontSize:"10px",fontWeight:"700",letterSpacing:"0.12em",textTransform:"uppercase",color:"rgba(255,255,255,0.35)",margin:"0 0 8px"}}>Your Event Link</p>
-            <p style={{fontSize:"11px",color:"rgba(255,255,255,0.25)",margin:"0 0 14px",lineHeight:1.5}}>Save this link — it's how you get back into the event anytime.</p>
-            <div style={{display:"flex",flexDirection:"column",gap:"8px"}}>
-              <button onClick={() => {
-                const link = window.location.origin + "/e/" + event?.slug + "/g/" + confirmedToken;
-                navigator.clipboard?.writeText(link).then(() => { setLinkCopied(true); setTimeout(() => setLinkCopied(false), 2000); });
-              }} style={{width:"100%",padding:"12px",background:linkCopied?"rgba(74,222,128,0.08)":"rgba(226,109,52,0.1)",color:linkCopied?"#4ade80":"#E26D34",border:`1px solid ${linkCopied?"rgba(74,222,128,0.3)":"rgba(226,109,52,0.3)"}`,borderRadius:"8px",fontSize:"13px",fontWeight:"600",cursor:"pointer"}}>
-                {linkCopied ? "✓ Copied" : "Copy Link"}
-              </button>
-              {!emailSent && (
-                <button onClick={sendAccessEmail} disabled={emailSending} style={{width:"100%",padding:"8px",background:"transparent",color:"rgba(255,255,255,0.3)",border:"none",fontSize:"11px",fontWeight:"500",cursor:emailSending?"default":"pointer",textDecoration:"underline"}}>
-                  {emailSending ? "Sending..." : "Email me this link"}
-                </button>
-              )}
-              {emailSent && <p style={{textAlign:"center",fontSize:"11px",color:"#4ade80",margin:0}}>✓ Sent to your email</p>}
-              {emailError && <p style={{textAlign:"center",fontSize:"11px",color:"#f87171",margin:0}}>{emailError}</p>}
-            </div>
-          </div>
-        )}
-        <button onClick={() => { if (confirmedToken) window.location.href = window.location.origin + "/e/" + event?.slug + "/g/" + confirmedToken; }}
-          style={{width:"100%",padding:"16px",background: isFreeRegistration ? "rgba(74,222,128,0.08)" : "rgba(255,255,255,0.05)",color:"#f5f5f5",border:`1px solid ${isFreeRegistration ? "rgba(74,222,128,0.3)" : "rgba(255,255,255,0.12)"}`,borderRadius:"12px",fontSize:"13px",fontWeight:"600",letterSpacing:"0.05em",textTransform:"uppercase",cursor:"pointer"}}>
-          Enter Event
-        </button>
-      </div>
-    </main>
+    <RegistrationSuccess
+      event={event}
+      selectedTicket={selectedTicket}
+      isFreeRegistration={isFreeRegistration}
+      confirmedToken={confirmedToken}
+      onSendEmail={sendAccessEmail}
+    />
   );
-
-
 
   if (paymentState === "waiting") return (
-    <main style={{minHeight:"100vh",background:"#000",display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",padding:"40px 24px"}}>
-      <div style={{maxWidth:"420px",width:"100%"}}>
-        <style>{"@keyframes pulse{0%,100%{opacity:1;transform:scale(1)}50%{opacity:0.4;transform:scale(0.85)}}"}</style>
-
-        {/* M-Pesa prompt simulation */}
-        <div style={{background:"rgba(0,255,255,0.0)",border:"1px solid rgba(255,255,255,0.06)",borderRadius:"20px",padding:"32px 24px",marginBottom:"24px",textAlign:"center"}}>
-          <div style={{width:"56px",height:"56px",borderRadius:"50%",background:"rgba(34,197,94,0.08)",border:"1px solid rgba(34,197,94,0.2)",display:"flex",alignItems:"center",justifyContent:"center",margin:"0 auto 20px"}}>
-            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#22c55e" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><rect x="5" y="2" width="14" height="20" rx="2"/><line x1="12" y1="18" x2="12" y2="18.01"/></svg>
-          </div>
-          <p style={{fontSize:"11px",letterSpacing:"0.15em",textTransform:"uppercase",color:"rgba(255,255,255,0.25)",marginBottom:"8px"}}>M-Pesa Request Sent</p>
-          <p style={{fontSize:"22px",fontWeight:"300",color:"#f5f5f5",marginBottom:"4px"}}>KES {Number(selectedTicket?.price ?? 0) * quantity}</p>
-          <p style={{fontSize:"13px",color:"rgba(255,255,255,0.4)",marginBottom:"24px"}}>to Oreeti</p>
-          <div style={{background:"rgba(255,255,255,0.02)",borderRadius:"12px",padding:"14px",marginBottom:"8px"}}>
-            <p style={{fontSize:"12px",color:"rgba(255,255,255,0.3)",marginBottom:"4px"}}>Payment requested to</p>
-            <p style={{fontSize:"15px",fontWeight:"600",color:"#f0ede8",letterSpacing:"0.04em"}}>{phone}</p>
-          </div>
-          <p style={{fontSize:"12px",color:"rgba(255,255,255,0.25)",lineHeight:"1.6"}}>{stkFailed ? "STK prompt failed. Pay manually below." : "Check your phone and enter your M-Pesa PIN to complete payment"}</p>
-          {stkFailed && (
-            <div style={{marginTop:"20px",padding:"16px",background:"rgba(255,255,255,0.02)",borderRadius:"12px",textAlign:"left"}}>
-              <div style={{display:"flex",justifyContent:"space-between",marginBottom:"10px"}}>
-                <span style={{fontSize:"12px",color:"rgba(255,255,255,0.4)"}}>Paybill</span>
-                <span style={{fontSize:"15px",fontWeight:"700",color:"#fff"}}>516600</span>
-              </div>
-              <div style={{display:"flex",justifyContent:"space-between",marginBottom:"10px"}}>
-                <span style={{fontSize:"12px",color:"rgba(255,255,255,0.4)"}}>Account</span>
-                <span style={{fontSize:"15px",fontWeight:"700",color:"#E26D34"}}>955154</span>
-              </div>
-              <div style={{display:"flex",justifyContent:"space-between"}}>
-                <span style={{fontSize:"12px",color:"rgba(255,255,255,0.4)"}}>Amount</span>
-                <span style={{fontSize:"15px",fontWeight:"700",color:"#D4AF37"}}>KES {Number(selectedTicket?.price ?? 0) * quantity}</span>
-              </div>
-            </div>
-          )}
-        </div>
-
-        {/* Pulse waiting indicator */}
-        <div style={{textAlign:"center",marginBottom:"28px"}}>
-          <div style={{display:"inline-flex",alignItems:"center",gap:"8px",padding:"10px 20px",borderRadius:"20px",background:"rgba(255,255,255,0.02)",border:"1px solid rgba(255,255,255,0.05)"}}>
-            <span style={{width:"6px",height:"6px",borderRadius:"50%",background:"#22c55e",display:"inline-block",animation:"pulse 1.5s ease-in-out infinite"}} />
-            <span style={{fontSize:"11px",color:"rgba(255,255,255,0.3)",letterSpacing:"0.08em"}}>{stkFailed ? "WAITING FOR PAYMENT" : "WAITING FOR PIN"}</span>
-          </div>
-        </div>
-
-        {error && <p style={{color:"#ef4444",fontSize:"12px",textAlign:"center",marginBottom:"16px"}}>{error}</p>}
-        <button onClick={resetForm} style={{display:"block",width:"100%",background:"none",border:"none",color:"rgba(255,255,255,0.15)",fontSize:"11px",cursor:"pointer",letterSpacing:"0.05em",textTransform:"uppercase",textAlign:"center"}}>
-          Start Over
-        </button>
-      </div>
-    </main>
+    <PaymentWaiting
+      phone={phone}
+      amount={Number(selectedTicket?.price ?? 0) * quantity}
+      stkFailed={stkFailed}
+      error={error}
+      onReset={resetForm}
+    />
   );
-  return (
-    <main style={{minHeight:"100vh",background:"#000",display:"flex",flexDirection:"column",padding:"40px 24px",maxWidth:"420px",margin:"0 auto",justifyContent:"space-between"}}>
-      <style>{`
-        @keyframes organicFlow {
-          0%{opacity:0;letter-spacing:-0.05em;transform:translateY(12px) scaleY(0.8);filter:blur(4px);}
-          60%{opacity:0.8;letter-spacing:0.25em;filter:blur(1px);}
-          100%{opacity:1;letter-spacing:0.2em;transform:translateY(0px) scaleY(1);filter:blur(0px);}
-        }
-        .living-tagline{font-size:11px;color:transparent;text-transform:uppercase;font-weight:500;margin:0;opacity:0;animation:organicFlow 1.6s cubic-bezier(0.25,1,0.5,1) forwards;animation-delay:0.4s;text-shadow:0 0 4px rgba(226,109,52,0.65),0 0 14px rgba(226,109,52,0.4);}
-      `}</style>
-      <div>
-        <div style={{marginBottom:"40px",textAlign:"center",display:"flex",flexDirection:"column",alignItems:"center",gap:"16px"}}>
-          <p className="living-tagline">The room activated</p>
-          <h1 style={{fontSize:"18px",fontWeight:"600",color:"#fff",letterSpacing:"0.08em",textTransform:"uppercase",marginTop:"24px",marginBottom:"6px"}}>Register</h1>
-          <p style={{color:"rgba(255,255,255,0.6)",fontSize:"14px",margin:0}}>Event: {event.title}</p>
-          {event.description && (
-            <p style={{color:"rgba(255,255,255,0.4)",fontSize:"12px",margin:"8px 0 0",textAlign:"center",maxWidth:"320px",lineHeight:1.6}}>{event.description}</p>
-          )}
-        </div>
 
-        {/* Organizer card — only shown when host has show_in_events enabled */}
-        {hostProfile && (
-          <div style={{display:"flex",alignItems:"center",gap:"12px",background:"rgba(212,175,55,0.04)",border:"1px solid rgba(212,175,55,0.1)",borderRadius:"14px",padding:"14px",marginBottom:"28px"}}>
-            <div style={{width:"40px",height:"40px",borderRadius:"50%",border:"1px solid rgba(212,175,55,0.3)",display:"flex",alignItems:"center",justifyContent:"center",overflow:"hidden",flexShrink:0,background:"rgba(212,175,55,0.06)"}}>
-              {hostProfile.avatar_url
-                ? <img src={hostProfile.avatar_url} alt="" style={{width:"100%",height:"100%",objectFit:"cover"}} />
-                : <span style={{fontSize:"15px",fontWeight:"700",color:"#D4AF37"}}>{hostProfile.display_name?.[0]?.toUpperCase()||"O"}</span>
-              }
-            </div>
-            <div style={{flex:1,minWidth:0}}>
-              <div style={{display:"flex",alignItems:"center",gap:"6px",marginBottom:"2px"}}>
-                <p style={{fontSize:"13px",fontWeight:"600",color:"#f0ede8",margin:0}}>{hostProfile.display_name}</p>
-                <span style={{display:"inline-flex",alignItems:"center",gap:"3px",fontSize:"8px",fontWeight:"800",color:"#D4AF37",background:"rgba(212,175,55,0.1)",border:"1px solid rgba(212,175,55,0.2)",borderRadius:"3px",padding:"2px 6px",letterSpacing:"0.1em",flexShrink:0}}><svg width="8" height="8" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>ORGANIZER</span>
-              </div>
-              {(hostProfile.role_title||hostProfile.organisation) && (
-                <p style={{fontSize:"11px",color:"rgba(255,255,255,0.4)",margin:0}}>
-                  {hostProfile.role_title}{hostProfile.role_title&&hostProfile.organisation?" · ":""}{hostProfile.organisation}
-                </p>
-              )}
-            </div>
-          </div>
-        )}
-        {ticketTypes.length > 0 && (
-          <div style={{marginBottom:"8px",position:"relative",width:"100%"}}>
-            <select value={selectedTicket?.id||""} onChange={e => setSelectedTicket(ticketTypes.find(t => t.id===e.target.value))} disabled={submitting}
-              style={{width:"100%",padding:"14px 0",background:"transparent",border:"none",borderBottom:"1px solid rgba(255,255,255,0.08)",color:"#fff",fontSize:"14px",outline:"none",borderRadius:0,cursor:submitting?"not-allowed":"pointer",appearance:"none",WebkitAppearance:"none"}}>
-              {ticketTypes.map(t => (
-                <option key={t.id} value={t.id} style={{background:"#000",color:"#fff"}}>
-                  {t.name} — {Number(t.price)<=0?"Complimentary":`${t.price} KES`}
-                </option>
-              ))}
-            </select>
-            <div style={{position:"absolute",right:"0",top:"50%",transform:"translateY(-50%)",color:"rgba(255,255,255,0.25)",fontSize:"11px",pointerEvents:"none"}}>[SELECT TIER]</div>
-          </div>
-        )}
-        <input value={name} onChange={e=>setName(e.target.value)} placeholder="Your Name" type="text" disabled={submitting} style={inp}/>
-        <input value={email} onChange={e=>setEmail(e.target.value)} placeholder="Email Address" type="email" disabled={submitting} style={inp}/>
-        <input value={phone} onChange={e=>setPhone(e.target.value)} placeholder="M-Pesa Number" type="tel" disabled={submitting} style={inp}/>
-        {selfSelectRoles.length > 1 && (
-          <div style={{marginTop:"12px"}}>
-            <p style={{fontSize:"11px",color:"rgba(255,255,255,0.45)",letterSpacing:"0.06em",textTransform:"uppercase",marginBottom:"8px"}}>Attending as</p>
-            <div style={{display:"flex",gap:"8px",flexWrap:"wrap"}}>
-              {selfSelectRoles.map((r:string) => {
-                const labels: Record<string,string> = { attendee:"Attendee", speaker:"Speaker", vip:"VIP" };
-                return (
-                  <button key={r} type="button" onClick={()=>setSelectedRole(r)} disabled={submitting}
-                    style={{padding:"8px 16px",borderRadius:"8px",border:"1px solid",fontSize:"12px",fontWeight:"600",cursor:"pointer",
-                      background: selectedRole===r ? "rgba(212,175,55,0.12)" : "transparent",
-                      borderColor: selectedRole===r ? "rgba(212,175,55,0.4)" : "rgba(255,255,255,0.1)",
-                      color: selectedRole===r ? "#D4AF37" : "rgba(255,255,255,0.5)"}}>
-                    {labels[r] ?? r}
-                  </button>
-                );
-              })}
-            </div>
-          </div>
-        )}
-      </div>
-      <div style={{width:"100%",marginBottom:"24px"}}>
-        {error && <p style={{color:"#ef4444",fontSize:"12px",marginBottom:"16px",textAlign:"center"}}>{error}</p>}
-        <button onClick={handleRegister} disabled={submitting}
-          style={{width:"100%",padding:"14px",borderRadius:"6px",background:submitting?"rgba(255,255,255,0.02)":"rgba(255,255,255,0.06)",color:submitting?"rgba(255,255,255,0.2)":"#ffffff",border:"1px solid rgba(255,255,255,0.15)",fontSize:"12px",fontWeight:"600",letterSpacing:"0.06em",textTransform:"uppercase",cursor:submitting?"not-allowed":"pointer"}}>
-          {submitting ? "Processing..." : error === "Couldn't connect." ? "Try Again" : "Register"}
-        </button>
-        <p style={{lineHeight:"1.5",fontSize:"11px",color:"rgba(255,255,255,0.3)",textAlign:"center",marginTop:"16px",marginBottom:"0"}}>
-          By continuing, you agree to our <a href="/terms" target="_blank" style={{color:"#888",textDecoration:"none"}}>Terms of Use</a> and <a href="/privacy" target="_blank" style={{color:"#888",textDecoration:"none"}}>Privacy Policy</a>.
-        </p>
-      </div>
-    </main>
+  return (
+    <RegistrationForm
+      event={event}
+      hostProfile={hostProfile}
+      ticketTypes={ticketTypes}
+      selectedTicket={selectedTicket}
+      onTicketChange={setSelectedTicket}
+      name={name} onName={setName}
+      email={email} onEmail={setEmail}
+      phone={phone} onPhone={setPhone}
+      selfSelectRoles={selfSelectRoles}
+      selectedRole={selectedRole} onRole={setSelectedRole}
+      submitting={submitting}
+      error={error}
+      onSubmit={handleRegister}
+    />
   );
 }
