@@ -173,7 +173,6 @@ export default function RegisterPage() {
       } else {
         setStkFailed(true);
       }
-      }
     } catch (err) {
       setError(friendlyError(err, "Registration failed. Please try again."));
       setSubmitting(false); isSubmittingRef.current = false;
