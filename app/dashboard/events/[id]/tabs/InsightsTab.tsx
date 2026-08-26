@@ -62,13 +62,21 @@ export default function InsightsTab({ event, stats }: InsightsTabProps) {
   // a pie chart that should sum to 100.
   const [intentBreakdown, setIntentBreakdown] = useState<{ id: string; label: string; count: number; pct: number }[]>([]);
   const [intentRespondents, setIntentRespondents] = useState(0);
+  // Industry cross-interaction (spec §5) — who connected with whom, by
+  // industry pair, counted from confirmed handshakes only (not requests —
+  // a pending or declined request never actually happened). Pairs where
+  // either side has no industry set are excluded rather than bucketed as
+  // "Other ↔ Other", since that would just be noise, not a real pattern.
+  // Capped to the top 8 pairs — a full matrix stops being readable fast
+  // once an event has more than a handful of industries represented.
+  const [industryPairs, setIndustryPairs] = useState<{ a: string; b: string; count: number }[]>([]);
 
   useEffect(() => {
     if (!isEnded || !event?.id) return;
     let cancelled = false;
     async function loadInsights() {
       const [{ data: guests }, { data: hs }, { data: unlocks }, { data: requests }] = await Promise.all([
-        supabase.from("guest_profiles").select("id,display_name,role,networking_intents").eq("event_id", event.id).limit(1000),
+        supabase.from("guest_profiles").select("id,display_name,role,networking_intents,industry").eq("event_id", event.id).limit(1000),
         supabase.from("handshakes").select("id,sender_id,receiver_id,created_at").eq("event_id", event.id).limit(1000),
         supabase.from("profile_unlocks").select("handshake_id").eq("event_id", event.id).limit(1000),
         supabase.from("handshake_requests").select("id,status").eq("event_id", event.id).limit(1000),
@@ -126,6 +134,28 @@ export default function InsightsTab({ event, stats }: InsightsTabProps) {
         .sort((a, b) => b.count - a.count);
       setIntentBreakdown(breakdown);
       setIntentRespondents(respondents);
+
+      // Industry cross-interaction — one entry per confirmed handshake,
+      // looked up by industry on both sides. A guest-to-industry map first,
+      // since `hs` only has ids.
+      const industryByGuest = new Map<string, string>();
+      attendees.forEach((a: any) => {
+        if (a.industry && a.industry.trim()) industryByGuest.set(a.id, a.industry.trim());
+      });
+      const pairCounts = new Map<string, number>();
+      (hs || []).forEach((h: any) => {
+        const indA = industryByGuest.get(h.sender_id);
+        const indB = industryByGuest.get(h.receiver_id);
+        if (!indA || !indB) return; // exclude pairs missing an industry on either side
+        const [a, b] = [indA, indB].sort();
+        const key = `${a}|||${b}`;
+        pairCounts.set(key, (pairCounts.get(key) || 0) + 1);
+      });
+      const pairs = [...pairCounts.entries()]
+        .map(([key, count]) => { const [a, b] = key.split("|||"); return { a, b, count }; })
+        .sort((x, y) => y.count - x.count)
+        .slice(0, 8);
+      setIndustryPairs(pairs);
 
       setLoading(false);
     }
@@ -266,6 +296,26 @@ export default function InsightsTab({ event, stats }: InsightsTabProps) {
         </div>
       )}
 
+      {/* Who Connected With Whom — spec §5. Counted from confirmed
+          handshakes only. Same-industry pairs (e.g. Technology ↔
+          Technology) are real and meaningful too — shown as a single
+          label rather than a redundant "X ↔ X". Capped to top 8 pairs. */}
+      {industryPairs.length > 0 && (
+        <div>
+          <p style={{ fontSize: "9px", fontWeight: "700", letterSpacing: "0.15em", color: "rgba(240,237,232,0.35)", textTransform: "uppercase", marginBottom: "10px" }}>Who Connected With Whom</p>
+          <div style={{ background: FAINT, border: "1px solid rgba(255,255,255,0.05)", borderRadius: "14px", padding: "16px", display: "flex", flexDirection: "column", gap: "10px" }}>
+            {industryPairs.map((p, i) => (
+              <div key={i} style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                <p style={{ fontSize: "12.5px", color: IVORY, margin: 0 }}>
+                  {p.a === p.b ? p.a : `${p.a} ↔ ${p.b}`}
+                </p>
+                <p style={{ fontSize: "12px", fontWeight: "700", color: GOLD, margin: 0 }}>{p.count}</p>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
       {/* Narrative summary */}
       <div style={{ background: FAINT, border: "1px solid rgba(255,255,255,0.05)", borderRadius: "14px", padding: "16px" }}>
         <p style={{ fontSize: "13px", color: IVORY, lineHeight: "1.6", margin: 0 }}>{narrative}</p>
@@ -295,16 +345,17 @@ export default function InsightsTab({ event, stats }: InsightsTabProps) {
         )}
       </div>
 
-      {/* Still to build, in order: Intent breakdown (§3), Industry
-          cross-interaction (§5), Intent→Connection (§4), Activation
-          refinement using aura_active (§1), then the funnel (§7) with
-          Discovered People omitted — no view/discovery event is logged
-          anywhere yet, so that step needs new instrumentation before it
-          can show a real number; deferred per explicit decision, not an
-          oversight. Location/area analytics (§6) dropped entirely — the
-          only location data that exists is opt-in meetup-signal proposals,
-          not actual foot traffic, so an "activity by area" chart would
-          overclaim what's actually measured. */}
+      {/* Still to build, in order: Intent→Connection (§4), Activation
+          refinement using networking_visible (§1 — NOT aura_active, see
+          the Networking tab cleanup that removed its dead toggle), then
+          the funnel (§7) with Discovered People omitted — no view/
+          discovery event is logged anywhere yet, so that step needs new
+          instrumentation before it can show a real number; deferred per
+          explicit decision, not an oversight. Location/area analytics
+          (§6) dropped entirely — the only location data that exists is
+          opt-in meetup-signal proposals, not actual foot traffic, so an
+          "activity by area" chart would overclaim what's actually
+          measured. */}
     </div>
   );
 }
