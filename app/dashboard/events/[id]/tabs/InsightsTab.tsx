@@ -70,6 +70,15 @@ export default function InsightsTab({ event, stats }: InsightsTabProps) {
   // Capped to the top 8 pairs — a full matrix stops being readable fast
   // once an event has more than a handful of industries represented.
   const [industryPairs, setIndustryPairs] = useState<{ a: string; b: string; count: number }[]>([]);
+  // Intent → Connection (spec §4) — did an attendee's stated intent
+  // actually translate into activity? "Connected" = appears in at least
+  // one confirmed handshake (any path). "Accepted" is the narrower,
+  // specifically request-driven subset — appears in at least one APPROVED
+  // handshake_request — distinct from a connection formed purely by a
+  // direct QR scan or card add. Same reasoning as showing QR Handshakes
+  // and Connections Created separately in §2: these can legitimately
+  // differ, and collapsing them would hide that.
+  const [intentConnectionStats, setIntentConnectionStats] = useState<{ id: string; label: string; selected: number; connected: number; accepted: number }[]>([]);
 
   useEffect(() => {
     if (!isEnded || !event?.id) return;
@@ -121,10 +130,11 @@ export default function InsightsTab({ event, stats }: InsightsTabProps) {
       // attendees (organizer excluded), then express each as % of
       // respondents (attendees with at least one intent selected).
       const countByIntent = new Map<string, number>();
+      const guestIntents = new Map<string, string[]>();
       let respondents = 0;
       attendees.forEach((a: any) => {
         const ids = parseIntents(a.networking_intents);
-        if (ids.length > 0) respondents++;
+        if (ids.length > 0) { respondents++; guestIntents.set(a.id, ids); }
         ids.forEach((id: string) => countByIntent.set(id, (countByIntent.get(id) || 0) + 1));
       });
       const breakdown = INTENTS
@@ -134,6 +144,25 @@ export default function InsightsTab({ event, stats }: InsightsTabProps) {
         .sort((a, b) => b.count - a.count);
       setIntentBreakdown(breakdown);
       setIntentRespondents(respondents);
+
+      // Intent → Connection — for each intent with at least one selector,
+      // how many of them actually connected (any confirmed handshake) vs.
+      // specifically had an approved request.
+      const connectedGuestIds = new Set<string>();
+      (hs || []).forEach((h: any) => { connectedGuestIds.add(h.sender_id); connectedGuestIds.add(h.receiver_id); });
+      const acceptedGuestIds = new Set<string>();
+      (requests || []).filter((r: any) => r.status === "approved").forEach((r: any) => {
+        acceptedGuestIds.add(r.requester_id); acceptedGuestIds.add(r.recipient_id);
+      });
+      const intentConnection = breakdown.map(i => {
+        const guestsWithIntent = [...guestIntents.entries()].filter(([, ids]) => ids.includes(i.id)).map(([gid]) => gid);
+        return {
+          id: i.id, label: i.label, selected: i.count,
+          connected: guestsWithIntent.filter(gid => connectedGuestIds.has(gid)).length,
+          accepted: guestsWithIntent.filter(gid => acceptedGuestIds.has(gid)).length,
+        };
+      });
+      setIntentConnectionStats(intentConnection);
 
       // Industry cross-interaction — one entry per confirmed handshake,
       // looked up by industry on both sides. A guest-to-industry map first,
@@ -296,6 +325,39 @@ export default function InsightsTab({ event, stats }: InsightsTabProps) {
         </div>
       )}
 
+      {/* Intent → Connection — spec §4. Did the stated intent translate
+          into actual activity? "Connected" = any confirmed handshake.
+          "Accepted" is the narrower request-specific subset — shown
+          separately since, like §2's QR Handshakes vs Connections
+          Created, these can legitimately differ (a connection can form
+          via direct QR/card add without ever going through a request). */}
+      {intentConnectionStats.length > 0 && (
+        <div>
+          <p style={{ fontSize: "9px", fontWeight: "700", letterSpacing: "0.15em", color: "rgba(240,237,232,0.35)", textTransform: "uppercase", marginBottom: "10px" }}>Intent → Connection</p>
+          <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
+            {intentConnectionStats.map(i => (
+              <div key={i.id} style={{ background: FAINT, border: "1px solid rgba(255,255,255,0.04)", borderRadius: "12px", padding: "12px 14px" }}>
+                <p style={{ fontSize: "12.5px", fontWeight: "600", color: IVORY, margin: "0 0 8px" }}>{i.label}</p>
+                <div style={{ display: "flex", gap: "18px" }}>
+                  <div>
+                    <p style={{ fontSize: "15px", fontWeight: "700", color: IVORY, margin: "0 0 1px", letterSpacing: "-0.01em" }}>{i.selected}</p>
+                    <p style={{ fontSize: "9px", color: "#555", textTransform: "uppercase", letterSpacing: "0.06em", margin: 0 }}>Selected</p>
+                  </div>
+                  <div>
+                    <p style={{ fontSize: "15px", fontWeight: "700", color: "#E26D34", margin: "0 0 1px", letterSpacing: "-0.01em" }}>{i.connected}</p>
+                    <p style={{ fontSize: "9px", color: "rgba(226,109,52,0.6)", textTransform: "uppercase", letterSpacing: "0.06em", margin: 0 }}>Connected</p>
+                  </div>
+                  <div>
+                    <p style={{ fontSize: "15px", fontWeight: "700", color: "#22c55e", margin: "0 0 1px", letterSpacing: "-0.01em" }}>{i.accepted}</p>
+                    <p style={{ fontSize: "9px", color: "rgba(34,197,94,0.6)", textTransform: "uppercase", letterSpacing: "0.06em", margin: 0 }}>Accepted</p>
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
       {/* Who Connected With Whom — spec §5. Counted from confirmed
           handshakes only. Same-industry pairs (e.g. Technology ↔
           Technology) are real and meaningful too — shown as a single
@@ -345,17 +407,16 @@ export default function InsightsTab({ event, stats }: InsightsTabProps) {
         )}
       </div>
 
-      {/* Still to build, in order: Intent→Connection (§4), Activation
-          refinement using networking_visible (§1 — NOT aura_active, see
-          the Networking tab cleanup that removed its dead toggle), then
-          the funnel (§7) with Discovered People omitted — no view/
-          discovery event is logged anywhere yet, so that step needs new
-          instrumentation before it can show a real number; deferred per
-          explicit decision, not an oversight. Location/area analytics
-          (§6) dropped entirely — the only location data that exists is
-          opt-in meetup-signal proposals, not actual foot traffic, so an
-          "activity by area" chart would overclaim what's actually
-          measured. */}
+      {/* Still to build, in order: Activation refinement using
+          networking_visible (§1 — NOT aura_active, see the Networking tab
+          cleanup that removed its dead toggle), then the funnel (§7) with
+          Discovered People omitted — no view/discovery event is logged
+          anywhere yet, so that step needs new instrumentation before it
+          can show a real number; deferred per explicit decision, not an
+          oversight. Location/area analytics (§6) dropped entirely — the
+          only location data that exists is opt-in meetup-signal proposals,
+          not actual foot traffic, so an "activity by area" chart would
+          overclaim what's actually measured. */}
     </div>
   );
 }
