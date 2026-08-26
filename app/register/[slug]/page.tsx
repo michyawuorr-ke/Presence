@@ -36,6 +36,7 @@ export default function RegisterPage() {
   const [isSavingCode, setIsSavingCode] = useState(false);
   const [currentRegId, setCurrentRegId] = useState("");
   const [paymentState, setPaymentState] = useState<"idle"|"waiting"|"success"|"failed">("idle");
+  const [stkFailed, setStkFailed] = useState(false);
   const [paymentRef, setPaymentRef] = useState("");
   const [confirmedToken, setConfirmedToken] = useState("");
   const [confirmedRegId, setConfirmedRegId] = useState<string|null>(null);
@@ -152,7 +153,27 @@ export default function RegisterPage() {
       }
       setCurrentRegId(json.registration_id);
       setPaymentState("waiting");
-      setPaymentRef(json.payment_ref ?? "");
+      // Trigger STK push
+      if (phone) {
+        try {
+          const stkRes = await fetch("/api/payments/initiate", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              phone,
+              amount: json.total_amount,
+              registration_id: json.registration_id,
+            }),
+          });
+          const stkJson = await stkRes.json();
+          if (!stkRes.ok || !stkJson.success) setStkFailed(true);
+        } catch {
+          setStkFailed(true);
+        }
+      } else {
+        setStkFailed(true);
+      }
+      }
     } catch (err) {
       setError(friendlyError(err, "Registration failed. Please try again."));
       setSubmitting(false); isSubmittingRef.current = false;
@@ -274,57 +295,58 @@ export default function RegisterPage() {
   );
 
 
+
   if (paymentState === "waiting") return (
     <main style={{minHeight:"100vh",background:"#000",display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",padding:"40px 24px"}}>
       <div style={{maxWidth:"420px",width:"100%"}}>
-        <div style={{textAlign:"center",marginBottom:"32px"}}>
-          <p style={{fontSize:"11px",letterSpacing:"0.15em",textTransform:"uppercase",color:"rgba(255,255,255,0.3)",marginBottom:"12px"}}>Complete Payment</p>
-          <h2 style={{fontSize:"20px",fontWeight:"400",color:"#f5f5f5",margin:0}}>Pay via M-Pesa</h2>
-        </div>
-        <div style={{background:"rgba(255,255,255,0.03)",border:"1px solid rgba(255,255,255,0.08)",borderRadius:"14px",padding:"24px",marginBottom:"24px"}}>
-          <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:"14px"}}>
-            <span style={{fontSize:"12px",color:"rgba(255,255,255,0.4)",letterSpacing:"0.08em",textTransform:"uppercase"}}>Paybill</span>
-            <span style={{fontSize:"22px",fontWeight:"700",color:"#fff",letterSpacing:"0.1em"}}>516600</span>
+        <style>{"@keyframes pulse{0%,100%{opacity:1;transform:scale(1)}50%{opacity:0.4;transform:scale(0.85)}}"}</style>
+
+        {/* M-Pesa prompt simulation */}
+        <div style={{background:"rgba(0,255,255,0.0)",border:"1px solid rgba(255,255,255,0.06)",borderRadius:"20px",padding:"32px 24px",marginBottom:"24px",textAlign:"center"}}>
+          <div style={{width:"56px",height:"56px",borderRadius:"50%",background:"rgba(34,197,94,0.08)",border:"1px solid rgba(34,197,94,0.2)",display:"flex",alignItems:"center",justifyContent:"center",margin:"0 auto 20px"}}>
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#22c55e" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><rect x="5" y="2" width="14" height="20" rx="2"/><line x1="12" y1="18" x2="12" y2="18.01"/></svg>
           </div>
-          <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:"14px"}}>
-            <span style={{fontSize:"12px",color:"rgba(255,255,255,0.4)",letterSpacing:"0.08em",textTransform:"uppercase"}}>Account</span>
-            <span style={{fontSize:"16px",fontWeight:"700",color:"#E26D34",letterSpacing:"0.1em"}}>955154</span>
+          <p style={{fontSize:"11px",letterSpacing:"0.15em",textTransform:"uppercase",color:"rgba(255,255,255,0.25)",marginBottom:"8px"}}>M-Pesa Request Sent</p>
+          <p style={{fontSize:"22px",fontWeight:"300",color:"#f5f5f5",marginBottom:"4px"}}>KES {Number(selectedTicket?.price ?? 0) * quantity}</p>
+          <p style={{fontSize:"13px",color:"rgba(255,255,255,0.4)",marginBottom:"24px"}}>to Oreeti</p>
+          <div style={{background:"rgba(255,255,255,0.02)",borderRadius:"12px",padding:"14px",marginBottom:"8px"}}>
+            <p style={{fontSize:"12px",color:"rgba(255,255,255,0.3)",marginBottom:"4px"}}>Payment requested to</p>
+            <p style={{fontSize:"15px",fontWeight:"600",color:"#f0ede8",letterSpacing:"0.04em"}}>{phone}</p>
           </div>
-          <div style={{borderTop:"1px solid rgba(255,255,255,0.05)",paddingTop:"14px",display:"flex",justifyContent:"space-between",alignItems:"center"}}>
-            <span style={{fontSize:"12px",color:"rgba(255,255,255,0.4)",letterSpacing:"0.08em",textTransform:"uppercase"}}>Amount</span>
-            <span style={{fontSize:"20px",fontWeight:"700",color:"#D4AF37"}}>KES {Number(selectedTicket?.price ?? 0) * quantity}</span>
-          </div>
-        </div>
-        <div style={{marginBottom:"32px"}}>
-          {[
-            "Open M-Pesa on your phone",
-            "Select Lipa na M-Pesa → Paybill",
-            "Business No: 516600",
-            `Account No: 955154`,
-            `Amount: KES ${Number(selectedTicket?.price ?? 0) * quantity}`,
-            "Enter PIN and send"
-          ].map((step, i) => (
-            <div key={i} style={{display:"flex",gap:"12px",alignItems:"flex-start",marginBottom:"10px"}}>
-              <span style={{fontSize:"10px",fontWeight:"700",color:"rgba(226,109,52,0.6)",minWidth:"18px",paddingTop:"2px"}}>{i + 1}</span>
-              <span style={{fontSize:"13px",color:"rgba(255,255,255,0.55)",lineHeight:"1.5"}}>{step}</span>
+          <p style={{fontSize:"12px",color:"rgba(255,255,255,0.25)",lineHeight:"1.6"}}>{stkFailed ? "STK prompt failed. Pay manually below." : "Check your phone and enter your M-Pesa PIN to complete payment"}</p>
+          {stkFailed && (
+            <div style={{marginTop:"20px",padding:"16px",background:"rgba(255,255,255,0.02)",borderRadius:"12px",textAlign:"left"}}>
+              <div style={{display:"flex",justifyContent:"space-between",marginBottom:"10px"}}>
+                <span style={{fontSize:"12px",color:"rgba(255,255,255,0.4)"}}>Paybill</span>
+                <span style={{fontSize:"15px",fontWeight:"700",color:"#fff"}}>516600</span>
+              </div>
+              <div style={{display:"flex",justifyContent:"space-between",marginBottom:"10px"}}>
+                <span style={{fontSize:"12px",color:"rgba(255,255,255,0.4)"}}>Account</span>
+                <span style={{fontSize:"15px",fontWeight:"700",color:"#E26D34"}}>955154</span>
+              </div>
+              <div style={{display:"flex",justifyContent:"space-between"}}>
+                <span style={{fontSize:"12px",color:"rgba(255,255,255,0.4)"}}>Amount</span>
+                <span style={{fontSize:"15px",fontWeight:"700",color:"#D4AF37"}}>KES {Number(selectedTicket?.price ?? 0) * quantity}</span>
+              </div>
             </div>
-          ))}
+          )}
         </div>
-        <div style={{textAlign:"center",marginBottom:"24px"}}>
-          <div style={{display:"inline-flex",alignItems:"center",gap:"8px",padding:"10px 20px",borderRadius:"20px",background:"rgba(255,255,255,0.03)",border:"1px solid rgba(255,255,255,0.06)"}}>
-            <span style={{width:"6px",height:"6px",borderRadius:"50%",background:"#E26D34",display:"inline-block",animation:"pulse 1.5s ease-in-out infinite"}} />
-            <span style={{fontSize:"11px",color:"rgba(255,255,255,0.35)",letterSpacing:"0.08em"}}>WAITING FOR PAYMENT</span>
+
+        {/* Pulse waiting indicator */}
+        <div style={{textAlign:"center",marginBottom:"28px"}}>
+          <div style={{display:"inline-flex",alignItems:"center",gap:"8px",padding:"10px 20px",borderRadius:"20px",background:"rgba(255,255,255,0.02)",border:"1px solid rgba(255,255,255,0.05)"}}>
+            <span style={{width:"6px",height:"6px",borderRadius:"50%",background:"#22c55e",display:"inline-block",animation:"pulse 1.5s ease-in-out infinite"}} />
+            <span style={{fontSize:"11px",color:"rgba(255,255,255,0.3)",letterSpacing:"0.08em"}}>{stkFailed ? "WAITING FOR PAYMENT" : "WAITING FOR PIN"}</span>
           </div>
-          <style>{"@keyframes pulse{0%,100%{opacity:1;transform:scale(1)}50%{opacity:0.3;transform:scale(0.8)}}"}</style>
         </div>
+
         {error && <p style={{color:"#ef4444",fontSize:"12px",textAlign:"center",marginBottom:"16px"}}>{error}</p>}
-        <button onClick={resetForm} style={{display:"block",width:"100%",background:"none",border:"none",color:"rgba(255,255,255,0.2)",fontSize:"11px",cursor:"pointer",letterSpacing:"0.05em",textTransform:"uppercase",textAlign:"center"}}>
+        <button onClick={resetForm} style={{display:"block",width:"100%",background:"none",border:"none",color:"rgba(255,255,255,0.15)",fontSize:"11px",cursor:"pointer",letterSpacing:"0.05em",textTransform:"uppercase",textAlign:"center"}}>
           Start Over
         </button>
       </div>
     </main>
   );
-
   return (
     <main style={{minHeight:"100vh",background:"#000",display:"flex",flexDirection:"column",padding:"40px 24px",maxWidth:"420px",margin:"0 auto",justifyContent:"space-between"}}>
       <style>{`
