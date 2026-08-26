@@ -1,6 +1,25 @@
 "use client";
 import { useEffect, useState } from "react";
 import { supabase } from "@/lib/supabase/client";
+import { INTENTS } from "@/lib/matching/intents";
+
+// Same parsing rule used on the guest side (app/e/[slug]/g/[token]/tabs/shared.ts)
+// — networking_intents is sometimes a real array, sometimes legacy
+// JSON-stringified text in the same column. Kept as a small local copy
+// rather than a cross-import from the guest-facing tab folder, since it's
+// a single pure function and the two feature areas otherwise don't share code.
+function parseIntents(raw: any): string[] {
+  if (Array.isArray(raw)) return raw;
+  if (typeof raw === "string" && raw.trim()) {
+    try {
+      const parsed = JSON.parse(raw);
+      return Array.isArray(parsed) ? parsed : [];
+    } catch {
+      return [];
+    }
+  }
+  return [];
+}
 
 interface InsightsTabProps {
   event: any;
@@ -35,13 +54,21 @@ export default function InsightsTab({ event, stats }: InsightsTabProps) {
   // match is more honest than collapsing them into one figure.
   const [requestStats, setRequestStats] = useState({ total: 0, accepted: 0, pending: 0, declined: 0 });
   const [qrHandshakeCount, setQrHandshakeCount] = useState(0);
+  // Intent breakdown (spec §3) — % is of RESPONDENTS (attendees who
+  // selected at least one intent), not of all attendees, and not of 100%
+  // total: since intent selection is multi-select, one guest can count
+  // toward several bars. That's correct behavior for this data, not a
+  // bug — the UI labels the denominator explicitly so it doesn't read as
+  // a pie chart that should sum to 100.
+  const [intentBreakdown, setIntentBreakdown] = useState<{ id: string; label: string; count: number; pct: number }[]>([]);
+  const [intentRespondents, setIntentRespondents] = useState(0);
 
   useEffect(() => {
     if (!isEnded || !event?.id) return;
     let cancelled = false;
     async function loadInsights() {
       const [{ data: guests }, { data: hs }, { data: unlocks }, { data: requests }] = await Promise.all([
-        supabase.from("guest_profiles").select("id,display_name,role").eq("event_id", event.id).limit(1000),
+        supabase.from("guest_profiles").select("id,display_name,role,networking_intents").eq("event_id", event.id).limit(1000),
         supabase.from("handshakes").select("id,sender_id,receiver_id,created_at").eq("event_id", event.id).limit(1000),
         supabase.from("profile_unlocks").select("handshake_id").eq("event_id", event.id).limit(1000),
         supabase.from("handshake_requests").select("id,status").eq("event_id", event.id).limit(1000),
@@ -81,6 +108,24 @@ export default function InsightsTab({ event, stats }: InsightsTabProps) {
         pending: reqs.filter((r: any) => r.status === "pending").length,
         declined: reqs.filter((r: any) => r.status === "declined").length,
       });
+
+      // Intent breakdown — count occurrences per intent id across all
+      // attendees (organizer excluded), then express each as % of
+      // respondents (attendees with at least one intent selected).
+      const countByIntent = new Map<string, number>();
+      let respondents = 0;
+      attendees.forEach((a: any) => {
+        const ids = parseIntents(a.networking_intents);
+        if (ids.length > 0) respondents++;
+        ids.forEach((id: string) => countByIntent.set(id, (countByIntent.get(id) || 0) + 1));
+      });
+      const breakdown = INTENTS
+        .map(i => ({ id: i.id, label: i.label, count: countByIntent.get(i.id) || 0 }))
+        .filter(i => i.count > 0)
+        .map(i => ({ ...i, pct: respondents > 0 ? Math.round((i.count / respondents) * 100) : 0 }))
+        .sort((a, b) => b.count - a.count);
+      setIntentBreakdown(breakdown);
+      setIntentRespondents(respondents);
 
       setLoading(false);
     }
@@ -196,6 +241,30 @@ export default function InsightsTab({ event, stats }: InsightsTabProps) {
           <p style={{ fontSize: "16px", fontWeight: "700", color: GOLD, margin: 0 }}>{acceptanceRate}%</p>
         </div>
       </div>
+
+      {/* What Attendees Were Looking For — spec §3. % is of respondents
+          (attendees who picked at least one intent), not all attendees,
+          and won't sum to 100 since intent is multi-select — the caption
+          says so explicitly rather than implying a pie-chart split. */}
+      {intentBreakdown.length > 0 && (
+        <div>
+          <p style={{ fontSize: "9px", fontWeight: "700", letterSpacing: "0.15em", color: "rgba(240,237,232,0.35)", textTransform: "uppercase", marginBottom: "2px" }}>What Attendees Came Looking For</p>
+          <p style={{ fontSize: "10.5px", color: "#555", margin: "0 0 12px" }}>% of the {intentRespondents} attendee{intentRespondents === 1 ? "" : "s"} who selected an intent — a guest can appear in more than one row</p>
+          <div style={{ background: FAINT, border: "1px solid rgba(255,255,255,0.05)", borderRadius: "14px", padding: "16px", display: "flex", flexDirection: "column", gap: "12px" }}>
+            {intentBreakdown.map(i => (
+              <div key={i.id}>
+                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline", marginBottom: "5px" }}>
+                  <p style={{ fontSize: "12.5px", color: IVORY, margin: 0 }}>{i.label}</p>
+                  <p style={{ fontSize: "12px", fontWeight: "700", color: "#E26D34", margin: 0 }}>{i.pct}%</p>
+                </div>
+                <div style={{ height: "5px", borderRadius: "3px", background: "rgba(255,255,255,0.05)", overflow: "hidden" }}>
+                  <div style={{ height: "100%", width: `${Math.min(i.pct, 100)}%`, background: "#E26D34", borderRadius: "3px" }} />
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
 
       {/* Narrative summary */}
       <div style={{ background: FAINT, border: "1px solid rgba(255,255,255,0.05)", borderRadius: "14px", padding: "16px" }}>
