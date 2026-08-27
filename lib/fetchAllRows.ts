@@ -20,7 +20,14 @@ const BATCH_SIZE = 1000;
 const MAX_BATCHES = 50;
 
 export async function fetchAllRows<T>(
-  queryBuilder: (from: number, to: number) => Promise<{ data: T[] | null; error: any }>
+  // PromiseLike, not Promise — Supabase's query builder (e.g.
+  // supabase.from(...).select(...).range(from, to)) is awaitable but is
+  // not a strict Promise subclass (it's missing .catch/.finally/etc per
+  // TypeScript's structural check), which is exactly what every call site
+  // of this function returns directly, unwrapped. PromiseLike only
+  // requires .then(), which the query builder does have, so `await` on it
+  // works correctly both at runtime and in the type system.
+  queryBuilder: (from: number, to: number) => PromiseLike<{ data: T[] | null; error: any }>
 ): Promise<T[]> {
   const all: T[] = [];
   for (let batch = 0; batch < MAX_BATCHES; batch++) {
