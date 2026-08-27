@@ -9,6 +9,7 @@ import PreEventDiscovery from "./PreEventDiscovery";
 import MatchRecommendations from "./MatchRecommendations";
 import MissedConnections from "./MissedConnections";
 import { List, type RowComponentProps } from "react-window";
+import { fetchAllRows } from "@/lib/fetchAllRows";
 
 interface NetworkingTabProps {
   event: any;
@@ -140,8 +141,17 @@ export default function NetworkingTab({ event, profile, isLive, isEnded, registr
     const permsByRole=Object.fromEntries((effectivePerms||[]).map((p:any)=>[p.role_id,p]));
     const defaultVisibility=policy?.default_visibility??"visible";
 
-    // limit raised to 99 — no artificial cap on visible attendees
-    const{data}=await supabase.from("guest_profiles").select("*").eq("event_id",event.id).eq("networking_visible",true).neq("id",profile.id).limit(99);
+    // The row list below is already virtualized with react-window, so
+    // rendering however many results come back is cheap — the actual bug
+    // was here: a hardcoded .limit(99) meant anyone past the 99th
+    // networking_visible guest was invisible to EVERYONE's discovery feed,
+    // permanently, with no ordering even applied to decide who made the
+    // cut. This function only runs on realtime-triggered refreshes, not a
+    // tight poll (see the comment where it's called), so a complete fetch
+    // here is safe at real event sizes.
+    const data = await fetchAllRows<any>((from, to) =>
+      supabase.from("guest_profiles").select("*").eq("event_id", event.id).eq("networking_visible", true).neq("id", profile.id).range(from, to)
+    );
     const{data:blockedData}=await supabase.from("guest_blocks").select("blocked_id").eq("blocker_id",profile.id).eq("event_id",event.id);
     const blockedSet=new Set((blockedData||[]).map((b:any)=>b.blocked_id));
 

@@ -2,6 +2,7 @@
 import { useEffect, useState, useRef, useCallback } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { supabase } from "@/lib/supabase/client";
+import { fetchAllRows } from "@/lib/fetchAllRows";
 
 export default function ScannerPage() {
   const [event, setEvent] = useState<any>(null);
@@ -49,7 +50,13 @@ export default function ScannerPage() {
       const { data: ev } = await supabase.from("events").select("*").eq("id", eventId).single();
       if (!ev || ev.host_id !== user.id) { router.replace("/dashboard/events"); return; }
       setEvent(ev);
-      const { data: regs } = await supabase.from("registrations").select("id,guest_name,checked_in,checked_in_at,status,event_id").eq("event_id", eventId).limit(500);
+      // See app/scan/[eventId]/[token]/page.tsx for why this is a complete
+      // paginated fetch, not a capped one — this is the offline-first
+      // check-in registry, and a truncated copy meant real ticket holders
+      // past row 500 were rejected as "Ticket not found" at the door.
+      const regs = await fetchAllRows<any>((from, to) =>
+        supabase.from("registrations").select("id,guest_name,checked_in,checked_in_at,status,event_id").eq("event_id", eventId).range(from, to)
+      );
       const registry = new Map();
       let count = 0;
       (regs || []).forEach((r: any) => {

@@ -2,6 +2,7 @@
 import { useEffect, useState, useRef, useCallback } from "react";
 import { useParams } from "next/navigation";
 import { supabase } from "@/lib/supabase/client";
+import { fetchAllRows } from "@/lib/fetchAllRows";
 
 export default function PublicScannerPage() {
   const [event, setEvent] = useState<any>(null);
@@ -49,7 +50,17 @@ export default function PublicScannerPage() {
       if (!ev || ev.scanner_token !== token) { setAuthError(true); setLoading(false); return; }
       if (ev.status === "ended") { setAuthError(true); setLoading(false); return; }
       setEvent(ev);
-      const { data: regs } = await supabase.from("registrations").select("id,guest_name,checked_in,checked_in_at,status,event_id").eq("event_id", eventId).limit(500);
+      // This registry is the scanner's offline-first source of truth — a
+      // guest can be validated and checked in with zero connectivity, then
+      // synced once back online (see offlineQueueRef below). That design
+      // is genuinely valuable at events with unreliable venue wifi/data,
+      // so the fix here is a complete paginated fetch, not removing the
+      // local registry — a hardcoded .limit(500) meant any registration
+      // past row 500 was silently invisible to this scanner and got
+      // rejected as "Ticket not found" at the actual door.
+      const regs = await fetchAllRows<any>((from, to) =>
+        supabase.from("registrations").select("id,guest_name,checked_in,checked_in_at,status,event_id").eq("event_id", eventId).range(from, to)
+      );
       const registry = new Map();
       let count = 0;
       (regs || []).forEach((r: any) => {

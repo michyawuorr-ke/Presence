@@ -2,6 +2,7 @@
 import { useEffect, useState, type ReactNode } from "react";
 import { supabase } from "@/lib/supabase/client";
 import { INTENTS } from "@/lib/matching/intents";
+import { fetchAllRows } from "@/lib/fetchAllRows";
 
 // Same parsing rule used on the guest side (app/e/[slug]/g/[token]/tabs/shared.ts)
 // — networking_intents is sometimes a real array, sometimes legacy
@@ -107,11 +108,16 @@ export default function InsightsTab({ event, stats }: InsightsTabProps) {
     if (!isEnded || !event?.id) return;
     let cancelled = false;
     async function loadInsights() {
-      const [{ data: guests }, { data: hs }, { data: unlocks }, { data: requests }] = await Promise.all([
-        supabase.from("guest_profiles").select("id,display_name,role,networking_intents,industry").eq("event_id", event.id).limit(1000),
-        supabase.from("handshakes").select("id,sender_id,receiver_id,created_at").eq("event_id", event.id).limit(1000),
-        supabase.from("profile_unlocks").select("handshake_id").eq("event_id", event.id).limit(1000),
-        supabase.from("handshake_requests").select("id,status").eq("event_id", event.id).limit(1000),
+      // Every stat on this tab is an aggregate over these four tables — a
+      // .limit(1000) here doesn't just slow things down past 1000 rows,
+      // it silently produces the WRONG number with no error, which is
+      // worse than a visible failure. fetchAllRows pages through the full
+      // result instead.
+      const [guests, hs, unlocks, requests] = await Promise.all([
+        fetchAllRows<any>((from, to) => supabase.from("guest_profiles").select("id,display_name,role,networking_intents,industry").eq("event_id", event.id).range(from, to)),
+        fetchAllRows<any>((from, to) => supabase.from("handshakes").select("id,sender_id,receiver_id,created_at").eq("event_id", event.id).range(from, to)),
+        fetchAllRows<any>((from, to) => supabase.from("profile_unlocks").select("handshake_id").eq("event_id", event.id).range(from, to)),
+        fetchAllRows<any>((from, to) => supabase.from("handshake_requests").select("id,status").eq("event_id", event.id).range(from, to)),
       ]);
       if (cancelled) return;
 

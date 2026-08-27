@@ -3,6 +3,7 @@ import { useState, useEffect, useCallback } from "react";
 import { supabase } from "@/lib/supabase/client";
 import { getAllRoles } from "@/lib/roles";
 import type { Role } from "@/lib/roles";
+import { fetchAllRows } from "@/lib/fetchAllRows";
 
 interface AttendeesTabProps {
   eventId: string;
@@ -78,12 +79,14 @@ export default function AttendeesTab({ eventId, isLive }: AttendeesTabProps) {
   // rather than pulling every handshake for the whole event up front.
   async function loadConnectionCounts(guestIds: string[]) {
     if (guestIds.length === 0) return;
-    const { data: hs } = await supabase
-      .from("handshakes")
-      .select("sender_id,receiver_id")
-      .eq("event_id", eventId)
-      .or(`sender_id.in.(${guestIds.join(",")}),receiver_id.in.(${guestIds.join(",")})`)
-      .limit(2000);
+    const hs = await fetchAllRows<any>((from, to) =>
+      supabase
+        .from("handshakes")
+        .select("sender_id,receiver_id")
+        .eq("event_id", eventId)
+        .or(`sender_id.in.(${guestIds.join(",")}),receiver_id.in.(${guestIds.join(",")})`)
+        .range(from, to)
+    );
     const counts: Record<string, number> = {};
     (hs || []).forEach((h: any) => {
       if (guestIds.includes(h.sender_id))   counts[h.sender_id]   = (counts[h.sender_id]   || 0) + 1;
