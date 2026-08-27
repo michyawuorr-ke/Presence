@@ -1,5 +1,5 @@
 "use client";
-import { useEffect, useState } from "react";
+import { useEffect, useState, type ReactNode } from "react";
 import { supabase } from "@/lib/supabase/client";
 import { INTENTS } from "@/lib/matching/intents";
 
@@ -29,6 +29,29 @@ interface InsightsTabProps {
 const GOLD  = "#D4AF37";
 const IVORY = "rgba(240,237,232,0.85)";
 const FAINT = "rgba(255,255,255,0.04)";
+
+// Collapsible section header — used for the parts of this tab that grow
+// with the data (Intent breakdown, Intent→Connection, Industry pairs).
+// Connection Activity, Narrative, Takeaways, and Top Connector stay
+// always-visible since they're fixed-size or naturally short; these three
+// are the ones that can genuinely turn into a wall of scroll once an
+// event has many intents or industries represented, so they default
+// closed and the organizer opens whichever one they actually want.
+function Section({ title, caption, defaultOpen = false, children }: { title: string; caption?: string; defaultOpen?: boolean; children: ReactNode }) {
+  const [open, setOpen] = useState(defaultOpen);
+  return (
+    <div>
+      <button onClick={() => setOpen(o => !o)} style={{ width: "100%", display: "flex", justifyContent: "space-between", alignItems: "center", background: "none", border: "none", padding: "4px 0 8px", cursor: "pointer", textAlign: "left" }}>
+        <div>
+          <p style={{ fontSize: "9px", fontWeight: "700", letterSpacing: "0.15em", color: "rgba(240,237,232,0.35)", textTransform: "uppercase", margin: 0 }}>{title}</p>
+          {caption && !open && <p style={{ fontSize: "10.5px", color: "#555", margin: "2px 0 0" }}>{caption}</p>}
+        </div>
+        <span style={{ fontSize: "13px", color: "#555", fontWeight: "700" }}>{open ? "\u2212" : "+"}</span>
+      </button>
+      {open && children}
+    </div>
+  );
+}
 
 // This tab is the organizer's "story" home — the interpretive layer, as
 // opposed to Overview's plain glance-and-go numbers. Top Connector, the
@@ -381,13 +404,9 @@ export default function InsightsTab({ event, stats }: InsightsTabProps) {
         </div>
       </div>
 
-      {/* What Attendees Were Looking For — spec §3. % is of respondents
-          (attendees who picked at least one intent), not all attendees,
-          and won't sum to 100 since intent is multi-select — the caption
-          says so explicitly rather than implying a pie-chart split. */}
+      {/* What Attendees Were Looking For — spec §3. */}
       {intentBreakdown.length > 0 && (
-        <div>
-          <p style={{ fontSize: "9px", fontWeight: "700", letterSpacing: "0.15em", color: "rgba(240,237,232,0.35)", textTransform: "uppercase", marginBottom: "2px" }}>What Attendees Came Looking For</p>
+        <Section title="What Attendees Came Looking For" caption={`${intentBreakdown.length} intents · top: ${intentBreakdown[0].label} (${intentBreakdown[0].pct}%)`}>
           <p style={{ fontSize: "10.5px", color: "#555", margin: "0 0 12px" }}>% of the {intentRespondents} attendee{intentRespondents === 1 ? "" : "s"} who selected an intent — a guest can appear in more than one row</p>
           <div style={{ background: FAINT, border: "1px solid rgba(255,255,255,0.05)", borderRadius: "14px", padding: "16px", display: "flex", flexDirection: "column", gap: "12px" }}>
             {intentBreakdown.map(i => (
@@ -402,40 +421,31 @@ export default function InsightsTab({ event, stats }: InsightsTabProps) {
               </div>
             ))}
           </div>
-        </div>
+        </Section>
       )}
 
       {/* Intent → Connection — spec §4. Did the stated intent translate
           into actual activity? "Connected" = any confirmed handshake.
-          "Accepted" is the narrower request-specific subset — shown
-          separately since, like §2's QR Handshakes vs Connections
-          Created, these can legitimately differ (a connection can form
-          via direct QR/card add without ever going through a request). */}
+          "Accepted" is the narrower request-specific subset — kept
+          separate since, like §2's QR Handshakes vs Connections Created,
+          these can legitimately differ. Compact rows, not cards — with up
+          to 9 possible intents, padded cards each ran ~80px; this fits
+          the same content in ~40px per row. */}
       {intentConnectionStats.length > 0 && (
-        <div>
-          <p style={{ fontSize: "9px", fontWeight: "700", letterSpacing: "0.15em", color: "rgba(240,237,232,0.35)", textTransform: "uppercase", marginBottom: "10px" }}>Intent → Connection</p>
-          <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
-            {intentConnectionStats.map(i => (
-              <div key={i.id} style={{ background: FAINT, border: "1px solid rgba(255,255,255,0.04)", borderRadius: "12px", padding: "12px 14px" }}>
-                <p style={{ fontSize: "12.5px", fontWeight: "600", color: IVORY, margin: "0 0 8px" }}>{i.label}</p>
-                <div style={{ display: "flex", gap: "18px" }}>
-                  <div>
-                    <p style={{ fontSize: "15px", fontWeight: "700", color: IVORY, margin: "0 0 1px", letterSpacing: "-0.01em" }}>{i.selected}</p>
-                    <p style={{ fontSize: "9px", color: "#555", textTransform: "uppercase", letterSpacing: "0.06em", margin: 0 }}>Selected</p>
-                  </div>
-                  <div>
-                    <p style={{ fontSize: "15px", fontWeight: "700", color: "#E26D34", margin: "0 0 1px", letterSpacing: "-0.01em" }}>{i.connected}</p>
-                    <p style={{ fontSize: "9px", color: "rgba(226,109,52,0.6)", textTransform: "uppercase", letterSpacing: "0.06em", margin: 0 }}>Connected</p>
-                  </div>
-                  <div>
-                    <p style={{ fontSize: "15px", fontWeight: "700", color: "#22c55e", margin: "0 0 1px", letterSpacing: "-0.01em" }}>{i.accepted}</p>
-                    <p style={{ fontSize: "9px", color: "rgba(34,197,94,0.6)", textTransform: "uppercase", letterSpacing: "0.06em", margin: 0 }}>Accepted</p>
-                  </div>
+        <Section title="Intent → Connection" caption={`${intentConnectionStats.length} intents tracked`}>
+          <div style={{ background: FAINT, border: "1px solid rgba(255,255,255,0.05)", borderRadius: "14px", padding: "4px 16px" }}>
+            {intentConnectionStats.map((i, idx) => (
+              <div key={i.id} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "11px 0", borderBottom: idx < intentConnectionStats.length - 1 ? "1px solid rgba(255,255,255,0.04)" : "none" }}>
+                <p style={{ fontSize: "12.5px", color: IVORY, margin: 0, flex: 1, minWidth: 0, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", paddingRight: "10px" }}>{i.label}</p>
+                <div style={{ display: "flex", gap: "13px", flexShrink: 0 }}>
+                  <span style={{ fontSize: "11px", color: "#777", whiteSpace: "nowrap" }}>{i.selected} selected</span>
+                  <span style={{ fontSize: "11px", color: "#E26D34", whiteSpace: "nowrap" }}>{i.connected} connected</span>
+                  <span style={{ fontSize: "11px", color: "#22c55e", whiteSpace: "nowrap" }}>{i.accepted} accepted</span>
                 </div>
               </div>
             ))}
           </div>
-        </div>
+        </Section>
       )}
 
       {/* Who Connected With Whom — spec §5. Counted from confirmed
@@ -443,8 +453,7 @@ export default function InsightsTab({ event, stats }: InsightsTabProps) {
           Technology) are real and meaningful too — shown as a single
           label rather than a redundant "X ↔ X". Capped to top 8 pairs. */}
       {industryPairs.length > 0 && (
-        <div>
-          <p style={{ fontSize: "9px", fontWeight: "700", letterSpacing: "0.15em", color: "rgba(240,237,232,0.35)", textTransform: "uppercase", marginBottom: "10px" }}>Who Connected With Whom</p>
+        <Section title="Who Connected With Whom" caption={`Top pair: ${industryPairs[0].a === industryPairs[0].b ? industryPairs[0].a : `${industryPairs[0].a} ↔ ${industryPairs[0].b}`} (${industryPairs[0].count})`}>
           <div style={{ background: FAINT, border: "1px solid rgba(255,255,255,0.05)", borderRadius: "14px", padding: "16px", display: "flex", flexDirection: "column", gap: "10px" }}>
             {industryPairs.map((p, i) => (
               <div key={i} style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
@@ -455,7 +464,7 @@ export default function InsightsTab({ event, stats }: InsightsTabProps) {
               </div>
             ))}
           </div>
-        </div>
+        </Section>
       )}
 
       {/* Narrative summary */}
